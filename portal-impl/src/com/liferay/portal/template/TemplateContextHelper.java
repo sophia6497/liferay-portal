@@ -21,6 +21,8 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.language.UnicodeLanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.PortletModeFactory_IW;
+import com.liferay.portal.kernel.portlet.WindowStateFactory_IW;
 import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
 import com.liferay.portal.kernel.templateparser.TemplateContext;
 import com.liferay.portal.kernel.util.ArrayUtil_IW;
@@ -65,6 +67,7 @@ import com.liferay.portal.util.WebKeys;
 import com.liferay.portal.webserver.WebServerServletTokenUtil;
 import com.liferay.portlet.PortletConfigImpl;
 import com.liferay.portlet.PortletURLFactoryUtil;
+import com.liferay.portlet.documentlibrary.util.DLUtil;
 import com.liferay.portlet.expando.service.ExpandoColumnLocalService;
 import com.liferay.portlet.expando.service.ExpandoRowLocalService;
 import com.liferay.portlet.expando.service.ExpandoTableLocalService;
@@ -147,6 +150,10 @@ public class TemplateContextHelper {
 		// Date util
 
 		variables.put("dateUtil", DateUtil_IW.getInstance());
+
+		// Document library util
+
+		variables.put("dlUtil", DLUtil.getDL());
 
 		// Expando column service
 
@@ -313,6 +320,11 @@ public class TemplateContextHelper {
 			_log.error(se, se);
 		}
 
+		// Portlet mode factory
+
+		variables.put(
+			"portletModeFactory", PortletModeFactory_IW.getInstance());
+
 		// Portlet URL factory
 
 		try {
@@ -404,6 +416,11 @@ public class TemplateContextHelper {
 		catch (SecurityException se) {
 			_log.error(se, se);
 		}
+
+		// Window state factory
+
+		variables.put(
+			"windowStateFactory", WindowStateFactory_IW.getInstance());
 
 		// Permissions
 

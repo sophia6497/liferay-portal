@@ -22,13 +22,13 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Shard;
 import com.liferay.portal.model.impl.ShardModelImpl;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -114,7 +114,7 @@ public class ShardPersistenceTest {
 
 		newShard.setName(ServiceTestUtil.randomString());
 
-		_persistence.update(newShard, false);
+		_persistence.update(newShard);
 
 		Shard existingShard = _persistence.findByPrimaryKey(newShard.getPrimaryKey());
 
@@ -269,7 +269,7 @@ public class ShardPersistenceTest {
 
 		shard.setName(ServiceTestUtil.randomString());
 
-		_persistence.update(shard, false);
+		_persistence.update(shard);
 
 		return shard;
 	}

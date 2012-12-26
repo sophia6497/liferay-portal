@@ -16,18 +16,20 @@ package com.liferay.portlet.blogs;
 
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Group;
+import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
+import com.liferay.portal.test.MainServletExecutionTestListener;
+import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.service.BlogsEntryLocalServiceUtil;
 import com.liferay.portlet.blogs.social.BlogsActivityKeys;
+import com.liferay.portlet.blogs.util.BlogsTestUtil;
 import com.liferay.portlet.social.model.SocialActivity;
 import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
 
@@ -44,11 +46,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Zsolt Berentey
  */
-@ExecutionTestListeners(
-	listeners = {
-		EnvironmentExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
+@ExecutionTestListeners(listeners = {MainServletExecutionTestListener.class})
 @RunWith(LiferayIntegrationJUnitTestRunner.class)
 public class BlogsEntryStatusTransitionTest extends BaseBlogsEntryTestCase {
 
@@ -56,10 +54,14 @@ public class BlogsEntryStatusTransitionTest extends BaseBlogsEntryTestCase {
 	public void setUp() throws Exception {
 		FinderCacheUtil.clearCache();
 
-		group = ServiceTestUtil.addGroup(
-			"BlogsEntryStatusTransitionTest#testGroup");
+		group = ServiceTestUtil.addGroup();
 
-		blogsEntry = addBlogsEntry(group, false);
+		User user = ServiceTestUtil.addUser(
+			ServiceTestUtil.randomString(), false,
+			new long[] {group.getGroupId()});
+
+		blogsEntry = BlogsTestUtil.addBlogsEntry(
+			user.getUserId(), group, false);
 	}
 
 	@After
@@ -309,6 +311,8 @@ public class BlogsEntryStatusTransitionTest extends BaseBlogsEntryTestCase {
 
 	protected void checkSocialActivity(int activityType, int expectedCount)
 		throws Exception {
+
+		Thread.sleep(500 * TestPropsValues.JUNIT_DELAY_FACTOR);
 
 		List<SocialActivity> activities =
 			SocialActivityLocalServiceUtil.getGroupActivities(

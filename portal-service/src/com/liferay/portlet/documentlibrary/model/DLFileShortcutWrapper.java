@@ -667,6 +667,10 @@ public class DLFileShortcutWrapper implements DLFileShortcut,
 		return new DLFileShortcutWrapper(_dlFileShortcut.toEscapedModel());
 	}
 
+	public com.liferay.portlet.documentlibrary.model.DLFileShortcut toUnescapedModel() {
+		return new DLFileShortcutWrapper(_dlFileShortcut.toUnescapedModel());
+	}
+
 	@Override
 	public java.lang.String toString() {
 		return _dlFileShortcut.toString();
@@ -687,6 +691,14 @@ public class DLFileShortcutWrapper implements DLFileShortcut,
 
 	public java.lang.String getToTitle() {
 		return _dlFileShortcut.getToTitle();
+	}
+
+	public com.liferay.portlet.documentlibrary.model.DLFolder getTrashFolder() {
+		return _dlFileShortcut.getTrashFolder();
+	}
+
+	public boolean isInTrashFolder() {
+		return _dlFileShortcut.isInTrashFolder();
 	}
 
 	/**

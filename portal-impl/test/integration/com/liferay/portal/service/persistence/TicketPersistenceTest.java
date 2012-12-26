@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Ticket;
@@ -29,7 +30,6 @@ import com.liferay.portal.model.impl.TicketModelImpl;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -125,7 +125,7 @@ public class TicketPersistenceTest {
 
 		newTicket.setExpirationDate(ServiceTestUtil.nextDate());
 
-		_persistence.update(newTicket, false);
+		_persistence.update(newTicket);
 
 		Ticket existingTicket = _persistence.findByPrimaryKey(newTicket.getPrimaryKey());
 
@@ -297,7 +297,7 @@ public class TicketPersistenceTest {
 
 		ticket.setExpirationDate(ServiceTestUtil.nextDate());
 
-		_persistence.update(ticket, false);
+		_persistence.update(ticket);
 
 		return ticket;
 	}

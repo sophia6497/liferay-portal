@@ -57,7 +57,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addGroupUsers", _addGroupUsersParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId,
@@ -90,7 +90,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addOrganizationUsers", _addOrganizationUsersParameterTypes1);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -123,7 +123,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addPasswordPolicyUsers",
 					_addPasswordPolicyUsersParameterTypes2);
 
@@ -157,7 +157,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addRoleUsers", _addRoleUsersParameterTypes3);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, roleId,
@@ -190,7 +190,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addTeamUsers", _addTeamUsersParameterTypes4);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, teamId,
@@ -233,7 +233,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addUser", _addUserParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -291,7 +291,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addUser", _addUserParameterTypes6);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -334,7 +334,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addUserGroupUsers", _addUserGroupUsersParameterTypes7);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -377,7 +377,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addUserWithWorkflow", _addUserWithWorkflowParameterTypes8);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -435,7 +435,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"addUserWithWorkflow", _addUserWithWorkflowParameterTypes9);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -477,7 +477,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"deletePortrait", _deletePortraitParameterTypes10);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId);
@@ -509,7 +509,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"deleteRoleUser", _deleteRoleUserParameterTypes11);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, roleId,
@@ -541,7 +541,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"deleteUser", _deleteUserParameterTypes12);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId);
@@ -573,7 +573,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getCompanyUsers", _getCompanyUsersParameterTypes13);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -610,7 +610,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getCompanyUsersCount",
 					_getCompanyUsersCountParameterTypes14);
 
@@ -647,7 +647,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getGroupUserIds", _getGroupUserIdsParameterTypes15);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId);
@@ -683,7 +683,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getGroupUsers", _getGroupUsersParameterTypes16);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId);
@@ -719,7 +719,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getOrganizationUserIds",
 					_getOrganizationUserIdsParameterTypes17);
 
@@ -757,7 +757,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getOrganizationUsers",
 					_getOrganizationUsersParameterTypes18);
 
@@ -794,7 +794,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getRoleUserIds", _getRoleUserIdsParameterTypes19);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, roleId);
@@ -831,7 +831,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getUserByEmailAddress",
 					_getUserByEmailAddressParameterTypes20);
 
@@ -869,7 +869,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getUserById", _getUserByIdParameterTypes21);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId);
@@ -905,7 +905,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getUserByScreenName", _getUserByScreenNameParameterTypes22);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -942,7 +942,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getUserGroupUsers", _getUserGroupUsersParameterTypes23);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -979,7 +979,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getUserIdByEmailAddress",
 					_getUserIdByEmailAddressParameterTypes24);
 
@@ -1017,7 +1017,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"getUserIdByScreenName",
 					_getUserIdByScreenNameParameterTypes25);
 
@@ -1055,7 +1055,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"hasGroupUser", _hasGroupUserParameterTypes26);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId,
@@ -1092,7 +1092,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"hasRoleUser", _hasRoleUserParameterTypes27);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, roleId,
@@ -1129,7 +1129,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"hasRoleUser", _hasRoleUserParameterTypes28);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -1166,7 +1166,7 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"setRoleUsers", _setRoleUsersParameterTypes29);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, roleId,
@@ -1199,11 +1199,45 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"setUserGroupUsers", _setUserGroupUsersParameterTypes30);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
 					userGroupId, userIds);
+
+			try {
+				TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception e) {
+				if (e instanceof com.liferay.portal.kernel.exception.PortalException) {
+					throw (com.liferay.portal.kernel.exception.PortalException)e;
+				}
+
+				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
+					throw (com.liferay.portal.kernel.exception.SystemException)e;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(e);
+			}
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException se) {
+			_log.error(se, se);
+
+			throw se;
+		}
+	}
+
+	public static void unsetGroupTeamsUsers(HttpPrincipal httpPrincipal,
+		long groupId, long[] userIds)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		try {
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"unsetGroupTeamsUsers",
+					_unsetGroupTeamsUsersParameterTypes31);
+
+			MethodHandler methodHandler = new MethodHandler(methodKey, groupId,
+					userIds);
 
 			try {
 				TunnelUtil.invoke(httpPrincipal, methodHandler);
@@ -1233,8 +1267,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"unsetGroupUsers", _unsetGroupUsersParameterTypes31);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"unsetGroupUsers", _unsetGroupUsersParameterTypes32);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, groupId,
 					userIds, serviceContext);
@@ -1266,9 +1300,9 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"unsetOrganizationUsers",
-					_unsetOrganizationUsersParameterTypes32);
+					_unsetOrganizationUsersParameterTypes33);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
 					organizationId, userIds);
@@ -1300,9 +1334,9 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"unsetPasswordPolicyUsers",
-					_unsetPasswordPolicyUsersParameterTypes33);
+					_unsetPasswordPolicyUsersParameterTypes34);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
 					passwordPolicyId, userIds);
@@ -1334,8 +1368,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"unsetRoleUsers", _unsetRoleUsersParameterTypes34);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"unsetRoleUsers", _unsetRoleUsersParameterTypes35);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, roleId,
 					userIds);
@@ -1367,8 +1401,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"unsetTeamUsers", _unsetTeamUsersParameterTypes35);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"unsetTeamUsers", _unsetTeamUsersParameterTypes36);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, teamId,
 					userIds);
@@ -1400,8 +1434,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"unsetUserGroupUsers", _unsetUserGroupUsersParameterTypes36);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"unsetUserGroupUsers", _unsetUserGroupUsersParameterTypes37);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
 					userGroupId, userIds);
@@ -1433,9 +1467,9 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"updateAgreedToTermsOfUse",
-					_updateAgreedToTermsOfUseParameterTypes37);
+					_updateAgreedToTermsOfUseParameterTypes38);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					agreedToTermsOfUse);
@@ -1473,8 +1507,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateEmailAddress", _updateEmailAddressParameterTypes38);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateEmailAddress", _updateEmailAddressParameterTypes39);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					password, emailAddress1, emailAddress2, serviceContext);
@@ -1520,9 +1554,9 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
 					"updateIncompleteUser",
-					_updateIncompleteUserParameterTypes39);
+					_updateIncompleteUserParameterTypes40);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
 					companyId, autoPassword, password1, password2,
@@ -1562,8 +1596,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateLockoutById", _updateLockoutByIdParameterTypes40);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateLockoutById", _updateLockoutByIdParameterTypes41);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					lockout);
@@ -1599,8 +1633,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateOpenId", _updateOpenIdParameterTypes41);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateOpenId", _updateOpenIdParameterTypes42);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					openId);
@@ -1637,8 +1671,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateOrganizations", _updateOrganizationsParameterTypes42);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateOrganizations", _updateOrganizationsParameterTypes43);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					organizationIds, serviceContext);
@@ -1671,8 +1705,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updatePassword", _updatePasswordParameterTypes43);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updatePassword", _updatePasswordParameterTypes44);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					password1, password2, passwordReset);
@@ -1708,8 +1742,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updatePortrait", _updatePortraitParameterTypes44);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updatePortrait", _updatePortraitParameterTypes45);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					bytes);
@@ -1746,8 +1780,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateReminderQuery", _updateReminderQueryParameterTypes45);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateReminderQuery", _updateReminderQueryParameterTypes46);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					question, answer);
@@ -1783,8 +1817,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateScreenName", _updateScreenNameParameterTypes46);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateScreenName", _updateScreenNameParameterTypes47);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					screenName);
@@ -1820,8 +1854,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateStatus", _updateStatusParameterTypes47);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateStatus", _updateStatusParameterTypes48);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					status);
@@ -1881,8 +1915,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateUser", _updateUserParameterTypes48);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateUser", _updateUserParameterTypes49);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					oldPassword, newPassword1, newPassword2, passwordReset,
@@ -1946,8 +1980,8 @@ public class UserServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(UserServiceUtil.class.getName(),
-					"updateUser", _updateUserParameterTypes49);
+			MethodKey methodKey = new MethodKey(UserServiceUtil.class,
+					"updateUser", _updateUserParameterTypes50);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					oldPassword, newPassword1, newPassword2, passwordReset,
@@ -2115,34 +2149,37 @@ public class UserServiceHttp {
 	private static final Class<?>[] _setUserGroupUsersParameterTypes30 = new Class[] {
 			long.class, long[].class
 		};
-	private static final Class<?>[] _unsetGroupUsersParameterTypes31 = new Class[] {
+	private static final Class<?>[] _unsetGroupTeamsUsersParameterTypes31 = new Class[] {
+			long.class, long[].class
+		};
+	private static final Class<?>[] _unsetGroupUsersParameterTypes32 = new Class[] {
 			long.class, long[].class,
 			com.liferay.portal.service.ServiceContext.class
 		};
-	private static final Class<?>[] _unsetOrganizationUsersParameterTypes32 = new Class[] {
+	private static final Class<?>[] _unsetOrganizationUsersParameterTypes33 = new Class[] {
 			long.class, long[].class
 		};
-	private static final Class<?>[] _unsetPasswordPolicyUsersParameterTypes33 = new Class[] {
+	private static final Class<?>[] _unsetPasswordPolicyUsersParameterTypes34 = new Class[] {
 			long.class, long[].class
 		};
-	private static final Class<?>[] _unsetRoleUsersParameterTypes34 = new Class[] {
+	private static final Class<?>[] _unsetRoleUsersParameterTypes35 = new Class[] {
 			long.class, long[].class
 		};
-	private static final Class<?>[] _unsetTeamUsersParameterTypes35 = new Class[] {
+	private static final Class<?>[] _unsetTeamUsersParameterTypes36 = new Class[] {
 			long.class, long[].class
 		};
-	private static final Class<?>[] _unsetUserGroupUsersParameterTypes36 = new Class[] {
+	private static final Class<?>[] _unsetUserGroupUsersParameterTypes37 = new Class[] {
 			long.class, long[].class
 		};
-	private static final Class<?>[] _updateAgreedToTermsOfUseParameterTypes37 = new Class[] {
+	private static final Class<?>[] _updateAgreedToTermsOfUseParameterTypes38 = new Class[] {
 			long.class, boolean.class
 		};
-	private static final Class<?>[] _updateEmailAddressParameterTypes38 = new Class[] {
+	private static final Class<?>[] _updateEmailAddressParameterTypes39 = new Class[] {
 			long.class, java.lang.String.class, java.lang.String.class,
 			java.lang.String.class,
 			com.liferay.portal.service.ServiceContext.class
 		};
-	private static final Class<?>[] _updateIncompleteUserParameterTypes39 = new Class[] {
+	private static final Class<?>[] _updateIncompleteUserParameterTypes40 = new Class[] {
 			long.class, boolean.class, java.lang.String.class,
 			java.lang.String.class, boolean.class, java.lang.String.class,
 			java.lang.String.class, long.class, java.lang.String.class,
@@ -2152,33 +2189,33 @@ public class UserServiceHttp {
 			java.lang.String.class, boolean.class, boolean.class,
 			com.liferay.portal.service.ServiceContext.class
 		};
-	private static final Class<?>[] _updateLockoutByIdParameterTypes40 = new Class[] {
+	private static final Class<?>[] _updateLockoutByIdParameterTypes41 = new Class[] {
 			long.class, boolean.class
 		};
-	private static final Class<?>[] _updateOpenIdParameterTypes41 = new Class[] {
+	private static final Class<?>[] _updateOpenIdParameterTypes42 = new Class[] {
 			long.class, java.lang.String.class
 		};
-	private static final Class<?>[] _updateOrganizationsParameterTypes42 = new Class[] {
+	private static final Class<?>[] _updateOrganizationsParameterTypes43 = new Class[] {
 			long.class, long[].class,
 			com.liferay.portal.service.ServiceContext.class
 		};
-	private static final Class<?>[] _updatePasswordParameterTypes43 = new Class[] {
+	private static final Class<?>[] _updatePasswordParameterTypes44 = new Class[] {
 			long.class, java.lang.String.class, java.lang.String.class,
 			boolean.class
 		};
-	private static final Class<?>[] _updatePortraitParameterTypes44 = new Class[] {
+	private static final Class<?>[] _updatePortraitParameterTypes45 = new Class[] {
 			long.class, byte[].class
 		};
-	private static final Class<?>[] _updateReminderQueryParameterTypes45 = new Class[] {
+	private static final Class<?>[] _updateReminderQueryParameterTypes46 = new Class[] {
 			long.class, java.lang.String.class, java.lang.String.class
 		};
-	private static final Class<?>[] _updateScreenNameParameterTypes46 = new Class[] {
+	private static final Class<?>[] _updateScreenNameParameterTypes47 = new Class[] {
 			long.class, java.lang.String.class
 		};
-	private static final Class<?>[] _updateStatusParameterTypes47 = new Class[] {
+	private static final Class<?>[] _updateStatusParameterTypes48 = new Class[] {
 			long.class, int.class
 		};
-	private static final Class<?>[] _updateUserParameterTypes48 = new Class[] {
+	private static final Class<?>[] _updateUserParameterTypes49 = new Class[] {
 			long.class, java.lang.String.class, java.lang.String.class,
 			java.lang.String.class, boolean.class, java.lang.String.class,
 			java.lang.String.class, java.lang.String.class,
@@ -2198,7 +2235,7 @@ public class UserServiceHttp {
 			java.util.List.class, java.util.List.class,
 			com.liferay.portal.service.ServiceContext.class
 		};
-	private static final Class<?>[] _updateUserParameterTypes49 = new Class[] {
+	private static final Class<?>[] _updateUserParameterTypes50 = new Class[] {
 			long.class, java.lang.String.class, java.lang.String.class,
 			java.lang.String.class, boolean.class, java.lang.String.class,
 			java.lang.String.class, java.lang.String.class,

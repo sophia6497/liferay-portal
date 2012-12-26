@@ -42,9 +42,14 @@ public class IconDeleteTag extends IconTag {
 			return _PAGE;
 		}
 
-		setImage("delete");
-
 		if (_trash) {
+			setImage("trash");
+		}
+		else {
+			setImage("delete");
+		}
+
+		if (_trash && Validator.isNull(getMessage())) {
 			setMessage("move-to-the-recycle-bin");
 		}
 
@@ -84,11 +89,6 @@ public class IconDeleteTag extends IconTag {
 			else {
 				String confirmation = "are-you-sure-you-want-to-delete-this";
 
-				if (_trash) {
-					confirmation =
-						"are-you-sure-you-want-to-move-this-to-the-recycle-bin";
-				}
-
 				sb.append(UnicodeLanguageUtil.get(pageContext, confirmation));
 			}
 
@@ -99,7 +99,7 @@ public class IconDeleteTag extends IconTag {
 			url = sb.toString();
 		}
 		else {
-			url = "javascript: ".concat(url);
+			url = "javascript:".concat(url);
 		}
 
 		setUrl(url);

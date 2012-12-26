@@ -22,12 +22,12 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.LayoutSetPrototype;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -122,7 +122,7 @@ public class LayoutSetPrototypePersistenceTest {
 
 		newLayoutSetPrototype.setActive(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(newLayoutSetPrototype, false);
+		_persistence.update(newLayoutSetPrototype);
 
 		LayoutSetPrototype existingLayoutSetPrototype = _persistence.findByPrimaryKey(newLayoutSetPrototype.getPrimaryKey());
 
@@ -286,7 +286,7 @@ public class LayoutSetPrototypePersistenceTest {
 
 		layoutSetPrototype.setActive(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(layoutSetPrototype, false);
+		_persistence.update(layoutSetPrototype);
 
 		return layoutSetPrototype;
 	}

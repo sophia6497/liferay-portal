@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Time;
@@ -109,7 +110,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		entry.setPriority(priority);
 		entry.setAlert(alert);
 
-		announcementsEntryPersistence.update(entry, false);
+		announcementsEntryPersistence.update(entry);
 
 		// Resources
 
@@ -124,10 +125,13 @@ public class AnnouncementsEntryLocalServiceImpl
 	public void checkEntries() throws PortalException, SystemException {
 		Date now = new Date();
 
+		if (_previousCheckDate == null) {
+			_previousCheckDate = new Date(
+				now.getTime() - _ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL);
+		}
+
 		List<AnnouncementsEntry> entries =
-			announcementsEntryFinder.findByDisplayDate(
-				now,
-				new Date(now.getTime() - _ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL));
+			announcementsEntryFinder.findByDisplayDate(now, _previousCheckDate);
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Processing " + entries.size() + " entries");
@@ -136,6 +140,8 @@ public class AnnouncementsEntryLocalServiceImpl
 		for (AnnouncementsEntry entry : entries) {
 			notifyUsers(entry);
 		}
+
+		_previousCheckDate = now;
 	}
 
 	public void deleteEntry(AnnouncementsEntry entry)
@@ -328,7 +334,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		entry.setExpirationDate(expirationDate);
 		entry.setPriority(priority);
 
-		announcementsEntryPersistence.update(entry, false);
+		announcementsEntryPersistence.update(entry);
 
 		// Flags
 
@@ -375,7 +381,9 @@ public class AnnouncementsEntryLocalServiceImpl
 
 				toName = organization.getName();
 
-				params.put("usersOrgs", classPK);
+				params.put(
+					"usersOrgsTree",
+					ListUtil.fromArray(new Organization[] {organization}));
 			}
 			else if (className.equals(Role.class.getName())) {
 				Role role = rolePersistence.findByPrimaryKey(classPK);
@@ -498,5 +506,7 @@ public class AnnouncementsEntryLocalServiceImpl
 
 	private static Log _log = LogFactoryUtil.getLog(
 		AnnouncementsEntryLocalServiceImpl.class);
+
+	private Date _previousCheckDate;
 
 }

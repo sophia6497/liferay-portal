@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.auth.AuthSettingsUtil;
+import com.liferay.portal.security.auth.CompanyThreadLocal;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
@@ -64,30 +65,30 @@ public class SecureFilter extends BasePortalFilter {
 			filterConfig.getInitParameter("basic_auth"));
 		_digestAuthEnabled = GetterUtil.getBoolean(
 			filterConfig.getInitParameter("digest_auth"));
-		_usePermissionChecker = GetterUtil.getBoolean(
-			filterConfig.getInitParameter("use_permission_checker"));
 
 		String propertyPrefix = filterConfig.getInitParameter(
 			"portal_property_prefix");
 
-		String[] hostsAllowedArray = null;
+		String[] hostsAllowed = null;
 
 		if (Validator.isNull(propertyPrefix)) {
-			hostsAllowedArray = StringUtil.split(
+			hostsAllowed = StringUtil.split(
 				filterConfig.getInitParameter("hosts.allowed"));
 			_httpsRequired = GetterUtil.getBoolean(
 				filterConfig.getInitParameter("https.required"));
 		}
 		else {
-			hostsAllowedArray = PropsUtil.getArray(
-				propertyPrefix + "hosts.allowed");
+			hostsAllowed = PropsUtil.getArray(propertyPrefix + "hosts.allowed");
 			_httpsRequired = GetterUtil.getBoolean(
 				PropsUtil.get(propertyPrefix + "https.required"));
 		}
 
-		for (int i = 0; i < hostsAllowedArray.length; i++) {
-			_hostsAllowed.add(hostsAllowedArray[i]);
+		for (String hostAllowed : hostsAllowed) {
+			_hostsAllowed.add(hostAllowed);
 		}
+
+		_usePermissionChecker = GetterUtil.getBoolean(
+			filterConfig.getInitParameter("use_permission_checker"));
 	}
 
 	protected HttpServletRequest basicAuth(
@@ -104,6 +105,8 @@ public class SecureFilter extends BasePortalFilter {
 		if (userId > 0) {
 			request = new ProtectedServletRequest(
 				request, String.valueOf(userId), HttpServletRequest.BASIC_AUTH);
+
+			initThreadLocals(request);
 		}
 		else {
 			try {
@@ -141,6 +144,8 @@ public class SecureFilter extends BasePortalFilter {
 			request = new ProtectedServletRequest(
 				request, String.valueOf(userId),
 				HttpServletRequest.DIGEST_AUTH);
+
+			initThreadLocals(request);
 		}
 		else {
 			try {
@@ -179,6 +184,28 @@ public class SecureFilter extends BasePortalFilter {
 		}
 
 		return request;
+	}
+
+	protected void initThreadLocals(HttpServletRequest request)
+		throws Exception {
+
+		HttpSession session = request.getSession();
+
+		User user = (User)session.getAttribute(WebKeys.USER);
+
+		CompanyThreadLocal.setCompanyId(user.getCompanyId());
+
+		PrincipalThreadLocal.setName(user.getUserId());
+		PrincipalThreadLocal.setPassword(PortalUtil.getUserPassword(request));
+
+		if (!_usePermissionChecker) {
+			return;
+		}
+
+		PermissionChecker permissionChecker =
+			PermissionCheckerFactoryUtil.create(user);
+
+		PermissionThreadLocal.setPermissionChecker(permissionChecker);
 	}
 
 	@Override
@@ -289,16 +316,7 @@ public class SecureFilter extends BasePortalFilter {
 		session.setAttribute(WebKeys.USER, user);
 		session.setAttribute(_AUTHENTICATED_USER, userIdString);
 
-		if (_usePermissionChecker) {
-			PrincipalThreadLocal.setName(userId);
-			PrincipalThreadLocal.setPassword(
-				PortalUtil.getUserPassword(request));
-
-			PermissionChecker permissionChecker =
-				PermissionCheckerFactoryUtil.create(user);
-
-			PermissionThreadLocal.setPermissionChecker(permissionChecker);
-		}
+		initThreadLocals(request);
 
 		return request;
 	}

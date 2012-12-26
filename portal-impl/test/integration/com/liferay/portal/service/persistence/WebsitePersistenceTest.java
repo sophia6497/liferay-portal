@@ -22,12 +22,12 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.Website;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -126,7 +126,7 @@ public class WebsitePersistenceTest {
 
 		newWebsite.setPrimary(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(newWebsite, false);
+		_persistence.update(newWebsite);
 
 		Website existingWebsite = _persistence.findByPrimaryKey(newWebsite.getPrimaryKey());
 
@@ -290,7 +290,7 @@ public class WebsitePersistenceTest {
 
 		website.setPrimary(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(website, false);
+		_persistence.update(website);
 
 		return website;
 	}

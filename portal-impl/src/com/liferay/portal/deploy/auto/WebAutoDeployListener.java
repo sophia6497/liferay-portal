@@ -28,7 +28,7 @@ import java.io.File;
 public class WebAutoDeployListener extends BaseAutoDeployListener {
 
 	public WebAutoDeployListener() {
-		_autoDeployer = new WebAutoDeployer();
+		_autoDeployer = new ThreadSafeAutoDeployer(new WebAutoDeployer());
 	}
 
 	public void deploy(AutoDeploymentContext autoDeploymentContext)
@@ -48,9 +48,9 @@ public class WebAutoDeployListener extends BaseAutoDeployListener {
 			_log.info("Copying web plugin for " + file.getPath());
 		}
 
-		_autoDeployer.autoDeploy(autoDeploymentContext);
+		int code = _autoDeployer.autoDeploy(autoDeploymentContext);
 
-		if (_log.isInfoEnabled()) {
+		if ((code == AutoDeployer.CODE_DEFAULT) && _log.isInfoEnabled()) {
 			_log.info(
 				"Web plugin for " + file.getPath() + " copied successfully. " +
 					"Deployment will start in a few seconds.");

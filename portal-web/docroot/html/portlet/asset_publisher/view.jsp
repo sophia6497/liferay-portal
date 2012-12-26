@@ -113,14 +113,16 @@ if (!paginationType.equals("none")) {
 <c:if test="<%= showMetadataDescriptions %>">
 	<liferay-ui:categorization-filter
 		assetType="content"
-		portletURL="<%= portletURL%>"
+		portletURL="<%= portletURL %>"
 	/>
 </c:if>
 
 <%
+long portletDisplayDDMTemplateId = PortletDisplayTemplateUtil.getPortletDisplayTemplateDDMTemplateId(themeDisplay, displayStyle);
+
 Map<String, Object> contextObjects = new HashMap<String, Object>();
 
-contextObjects.put(PortletDisplayTemplatesConstants.ASSET_PUBLISHER_HELPER, AssetPublisherHelperUtil.getAssetPublisherHelper());
+contextObjects.put(PortletDisplayTemplateConstants.ASSET_PUBLISHER_HELPER, AssetPublisherHelperUtil.getAssetPublisherHelper());
 %>
 
 <c:choose>
@@ -137,23 +139,13 @@ contextObjects.put(PortletDisplayTemplatesConstants.ASSET_PUBLISHER_HELPER, Asse
 </c:if>
 
 <c:if test="<%= enableRSS %>">
-	<portlet:resourceURL var="rssURL">
+	<liferay-portlet:resourceURL varImpl="rssURL">
 		<portlet:param name="struts_action" value="/asset_publisher/rss" />
-	</portlet:resourceURL>
+	</liferay-portlet:resourceURL>
 
 	<div class="subscribe">
-		<liferay-ui:icon
-			image="rss"
-			label="<%= true %>"
-			method="get"
-			target="_blank"
-			url="<%= rssURL %>"
-		/>
+		<liferay-ui:rss resourceURL="<%= rssURL %>" />
 	</div>
-
-	<liferay-util:html-top>
-		<link href="<%= HtmlUtil.escape(rssURL) %>" rel="alternate" title="RSS" type="application/rss+xml" />
-	</liferay-util:html-top>
 </c:if>
 
 <%!

@@ -59,6 +59,9 @@ import java.util.Properties;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.pdfbox.exceptions.CryptographyException;
+import org.apache.poi.EncryptedDocumentException;
 import org.apache.tika.Tika;
 import org.apache.tools.ant.DirectoryScanner;
 
@@ -89,14 +92,14 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 				if (fileArray[i].isDirectory()) {
 					copyDirectory(
 						fileArray[i],
-						new File(destination.getPath() + File.separator
-							+ fileArray[i].getName()));
+						new File(destination.getPath() + File.separator +
+							fileArray[i].getName()));
 				}
 				else {
 					copyFile(
 						fileArray[i],
-						new File(destination.getPath() + File.separator
-							+ fileArray[i].getName()));
+						new File(destination.getPath() + File.separator +
+							fileArray[i].getName()));
 				}
 			}
 		}
@@ -296,6 +299,8 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 
 			Tika tika = new Tika();
 
+			tika.setMaxStringLength(-1);
+
 			boolean forkProcess = false;
 
 			if (PropsValues.TEXT_EXTRACTION_FORK_PROCESS_ENABLED) {
@@ -321,7 +326,18 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 			}
 		}
 		catch (Exception e) {
-			_log.error(e, e);
+			Throwable throwable = ExceptionUtils.getRootCause(e);
+
+			if ((throwable instanceof CryptographyException) ||
+				(throwable instanceof EncryptedDocumentException)) {
+
+				if (_log.isWarnEnabled()) {
+					_log.warn("Unable to extract text from an encrypted file");
+				}
+			}
+			else {
+				_log.error(e, e);
+			}
 		}
 		finally {
 			if (contextClassLoader != portalClassLoader) {
@@ -601,7 +617,19 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 
 		destination.delete();
 
-		return source.renameTo(destination);
+		try {
+			if (source.isDirectory()) {
+				FileUtils.moveDirectory(source, destination);
+			}
+			else {
+				FileUtils.moveFile(source, destination);
+			}
+		}
+		catch (IOException ioe) {
+			return false;
+		}
+
+		return true;
 	}
 
 	public boolean move(String sourceFileName, String destinationFileName) {

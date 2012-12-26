@@ -95,6 +95,7 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 				"value.object.column.bitmask.enabled.com.liferay.portal.model.OrgLabor"),
 			true);
 	public static long ORGANIZATIONID_COLUMN_BITMASK = 1L;
+	public static long TYPEID_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -482,17 +483,6 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	}
 
 	@Override
-	public OrgLabor toEscapedModel() {
-		if (_escapedModelProxy == null) {
-			_escapedModelProxy = (OrgLabor)ProxyUtil.newProxyInstance(_classLoader,
-					_escapedModelProxyInterfaces,
-					new AutoEscapeBeanHandler(this));
-		}
-
-		return _escapedModelProxy;
-	}
-
-	@Override
 	public ExpandoBridge getExpandoBridge() {
 		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
 			OrgLabor.class.getName(), getPrimaryKey());
@@ -503,6 +493,16 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 		ExpandoBridge expandoBridge = getExpandoBridge();
 
 		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public OrgLabor toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (OrgLabor)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -773,7 +773,7 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	}
 
 	private static ClassLoader _classLoader = OrgLabor.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			OrgLabor.class
 		};
 	private long _orgLaborId;
@@ -796,5 +796,5 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	private int _satOpen;
 	private int _satClose;
 	private long _columnBitmask;
-	private OrgLabor _escapedModelProxy;
+	private OrgLabor _escapedModel;
 }

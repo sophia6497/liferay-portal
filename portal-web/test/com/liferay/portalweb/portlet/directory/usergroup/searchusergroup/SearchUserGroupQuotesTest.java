@@ -22,49 +22,29 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
  */
 public class SearchUserGroupQuotesTest extends BaseTestCase {
 	public void testSearchUserGroupQuotes() throws Exception {
+		selenium.selectWindow("null");
+		selenium.selectFrame("relative=top");
 		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible("link=Directory Test Page")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
 		selenium.clickAt("link=Directory Test Page",
 			RuntimeVariables.replace("Directory Test Page"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
 		selenium.clickAt("link=User Groups",
 			RuntimeVariables.replace("User Groups"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		selenium.type("//input[@id='_11_name']",
+		selenium.type("//input[@id='_11_keywords']",
 			RuntimeVariables.replace("\"User Group Name\""));
 		selenium.clickAt("//input[@value='Search']",
 			RuntimeVariables.replace("Search"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
 		assertEquals(RuntimeVariables.replace("User Group Name"),
 			selenium.getText("//tr[3]/td[1]"));
 		assertEquals(RuntimeVariables.replace("User Group Description"),
 			selenium.getText("//tr[3]/td[2]"));
-		selenium.type("//input[@id='_11_name']",
+		selenium.type("//input[@id='_11_keywords']",
 			RuntimeVariables.replace("\"User1 Group1 Name1\""));
 		selenium.clickAt("//input[@value='Search']",
 			RuntimeVariables.replace("Search"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
 		assertFalse(selenium.isTextPresent("User Group Name"));
 		assertFalse(selenium.isTextPresent("User Group Description"));
 	}

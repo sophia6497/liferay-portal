@@ -22,12 +22,12 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.PasswordTracker;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -112,7 +112,7 @@ public class PasswordTrackerPersistenceTest {
 
 		newPasswordTracker.setPassword(ServiceTestUtil.randomString());
 
-		_persistence.update(newPasswordTracker, false);
+		_persistence.update(newPasswordTracker);
 
 		PasswordTracker existingPasswordTracker = _persistence.findByPrimaryKey(newPasswordTracker.getPrimaryKey());
 
@@ -253,7 +253,7 @@ public class PasswordTrackerPersistenceTest {
 
 		passwordTracker.setPassword(ServiceTestUtil.randomString());
 
-		_persistence.update(passwordTracker, false);
+		_persistence.update(passwordTracker);
 
 		return passwordTracker;
 	}

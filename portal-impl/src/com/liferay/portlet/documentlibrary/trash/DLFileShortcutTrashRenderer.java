@@ -20,15 +20,12 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.trash.BaseTrashRenderer;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.asset.model.AssetRenderer;
 import com.liferay.portlet.documentlibrary.model.DLFileShortcut;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.service.permission.DLFileShortcutPermission;
 
 import java.util.Locale;
 
@@ -49,6 +46,14 @@ public class DLFileShortcutTrashRenderer extends BaseTrashRenderer {
 
 		_fileEntry = DLAppLocalServiceUtil.getFileEntry(
 			fileShortcut.getToFileEntryId());
+	}
+
+	public String getClassName() {
+		return DLFileShortcut.class.getName();
+	}
+
+	public long getClassPK() {
+		return _fileShortcut.getPrimaryKey();
 	}
 
 	@Override
@@ -74,16 +79,7 @@ public class DLFileShortcutTrashRenderer extends BaseTrashRenderer {
 		return TYPE;
 	}
 
-	public boolean hasDeletePermission(PermissionChecker permissionChecker) {
-		return DLFileShortcutPermission.contains(
-			permissionChecker, _fileShortcut, ActionKeys.DELETE);
-	}
-
-	public boolean hasViewPermission(PermissionChecker permissionChecker) {
-		return DLFileShortcutPermission.contains(
-			permissionChecker, _fileShortcut, ActionKeys.VIEW);
-	}
-
+	@Override
 	public String render(
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			String template)

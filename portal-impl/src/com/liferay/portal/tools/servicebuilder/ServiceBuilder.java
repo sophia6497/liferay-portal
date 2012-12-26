@@ -15,6 +15,8 @@
 package com.liferay.portal.tools.servicebuilder;
 
 import com.liferay.portal.freemarker.FreeMarkerUtil;
+import com.liferay.portal.kernel.dao.db.IndexMetadata;
+import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
@@ -107,10 +109,86 @@ import org.dom4j.DocumentException;
  * @author Raymond Augé
  * @author Prashant Dighe
  * @author Shuyang Zhou
+ * @author James Lefeu
  */
 public class ServiceBuilder {
 
 	public static final String AUTHOR = "Brian Wing Shun Chan";
+
+	public static String getContent(String fileName) throws Exception {
+		Document document = _getContentDocument(fileName);
+
+		Element rootElement = document.getRootElement();
+
+		Element authorElement = null;
+		Element namespaceElement = null;
+		Map<String, Element> entityElements = new TreeMap<String, Element>();
+		Map<String, Element> exceptionElements = new TreeMap<String, Element>();
+
+		for (Element element : rootElement.elements()) {
+			String elementName = element.getName();
+
+			if (elementName.equals("author")) {
+				element.detach();
+
+				if (authorElement != null) {
+					throw new IllegalArgumentException(
+						"There can only be one author element");
+				}
+
+				authorElement = element;
+			}
+			else if (elementName.equals("namespace")) {
+				element.detach();
+
+				if (namespaceElement != null) {
+					throw new IllegalArgumentException(
+						"There can only be one namespace element");
+				}
+
+				namespaceElement = element;
+			}
+			else if (elementName.equals("entity")) {
+				element.detach();
+
+				String name = element.attributeValue("name");
+
+				entityElements.put(name.toLowerCase(), element);
+			}
+			else if (elementName.equals("exceptions")) {
+				element.detach();
+
+				for (Element exceptionElement : element.elements("exception")) {
+					exceptionElement.detach();
+
+					exceptionElements.put(
+						exceptionElement.getText(), exceptionElement);
+				}
+			}
+		}
+
+		if (authorElement != null) {
+			rootElement.add(authorElement);
+		}
+
+		if (namespaceElement == null) {
+			throw new IllegalArgumentException(
+				"The namespace element is required");
+		}
+		else {
+			rootElement.add(namespaceElement);
+		}
+
+		_addElements(rootElement, entityElements);
+
+		if (!exceptionElements.isEmpty()) {
+			Element exceptionsElement = rootElement.addElement("exceptions");
+
+			_addElements(exceptionsElement, exceptionElements);
+		}
+
+		return document.asXML();
+	}
 
 	public static void main(String[] args) {
 		Map<String, String> arguments = ArgumentsUtil.parseArguments(args);
@@ -357,7 +435,7 @@ public class ServiceBuilder {
 
 		Convention convention = Convention.getInstance();
 
-		String classMask = "/**\n" + " * @author $author$\n" + "*/";
+		String classMask = "/**\n * @author $author$\n*/";
 
 		convention.put(
 			ConventionKeys.COMMENT_JAVADOC_TEMPLATE_CLASS,
@@ -550,7 +628,7 @@ public class ServiceBuilder {
 			_buildNumber = buildNumber;
 			_buildNumberIncrement = buildNumberIncrement;
 
-			String content = _getContent(fileName);
+			String content = getContent(fileName);
 
 			Document document = SAXReaderUtil.read(content, true);
 
@@ -651,6 +729,10 @@ public class ServiceBuilder {
 						System.out.println("Building " + entity.getName());
 
 						if (entity.hasColumns()) {
+							if (entity.hasLocalService()) {
+								_createActionableDynamicQuery(entity);
+							}
+
 							_createHbm(entity);
 							_createHbmUtil(entity);
 
@@ -854,7 +936,7 @@ public class ServiceBuilder {
 	}
 
 	public String getDimensions(String dims) {
-		return getDimensions(Integer.parseInt(dims));
+		return getDimensions(GetterUtil.getInteger(dims));
 	}
 
 	public Entity getEntity(String name) throws IOException {
@@ -1298,7 +1380,7 @@ public class ServiceBuilder {
 			return false;
 		}
 
-		if (genericsName.indexOf(".model.") == -1) {
+		if (!genericsName.contains(".model.")) {
 			return false;
 		}
 
@@ -1315,7 +1397,7 @@ public class ServiceBuilder {
 			return false;
 		}
 
-		if (parameterTypeValue.indexOf(".model.") == -1) {
+		if (!parameterTypeValue.contains(".model.")) {
 			return false;
 		}
 
@@ -1568,15 +1650,62 @@ public class ServiceBuilder {
 			return false;
 		}
 
-		String methodName = method.getName();
-
-		for (String txRequired : txRequiredList) {
-			if (methodName.equals(txRequired)) {
-				return true;
-			}
+		if (txRequiredList.contains(method.getName())) {
+			return true;
 		}
 
 		return false;
+	}
+
+	private static void _addElements(
+		Element element, Map<String, Element> elements) {
+
+		for (Map.Entry<String, Element> entry : elements.entrySet()) {
+			Element childElement = entry.getValue();
+
+			element.add(childElement);
+		}
+	}
+
+	private static Document _getContentDocument(String fileName)
+		throws Exception {
+
+		String content = FileUtil.read(new File(fileName));
+
+		Document document = SAXReaderUtil.read(content);
+
+		Element rootElement = document.getRootElement();
+
+		for (Element element : rootElement.elements()) {
+			String elementName = element.getName();
+
+			if (!elementName.equals("service-builder-import")) {
+				continue;
+			}
+
+			element.detach();
+
+			String dirName = fileName.substring(
+				0, fileName.lastIndexOf(StringPool.SLASH) + 1);
+			String serviceBuilderImportFileName = element.attributeValue(
+				"file");
+
+			Document serviceBuilderImportDocument = _getContentDocument(
+				dirName + serviceBuilderImportFileName);
+
+			Element serviceBuilderImportRootElement =
+				serviceBuilderImportDocument.getRootElement();
+
+			for (Element serviceBuilderImportElement :
+					serviceBuilderImportRootElement.elements()) {
+
+				serviceBuilderImportElement.detach();
+
+				rootElement.add(serviceBuilderImportElement);
+			}
+		}
+
+		return document;
 	}
 
 	private static String _getPackagePath(File file) {
@@ -1595,12 +1724,22 @@ public class ServiceBuilder {
 		return StringUtil.replace(fileName, "/", ".");
 	}
 
-	private void _addElements(Element element, Map<String, Element> elements) {
-		for (Map.Entry<String, Element> entry : elements.entrySet()) {
-			Element childElement = entry.getValue();
+	private void _createActionableDynamicQuery(Entity entity) throws Exception {
+		Map<String, Object> context = _getContext();
 
-			element.add(childElement);
-		}
+		context.put("entity", entity);
+
+		// Content
+
+		String content = _processTemplate(_tplActionableDynamicQuery, context);
+
+		// Write file
+
+		File ejbFile = new File(
+			_serviceOutputPath + "/service/persistence/" +
+				entity.getName() + "ActionableDynamicQuery.java");
+
+		writeFile(ejbFile, content, _author);
 	}
 
 	private void _createBlobModels(Entity entity) throws Exception {
@@ -2810,9 +2949,7 @@ public class ServiceBuilder {
 		writeFile(ejbFile, content);
 	}
 
-	private void _createServiceFactory(Entity entity, int sessionType)
-		throws Exception {
-
+	private void _createServiceFactory(Entity entity, int sessionType) {
 		File ejbFile = new File(
 			_serviceOutputPath + "/service/" + entity.getName() +
 				_getSessionTypeName(sessionType) + "ServiceFactory.java");
@@ -2881,7 +3018,7 @@ public class ServiceBuilder {
 		}
 	}
 
-	private void _createServiceJson(Entity entity) throws Exception {
+	private void _createServiceJson(Entity entity) {
 		File ejbFile = new File(
 			_outputPath + "/service/http/" + entity.getName() +
 				"ServiceJSON.java");
@@ -2893,7 +3030,7 @@ public class ServiceBuilder {
 		}
 	}
 
-	private void _createServiceJsonSerializer(Entity entity) throws Exception {
+	private void _createServiceJsonSerializer(Entity entity) {
 		File ejbFile = new File(
 			_serviceOutputPath + "/service/http/" + entity.getName() +
 				"JSONSerializer.java");
@@ -3271,49 +3408,31 @@ public class ServiceBuilder {
 				EntityFinder finder = finderList.get(j);
 
 				if (finder.isDBIndex()) {
-					StringBundler sb = new StringBundler();
-
-					sb.append(entity.getTable() + " (");
+					List<String> finderColsNames = new ArrayList<String>();
 
 					List<EntityColumn> finderColsList = finder.getColumns();
 
 					for (int k = 0; k < finderColsList.size(); k++) {
 						EntityColumn col = finderColsList.get(k);
 
-						sb.append(col.getDBName());
-
-						if ((k + 1) != finderColsList.size()) {
-							sb.append(", ");
-						}
+						finderColsNames.add(col.getDBName());
 					}
 
-					sb.append(");");
+					IndexMetadata indexMetadata =
+						IndexMetadataFactoryUtil.createIndexMetadata(
+							finder.isUnique(), entity.getTable(),
+							finderColsNames.toArray(
+								new String[finderColsNames.size()]));
 
-					String indexSpec = sb.toString();
-
-					String indexHash = StringUtil.toHexString(
-						indexSpec.hashCode()).toUpperCase();
-
-					String indexName = "IX_" + indexHash;
-
-					sb.setIndex(0);
-
-					sb.append("create ");
-
-					if (finder.isUnique()) {
-						sb.append("unique ");
-					}
-
-					sb.append("index " + indexName + " on ");
-					sb.append(indexSpec);
-
-					indexSQLs.put(indexSpec, sb.toString());
+					indexSQLs.put(
+						indexMetadata.getSpecification(),
+						indexMetadata.getCreateSQL());
 
 					String finderName =
 						entity.getTable() + StringPool.PERIOD +
 							finder.getName();
 
-					indexProps.put(finderName, indexName);
+					indexProps.put(finderName, indexMetadata.getIndexName());
 				}
 			}
 		}
@@ -3780,120 +3899,6 @@ public class ServiceBuilder {
 		return javaFields.toArray(new JavaField[javaFields.size()]);
 	}
 
-	private String _getContent(String fileName) throws Exception {
-		Document document = _getContentDocument(fileName);
-
-		Element rootElement = document.getRootElement();
-
-		Element authorElement = null;
-		Element namespaceElement = null;
-		Map<String, Element> entityElements = new TreeMap<String, Element>();
-		Map<String, Element> exceptionElements = new TreeMap<String, Element>();
-
-		for (Element element : rootElement.elements()) {
-			String elementName = element.getName();
-
-			if (elementName.equals("author")) {
-				element.detach();
-
-				if (authorElement != null) {
-					throw new IllegalArgumentException(
-						"There can only be one author element");
-				}
-
-				authorElement = element;
-			}
-			else if (elementName.equals("namespace")) {
-				element.detach();
-
-				if (namespaceElement != null) {
-					throw new IllegalArgumentException(
-						"There can only be one namespace element");
-				}
-
-				namespaceElement = element;
-			}
-			else if (elementName.equals("entity")) {
-				element.detach();
-
-				String name = element.attributeValue("name");
-
-				entityElements.put(name.toLowerCase(), element);
-			}
-			else if (elementName.equals("exceptions")) {
-				element.detach();
-
-				for (Element exceptionElement : element.elements("exception")) {
-					exceptionElement.detach();
-
-					exceptionElements.put(
-						exceptionElement.getText(), exceptionElement);
-				}
-			}
-		}
-
-		if (authorElement != null) {
-			rootElement.add(authorElement);
-		}
-
-		if (namespaceElement == null) {
-			throw new IllegalArgumentException(
-				"The namespace element is required");
-		}
-		else {
-			rootElement.add(namespaceElement);
-		}
-
-		_addElements(rootElement, entityElements);
-
-		if (!exceptionElements.isEmpty()) {
-			Element exceptionsElement = rootElement.addElement("exceptions");
-
-			_addElements(exceptionsElement, exceptionElements);
-		}
-
-		return document.asXML();
-	}
-
-	private Document _getContentDocument(String fileName) throws Exception {
-		String content = FileUtil.read(new File(fileName));
-
-		Document document = SAXReaderUtil.read(content);
-
-		Element rootElement = document.getRootElement();
-
-		for (Element element : rootElement.elements()) {
-			String elementName = element.getName();
-
-			if (!elementName.equals("service-builder-import")) {
-				continue;
-			}
-
-			element.detach();
-
-			String dirName = fileName.substring(
-				0, fileName.lastIndexOf(StringPool.SLASH) + 1);
-			String serviceBuilderImportFileName = element.attributeValue(
-				"file");
-
-			Document serviceBuilderImportDocument = _getContentDocument(
-				dirName + serviceBuilderImportFileName);
-
-			Element serviceBuilderImportRootElement =
-				serviceBuilderImportDocument.getRootElement();
-
-			for (Element serviceBuilderImportElement :
-					serviceBuilderImportRootElement.elements()) {
-
-				serviceBuilderImportElement.detach();
-
-				rootElement.add(serviceBuilderImportElement);
-			}
-		}
-
-		return document;
-	}
-
 	private Map<String, Object> _getContext() throws TemplateModelException {
 		BeansWrapper wrapper = BeansWrapper.getDefaultInstance();
 
@@ -4333,7 +4338,7 @@ public class ServiceBuilder {
 			if (found) {
 				String property = matcher.group();
 
-				if (property.indexOf("get") != -1) {
+				if (property.contains("get")) {
 					property = property.substring(
 						property.indexOf("get") + 3, property.length() - 1);
 				}
@@ -4558,11 +4563,16 @@ public class ServiceBuilder {
 				columnElement.attributeValue("localized"));
 			boolean colJsonEnabled = GetterUtil.getBoolean(
 				columnElement.attributeValue("json-enabled"), jsonEnabled);
+			boolean containerModel = GetterUtil.getBoolean(
+				columnElement.attributeValue("container-model"));
+			boolean parentContainerModel = GetterUtil.getBoolean(
+				columnElement.attributeValue("parent-container-model"));
 
 			EntityColumn col = new EntityColumn(
 				columnName, columnDBName, columnType, primary, accessor,
 				filterPrimary, collectionEntity, mappingKey, mappingTable,
-				idType, idParam, convertNull, lazy, localized, colJsonEnabled);
+				idType, idParam, convertNull, lazy, localized, colJsonEnabled,
+				containerModel, parentContainerModel);
 
 			if (primary) {
 				pkList.add(col);
@@ -4738,7 +4748,7 @@ public class ServiceBuilder {
 				for (EntityColumn column : columnList) {
 					String name = column.getName();
 
-					if (finderWhere.indexOf(name) != -1) {
+					if (finderWhere.contains(name)) {
 						finderWhere = finderWhere.replaceAll(
 							name, alias + "." + name);
 					}
@@ -4941,6 +4951,8 @@ public class ServiceBuilder {
 	private String _targetEntityName;
 	private String _testDir;
 	private String _testOutputPath;
+	private String _tplActionableDynamicQuery =
+		_TPL_ROOT + "actionable_dynamic_query.ftl";
 	private String _tplBadAliasNames = _TPL_ROOT + "bad_alias_names.txt";
 	private String _tplBadColumnNames = _TPL_ROOT + "bad_column_names.txt";
 	private String _tplBadTableNames = _TPL_ROOT + "bad_table_names.txt";

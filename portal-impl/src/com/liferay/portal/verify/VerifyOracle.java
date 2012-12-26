@@ -34,6 +34,8 @@ import java.sql.SQLException;
 public class VerifyOracle extends VerifyProcess {
 
 	protected void alterColumns() throws Exception {
+		int buildNumber = getBuildNumber();
+
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -50,13 +52,20 @@ public class VerifyOracle extends VerifyProcess {
 
 			while (rs.next()) {
 				String tableName = rs.getString(1);
+
+				if (!isPortalTableName(tableName)) {
+					continue;
+				}
+
 				String columnName = rs.getString(2);
 				int dataLength = rs.getInt(3);
 
-				int buildNumber = getBuildNumber();
-
-				if ((buildNumber >= ReleaseInfo.RELEASE_6_0_0_BUILD_NUMBER) &&
-					(buildNumber < ReleaseInfo.RELEASE_6_1_20_BUILD_NUMBER)) {
+				if (isBetweenBuildNumbers(
+						buildNumber, ReleaseInfo.RELEASE_5_2_9_BUILD_NUMBER,
+						ReleaseInfo.RELEASE_6_0_0_BUILD_NUMBER) ||
+					isBetweenBuildNumbers(
+						buildNumber, ReleaseInfo.RELEASE_6_0_5_BUILD_NUMBER,
+						ReleaseInfo.RELEASE_6_1_20_BUILD_NUMBER)) {
 
 					if (dataLength != 4000) {
 						dataLength = dataLength / 4;
@@ -77,7 +86,7 @@ public class VerifyOracle extends VerifyProcess {
 							sb.append(columnName);
 							sb.append(" for table ");
 							sb.append(tableName);
-							sb.append("because it contains values that are ");
+							sb.append(" because it contains values that are ");
 							sb.append("larger than the new column length");
 
 							_log.warn(sb.toString());
@@ -105,6 +114,18 @@ public class VerifyOracle extends VerifyProcess {
 		}
 
 		alterColumns();
+	}
+
+	protected boolean isBetweenBuildNumbers(
+		int buildNumber, int startBuildNumber, int endBuildNumber) {
+
+		if ((buildNumber >= startBuildNumber) &&
+			(buildNumber < endBuildNumber)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(VerifyOracle.class);

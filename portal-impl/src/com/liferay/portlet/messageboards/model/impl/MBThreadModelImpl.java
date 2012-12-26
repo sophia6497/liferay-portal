@@ -656,17 +656,6 @@ public class MBThreadModelImpl extends BaseModelImpl<MBThread>
 	}
 
 	@Override
-	public MBThread toEscapedModel() {
-		if (_escapedModelProxy == null) {
-			_escapedModelProxy = (MBThread)ProxyUtil.newProxyInstance(_classLoader,
-					_escapedModelProxyInterfaces,
-					new AutoEscapeBeanHandler(this));
-		}
-
-		return _escapedModelProxy;
-	}
-
-	@Override
 	public ExpandoBridge getExpandoBridge() {
 		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
 			MBThread.class.getName(), getPrimaryKey());
@@ -677,6 +666,16 @@ public class MBThreadModelImpl extends BaseModelImpl<MBThread>
 		ExpandoBridge expandoBridge = getExpandoBridge();
 
 		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public MBThread toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (MBThread)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -972,7 +971,7 @@ public class MBThreadModelImpl extends BaseModelImpl<MBThread>
 	}
 
 	private static ClassLoader _classLoader = MBThread.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			MBThread.class
 		};
 	private long _threadId;
@@ -1006,5 +1005,5 @@ public class MBThreadModelImpl extends BaseModelImpl<MBThread>
 	private String _statusByUserName;
 	private Date _statusDate;
 	private long _columnBitmask;
-	private MBThread _escapedModelProxy;
+	private MBThread _escapedModel;
 }

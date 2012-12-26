@@ -205,6 +205,10 @@ public class DLFileEntryFinderImpl
 				qPos.add(folderId);
 			}
 
+			if (mimeTypes != null) {
+				qPos.add(mimeTypes);
+			}
+
 			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
@@ -380,6 +384,13 @@ public class DLFileEntryFinderImpl
 		}
 	}
 
+	public List<DLFileEntry> findByG_F(
+			long groupId, List<Long> folderIds, QueryDefinition queryDefinition)
+		throws SystemException {
+
+		return doFindByG_F(groupId, folderIds, queryDefinition, false);
+	}
+
 	public List<DLFileEntry> findByG_U_F_M(
 			long groupId, long userId, List<Long> folderIds, String[] mimeTypes,
 			QueryDefinition queryDefinition)
@@ -460,6 +471,10 @@ public class DLFileEntryFinderImpl
 
 			for (Long folderId : folderIds) {
 				qPos.add(folderId);
+			}
+
+			if (mimeTypes != null) {
+				qPos.add(mimeTypes);
 			}
 
 			return (List<DLFileEntry>)QueryUtil.list(
@@ -660,10 +675,7 @@ public class DLFileEntryFinderImpl
 
 		for (int i = 0; i < mimeTypes.length; i++) {
 			sb.append(table);
-
-			sb.append(".mimeType = '");
-			sb.append(mimeTypes[i]);
-			sb.append("'");
+			sb.append(".mimeType = ?");
 
 			if ((i + 1) != mimeTypes.length) {
 				sb.append(WHERE_OR);

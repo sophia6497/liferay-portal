@@ -69,8 +69,8 @@ double version = ParamUtil.getDouble(request, "version");
 		searchTerms.setGroupId(groupId);
 		searchTerms.setType(type);
 
-		if (Validator.isNotNull(structureId)) {
-			searchTerms.setStructureId(structureId);
+		if (ddmStructure != null) {
+			searchTerms.setStructureId(ddmStructure.getStructureKey());
 		}
 
 		searchTerms.setDisplayDateLT(new Date());
@@ -188,7 +188,7 @@ double version = ParamUtil.getDouble(request, "version");
 
 			rowTextEntry = (TextSearchEntry)rowTextEntry.clone();
 
-			rowTextEntry.setName(HtmlUtil.escape(PortalUtil.getUserName(article.getUserId(), article.getUserName())));
+			rowTextEntry.setName(PortalUtil.getUserName(article));
 
 			row.addText(rowTextEntry);
 

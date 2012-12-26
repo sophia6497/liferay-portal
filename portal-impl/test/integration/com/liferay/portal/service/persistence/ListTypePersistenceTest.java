@@ -22,11 +22,11 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.model.ListType;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -109,7 +109,7 @@ public class ListTypePersistenceTest {
 
 		newListType.setType(ServiceTestUtil.randomString());
 
-		_persistence.update(newListType, false);
+		_persistence.update(newListType);
 
 		ListType existingListType = _persistence.findByPrimaryKey(newListType.getPrimaryKey());
 
@@ -240,7 +240,7 @@ public class ListTypePersistenceTest {
 
 		listType.setType(ServiceTestUtil.randomString());
 
-		_persistence.update(listType, false);
+		_persistence.update(listType);
 
 		return listType;
 	}

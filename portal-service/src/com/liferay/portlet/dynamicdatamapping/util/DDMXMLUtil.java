@@ -14,11 +14,16 @@
 
 package com.liferay.portlet.dynamicdatamapping.util;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
 import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.DocumentException;
+import com.liferay.portal.kernel.xml.XPath;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
+import com.liferay.portlet.dynamicdatamapping.storage.Fields;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Bruno Basto
@@ -26,13 +31,11 @@ import java.io.IOException;
  */
 public class DDMXMLUtil {
 
-	public static String formatXML(Document document) throws IOException {
+	public static String formatXML(Document document) throws SystemException {
 		return getDDMXML().formatXML(document);
 	}
 
-	public static String formatXML(String xml)
-		throws DocumentException, IOException {
-
+	public static String formatXML(String xml) throws SystemException {
 		return getDDMXML().formatXML(xml);
 	}
 
@@ -40,6 +43,39 @@ public class DDMXMLUtil {
 		PortalRuntimePermission.checkGetBeanProperty(DDMXMLUtil.class);
 
 		return _ddmXML;
+	}
+
+	public static Fields getFields(DDMStructure structure, String xml)
+		throws PortalException, SystemException {
+
+		return getDDMXML().getFields(structure, xml);
+	}
+
+	public static Fields getFields(
+			DDMStructure structure, XPath xPath, String xml,
+			List<String> fieldNames)
+		throws PortalException, SystemException {
+
+		return getDDMXML().getFields(structure, xPath, xml, fieldNames);
+	}
+
+	public static String getXML(Document document, Fields fields)
+		throws SystemException {
+
+		return getDDMXML().getXML(document, fields);
+	}
+
+	public static String getXML(Fields fields) throws SystemException {
+		return getDDMXML().getXML(fields);
+	}
+
+	public static String updateXMLDefaultLocale(
+			String xml, Locale contentDefaultLocale,
+			Locale contentNewDefaultLocale)
+		throws SystemException {
+
+		return getDDMXML().updateXMLDefaultLocale(
+			xml, contentDefaultLocale, contentNewDefaultLocale);
 	}
 
 	public void setDDMXML(DDMXML ddmXML) {

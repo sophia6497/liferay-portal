@@ -119,8 +119,9 @@ public class EditFileShortcutAction extends PortletAction {
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.document_library.edit_file_shortcut"));
+		return mapping.findForward(
+			getForward(
+				renderRequest, "portlet.document_library.edit_file_shortcut"));
 	}
 
 	protected void deleteFileShortcut(
@@ -134,9 +135,11 @@ public class EditFileShortcutAction extends PortletAction {
 		if (moveToTrash) {
 			DLAppServiceUtil.moveFileShortcutToTrash(fileShortcutId);
 
-			Map<String, long[]> data = new HashMap<String, long[]>();
+			Map<String, String[]> data = new HashMap<String, String[]>();
 
-			data.put("restoreddFileShortcutIds", new long[] {fileShortcutId});
+			data.put(
+				"restoreddFileShortcutIds",
+				new String[] {String.valueOf(fileShortcutId)});
 
 			SessionMessages.add(
 				actionRequest,
@@ -170,8 +173,7 @@ public class EditFileShortcutAction extends PortletAction {
 
 		if (moveFromTrash) {
 			DLAppServiceUtil.moveFileShortcutFromTrash(
-				fileShortcutId, newFolderId, fileShortcut.getToFileEntryId(),
-				serviceContext);
+				fileShortcutId, newFolderId, serviceContext);
 		}
 		else {
 			DLAppServiceUtil.updateFileShortcut(

@@ -186,12 +186,12 @@ if ((row == null) && (portletName.equals(PortletKeys.DOCUMENT_LIBRARY_DISPLAY) |
 
 						<portlet:actionURL var="deleteURL">
 							<portlet:param name="struts_action" value="/document_library/edit_folder" />
-							<portlet:param name="<%= Constants.CMD %>" value="<%= ((folder.getModel() instanceof DLFolder) && TrashUtil.isTrashEnabled(themeDisplay.getScopeGroupId())) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>" />
+							<portlet:param name="<%= Constants.CMD %>" value="<%= ((folder.getModel() instanceof DLFolder) && TrashUtil.isTrashEnabled(scopeGroupId)) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>" />
 							<portlet:param name="redirect" value="<%= (view || folderSelected) ? redirectURL : redirect %>" />
 							<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
 						</portlet:actionURL>
 
-						<liferay-ui:icon-delete trash="<%= ((folder.getModel() instanceof DLFolder) && TrashUtil.isTrashEnabled(themeDisplay.getScopeGroupId())) %>" url="<%= deleteURL %>" />
+						<liferay-ui:icon-delete trash="<%= ((folder.getModel() instanceof DLFolder) && TrashUtil.isTrashEnabled(scopeGroupId)) %>" url="<%= deleteURL %>" />
 					</c:if>
 
 					<c:if test="<%= hasDeletePermission && folder.isMountPoint() %>">
@@ -409,7 +409,7 @@ if ((row == null) && (portletName.equals(PortletKeys.DOCUMENT_LIBRARY_DISPLAY) |
 
 	</c:when>
 	<c:otherwise>
-		<span class="overlay document-action">
+		<span class="entry-action overlay">
 
 			<%= iconMenu %>
 
@@ -450,8 +450,10 @@ if ((row == null) && (portletName.equals(PortletKeys.DOCUMENT_LIBRARY_DISPLAY) |
 	<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
 </portlet:renderURL>
 
-<aui:script use="aui-dialog,aui-swf">
-	if (A.SWF.isFlashVersionAtLeast(9)) {
+<aui:script use="aui-dialog,uploader">
+	var swfDetect = A.SWFDetect || A.SWF;
+
+	if (!A.UA.ios && (A.Uploader.TYPE != 'none')) {
 		var uploadMultipleDocumentsIcon = A.all('.upload-multiple-documents:hidden');
 
 		uploadMultipleDocumentsIcon.show();

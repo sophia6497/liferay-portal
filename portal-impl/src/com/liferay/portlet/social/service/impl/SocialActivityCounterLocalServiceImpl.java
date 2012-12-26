@@ -47,7 +47,6 @@ import com.liferay.portlet.social.model.SocialActivityProcessor;
 import com.liferay.portlet.social.service.SocialActivityCounterLocalService;
 import com.liferay.portlet.social.service.base.SocialActivityCounterLocalServiceBaseImpl;
 import com.liferay.portlet.social.service.persistence.SocialActivityCounterFinder;
-import com.liferay.portlet.social.service.persistence.SocialActivityCounterFinderUtil;
 import com.liferay.portlet.social.util.SocialCounterPeriodUtil;
 
 import java.util.Arrays;
@@ -447,7 +446,7 @@ public class SocialActivityCounterLocalServiceImpl
 					activityCounter.getStartPeriod() + periodLength - 1);
 			}
 
-			socialActivityCounterPersistence.update(activityCounter, false);
+			socialActivityCounterPersistence.update(activityCounter);
 		}
 
 		activityCounter = socialActivityCounterPersistence.fetchByG_C_C_N_O_E(
@@ -476,7 +475,7 @@ public class SocialActivityCounterLocalServiceImpl
 		activityCounter.setEndPeriod(endPeriod);
 		activityCounter.setActive(true);
 
-		socialActivityCounterPersistence.update(activityCounter, false);
+		socialActivityCounterPersistence.update(activityCounter);
 
 		return activityCounter;
 	}
@@ -635,7 +634,7 @@ public class SocialActivityCounterLocalServiceImpl
 			if (activityCounter.isActive()) {
 				activityCounter.setActive(false);
 
-				socialActivityCounterPersistence.update(activityCounter, false);
+				socialActivityCounterPersistence.update(activityCounter);
 			}
 		}
 
@@ -700,7 +699,7 @@ public class SocialActivityCounterLocalServiceImpl
 			if (!activityCounter.isActive()) {
 				activityCounter.setActive(true);
 
-				socialActivityCounterPersistence.update(activityCounter, false);
+				socialActivityCounterPersistence.update(activityCounter);
 			}
 		}
 
@@ -977,8 +976,7 @@ public class SocialActivityCounterLocalServiceImpl
 	public int getUserActivityCountersCount(long groupId, String[] rankingNames)
 		throws SystemException {
 
-		return SocialActivityCounterFinderUtil.countU_ByG_N(
-			groupId, rankingNames);
+		return socialActivityCounterFinder.countU_ByG_N(groupId, rankingNames);
 	}
 
 	/**
@@ -1108,7 +1106,7 @@ public class SocialActivityCounterLocalServiceImpl
 				(latestPopularityActivityCounter.getTotalValue() * factor));
 
 		socialActivityCounterPersistence.update(
-			latestContributionActivityCounter, false);
+			latestContributionActivityCounter);
 	}
 
 	protected boolean checkActivityLimit(
@@ -1163,7 +1161,7 @@ public class SocialActivityCounterLocalServiceImpl
 			activityLimit.setCount(
 				activityCounterDefinition.getLimitPeriod(), count + 1);
 
-			socialActivityLimitPersistence.update(activityLimit, false);
+			socialActivityLimitPersistence.update(activityLimit);
 
 			return true;
 		}
@@ -1172,8 +1170,9 @@ public class SocialActivityCounterLocalServiceImpl
 	}
 
 	protected void clearFinderCache() {
-		PortalCache portalCache = MultiVMPoolUtil.getCache(
-			SocialActivityCounterFinder.class.getName());
+		PortalCache<String, SocialActivityCounter> portalCache =
+			MultiVMPoolUtil.getCache(
+				SocialActivityCounterFinder.class.getName());
 
 		portalCache.removeAll();
 	}
@@ -1231,7 +1230,7 @@ public class SocialActivityCounterLocalServiceImpl
 		activityCounter.setTotalValue(
 			activityCounter.getTotalValue() + increment);
 
-		socialActivityCounterPersistence.update(activityCounter, false);
+		socialActivityCounterPersistence.update(activityCounter);
 	}
 
 	protected void incrementActivityCounter(

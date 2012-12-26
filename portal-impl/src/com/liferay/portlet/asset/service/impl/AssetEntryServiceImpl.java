@@ -91,7 +91,7 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 			return new ArrayList<AssetEntry>();
 		}
 
-		Object[] results = filterEntryQuery(filteredEntryQuery);
+		Object[] results = filterEntryQuery(filteredEntryQuery, false);
 
 		return (List<AssetEntry>)results[0];
 	}
@@ -106,7 +106,7 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 			return 0;
 		}
 
-		Object[] results = filterEntryQuery(filteredEntryQuery);
+		Object[] results = filterEntryQuery(filteredEntryQuery, true);
 
 		return (Integer)results[1];
 	}
@@ -147,6 +147,26 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 		return assetEntry;
 	}
 
+	public AssetEntry updateEntry(
+			long groupId, Date createDate, Date modifiedDate, String className,
+			long classPK, String classUuid, long classTypeId,
+			long[] categoryIds, String[] tagNames, boolean visible,
+			Date startDate, Date endDate, Date expirationDate, String mimeType,
+			String title, String description, String summary, String url,
+			String layoutUuid, int height, int width, Integer priority,
+			boolean sync)
+		throws PortalException, SystemException {
+
+		AssetEntryPermission.check(
+			getPermissionChecker(), className, classPK, ActionKeys.UPDATE);
+
+		return assetEntryLocalService.updateEntry(
+			getUserId(), groupId, createDate, modifiedDate, className, classPK,
+			classUuid, classTypeId, categoryIds, tagNames, visible, startDate,
+			endDate, expirationDate, mimeType, title, description, summary, url,
+			layoutUuid, height, width, priority, sync);
+	}
+
 	/**
 	 * @deprecated {@link #updateEntry(long, String, long, String, long, long[],
 	 *             String[], boolean, Date, Date, Date, String, String, String,
@@ -171,6 +191,12 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 			width, priority, sync);
 	}
 
+	/**
+	 * @deprecated {@link #updateEntry(long, Date, Date. String, long, String,
+	 *             long, long[], String[], boolean, Date, Date, Date, String,
+	 *             String, String, String, String, String, int, int, Integer,
+	 *             boolean)}
+	 */
 	public AssetEntry updateEntry(
 			long groupId, String className, long classPK, String classUuid,
 			long classTypeId, long[] categoryIds, String[] tagNames,
@@ -180,14 +206,11 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 			Integer priority, boolean sync)
 		throws PortalException, SystemException {
 
-		AssetEntryPermission.check(
-			getPermissionChecker(), className, classPK, ActionKeys.UPDATE);
-
 		return assetEntryLocalService.updateEntry(
-			getUserId(), groupId, className, classPK, classUuid, classTypeId,
-			categoryIds, tagNames, visible, startDate, endDate, expirationDate,
-			mimeType, title, description, summary, url, layoutUuid, height,
-			width, priority, sync);
+			getUserId(), groupId, null, null, className, classPK, classUuid,
+			classTypeId, categoryIds, tagNames, visible, startDate, endDate,
+			expirationDate, mimeType, title, description, summary, url,
+			layoutUuid, height, width, priority, sync);
 	}
 
 	protected AssetEntryQuery buildFilteredEntryQuery(
@@ -228,7 +251,8 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 			viewableCategoryIds.toArray(new Long[viewableCategoryIds.size()]));
 	}
 
-	protected Object[] filterEntryQuery(AssetEntryQuery entryQuery)
+	protected Object[] filterEntryQuery(
+			AssetEntryQuery entryQuery, boolean returnEntriesCountOnly)
 		throws PortalException, SystemException {
 
 		ThreadLocalCache<Object[]> threadLocalCache =
@@ -237,9 +261,23 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 
 		String key = entryQuery.toString();
 
+		key = key.concat(StringPool.POUND).concat(
+			Boolean.toString(returnEntriesCountOnly));
+
 		Object[] results = threadLocalCache.get(key);
 
 		if (results != null) {
+			return results;
+		}
+
+		if (returnEntriesCountOnly && !entryQuery.isEnablePermissions()) {
+			int entriesCount = assetEntryLocalService.getEntriesCount(
+				entryQuery);
+
+			results = new Object[] {null, entriesCount};
+
+			threadLocalCache.put(key, results);
+
 			return results;
 		}
 
@@ -306,8 +344,7 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 		}
 		else {
 			filteredEntries = entries;
-			filteredEntriesCount = assetEntryLocalService.getEntriesCount(
-				entryQuery);
+			filteredEntriesCount = filteredEntries.size();
 		}
 
 		results = new Object[] {filteredEntries, filteredEntriesCount};
@@ -340,7 +377,7 @@ public class AssetEntryServiceImpl extends AssetEntryServiceBaseImpl {
 		List<long[]> viewableTagIdsArray = new ArrayList<long[]>();
 
 		for (int i = 0; i< tagIdsArray.length; i++) {
-			long tagIds[] = tagIdsArray[i];
+			long[] tagIds = tagIdsArray[i];
 
 			List<Long> viewableTagIds = new ArrayList<Long>();
 

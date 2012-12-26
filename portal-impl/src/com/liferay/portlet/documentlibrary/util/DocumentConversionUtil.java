@@ -103,8 +103,8 @@ public class DocumentConversionUtil {
 			return false;
 		}
 
-		if (extension.equals("css") || extension.equals("js") ||
-			extension.equals("htm") || extension.equals("html") ||
+		if (extension.equals("css") || extension.equals("htm") ||
+			extension.equals("html") || extension.equals("js") ||
 			extension.equals("txt") || extension.equals("xml")) {
 
 			return true;
@@ -171,7 +171,7 @@ public class DocumentConversionUtil {
 		sourceExtension = _fixExtension(sourceExtension);
 		targetExtension = _fixExtension(targetExtension);
 
-		_validateExtension(targetExtension);
+		_validate(targetExtension, id);
 
 		String fileName = getFilePath(id, targetExtension);
 
@@ -373,12 +373,15 @@ public class DocumentConversionUtil {
 		}
 	}
 
-	private void _validateExtension(String extension) throws SystemException {
-		if (extension.contains(StringPool.SLASH) ||
-			extension.contains(StringPool.BACK_SLASH) ||
-			extension.contains(File.pathSeparator)) {
+	private void _validate(String targetExtension, String id)
+		throws SystemException {
 
-			throw new SystemException("Invalid extension: " + extension);
+		if (!Validator.isFileExtension(targetExtension)) {
+			throw new SystemException("Invalid extension: " + targetExtension);
+		}
+
+		if (!Validator.isFileName(id)) {
+			throw new SystemException("Invalid file name: " + id);
 		}
 	}
 

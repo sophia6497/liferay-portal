@@ -22,13 +22,13 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.ResourceAction;
 import com.liferay.portal.model.impl.ResourceActionModelImpl;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -114,7 +114,7 @@ public class ResourceActionPersistenceTest {
 
 		newResourceAction.setBitwiseValue(ServiceTestUtil.nextLong());
 
-		_persistence.update(newResourceAction, false);
+		_persistence.update(newResourceAction);
 
 		ResourceAction existingResourceAction = _persistence.findByPrimaryKey(newResourceAction.getPrimaryKey());
 
@@ -274,7 +274,7 @@ public class ResourceActionPersistenceTest {
 
 		resourceAction.setBitwiseValue(ServiceTestUtil.nextLong());
 
-		_persistence.update(resourceAction, false);
+		_persistence.update(resourceAction);
 
 		return resourceAction;
 	}

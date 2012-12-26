@@ -14,11 +14,16 @@
 
 package com.liferay.portlet.trash.service.impl;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
@@ -26,6 +31,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.persistence.GroupActionableDynamicQuery;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.trash.model.TrashEntry;
 import com.liferay.portlet.trash.model.TrashVersion;
@@ -52,16 +58,17 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	 * @param  className the class name of the entity
 	 * @param  classPK the primary key of the entity
 	 * @param  status the status of the entity prior to being moved to trash
-	 * @param  versions the primary keys and statuses of any of the entry's
+	 * @param  statusOVPs the primary keys and statuses of any of the entry's
 	 *         versions (e.g., {@link
 	 *         com.liferay.portlet.documentlibrary.model.DLFileVersion})
 	 * @param  typeSettingsProperties the type settings properties
 	 * @return the trashEntry
+	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
 	public TrashEntry addTrashEntry(
 			long userId, long groupId, String className, long classPK,
-			int status, List<ObjectValuePair<Long, Integer>> versions,
+			int status, List<ObjectValuePair<Long, Integer>> statusOVPs,
 			UnicodeProperties typeSettingsProperties)
 		throws PortalException, SystemException {
 
@@ -86,13 +93,10 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 		trashEntry.setStatus(status);
 
-		trashEntryPersistence.update(trashEntry, false);
+		trashEntryPersistence.update(trashEntry);
 
-		if (versions != null) {
-			for (ObjectValuePair<Long, Integer> version : versions) {
-				long versionClassPK = version.getKey();
-				int versionStatus = version.getValue();
-
+		if (statusOVPs != null) {
+			for (ObjectValuePair<Long, Integer> statusOVP : statusOVPs) {
 				long versionId = counterLocalService.increment();
 
 				TrashVersion trashVersion = trashVersionPersistence.create(
@@ -100,10 +104,10 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 
 				trashVersion.setEntryId(entryId);
 				trashVersion.setClassNameId(classNameId);
-				trashVersion.setClassPK(versionClassPK);
-				trashVersion.setStatus(versionStatus);
+				trashVersion.setClassPK(statusOVP.getKey());
+				trashVersion.setStatus(statusOVP.getValue());
 
-				trashVersionPersistence.update(trashVersion, false);
+				trashVersionPersistence.update(trashVersion);
 			}
 		}
 
@@ -111,17 +115,15 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 	}
 
 	public void checkEntries() throws PortalException, SystemException {
-		int count = groupPersistence.countAll();
+		ActionableDynamicQuery actionableDynamicQuery =
+			new GroupActionableDynamicQuery() {
 
-		int pages = count / Indexer.DEFAULT_INTERVAL;
+			@Override
+			protected void performAction(Object object)
+				throws PortalException, SystemException {
 
-		for (int i = 0; i <= pages; i++) {
-			int start = (i * Indexer.DEFAULT_INTERVAL);
-			int end = start + Indexer.DEFAULT_INTERVAL;
+				Group group = (Group)object;
 
-			List<Group> groups = groupPersistence.findAll(start, end);
-
-			for (Group group : groups) {
 				Date date = getMaxAge(group);
 
 				List<TrashEntry> entries = trashEntryPersistence.findByG_LtCD(
@@ -135,7 +137,10 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 					trashHandler.deleteTrashEntry(entry.getClassPK(), false);
 				}
 			}
-		}
+
+		};
+
+		actionableDynamicQuery.performActions();
 	}
 
 	/**
@@ -330,6 +335,36 @@ public class TrashEntryLocalServiceImpl extends TrashEntryLocalServiceBaseImpl {
 		long classNameId = PortalUtil.getClassNameId(className);
 
 		return trashVersionPersistence.findByC_C(classNameId, classPK);
+	}
+
+	public Hits search(
+			long companyId, long groupId, long userId, String keywords,
+			int start, int end, Sort sort)
+		throws SystemException {
+
+		try {
+			SearchContext searchContext = new SearchContext();
+
+			searchContext.setCompanyId(companyId);
+			searchContext.setEnd(end);
+			searchContext.setKeywords(keywords);
+			searchContext.setGroupIds(new long[] {groupId});
+
+			if (sort != null) {
+				searchContext.setSorts(new Sort[] {sort});
+			}
+
+			searchContext.setStart(start);
+			searchContext.setUserId(userId);
+
+			Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+				TrashEntry.class);
+
+			return indexer.search(searchContext);
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
 	}
 
 	protected Date getMaxAge(Group group)

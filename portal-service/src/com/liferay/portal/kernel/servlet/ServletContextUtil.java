@@ -23,6 +23,8 @@ import com.liferay.portal.kernel.util.StringUtil;
 import java.io.IOException;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -38,6 +40,11 @@ import javax.servlet.ServletContext;
  * @author Raymond Augé
  */
 public class ServletContextUtil {
+
+	public static final String PATH_WEB_XML = "/WEB-INF/web.xml";
+
+	public static final String URI_ATTRIBUTE =
+		ServletContextUtil.class.getName().concat(".rootURI");
 
 	public static Set<String> getClassNames(ServletContext servletContext)
 		throws IOException {
@@ -143,13 +150,47 @@ public class ServletContextUtil {
 	public static String getRootPath(ServletContext servletContext)
 		throws MalformedURLException {
 
-		URL rootURL = servletContext.getResource(_PATH_WEB_XML);
+		URI rootURI = getRootURI(servletContext);
 
-		String rootPath = rootURL.getPath();
+		return rootURI.toString();
+	}
 
-		int pos = rootPath.indexOf(_PATH_WEB_XML);
+	public static URI getRootURI(ServletContext servletContext)
+		throws MalformedURLException {
 
-		return rootPath.substring(0, pos);
+		URI rootURI = (URI)servletContext.getAttribute(URI_ATTRIBUTE);
+
+		if (rootURI != null) {
+			return rootURI;
+		}
+
+		try {
+			URL rootURL = servletContext.getResource(PATH_WEB_XML);
+
+			String path = rootURL.getPath();
+
+			int index = path.indexOf(PATH_WEB_XML);
+
+			if (index < 0) {
+				throw new MalformedURLException("Invalid URL " + rootURL);
+			}
+
+			if (index == 0) {
+				path = StringPool.SLASH;
+			}
+			else {
+				path = path.substring(0, index);
+			}
+
+			rootURI = new URI(rootURL.getProtocol(), path, null);
+
+			servletContext.setAttribute(URI_ATTRIBUTE, rootURI);
+		}
+		catch (URISyntaxException urise) {
+			throw new MalformedURLException(urise.getMessage());
+		}
+
+		return rootURI;
 	}
 
 	private static String _getClassName(String path) {
@@ -230,8 +271,6 @@ public class ServletContextUtil {
 	private static final String _EXT_CLASS = ".class";
 
 	private static final String _EXT_JAR = ".jar";
-
-	private static final String _PATH_WEB_XML = "/WEB-INF/web.xml";
 
 	private static Log _log = LogFactoryUtil.getLog(ServletContextUtil.class);
 

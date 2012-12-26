@@ -23,15 +23,20 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
 public class ViewConfigurePortletDirectionsAddressTest extends BaseTestCase {
 	public void testViewConfigurePortletDirectionsAddress()
 		throws Exception {
+		selenium.selectWindow("null");
+		selenium.selectFrame("relative=top");
 		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
 		selenium.clickAt("link=Google Maps Test Page",
 			RuntimeVariables.replace("Google Maps Test Page"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
 		Thread.sleep(5000);
 		assertEquals(RuntimeVariables.replace(
-				"1220 Brea Canyon Road, Diamond Bar, CA, 91789"),
-			selenium.getText("//div[@style='overflow: auto;']"));
+				"From 1220 Brea Canyon Road, Diamond Bar, CA, 91789"),
+			selenium.getText(
+				"xPath=(//div[@class='aui-field-wrapper-content'])[1]"));
+		assertEquals(RuntimeVariables.replace(
+				"To 205 W. Wacker Dr, Suite 513 Chicago, IL, 60606"),
+			selenium.getText(
+				"xPath=(//div[@class='aui-field-wrapper-content'])[2]"));
 	}
 }

@@ -22,13 +22,13 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.PluginSetting;
 import com.liferay.portal.model.impl.PluginSettingModelImpl;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -118,7 +118,7 @@ public class PluginSettingPersistenceTest {
 
 		newPluginSetting.setActive(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(newPluginSetting, false);
+		_persistence.update(newPluginSetting);
 
 		PluginSetting existingPluginSetting = _persistence.findByPrimaryKey(newPluginSetting.getPrimaryKey());
 
@@ -288,7 +288,7 @@ public class PluginSettingPersistenceTest {
 
 		pluginSetting.setActive(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(pluginSetting, false);
+		_persistence.update(pluginSetting);
 
 		return pluginSetting;
 	}

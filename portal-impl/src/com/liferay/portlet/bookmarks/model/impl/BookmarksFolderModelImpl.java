@@ -99,6 +99,7 @@ public class BookmarksFolderModelImpl extends BaseModelImpl<BookmarksFolder>
 	public static long PARENTFOLDERID_COLUMN_BITMASK = 4L;
 	public static long RESOURCEBLOCKID_COLUMN_BITMASK = 8L;
 	public static long UUID_COLUMN_BITMASK = 16L;
+	public static long NAME_COLUMN_BITMASK = 32L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -474,17 +475,6 @@ public class BookmarksFolderModelImpl extends BaseModelImpl<BookmarksFolder>
 	}
 
 	@Override
-	public BookmarksFolder toEscapedModel() {
-		if (_escapedModelProxy == null) {
-			_escapedModelProxy = (BookmarksFolder)ProxyUtil.newProxyInstance(_classLoader,
-					_escapedModelProxyInterfaces,
-					new AutoEscapeBeanHandler(this));
-		}
-
-		return _escapedModelProxy;
-	}
-
-	@Override
 	public ExpandoBridge getExpandoBridge() {
 		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
 			BookmarksFolder.class.getName(), getPrimaryKey());
@@ -495,6 +485,16 @@ public class BookmarksFolderModelImpl extends BaseModelImpl<BookmarksFolder>
 		ExpandoBridge expandoBridge = getExpandoBridge();
 
 		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public BookmarksFolder toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (BookmarksFolder)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -765,7 +765,7 @@ public class BookmarksFolderModelImpl extends BaseModelImpl<BookmarksFolder>
 	}
 
 	private static ClassLoader _classLoader = BookmarksFolder.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			BookmarksFolder.class
 		};
 	private String _uuid;
@@ -791,5 +791,5 @@ public class BookmarksFolderModelImpl extends BaseModelImpl<BookmarksFolder>
 	private String _name;
 	private String _description;
 	private long _columnBitmask;
-	private BookmarksFolder _escapedModelProxy;
+	private BookmarksFolder _escapedModel;
 }

@@ -36,6 +36,7 @@ import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
+import com.liferay.portal.model.Team;
 import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.AdvancedPermissionChecker;
@@ -43,9 +44,13 @@ import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionCheckerBag;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
+import com.liferay.portal.security.permission.ResourceBlockIdsBag;
 import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.ResourceBlockLocalServiceUtil;
+import com.liferay.portal.service.ResourceBlockPermissionLocalServiceUtil;
 import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.TeamLocalServiceUtil;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 
 import java.util.ArrayList;
@@ -162,6 +167,17 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 		List<Role> roles = ResourceActionsUtil.getRoles(
 			companyId, group, className, null);
 
+		if (groupId > 0) {
+			List<Team> teams = TeamLocalServiceUtil.getGroupTeams(groupId);
+
+			for (Team team : teams) {
+				Role role = RoleLocalServiceUtil.getTeamRole(
+					team.getCompanyId(), team.getTeamId());
+
+				roles.add(role);
+			}
+		}
+
 		long[] roleIdsArray = new long[roles.size()];
 
 		for (int i = 0; i < roleIdsArray.length; i++) {
@@ -170,10 +186,38 @@ public class SearchPermissionCheckerImpl implements SearchPermissionChecker {
 			roleIdsArray[i] = role.getRoleId();
 		}
 
-		boolean[] hasResourcePermissions =
-			ResourcePermissionLocalServiceUtil.hasResourcePermissions(
-				companyId, className, ResourceConstants.SCOPE_INDIVIDUAL,
-				classPK, roleIdsArray, ActionKeys.VIEW);
+		boolean[] hasResourcePermissions = null;
+
+		if (ResourceBlockLocalServiceUtil.isSupported(className)) {
+			ResourceBlockIdsBag resourceBlockIdsBag =
+				ResourceBlockLocalServiceUtil.getResourceBlockIdsBag(
+					companyId, groupId, className, roleIdsArray);
+
+			long actionId = ResourceBlockLocalServiceUtil.getActionId(
+				className, ActionKeys.VIEW);
+
+			List<Long> resourceBlockIds =
+				resourceBlockIdsBag.getResourceBlockIds(actionId);
+
+			hasResourcePermissions = new boolean[roleIdsArray.length];
+
+			for (long resourceBlockId : resourceBlockIds) {
+				for (int i = 0; i < roleIdsArray.length; i++) {
+					int count =
+						ResourceBlockPermissionLocalServiceUtil.
+							getResourceBlockPermissionsCount(
+								resourceBlockId, roleIdsArray[i]);
+
+					hasResourcePermissions[i] = (count > 0);
+				}
+			}
+		}
+		else {
+			hasResourcePermissions =
+				ResourcePermissionLocalServiceUtil.hasResourcePermissions(
+					companyId, className, ResourceConstants.SCOPE_INDIVIDUAL,
+					classPK, roleIdsArray, ActionKeys.VIEW);
+		}
 
 		List<Long> roleIds = new ArrayList<Long>();
 		List<String> groupRoleIds = new ArrayList<String>();

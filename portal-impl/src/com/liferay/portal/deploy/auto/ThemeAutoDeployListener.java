@@ -29,7 +29,7 @@ import java.io.File;
 public class ThemeAutoDeployListener extends BaseAutoDeployListener {
 
 	public ThemeAutoDeployListener() {
-		_autoDeployer = new ThemeAutoDeployer();
+		_autoDeployer = new ThreadSafeAutoDeployer(new ThemeAutoDeployer());
 	}
 
 	public void deploy(AutoDeploymentContext autoDeploymentContext)
@@ -49,9 +49,9 @@ public class ThemeAutoDeployListener extends BaseAutoDeployListener {
 			_log.info("Copying themes for " + file.getPath());
 		}
 
-		_autoDeployer.autoDeploy(autoDeploymentContext);
+		int code = _autoDeployer.autoDeploy(autoDeploymentContext);
 
-		if (_log.isInfoEnabled()) {
+		if ((code == AutoDeployer.CODE_DEFAULT) && _log.isInfoEnabled()) {
 			_log.info(
 				"Themes for " + file.getPath() + " copied successfully. " +
 					"Deployment will start in a few seconds.");

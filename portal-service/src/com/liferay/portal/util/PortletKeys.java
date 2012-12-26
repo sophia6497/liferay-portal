@@ -45,6 +45,8 @@ public class PortletKeys {
 
 	public static final String BOOKMARKS = "28";
 
+	public static final String BREADCRUMB = "73";
+
 	public static final String CALENDAR = "8";
 
 	public static final String CHAT = "1_WAR_chatportlet";
@@ -194,6 +196,8 @@ public class PortletKeys {
 
 	public static final String SHOPPING = "34";
 
+	public static final String SITE_MAP = "85";
+
 	public static final String SITE_MEMBERSHIPS_ADMIN = "174";
 
 	public static final String SITE_REDIRECTOR = "49";
@@ -201,6 +205,8 @@ public class PortletKeys {
 	public static final String SITE_SETTINGS = "165";
 
 	public static final String SITES_ADMIN = "134";
+
+	public static final String SITES_DIRECTORY = "184";
 
 	public static final String SOFTWARE_CATALOG = "98";
 

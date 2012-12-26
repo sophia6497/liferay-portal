@@ -4,14 +4,17 @@ package ${packagePath}.model;
 	import ${packagePath}.service.persistence.${entity.name}PK;
 </#if>
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.AttachedModel;
 import com.liferay.portal.model.AuditedModel;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
+import com.liferay.portal.model.ContainerModel;
 import com.liferay.portal.model.GroupedModel;
 import com.liferay.portal.model.ResourcedModel;
+import com.liferay.portal.model.StagedModel;
 import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -49,12 +52,20 @@ public interface ${entity.name}Model extends
 
 	BaseModel<${entity.name}>
 
+	<#if entity.isContainerModel()>
+		, ContainerModel
+	</#if>
+
 	<#if entity.isGroupedModel()>
 		, GroupedModel
 	</#if>
 
 	<#if entity.isResourcedModel()>
 		, ResourcedModel
+	</#if>
+
+	<#if entity.isStagedModel()>
+		, StagedModel
 	</#if>
 
 	<#if entity.isWorkflowEnabled()>
@@ -322,6 +333,47 @@ public interface ${entity.name}Model extends
 		public boolean isScheduled();
 	</#if>
 
+	<#if entity.isContainerModel()>
+		<#if !entity.hasColumn("containerModelId")>
+			/**
+			 * Returns the container model ID of this ${entity.humanName}.
+			 *
+			 * @return the container model ID of this ${entity.humanName}
+			 */
+			public long getContainerModelId();
+
+			/**
+			 * Sets the container model ID of this ${entity.humanName}.
+			 *
+			 * @param container model ID of this ${entity.humanName}
+			 */
+			public void setContainerModelId(long containerModelId);
+		</#if>
+
+		/**
+		 * Returns the container name of this ${entity.humanName}.
+		 *
+		 * @return the container name of this ${entity.humanName}
+		 */
+		public String getContainerModelName();
+
+		<#if !entity.hasColumn("parentContainerModelId")>
+			/**
+			 * Returns the parent container model ID of this ${entity.humanName}.
+			 *
+			 * @return the parent container model ID of this ${entity.humanName}
+			 */
+			public long getParentContainerModelId();
+
+			/**
+			 * Sets the parent container model ID of this ${entity.humanName}.
+			 *
+			 * @param parent container model ID of this ${entity.humanName}
+			 */
+			public void setParentContainerModelId(long parentContainerModelId);
+		</#if>
+	</#if>
+
 	<#--
 	Copy methods from com.liferay.portal.model.BaseModel and java.lang.Object to
 	correctly generate wrappers.
@@ -345,6 +397,10 @@ public interface ${entity.name}Model extends
 
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	<#if entity.hasLocalizedColumn()>
+		public void prepareLocalizedFieldsForImport(Locale defaultImportLocale) throws LocaleException;
+	</#if>
+
 	public Object clone();
 
 	public int compareTo(${entity.name} ${entity.varName});
@@ -354,6 +410,8 @@ public interface ${entity.name}Model extends
 	public CacheModel<${entity.name}> toCacheModel();
 
 	public ${entity.name} toEscapedModel();
+
+	public ${entity.name} toUnescapedModel();
 
 	public String toString();
 

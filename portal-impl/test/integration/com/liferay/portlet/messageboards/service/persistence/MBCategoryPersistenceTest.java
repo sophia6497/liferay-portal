@@ -21,12 +21,12 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -138,7 +138,15 @@ public class MBCategoryPersistenceTest {
 
 		newMBCategory.setLastPostDate(ServiceTestUtil.nextDate());
 
-		_persistence.update(newMBCategory, false);
+		newMBCategory.setStatus(ServiceTestUtil.nextInt());
+
+		newMBCategory.setStatusByUserId(ServiceTestUtil.nextLong());
+
+		newMBCategory.setStatusByUserName(ServiceTestUtil.randomString());
+
+		newMBCategory.setStatusDate(ServiceTestUtil.nextDate());
+
+		_persistence.update(newMBCategory);
 
 		MBCategory existingMBCategory = _persistence.findByPrimaryKey(newMBCategory.getPrimaryKey());
 
@@ -175,6 +183,15 @@ public class MBCategoryPersistenceTest {
 		Assert.assertEquals(Time.getShortTimestamp(
 				existingMBCategory.getLastPostDate()),
 			Time.getShortTimestamp(newMBCategory.getLastPostDate()));
+		Assert.assertEquals(existingMBCategory.getStatus(),
+			newMBCategory.getStatus());
+		Assert.assertEquals(existingMBCategory.getStatusByUserId(),
+			newMBCategory.getStatusByUserId());
+		Assert.assertEquals(existingMBCategory.getStatusByUserName(),
+			newMBCategory.getStatusByUserName());
+		Assert.assertEquals(Time.getShortTimestamp(
+				existingMBCategory.getStatusDate()),
+			Time.getShortTimestamp(newMBCategory.getStatusDate()));
 	}
 
 	@Test
@@ -341,7 +358,15 @@ public class MBCategoryPersistenceTest {
 
 		mbCategory.setLastPostDate(ServiceTestUtil.nextDate());
 
-		_persistence.update(mbCategory, false);
+		mbCategory.setStatus(ServiceTestUtil.nextInt());
+
+		mbCategory.setStatusByUserId(ServiceTestUtil.nextLong());
+
+		mbCategory.setStatusByUserName(ServiceTestUtil.randomString());
+
+		mbCategory.setStatusDate(ServiceTestUtil.nextDate());
+
+		_persistence.update(mbCategory);
 
 		return mbCategory;
 	}

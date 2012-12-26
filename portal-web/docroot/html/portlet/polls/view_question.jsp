@@ -27,7 +27,7 @@ List<PollsChoice> choices = PollsChoiceLocalServiceUtil.getChoices(question.getQ
 
 boolean hasVoted = PollsUtil.hasVoted(request, question.getQuestionId());
 
-boolean viewResults = ParamUtil.getBoolean(request, "viewResults", false);
+boolean viewResults = ParamUtil.getBoolean(request, "viewResults");
 
 if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question, ActionKeys.UPDATE)) {
 	viewResults = false;
@@ -52,7 +52,7 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 	<liferay-ui:error exception="<%= NoSuchChoiceException.class %>" message="please-select-an-option" />
 
 	<aui:fieldset>
- 		<liferay-ui:header
+		<liferay-ui:header
 			backURL="<%= redirect %>"
 			escapeXml="<%= false %>"
 			localizeTitle="<%= false %>"
@@ -66,7 +66,7 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 		<br /><br />
 
 		<c:choose>
-			<c:when test='<%= !viewResults && !question.isExpired() && !hasVoted && PollsQuestionPermission.contains(permissionChecker, question, ActionKeys.ADD_VOTE) %>'>
+			<c:when test="<%= !viewResults && !question.isExpired() && !hasVoted && PollsQuestionPermission.contains(permissionChecker, question, ActionKeys.ADD_VOTE) %>">
 				<aui:field-wrapper>
 
 					<%
@@ -99,7 +99,7 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 				</c:if>
 
 				<aui:button-row>
-					<aui:button type="submit" value="vote" />
+					<aui:button type="submit" value="vote[action]" />
 
 					<aui:button href="<%= redirect %>" type="cancel" />
 				</aui:button-row>

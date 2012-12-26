@@ -23,132 +23,71 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
 public class ConfigurePortletMapsInputEnabledTest extends BaseTestCase {
 	public void testConfigurePortletMapsInputEnabled()
 		throws Exception {
-		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
-		selenium.click(RuntimeVariables.replace("link=Google Maps Test Page"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		assertEquals(RuntimeVariables.replace("Google Maps"),
-			selenium.getText("//span[@class='portlet-title-text']"));
-		selenium.clickAt("//span[@class='portlet-title-text']",
-			RuntimeVariables.replace("Google Maps"));
+		int label = 1;
 
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
+		while (label >= 1) {
+			switch (label) {
+			case 1:
+				selenium.selectWindow("null");
+				selenium.selectFrame("relative=top");
+				selenium.open("/web/guest/home/");
+				selenium.click(RuntimeVariables.replace(
+						"link=Google Maps Test Page"));
+				selenium.waitForPageToLoad("30000");
+				assertEquals(RuntimeVariables.replace("Google Maps"),
+					selenium.getText("//span[@class='portlet-title-text']"));
+				selenium.clickAt("//span[@class='portlet-title-text']",
+					RuntimeVariables.replace("Google Maps"));
+				selenium.waitForElementPresent("//div[@class='yui3-dd-shim']");
+				assertEquals(RuntimeVariables.replace("Options"),
+					selenium.getText("//span[@title='Options']/ul/li/strong/a"));
+				selenium.clickAt("//span[@title='Options']/ul/li/strong/a",
+					RuntimeVariables.replace("Options"));
+				selenium.waitForVisible(
+					"//div[@class='lfr-component lfr-menu-list']/ul/li/a[contains(.,'Configuration')]");
+				assertEquals(RuntimeVariables.replace("Configuration"),
+					selenium.getText(
+						"//div[@class='lfr-component lfr-menu-list']/ul/li/a[contains(.,'Configuration')]"));
+				selenium.click(
+					"//div[@class='lfr-component lfr-menu-list']/ul/li/a[contains(.,'Configuration')]");
+				selenium.waitForVisible(
+					"//iframe[contains(@id,'_1_WAR_googlemapsportlet_INSTANCE')]");
+				selenium.selectFrame(
+					"//iframe[contains(@id,'_1_WAR_googlemapsportlet_INSTANCE')]");
+				selenium.waitForVisible(
+					"//input[@id='_86_mapInputEnabledCheckbox']");
 
-			try {
-				if (selenium.isElementPresent("//div[@class='yui3-dd-shim']")) {
-					break;
+				boolean allowMapAddressToBeEdited = selenium.isChecked(
+						"//input[@id='_86_mapInputEnabledCheckbox']");
+
+				if (allowMapAddressToBeEdited) {
+					label = 2;
+
+					continue;
 				}
-			}
-			catch (Exception e) {
-			}
 
-			Thread.sleep(1000);
+				selenium.clickAt("//input[@id='_86_mapInputEnabledCheckbox']",
+					RuntimeVariables.replace("Map Input Enabled"));
+				Thread.sleep(5000);
+
+			case 2:
+				assertTrue(selenium.isChecked(
+						"//input[@id='_86_mapInputEnabledCheckbox']"));
+				selenium.clickAt("//input[@value='Save']",
+					RuntimeVariables.replace("Save"));
+				selenium.waitForPageToLoad("30000");
+				selenium.waitForText("//div[@class='portlet-msg-success']",
+					"You have successfully updated the setup.");
+				assertEquals(RuntimeVariables.replace(
+						"You have successfully updated the setup."),
+					selenium.getText("//div[@class='portlet-msg-success']"));
+				assertTrue(selenium.isChecked(
+						"//input[@id='_86_mapInputEnabledCheckbox']"));
+				selenium.selectFrame("relative=top");
+
+			case 100:
+				label = -1;
+			}
 		}
-
-		assertEquals(RuntimeVariables.replace("Options"),
-			selenium.getText("//span[@title='Options']/ul/li/strong/a"));
-		selenium.clickAt("//span[@title='Options']/ul/li/strong/a",
-			RuntimeVariables.replace("Options"));
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible(
-							"//div[@class='lfr-component lfr-menu-list']/ul/li[contains(.,'Configuration')]/a")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		assertEquals(RuntimeVariables.replace("Configuration"),
-			selenium.getText(
-				"//div[@class='lfr-component lfr-menu-list']/ul/li[contains(.,'Configuration')]/a"));
-		selenium.click(
-			"//div[@class='lfr-component lfr-menu-list']/ul/li[contains(.,'Configuration')]/a");
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible(
-							"//iframe[contains(@id,'_1_WAR_googlemapsportlet_INSTANCE')]")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		selenium.selectFrame(
-			"//iframe[contains(@id,'_1_WAR_googlemapsportlet_INSTANCE')]");
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible(
-							"//input[@id='_86_mapInputEnabledCheckbox']")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		assertFalse(selenium.isChecked(
-				"//input[@id='_86_mapInputEnabledCheckbox']"));
-		selenium.clickAt("//input[@id='_86_mapInputEnabledCheckbox']",
-			RuntimeVariables.replace("Map Input Enabled"));
-		assertTrue(selenium.isChecked(
-				"//input[@id='_86_mapInputEnabledCheckbox']"));
-		selenium.clickAt("//input[@value='Save']",
-			RuntimeVariables.replace("Save"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (RuntimeVariables.replace(
-							"You have successfully updated the setup.")
-										.equals(selenium.getText(
-								"//div[@class='portlet-msg-success']"))) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		assertEquals(RuntimeVariables.replace(
-				"You have successfully updated the setup."),
-			selenium.getText("//div[@class='portlet-msg-success']"));
-		assertTrue(selenium.isChecked(
-				"//input[@id='_86_mapInputEnabledCheckbox']"));
-		selenium.selectFrame("relative=top");
 	}
 }

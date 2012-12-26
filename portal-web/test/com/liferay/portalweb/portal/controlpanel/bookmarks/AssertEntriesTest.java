@@ -22,48 +22,35 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
  */
 public class AssertEntriesTest extends BaseTestCase {
 	public void testAssertEntries() throws Exception {
+		selenium.selectWindow("null");
+		selenium.selectFrame("relative=top");
 		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
+		selenium.clickAt("//div[@id='dockbar']",
+			RuntimeVariables.replace("Dockbar"));
+		selenium.waitForElementPresent(
+			"//script[contains(@src,'/aui/aui-editable/aui-editable-min.js')]");
 		assertEquals(RuntimeVariables.replace("Go to"),
 			selenium.getText("//li[@id='_145_mySites']/a/span"));
 		selenium.mouseOver("//li[@id='_145_mySites']/a/span");
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible("link=Control Panel")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
+		selenium.waitForVisible("link=Control Panel");
 		selenium.clickAt("link=Control Panel",
 			RuntimeVariables.replace("Control Panel"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
 		selenium.clickAt("link=Bookmarks", RuntimeVariables.replace("Bookmarks"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		selenium.clickAt("link=Mine", RuntimeVariables.replace("Mine"));
+		selenium.clickAt("//span[contains(.,'Mine')]/a/span",
+			RuntimeVariables.replace("Mine"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		assertEquals(RuntimeVariables.replace("exact:http://www.digg.com"),
-			selenium.getText("//td[2]/a"));
-		assertEquals(RuntimeVariables.replace("exact:http://www.liferay.com"),
-			selenium.getText("//tr[4]/td[2]/a"));
-		selenium.clickAt("link=Recent", RuntimeVariables.replace("Recent"));
+		assertEquals(RuntimeVariables.replace("http://www.digg.com"),
+			selenium.getText("//tr[contains(.,'Test Bookmark 2')]/td[2]/a"));
+		assertEquals(RuntimeVariables.replace("http://www.liferay.com"),
+			selenium.getText("//tr[contains(.,'Test Bookmark')][2]/td[2]/a"));
+		selenium.clickAt("//span[contains(.,'Recent')]/a/span",
+			RuntimeVariables.replace("Recent"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		assertEquals(RuntimeVariables.replace("exact:http://www.digg.com"),
-			selenium.getText("//td[2]/a"));
-		assertEquals(RuntimeVariables.replace("exact:http://www.liferay.com"),
-			selenium.getText("//tr[4]/td[2]/a"));
+		assertEquals(RuntimeVariables.replace("http://www.digg.com"),
+			selenium.getText("//tr[contains(.,'Test Bookmark 2')]/td[2]/a"));
+		assertEquals(RuntimeVariables.replace("http://www.liferay.com"),
+			selenium.getText("//tr[contains(.,'Test Bookmark')][2]/td[2]/a"));
 	}
 }

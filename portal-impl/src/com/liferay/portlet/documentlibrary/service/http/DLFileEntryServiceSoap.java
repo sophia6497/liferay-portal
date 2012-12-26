@@ -49,9 +49,8 @@ import java.rmi.RemoteException;
  * </p>
  *
  * <p>
- * You can see a list of services at
- * http://localhost:8080/api/secure/axis. Set the property
- * <b>axis.servlet.hosts.allowed</b> in portal.properties to configure
+ * You can see a list of services at http://localhost:8080/api/axis. Set the
+ * property <b>axis.servlet.hosts.allowed</b> in portal.properties to configure
  * security.
  * </p>
  *
@@ -95,10 +94,28 @@ public class DLFileEntryServiceSoap {
 		}
 	}
 
+	/**
+	* @deprecated {@link #checkInFileEntry(long, String, ServiceContext)}
+	*/
 	public static void checkInFileEntry(long fileEntryId,
 		java.lang.String lockUuid) throws RemoteException {
 		try {
 			DLFileEntryServiceUtil.checkInFileEntry(fileEntryId, lockUuid);
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
+	public static void checkInFileEntry(long fileEntryId,
+		java.lang.String lockUuid,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws RemoteException {
+		try {
+			DLFileEntryServiceUtil.checkInFileEntry(fileEntryId, lockUuid,
+				serviceContext);
 		}
 		catch (Exception e) {
 			_log.error(e, e);
@@ -557,30 +574,6 @@ public class DLFileEntryServiceSoap {
 		try {
 			DLFileEntryServiceUtil.revertFileEntry(fileEntryId, version,
 				serviceContext);
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-
-			throw new RemoteException(e.getMessage());
-		}
-	}
-
-	public static void unlockFileEntry(long fileEntryId)
-		throws RemoteException {
-		try {
-			DLFileEntryServiceUtil.unlockFileEntry(fileEntryId);
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-
-			throw new RemoteException(e.getMessage());
-		}
-	}
-
-	public static void unlockFileEntry(long fileEntryId,
-		java.lang.String lockUuid) throws RemoteException {
-		try {
-			DLFileEntryServiceUtil.unlockFileEntry(fileEntryId, lockUuid);
 		}
 		catch (Exception e) {
 			_log.error(e, e);

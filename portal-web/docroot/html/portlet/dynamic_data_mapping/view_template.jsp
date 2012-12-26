@@ -52,15 +52,18 @@ if (!portletName.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATES)) {
 }
 %>
 
+<portlet:renderURL var="viewRecordsURL">
+	<portlet:param name="struts_action" value="/dynamic_data_lists/view" />
+</portlet:renderURL>
+
 <liferay-ui:header
-	backURL="<%= backURL %>"
+	backURL="<%= portletName.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATES) ? backURL : viewRecordsURL %>"
 	title="<%= title %>"
 />
 
 <liferay-util:include page="/html/portlet/dynamic_data_mapping/template_toolbar.jsp">
 	<liferay-util:param name="classNameId" value="<%= String.valueOf(classNameId) %>" />
 	<liferay-util:param name="classPK" value="<%= String.valueOf(classPK) %>" />
-	<liferay-util:param name="backURL" value="<%= backURL %>" />
 </liferay-util:include>
 
 <aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
@@ -126,7 +129,6 @@ if (!portletName.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATES)) {
 
 				rowURL.setParameter("struts_action", "/dynamic_data_mapping/edit_template");
 				rowURL.setParameter("redirect", currentURL);
-				rowURL.setParameter("backURL", currentURL);
 				rowURL.setParameter("groupId", String.valueOf(template.getGroupId()));
 				rowURL.setParameter("templateId", String.valueOf(template.getTemplateId()));
 				rowURL.setParameter("classNameId", String.valueOf(classNameId));
@@ -136,6 +138,11 @@ if (!portletName.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATES)) {
 				rowHREF = rowURL.toString();
 			}
 			%>
+
+			<liferay-ui:search-container-row-parameter
+				name="rowHREF"
+				value="<%= rowHREF %>"
+			/>
 
 			<liferay-ui:search-container-column-text
 				href="<%= rowHREF %>"
@@ -149,6 +156,11 @@ if (!portletName.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATES)) {
 				href="<%= rowHREF %>"
 				name="name"
 				value="<%= HtmlUtil.escape(LanguageUtil.get(pageContext, template.getName(locale))) %>"
+			/>
+
+			<liferay-ui:search-container-column-jsp
+				name="description"
+				path="/html/portlet/dynamic_data_mapping/template_description.jsp"
 			/>
 
 			<c:if test="<%= Validator.isNull(templateTypeValue) && (classNameId == 0) %>">
@@ -222,6 +234,22 @@ if (!portletName.equals(PortletKeys.PORTLET_DISPLAY_TEMPLATES)) {
 </aui:form>
 
 <aui:script>
+	function <portlet:namespace />copyTemplate(uri) {
+		Liferay.Util.openWindow(
+			{
+				dialog: {
+					align: Liferay.Util.Window.ALIGN_CENTER,
+					constrain: true,
+					width: 600
+				},
+				id: '<portlet:namespace />copyTemplate',
+				refreshWindow: window,
+				title: '<%= UnicodeLanguageUtil.get(pageContext, "copy-template") %>',
+				uri: uri
+			}
+		);
+	}
+
 	Liferay.provide(
 		window,
 		'<portlet:namespace />deleteTemplates',

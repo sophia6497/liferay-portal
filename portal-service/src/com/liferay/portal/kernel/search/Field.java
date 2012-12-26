@@ -120,6 +120,8 @@ public class Field implements Serializable {
 
 	public static final String URL = "url";
 
+	public static final String USER_GROUP_ID = "userGroupId";
+
 	public static final String USER_ID = "userId";
 
 	public static final String USER_NAME = "userName";
@@ -135,11 +137,6 @@ public class Field implements Serializable {
 		this(name, new String[] {value});
 	}
 
-	public Field(String name, String[] values) {
-		_name = name;
-		_values = values;
-	}
-
 	/**
 	 * @deprecated
 	 */
@@ -147,6 +144,11 @@ public class Field implements Serializable {
 		this(name, value);
 
 		setTokenized(tokenized);
+	}
+
+	public Field(String name, String[] values) {
+		_name = name;
+		_values = values;
 	}
 
 	/**

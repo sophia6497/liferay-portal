@@ -20,14 +20,22 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.model.Group;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.trash.model.TrashEntry;
 
+import java.util.Date;
 import java.util.List;
+
+import javax.portlet.PortletURL;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Julio Camarero
  */
 public class TrashUtil {
+
+	public static final String TRASH_ATTACHMENTS_DIR = ".trashed_";
 
 	public static final int TRASH_DEFAULT_VALUE = -1;
 
@@ -38,6 +46,35 @@ public class TrashUtil {
 	public static final int TRASH_ENABLED = 3;
 
 	public static final int TRASH_ENABLED_BY_DEFAULT = 2;
+
+	public static final String TRASH_TIME_SEPARATOR = "_TRASH_TIME_";
+
+	public static void addBaseModelBreadcrumbEntries(
+			HttpServletRequest request, String className, long classPK,
+			PortletURL containerModelURL)
+		throws PortalException, SystemException {
+
+		getTrash().addBaseModelBreadcrumbEntries(
+			request, className, classPK, containerModelURL);
+	}
+
+	public static void addContainerModelBreadcrumbEntries(
+			HttpServletRequest request, String className, long classPK,
+			PortletURL containerModelURL)
+		throws PortalException, SystemException {
+
+		getTrash().addContainerModelBreadcrumbEntries(
+			request, className, classPK, containerModelURL);
+	}
+
+	public static void deleteEntriesAttachments(
+			long companyId, long repositoryId, Date date,
+			String[] attachmentFileNames)
+		throws PortalException, SystemException {
+
+		getTrash().deleteEntriesAttachments(
+			companyId, repositoryId, date, attachmentFileNames);
+	}
 
 	public static List<TrashEntry> getEntries(Hits hits)
 		throws PortalException, SystemException {
@@ -57,10 +94,32 @@ public class TrashUtil {
 		return getTrash().getMaxAge(group);
 	}
 
+	public static String getNewName(ThemeDisplay themeDisplay, String oldName) {
+		return getTrash().getNewName(themeDisplay, oldName);
+	}
+
+	public static String getOriginalTitle(String title) {
+		return getTrash().getOriginalTitle(title);
+	}
+
 	public static Trash getTrash() {
 		PortalRuntimePermission.checkGetBeanProperty(TrashUtil.class);
 
 		return _trash;
+	}
+
+	public static String getTrashTime(String title, String separator) {
+		return getTrash().getTrashTime(title, separator);
+	}
+
+	public static String getTrashTitle(long trashEntryId) {
+		return getTrash().getTrashTitle(trashEntryId);
+	}
+
+	public static boolean isInTrash(String className, long classPK)
+		throws PortalException, SystemException {
+
+		return getTrash().isInTrash(className, classPK);
 	}
 
 	public static boolean isTrashEnabled(long groupId)

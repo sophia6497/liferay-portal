@@ -36,7 +36,9 @@ import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalTemplate;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalContentSearchLocalServiceUtil;
+import com.liferay.portlet.journal.service.JournalTemplateLocalServiceUtil;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.portlet.PortletPreferences;
@@ -141,6 +143,10 @@ public class JournalContentPortletDataHandlerImpl
 			PortletPreferences portletPreferences)
 		throws Exception {
 
+		if (portletPreferences == null) {
+			return portletPreferences;
+		}
+
 		portletPreferences.setValue("groupId", StringPool.BLANK);
 		portletPreferences.setValue("articleId", StringPool.BLANK);
 
@@ -233,14 +239,29 @@ public class JournalContentPortletDataHandlerImpl
 		Element dlRepositoryEntriesElement = rootElement.addElement(
 			"dl-repository-entries");
 
-		String preferenceTemplateId = portletPreferences.getValue(
-			"templateId", null);
-
 		JournalPortletDataHandlerImpl.exportArticle(
 			portletDataContext, rootElement, rootElement, rootElement,
 			dlFileEntryTypesElement, dlFoldersElement, dlFilesElement,
 			dlFileRanksElement, dlRepositoriesElement,
-			dlRepositoryEntriesElement, article, preferenceTemplateId, false);
+			dlRepositoryEntriesElement, article, false);
+
+		String defaultTemplateId = article.getTemplateId();
+		String preferenceTemplateId = portletPreferences.getValue(
+			"templateId", null);
+
+		if (Validator.isNotNull(defaultTemplateId) &&
+			Validator.isNotNull(preferenceTemplateId) &&
+			!defaultTemplateId.equals(preferenceTemplateId)) {
+
+			JournalTemplate template =
+				JournalTemplateLocalServiceUtil.getTemplate(
+					article.getGroupId(), preferenceTemplateId, true);
+
+			JournalPortletDataHandlerImpl.exportTemplate(
+				portletDataContext, rootElement, dlFileEntryTypesElement,
+				dlFoldersElement, dlFilesElement, dlFileRanksElement,
+				dlRepositoriesElement, dlRepositoryEntriesElement, template);
+		}
 
 		portletDataContext.setScopeGroupId(previousScopeGroupId);
 
@@ -285,11 +306,13 @@ public class JournalContentPortletDataHandlerImpl
 				portletDataContext, structureElement);
 		}
 
-		Element templateElement = rootElement.element("template");
+		List<Element> templateElements = rootElement.elements("template");
 
-		if (templateElement != null) {
-			JournalPortletDataHandlerImpl.importTemplate(
-				portletDataContext, templateElement);
+		if (templateElements != null) {
+			for (Element templateElement : templateElements) {
+				JournalPortletDataHandlerImpl.importTemplate(
+					portletDataContext, templateElement);
+			}
 		}
 
 		Element articleElement = rootElement.element("article");
@@ -302,16 +325,6 @@ public class JournalContentPortletDataHandlerImpl
 		String articleId = portletPreferences.getValue("articleId", null);
 
 		if (Validator.isNotNull(articleId) && (articleElement != null)) {
-			String importedArticleGroupId = articleElement.attributeValue(
-				"imported-article-group-id");
-
-			if (Validator.isNull(importedArticleGroupId)) {
-				importedArticleGroupId = String.valueOf(
-					portletDataContext.getScopeGroupId());
-			}
-
-			portletPreferences.setValue("groupId", importedArticleGroupId);
-
 			Map<String, String> articleIds =
 				(Map<String, String>)portletDataContext.getNewPrimaryKeysMap(
 					JournalArticle.class + ".articleId");
@@ -319,6 +332,11 @@ public class JournalContentPortletDataHandlerImpl
 			articleId = MapUtil.getString(articleIds, articleId, articleId);
 
 			portletPreferences.setValue("articleId", articleId);
+
+			String importedArticleGroupId = String.valueOf(
+				portletDataContext.getScopeGroupId());
+
+			portletPreferences.setValue("groupId", importedArticleGroupId);
 
 			Layout layout = LayoutLocalServiceUtil.getLayout(
 				portletDataContext.getPlid());

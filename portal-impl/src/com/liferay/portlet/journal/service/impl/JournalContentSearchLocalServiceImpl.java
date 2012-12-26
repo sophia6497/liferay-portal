@@ -104,13 +104,15 @@ public class JournalContentSearchLocalServiceImpl
 	public void deleteArticleContentSearch(
 			long groupId, boolean privateLayout, long layoutId,
 			String portletId, String articleId)
-		throws PortalException, SystemException {
+		throws SystemException {
 
 		JournalContentSearch contentSearch =
-			journalContentSearchPersistence.findByG_P_L_P_A(
+			journalContentSearchPersistence.fetchByG_P_L_P_A(
 				groupId, privateLayout, layoutId, portletId, articleId);
 
-		deleteJournalContentSearch(contentSearch);
+		if (contentSearch != null) {
+			deleteJournalContentSearch(contentSearch);
+		}
 	}
 
 	public void deleteArticleContentSearches(long groupId, String articleId)
@@ -243,7 +245,7 @@ public class JournalContentSearchLocalServiceImpl
 			contentSearch.setArticleId(articleId);
 		}
 
-		journalContentSearchPersistence.update(contentSearch, false);
+		journalContentSearchPersistence.update(contentSearch);
 
 		return contentSearch;
 	}

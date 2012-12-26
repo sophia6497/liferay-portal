@@ -22,13 +22,13 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.RepositoryEntry;
 import com.liferay.portal.model.impl.RepositoryEntryModelImpl;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -116,7 +116,9 @@ public class RepositoryEntryPersistenceTest {
 
 		newRepositoryEntry.setMappedId(ServiceTestUtil.randomString());
 
-		_persistence.update(newRepositoryEntry, false);
+		newRepositoryEntry.setManualCheckInRequired(ServiceTestUtil.randomBoolean());
+
+		_persistence.update(newRepositoryEntry);
 
 		RepositoryEntry existingRepositoryEntry = _persistence.findByPrimaryKey(newRepositoryEntry.getPrimaryKey());
 
@@ -130,6 +132,8 @@ public class RepositoryEntryPersistenceTest {
 			newRepositoryEntry.getRepositoryId());
 		Assert.assertEquals(existingRepositoryEntry.getMappedId(),
 			newRepositoryEntry.getMappedId());
+		Assert.assertEquals(existingRepositoryEntry.getManualCheckInRequired(),
+			newRepositoryEntry.getManualCheckInRequired());
 	}
 
 	@Test
@@ -285,7 +289,9 @@ public class RepositoryEntryPersistenceTest {
 
 		repositoryEntry.setMappedId(ServiceTestUtil.randomString());
 
-		_persistence.update(repositoryEntry, false);
+		repositoryEntry.setManualCheckInRequired(ServiceTestUtil.randomBoolean());
+
+		_persistence.update(repositoryEntry);
 
 		return repositoryEntry;
 	}

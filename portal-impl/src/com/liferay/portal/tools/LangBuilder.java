@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.microsofttranslator.MicrosoftTranslatorException;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.NumericalStringComparator;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
@@ -110,6 +111,8 @@ public class LangBuilder {
 		// rewritten to use the rignt line separator
 
 		_orderProperties(
+			new File(_langDir + "/" + _langFile + "_en_AU.properties"));
+		_orderProperties(
 			new File(_langDir + "/" + _langFile + "_en_GB.properties"));
 		_orderProperties(
 			new File(_langDir + "/" + _langFile + "_fr_CA.properties"));
@@ -139,6 +142,7 @@ public class LangBuilder {
 		_createProperties(content, "ja"); // Japanese
 		_createProperties(content, "ko"); // Korean
 		_createProperties(content, "lo"); // Lao
+		_createProperties(content, "lt"); // Lithuanian
 		_createProperties(content, "nb"); // Norwegian Bokmål
 		_createProperties(content, "fa"); // Persian
 		_createProperties(content, "pl"); // Polish
@@ -267,8 +271,15 @@ public class LangBuilder {
 
 						String baseKey = line.substring(0, pos);
 
-						translatedText =
-							properties.getProperty(baseKey) + AUTOMATIC_COPY;
+						String translatedBaseKey = properties.getProperty(
+							baseKey);
+
+						if (Validator.isNotNull(translatedBaseKey)) {
+							translatedText = translatedBaseKey + AUTOMATIC_COPY;
+						}
+						else {
+							translatedText = value + AUTOMATIC_COPY;
+						}
 					}
 					else if (key.equals("lang.dir")) {
 						translatedText = "ltr";
@@ -446,11 +457,11 @@ public class LangBuilder {
 			value.trim(),
 			new String[] {
 				"  ", "<b>", "</b>", "<i>", "</i>", " url ", "&#39;", "&#39 ;",
-				"&quot;", "&quot ;"
+				"&quot;", "&quot ;", "ReCaptcha", "Captcha"
 			},
 			new String[] {
 				" ", "<strong>", "</strong>", "<em>", "</em>", " URL ", "\'",
-				"\'", "\"", "\""
+				"\'", "\"", "\"", "reCAPTCHA", "CAPTCHA"
 			});
 
 		return value;
@@ -468,7 +479,8 @@ public class LangBuilder {
 		UnsyncBufferedWriter unsyncBufferedWriter = new UnsyncBufferedWriter(
 			new FileWriter(propertiesFile));
 
-		Set<String> messages = new TreeSet<String>();
+		Set<String> messages = new TreeSet<String>(
+			new NumericalStringComparator(true, true));
 
 		boolean begin = false;
 		boolean firstLine = true;
@@ -570,6 +582,7 @@ public class LangBuilder {
 			toLanguageId.equals("hu") ||
 			toLanguageId.equals("in") ||
 			toLanguageId.equals("lo") ||
+			toLanguageId.equals("lt") ||
 			toLanguageId.equals("nb") ||
 			toLanguageId.equals("fa") ||
 			toLanguageId.equals("pl") ||

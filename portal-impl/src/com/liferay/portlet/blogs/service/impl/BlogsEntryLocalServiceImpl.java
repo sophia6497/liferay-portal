@@ -36,6 +36,7 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.model.Group;
@@ -44,6 +45,7 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.model.WorkflowInstanceLink;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextUtil;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.Portal;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
@@ -76,15 +78,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.portlet.PortletPreferences;
+
+import javax.servlet.http.HttpServletRequest;
 
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 
 /**
+ * The implementation of the blogs entry local service.
+ *
  * @author Brian Wing Shun Chan
  * @author Wilson S. Man
  * @author Raymond Augé
@@ -155,7 +159,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		entry.setStatusDate(serviceContext.getModifiedDate(now));
 		entry.setExpandoBridgeAttributes(serviceContext);
 
-		blogsEntryPersistence.update(entry, false);
+		blogsEntryPersistence.update(entry);
 
 		// Resources
 
@@ -318,7 +322,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		// Statistics
 
 		blogsStatsUserLocalService.updateStatsUser(
-			entry.getGroupId(), entry.getUserId());
+			entry.getGroupId(), entry.getUserId(), entry.getDisplayDate());
 
 		// Asset
 
@@ -399,7 +403,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.findByC_LtD_NeS(
+			return blogsEntryPersistence.findByC_LtD_NotS(
 				companyId, displayDate, queryDefinition.getStatus(),
 				queryDefinition.getStart(), queryDefinition.getEnd(),
 				queryDefinition.getOrderByComparator());
@@ -429,7 +433,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.countByC_LtD_NeS(
+			return blogsEntryPersistence.countByC_LtD_NotS(
 				companyId, displayDate, queryDefinition.getStatus());
 		}
 		else {
@@ -493,7 +497,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.findByG_LtD_NeS(
+			return blogsEntryPersistence.findByG_LtD_NotS(
 				groupId, displayDate, queryDefinition.getStatus(),
 				queryDefinition.getStart(), queryDefinition.getEnd(),
 				queryDefinition.getOrderByComparator());
@@ -537,7 +541,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.findByG_NeS(
+			return blogsEntryPersistence.findByG_NotS(
 				groupId, queryDefinition.getStatus(),
 				queryDefinition.getStart(), queryDefinition.getEnd(),
 				queryDefinition.getOrderByComparator());
@@ -566,7 +570,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.countByG_LtD_NeS(
+			return blogsEntryPersistence.countByG_LtD_NotS(
 				groupId, displayDate, queryDefinition.getStatus());
 		}
 		else {
@@ -591,7 +595,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.countByG_NeS(
+			return blogsEntryPersistence.countByG_NotS(
 				groupId, queryDefinition.getStatus());
 		}
 		else {
@@ -662,7 +666,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.findByG_U_NeS(
+			return blogsEntryPersistence.findByG_U_NotS(
 				groupId, userId, queryDefinition.getStatus(),
 				queryDefinition.getStart(), queryDefinition.getEnd(),
 				queryDefinition.getOrderByComparator());
@@ -695,7 +699,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		throws SystemException {
 
 		if (queryDefinition.isExcludeStatus()) {
-			return blogsEntryPersistence.countByG_U_LtD_NeS(
+			return blogsEntryPersistence.countByG_U_LtD_NotS(
 				groupId, userId, displayDate, queryDefinition.getStatus());
 		}
 		else {
@@ -780,6 +784,18 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		}
 	}
 
+	/**
+	 * Moves the blogs entry to the recycle bin. Social activity counters for
+	 * this entry get disabled.
+	 *
+	 * @param  userId the primary key of the user moving the blogs entry
+	 * @param  entry the blogs entry to be moved
+	 * @return the moved blogs entry
+	 * @throws PortalException if a user with the primary key could not be found
+	 *         or if the blogs entry owner's social activity counter could not
+	 *         be updated
+	 * @throws SystemException if a system exception occurred
+	 */
 	public BlogsEntry moveEntryToTrash(long userId, BlogsEntry entry)
 		throws PortalException, SystemException {
 
@@ -790,7 +806,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		if (oldStatus == WorkflowConstants.STATUS_PENDING) {
 			entry.setStatus(WorkflowConstants.STATUS_DRAFT);
 
-			blogsEntryPersistence.update(entry, false);
+			blogsEntryPersistence.update(entry);
 		}
 
 		updateStatus(
@@ -822,6 +838,17 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		return entry;
 	}
 
+	/**
+	 * Moves the blogs entry with the ID to the recycle bin.
+	 *
+	 * @param  userId the primary key of the user moving the blogs entry
+	 * @param  entryId the primary key of the blogs entry to be moved
+	 * @return the moved blogs entry
+	 * @throws PortalException if a user or blogs entry with the primary key
+	 *         could not be found or if the blogs entry owner's social activity
+	 *         counter could not be updated
+	 * @throws SystemException if a system exception occurred
+	 */
 	public BlogsEntry moveEntryToTrash(long userId, long entryId)
 		throws PortalException, SystemException {
 
@@ -830,6 +857,17 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		return moveEntryToTrash(userId, entry);
 	}
 
+	/**
+	 * Restores the blogs entry with the ID from the recycle bin. Social
+	 * activity counters for this entry get activated.
+	 *
+	 * @param  userId the primary key of the user restoring the blogs entry
+	 * @param  entryId the primary key of the blogs entry to be restored
+	 * @throws PortalException if a user or blogs entry with the primary key
+	 *         could not be found or if the blogs entry owner's social activity
+	 *         counter could not be updated
+	 * @throws SystemException if a system exception occurred
+	 */
 	public void restoreEntryFromTrash(long userId, long entryId)
 		throws PortalException, SystemException {
 
@@ -881,10 +919,12 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 			StringUtil.shorten(entry.getContent(), 500));
 
 		AssetEntry assetEntry = assetEntryLocalService.updateEntry(
-			userId, entry.getGroupId(), BlogsEntry.class.getName(),
+			userId, entry.getGroupId(), entry.getCreateDate(),
+			entry.getModifiedDate(), BlogsEntry.class.getName(),
 			entry.getEntryId(), entry.getUuid(), 0, assetCategoryIds,
 			assetTagNames, visible, null, null, null, ContentTypes.TEXT_HTML,
-			entry.getTitle(), null, summary, null, null, 0, 0, null, false);
+			entry.getTitle(), entry.getDescription(), summary, null, null, 0, 0,
+			null, false);
 
 		assetLinkLocalService.updateLinks(
 			userId, assetEntry.getEntryId(), assetLinkEntryIds,
@@ -953,7 +993,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 
 		entry.setExpandoBridgeAttributes(serviceContext);
 
-		blogsEntryPersistence.update(entry, false);
+		blogsEntryPersistence.update(entry);
 
 		// Resources
 
@@ -1039,7 +1079,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		entry.setStatusByUserName(user.getFullName());
 		entry.setStatusDate(serviceContext.getModifiedDate(now));
 
-		blogsEntryPersistence.update(entry, false);
+		blogsEntryPersistence.update(entry);
 
 		// Statistics
 
@@ -1211,45 +1251,28 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 
 		String urlTitle = null;
 
-		if (isMatchesServiceContextUrlTitle(serviceContextUrlTitle)) {
+		if (Validator.isNotNull(serviceContextUrlTitle)) {
 			urlTitle = BlogsUtil.getUrlTitle(entryId, serviceContextUrlTitle);
-
-			BlogsEntry urlTitleEntry = blogsEntryPersistence.fetchByG_UT(
-				serviceContext.getScopeGroupId(), urlTitle);
-
-			if ((urlTitleEntry != null) &&
-				(urlTitleEntry.getEntryId() != entryId)) {
-
-				urlTitle = getUniqueUrlTitle(
-					entryId, serviceContext.getScopeGroupId(), urlTitle);
-			}
+		}
+		else if (Validator.isNotNull(oldUrlTitle)) {
+			return oldUrlTitle;
 		}
 		else {
-			if (isMatchesServiceContextUrlTitle(oldUrlTitle)) {
-				urlTitle = oldUrlTitle;
-			}
-			else {
-				urlTitle = getUniqueUrlTitle(
-					entryId, serviceContext.getScopeGroupId(), title);
-			}
+			urlTitle = getUniqueUrlTitle(
+				entryId, serviceContext.getScopeGroupId(), title);
+		}
+
+		BlogsEntry urlTitleEntry = blogsEntryPersistence.fetchByG_UT(
+			serviceContext.getScopeGroupId(), urlTitle);
+
+		if ((urlTitleEntry != null) &&
+			(urlTitleEntry.getEntryId() != entryId)) {
+
+			urlTitle = getUniqueUrlTitle(
+				entryId, serviceContext.getScopeGroupId(), urlTitle);
 		}
 
 		return urlTitle;
-	}
-
-	protected boolean isMatchesServiceContextUrlTitle(String urlTitle) {
-		if (Validator.isNotNull(urlTitle) &&
-			Validator.isNotNull(PropsValues.BLOGS_ENTRY_URL_TITLE_REGEXP)) {
-
-			Pattern pattern = Pattern.compile(
-				PropsValues.BLOGS_ENTRY_URL_TITLE_REGEXP);
-
-			Matcher matcher = pattern.matcher(urlTitle);
-
-			return matcher.matches();
-		}
-
-		return false;
 	}
 
 	protected void notifySubscribers(
@@ -1397,8 +1420,8 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 		}
 	}
 
-	protected void pingPingback(
-		BlogsEntry entry, ServiceContext serviceContext) {
+	protected void pingPingback(BlogsEntry entry, ServiceContext serviceContext)
+		throws PortalException, SystemException {
 
 		if (!PropsValues.BLOGS_PINGBACK_ENABLED ||
 			!entry.isAllowPingbacks() || !entry.isApproved()) {
@@ -1406,7 +1429,16 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 			return;
 		}
 
-		String layoutFullURL = serviceContext.getLayoutFullURL();
+		HttpServletRequest request = serviceContext.getRequest();
+
+		if (request == null) {
+			return;
+		}
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		String layoutFullURL = PortalUtil.getLayoutFullURL(themeDisplay);
 
 		if (Validator.isNull(layoutFullURL)) {
 			return;
@@ -1437,7 +1469,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 	protected void pingTrackbacks(
 			BlogsEntry entry, String[] trackbacks, boolean pingOldTrackbacks,
 			ServiceContext serviceContext)
-		throws SystemException {
+		throws PortalException, SystemException {
 
 		if (!PropsValues.BLOGS_TRACKBACK_ENABLED ||
 			!entry.isAllowTrackbacks() || !entry.isApproved()) {
@@ -1445,7 +1477,16 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 			return;
 		}
 
-		String layoutFullURL = serviceContext.getLayoutFullURL();
+		HttpServletRequest request = serviceContext.getRequest();
+
+		if (request == null) {
+			return;
+		}
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		String layoutFullURL = PortalUtil.getLayoutFullURL(themeDisplay);
 
 		if (Validator.isNull(layoutFullURL)) {
 			return;
@@ -1480,7 +1521,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 
 			entry.setTrackbacks(StringPool.BLANK);
 
-			blogsEntryPersistence.update(entry, false);
+			blogsEntryPersistence.update(entry);
 		}
 
 		Set<String> oldTrackbacks = SetUtil.fromArray(
@@ -1512,7 +1553,7 @@ public class BlogsEntryLocalServiceImpl extends BlogsEntryLocalServiceBaseImpl {
 
 			entry.setTrackbacks(newTrackbacks);
 
-			blogsEntryPersistence.update(entry, false);
+			blogsEntryPersistence.update(entry);
 		}
 	}
 

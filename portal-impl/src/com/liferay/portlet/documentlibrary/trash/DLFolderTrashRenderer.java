@@ -14,26 +14,19 @@
 
 package com.liferay.portlet.documentlibrary.trash;
 
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.trash.BaseTrashRenderer;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
 import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLAppServiceUtil;
-import com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission;
+import com.liferay.portlet.trash.util.TrashUtil;
 
 import java.util.Locale;
-
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
 
 /**
  * @author Alexander Chow
@@ -44,6 +37,14 @@ public class DLFolderTrashRenderer extends BaseTrashRenderer {
 
 	public DLFolderTrashRenderer(Folder folder) {
 		_folder = folder;
+	}
+
+	public String getClassName() {
+		return DLFolder.class.getName();
+	}
+
+	public long getClassPK() {
+		return _folder.getPrimaryKey();
 	}
 
 	@Override
@@ -84,35 +85,11 @@ public class DLFolderTrashRenderer extends BaseTrashRenderer {
 	}
 
 	public String getTitle(Locale locale) {
-		return _folder.getName();
+		return TrashUtil.getOriginalTitle(_folder.getName());
 	}
 
 	public String getType() {
 		return TYPE;
-	}
-
-	public boolean hasDeletePermission(PermissionChecker permissionChecker)
-		throws PortalException, SystemException {
-
-		return DLFolderPermission.contains(
-			permissionChecker, _folder, ActionKeys.DELETE);
-	}
-
-	public boolean hasViewPermission(PermissionChecker permissionChecker)
-		throws PortalException, SystemException {
-
-		return DLFolderPermission.contains(
-			permissionChecker, _folder, ActionKeys.VIEW);
-	}
-
-	public String render(
-			RenderRequest renderRequest, RenderResponse renderResponse,
-			String template)
-		throws Exception {
-
-		renderRequest.setAttribute(WebKeys.DOCUMENT_LIBRARY_FOLDER, _folder);
-
-		return "/html/portlet/document_library/trash/folder.jsp";
 	}
 
 	private Folder _folder;

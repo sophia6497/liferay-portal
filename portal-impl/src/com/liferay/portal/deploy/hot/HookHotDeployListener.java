@@ -41,6 +41,8 @@ import com.liferay.portal.kernel.format.PhoneNumberFormat;
 import com.liferay.portal.kernel.format.PhoneNumberFormatUtil;
 import com.liferay.portal.kernel.format.PhoneNumberFormatWrapper;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.lock.LockListener;
+import com.liferay.portal.kernel.lock.LockListenerRegistryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
@@ -67,7 +69,6 @@ import com.liferay.portal.kernel.servlet.taglib.FileAvailabilityUtil;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.struts.StrutsPortletAction;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
-import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -78,6 +79,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -98,6 +100,9 @@ import com.liferay.portal.security.auth.AuthPipeline;
 import com.liferay.portal.security.auth.AuthToken;
 import com.liferay.portal.security.auth.AuthTokenUtil;
 import com.liferay.portal.security.auth.AuthTokenWrapper;
+import com.liferay.portal.security.auth.AuthVerifier;
+import com.liferay.portal.security.auth.AuthVerifierConfiguration;
+import com.liferay.portal.security.auth.AuthVerifierPipeline;
 import com.liferay.portal.security.auth.Authenticator;
 import com.liferay.portal.security.auth.AutoLogin;
 import com.liferay.portal.security.auth.CompanyThreadLocal;
@@ -122,7 +127,7 @@ import com.liferay.portal.service.ReleaseLocalServiceUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.servlet.filters.autologin.AutoLoginFilter;
 import com.liferay.portal.servlet.filters.cache.CacheUtil;
-import com.liferay.portal.spring.aop.ServiceBeanAopProxy;
+import com.liferay.portal.spring.aop.ServiceBeanAopCacheManagerUtil;
 import com.liferay.portal.struts.AuthPublicPathRegistry;
 import com.liferay.portal.struts.StrutsActionRegistryUtil;
 import com.liferay.portal.upgrade.UpgradeProcessUtil;
@@ -141,7 +146,6 @@ import com.liferay.portlet.documentlibrary.store.Store;
 import com.liferay.portlet.documentlibrary.store.StoreFactory;
 import com.liferay.portlet.documentlibrary.util.DLProcessor;
 import com.liferay.portlet.documentlibrary.util.DLProcessorRegistryUtil;
-import com.liferay.util.log4j.Log4JUtil;
 
 import java.io.File;
 import java.io.InputStream;
@@ -186,16 +190,18 @@ public class HookHotDeployListener
 		"admin.default.group.names", "admin.default.role.names",
 		"admin.default.user.group.names", "asset.publisher.display.styles",
 		"auth.forward.by.last.path", "auth.public.paths",
-		"auto.deploy.listeners", "application.startup.events", "auth.failure",
-		"auth.max.failures", "auth.token.impl", "auth.pipeline.post",
-		"auth.pipeline.pre", "auto.login.hooks",
-		"captcha.check.portal.create_account", "captcha.engine.impl",
-		"company.settings.form.authentication",
+		"auth.verifier.pipeline", "auto.deploy.listeners",
+		"application.startup.events", "auth.failure", "auth.max.failures",
+		"auth.token.impl", "auth.pipeline.post", "auth.pipeline.pre",
+		"auto.login.hooks", "captcha.check.portal.create_account",
+		"captcha.engine.impl", "company.default.locale",
+		"company.default.time.zone", "company.settings.form.authentication",
 		"company.settings.form.configuration",
 		"company.settings.form.identification",
 		"company.settings.form.miscellaneous",
 		"control.panel.entry.class.default", "convert.processes",
 		"default.landing.page.path", "dl.file.entry.drafts.enabled",
+		"dl.file.entry.open.in.ms.office.manual.check.in.required",
 		"dl.file.entry.processors", "dl.repository.impl",
 		"dl.store.antivirus.impl", "dl.store.impl", "dockbar.add.portlets",
 		"field.enable.com.liferay.portal.model.Contact.birthday",
@@ -212,9 +218,9 @@ public class HookHotDeployListener
 		"layout.user.public.layouts.auto.create",
 		"layout.user.public.layouts.enabled",
 		"layout.user.public.layouts.power.user.required",
-		"ldap.attrs.transformer.impl", "locales.beta",
-		"login.create.account.allow.custom.password", "login.events.post",
-		"login.events.pre", "login.form.navigation.post",
+		"ldap.attrs.transformer.impl", "locales", "locales.beta",
+		"lock.listeners", "login.create.account.allow.custom.password",
+		"login.events.post", "login.events.pre", "login.form.navigation.post",
 		"login.form.navigation.pre", "logout.events.post", "logout.events.pre",
 		"mail.hook.impl", "my.sites.show.private.sites.with.no.layouts",
 		"my.sites.show.public.sites.with.no.layouts",
@@ -229,7 +235,7 @@ public class HookHotDeployListener
 		"portlet.add.default.resource.check.enabled",
 		"portlet.add.default.resource.check.whitelist",
 		"portlet.add.default.resource.check.whitelist.actions",
-		"sanitizer.impl", "servlet.session.create.events",
+		"rss.feeds.enabled", "sanitizer.impl", "servlet.session.create.events",
 		"servlet.session.destroy.events", "servlet.service.events.post",
 		"servlet.service.events.pre", "session.max.allowed",
 		"session.phishing.protected.attributes", "session.store.password",
@@ -239,7 +245,7 @@ public class HookHotDeployListener
 		"theme.css.fast.load", "theme.images.fast.load",
 		"theme.jsp.override.enabled", "theme.loader.new.theme.id.on.import",
 		"theme.portlet.decorate.default", "theme.portlet.sharing.default",
-		"theme.shortcut.icon", "upgrade.processes",
+		"theme.shortcut.icon", "time.zones", "upgrade.processes",
 		"user.notification.event.confirmation.enabled",
 		"users.email.address.generator", "users.email.address.validator",
 		"users.email.address.required", "users.form.add.identification",
@@ -414,6 +420,15 @@ public class HookHotDeployListener
 			AttributesTransformerFactory.setInstance(null);
 		}
 
+		if (portalProperties.containsKey(LOCK_LISTENERS)) {
+			LockListenerContainer lockListenerContainer =
+				_lockListenerContainerMap.remove(servletContextName);
+
+			if (lockListenerContainer != null) {
+				lockListenerContainer.unregisterLockListeners();
+			}
+		}
+
 		if (portalProperties.containsKey(PropsKeys.MAIL_HOOK_IMPL)) {
 			com.liferay.mail.util.HookFactory.setInstance(null);
 		}
@@ -543,13 +558,11 @@ public class HookHotDeployListener
 
 		_servletContextNames.add(servletContextName);
 
-		ClassLoader portletClassLoader = hotDeployEvent.getContextClassLoader();
-
-		initLogger(portletClassLoader);
-
 		Document document = SAXReaderUtil.read(xml, true);
 
 		Element rootElement = document.getRootElement();
+
+		ClassLoader portletClassLoader = hotDeployEvent.getContextClassLoader();
 
 		initPortalProperties(
 			servletContextName, portletClassLoader, rootElement);
@@ -717,6 +730,13 @@ public class HookHotDeployListener
 
 		if (authPublicPathsContainer != null) {
 			authPublicPathsContainer.unregisterPaths();
+		}
+
+		AuthVerifierConfigurationContainer authVerifierConfigurationContainer =
+			_authVerifierConfigurationContainerMap.remove(servletContextName);
+
+		if (authVerifierConfigurationContainer != null) {
+			authVerifierConfigurationContainer.unregisterConfigurations();
 		}
 
 		AutoDeployListenersContainer autoDeployListenersContainer =
@@ -986,6 +1006,45 @@ public class HookHotDeployListener
 		authPublicPathsContainer.registerPaths(publicPaths);
 	}
 
+	protected void initAuthVerifiers(
+			String servletContextName, ClassLoader portletClassLoader,
+			Properties portalProperties)
+		throws Exception {
+
+		AuthVerifierConfigurationContainer authVerifierConfigurationContainer =
+			new AuthVerifierConfigurationContainer();
+
+		_authVerifierConfigurationContainerMap.put(
+			servletContextName, authVerifierConfigurationContainer);
+
+		String[] authVerifierClassNames = StringUtil.split(
+			portalProperties.getProperty(AUTH_VERIFIER_PIPELINE));
+
+		for (String authVerifierClassName : authVerifierClassNames) {
+			AuthVerifierConfiguration authVerifierConfiguration =
+				new AuthVerifierConfiguration();
+
+			AuthVerifier authVerifier = (AuthVerifier)newInstance(
+				portletClassLoader, AuthVerifier.class, authVerifierClassName);
+
+			authVerifierConfiguration.setAuthVerifier(authVerifier);
+
+			authVerifierConfiguration.setAuthVerifierClassName(
+				authVerifierClassName);
+
+			Properties properties = PropertiesUtil.getProperties(
+				portalProperties,
+				AuthVerifierPipeline.getAuthVerifierPropertyName(
+					authVerifierClassName),
+				true);
+
+			authVerifierConfiguration.setProperties(properties);
+
+			authVerifierConfigurationContainer.
+				registerAuthVerifierConfiguration(authVerifierConfiguration);
+		}
+	}
+
 	protected void initAutoDeployListeners(
 			String servletContextName, ClassLoader portletClassLoader,
 			Properties portalProperties)
@@ -1180,7 +1239,7 @@ public class HookHotDeployListener
 			return null;
 		}
 
-		if (ArrayUtil.contains(_PROPS_KEYS_EVENTS, eventName)) {
+		if (_propsKeysEvents.contains(eventName)) {
 			Action action = (Action)portletClassLoader.loadClass(
 				eventClassName).newInstance();
 
@@ -1191,7 +1250,7 @@ public class HookHotDeployListener
 			return action;
 		}
 
-		if (ArrayUtil.contains(_PROPS_KEYS_SESSION_EVENTS, eventName)) {
+		if (_propsKeysSessionEvents.contains(eventName)) {
 			SessionAction sessionAction =
 				(SessionAction)portletClassLoader.loadClass(
 					eventClassName).newInstance();
@@ -1220,8 +1279,8 @@ public class HookHotDeployListener
 			String key = (String)entry.getKey();
 
 			if (!key.equals(APPLICATION_STARTUP_EVENTS) &&
-				!ArrayUtil.contains(_PROPS_KEYS_EVENTS, key) &&
-				!ArrayUtil.contains(_PROPS_KEYS_SESSION_EVENTS, key)) {
+				!_propsKeysEvents.contains(key) &&
+				!_propsKeysSessionEvents.contains(key)) {
 
 				continue;
 			}
@@ -1432,11 +1491,6 @@ public class HookHotDeployListener
 		}
 	}
 
-	protected void initLogger(ClassLoader portletClassLoader) {
-		Log4JUtil.configureLog4J(
-			portletClassLoader.getResource("META-INF/portal-log4j.xml"));
-	}
-
 	@SuppressWarnings("rawtypes")
 	protected ModelListener<BaseModel<?>> initModelListener(
 			String modelName, String modelListenerClassName,
@@ -1582,6 +1636,8 @@ public class HookHotDeployListener
 		initAutoLogins(
 			servletContextName, portletClassLoader, portalProperties);
 		initAuthenticators(
+			servletContextName, portletClassLoader, portalProperties);
+		initAuthVerifiers(
 			servletContextName, portletClassLoader, portalProperties);
 		initHotDeployListeners(
 			servletContextName, portletClassLoader, portalProperties);
@@ -1734,6 +1790,29 @@ public class HookHotDeployListener
 					attributesTransformerClassName);
 
 			AttributesTransformerFactory.setInstance(attributesTransformer);
+		}
+
+		if (portalProperties.containsKey(LOCK_LISTENERS)) {
+			LockListenerContainer lockListenerContainer =
+				_lockListenerContainerMap.get(servletContextName);
+
+			if (lockListenerContainer == null) {
+				lockListenerContainer = new LockListenerContainer();
+
+				_lockListenerContainerMap.put(
+					servletContextName, lockListenerContainer);
+			}
+
+			String[] lockListenerClassNames = StringUtil.split(
+				portalProperties.getProperty(LOCK_LISTENERS));
+
+			for (String lockListenerClassName : lockListenerClassNames) {
+				LockListener lockListener = (LockListener)newInstance(
+					portletClassLoader, LockListener.class,
+					lockListenerClassName);
+
+				lockListenerContainer.registerLockListener(lockListener);
+			}
 		}
 
 		if (portalProperties.containsKey(PropsKeys.MAIL_HOOK_IMPL)) {
@@ -1941,7 +2020,7 @@ public class HookHotDeployListener
 			servletContextName, portletClassLoader, serviceType,
 			serviceTypeClass, serviceImplConstructor, previousService);
 
-		ServiceBeanAopProxy.clearMethodInterceptorCache();
+		ServiceBeanAopCacheManagerUtil.reset();
 	}
 
 	protected Filter initServletFilter(
@@ -2390,8 +2469,7 @@ public class HookHotDeployListener
 		Release release = null;
 
 		try {
-			release = ReleaseLocalServiceUtil.getRelease(
-				servletContextName, buildNumber);
+			release = ReleaseLocalServiceUtil.getRelease(servletContextName);
 		}
 		catch (PortalException pe) {
 			int previousBuildNumber = GetterUtil.getInteger(
@@ -2447,6 +2525,7 @@ public class HookHotDeployListener
 	private static final String[] _PROPS_VALUES_BOOLEAN = {
 		"auth.forward.by.last.path", "captcha.check.portal.create_account",
 		"dl.file.entry.drafts.enabled",
+		"dl.file.entry.open.in.ms.office.manual.check.in.required",
 		"field.enable.com.liferay.portal.model.Contact.birthday",
 		"field.enable.com.liferay.portal.model.Contact.male",
 		"field.enable.com.liferay.portal.model.Organization.status",
@@ -2462,11 +2541,11 @@ public class HookHotDeployListener
 		"my.sites.show.public.sites.with.no.layouts",
 		"my.sites.show.user.private.sites.with.no.layouts",
 		"my.sites.show.user.public.sites.with.no.layouts",
-		"portlet.add.default.resource.check.enabled", "session.store.password",
-		"terms.of.use.required", "theme.css.fast.load",
-		"theme.images.fast.load", "theme.jsp.override.enabled",
-		"theme.loader.new.theme.id.on.import", "theme.portlet.decorate.default",
-		"theme.portlet.sharing.default",
+		"portlet.add.default.resource.check.enabled", "rss.feeds.enabled",
+		"session.store.password", "terms.of.use.required",
+		"theme.css.fast.load", "theme.images.fast.load",
+		"theme.jsp.override.enabled", "theme.loader.new.theme.id.on.import",
+		"theme.portlet.decorate.default", "theme.portlet.sharing.default",
 		"user.notification.event.confirmation.enabled",
 		"users.email.address.required", "users.screen.name.always.autogenerate"
 	};
@@ -2516,6 +2595,7 @@ public class HookHotDeployListener
 	};
 
 	private static final String[] _PROPS_VALUES_STRING = {
+		"company.default.locale", "company.default.time.zone",
 		"default.landing.page.path",
 		"passwords.passwordpolicytoolkit.generator",
 		"passwords.passwordpolicytoolkit.static",
@@ -2532,6 +2612,9 @@ public class HookHotDeployListener
 		new HashMap<String, AuthFailuresContainer>();
 	private Map<String, AuthPublicPathsContainer> _authPublicPathsContainerMap =
 		new HashMap<String, AuthPublicPathsContainer>();
+	private Map<String, AuthVerifierConfigurationContainer>
+		_authVerifierConfigurationContainerMap =
+			new HashMap<String, AuthVerifierConfigurationContainer>();
 	private Map<String, AutoDeployListenersContainer>
 		_autoDeployListenersContainerMap =
 			new HashMap<String, AutoDeployListenersContainer>();
@@ -2554,6 +2637,8 @@ public class HookHotDeployListener
 			new HashMap<String, IndexerPostProcessorContainer>();
 	private Map<String, LanguagesContainer> _languagesContainerMap =
 		new HashMap<String, LanguagesContainer>();
+	private Map<String, LockListenerContainer> _lockListenerContainerMap =
+		new HashMap<String, LockListenerContainer>();
 	private Map<String, StringArraysContainer> _mergeStringArraysContainerMap =
 		new HashMap<String, StringArraysContainer>();
 	private Map<String, ModelListenersContainer> _modelListenersContainerMap =
@@ -2563,6 +2648,10 @@ public class HookHotDeployListener
 			new HashMap<String, StringArraysContainer>();
 	private Map<String, Properties> _portalPropertiesMap =
 		new HashMap<String, Properties>();
+	private Set<String> _propsKeysEvents = SetUtil.fromArray(
+		_PROPS_KEYS_EVENTS);
+	private Set<String> _propsKeysSessionEvents = SetUtil.fromArray(
+		_PROPS_KEYS_SESSION_EVENTS);
 	private ServicesContainer _servicesContainer = new ServicesContainer();
 	private Set<String> _servletContextNames = new HashSet<String>();
 	private Map<String, ServletFiltersContainer> _servletFiltersContainerMap =
@@ -2659,6 +2748,29 @@ public class HookHotDeployListener
 		}
 
 		private Set<String> _paths = new HashSet<String>();
+
+	}
+
+	private class AuthVerifierConfigurationContainer {
+
+		public void registerAuthVerifierConfiguration(
+			AuthVerifierConfiguration authVerifierConfiguration) {
+
+			AuthVerifierPipeline.register(authVerifierConfiguration);
+
+			_authVerifierConfigurations.add(authVerifierConfiguration);
+		}
+
+		public void unregisterConfigurations() {
+			for (AuthVerifierConfiguration authVerifierConfiguration :
+					_authVerifierConfigurations) {
+
+				AuthVerifierPipeline.unregister(authVerifierConfiguration);
+			}
+		}
+
+		private List<AuthVerifierConfiguration> _authVerifierConfigurations =
+			new ArrayList<AuthVerifierConfiguration>();
 
 	}
 
@@ -2908,6 +3020,27 @@ public class HookHotDeployListener
 
 		private Map<Locale, Map<String, String>> _languagesMap =
 			new HashMap<Locale, Map<String, String>>();
+
+	}
+
+	private class LockListenerContainer {
+
+		public void registerLockListener(LockListener lockListener) {
+			LockListenerRegistryUtil.register(lockListener);
+
+			_lockListeners.add(lockListener);
+		}
+
+		public void unregisterLockListeners() {
+			for (LockListener lockListener : _lockListeners) {
+				LockListenerRegistryUtil.unregister(lockListener);
+			}
+
+			_lockListeners.clear();
+		}
+
+		private List<LockListener> _lockListeners =
+			new ArrayList<LockListener>();
 
 	}
 

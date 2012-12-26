@@ -13,6 +13,8 @@
 	</if>
 
 	<target name="test-${test.ant.script.command}-geronimo-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -26,12 +28,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-geronimo-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -46,12 +51,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-glassfish-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -65,12 +73,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-glassfish-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -85,12 +96,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-jboss-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -104,12 +118,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-jboss-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -124,12 +141,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-jetty-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -143,12 +163,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-jetty-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -163,12 +186,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-jonas-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -182,12 +208,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-jonas-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -202,12 +231,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-db2-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -228,6 +260,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -238,6 +271,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-db2-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -259,6 +294,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -269,6 +305,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-hsql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-hsql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -282,12 +320,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-hsql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-hsql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -302,12 +343,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -321,12 +365,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-mysql-google-chrome">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -340,6 +387,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.browser" value="googlechrome" />
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
@@ -347,6 +395,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-mysql-internet-explorer">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -360,6 +410,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.browser" value="iehta" />
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
@@ -367,6 +418,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -381,12 +434,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-mysql-minimal-google-chrome">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -401,6 +457,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.browser" value="googlechrome" />
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
@@ -408,6 +465,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-mysql-minimal-internet-explorer">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -422,6 +481,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.browser" value="iehta" />
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
@@ -429,6 +489,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-oracle-10-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -449,6 +511,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -459,6 +522,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-oracle-10-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -480,6 +545,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -490,6 +556,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-oracle-11-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -510,6 +578,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -520,6 +589,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-oracle-11-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -541,6 +612,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -551,6 +623,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-postgresql-8.4-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -571,6 +645,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -581,6 +656,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-postgresql-8.4-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -602,6 +679,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -612,6 +690,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-postgresql-9.0-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -632,6 +712,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -642,6 +723,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-postgresql-9.0-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -663,6 +746,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -673,6 +757,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-sql-server-2005-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -693,6 +779,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -703,6 +790,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-sql-server-2005-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -724,6 +813,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -734,6 +824,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-sql-server-2008-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -754,6 +846,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -764,6 +857,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-sql-server-2008-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -785,6 +880,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -795,6 +891,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-sybase-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -815,6 +913,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -825,6 +924,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-tomcat-sybase-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-vm-server">
 			<param name="build.war" value="false" />
 			<param name="skip.prepare-bundle" value="true" />
@@ -846,6 +947,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
@@ -856,6 +958,8 @@
 	</target>
 
 	<target name="test-${test.ant.script.command}-weblogic-10.3-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -869,12 +973,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-weblogic-10.3-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 		</antcall>
@@ -889,12 +996,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-websphere-6.1-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 			<param name="vm.vmdk.suffix" value="websphere-6.1.0.27" />
@@ -909,12 +1019,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-websphere-6.1-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 			<param name="vm.vmdk.suffix" value="websphere-6.1.0.27" />
@@ -930,14 +1043,16 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-websphere-7.0-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
-			<param name="vm.vmdk.suffix" value="websphere-7.0.0.7" />
 		</antcall>
 
 		<ant antfile="build-test-websphere-7.0.xml" target="run-selenium-websphere-7.0">
@@ -949,12 +1064,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-websphere-8.0-mysql-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 			<param name="vm.vmdk.suffix" value="websphere-8.0.0.0" />
@@ -969,15 +1087,17 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-websphere-7.0-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
-			<param name="vm.vmdk.suffix" value="websphere-7.0.0.7" />
 		</antcall>
 
 		<ant antfile="build-test-websphere-7.0.xml" target="run-selenium-websphere-7.0">
@@ -990,12 +1110,15 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>
 	</target>
 
 	<target name="test-${test.ant.script.command}-websphere-8.0-mysql-minimal-firefox">
+		<antcall target="clean-up-test-properties" />
+
 		<antcall target="prepare-mysql">
 			${test.ant.script.file.properties}
 			<param name="vm.vmdk.suffix" value="websphere-8.0.0.0" />
@@ -1011,6 +1134,7 @@
 			${test.ant.script.file.plugin.portlets.properties}
 			${test.ant.script.file.plugin.themes}
 			${test.ant.script.file.plugin.webs}
+			${test.ant.script.file.selenium.implementation}
 			<property name="test.name" value="${test.ant.script.suite}" />
 			<property name="test.pacl" value="$${test.pacl}" />
 		</ant>

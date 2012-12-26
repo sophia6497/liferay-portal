@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.GroupedModel;
+import com.liferay.portal.model.StagedModel;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -40,7 +41,8 @@ import java.util.Date;
  * @see com.liferay.portlet.documentlibrary.model.impl.DLFileEntryModelImpl
  * @generated
  */
-public interface DLFileEntryModel extends BaseModel<DLFileEntry>, GroupedModel {
+public interface DLFileEntryModel extends BaseModel<DLFileEntry>, GroupedModel,
+	StagedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -465,6 +467,27 @@ public interface DLFileEntryModel extends BaseModel<DLFileEntry>, GroupedModel {
 	 */
 	public void setCustom2ImageId(long custom2ImageId);
 
+	/**
+	 * Returns the manual check in required of this document library file entry.
+	 *
+	 * @return the manual check in required of this document library file entry
+	 */
+	public boolean getManualCheckInRequired();
+
+	/**
+	 * Returns <code>true</code> if this document library file entry is manual check in required.
+	 *
+	 * @return <code>true</code> if this document library file entry is manual check in required; <code>false</code> otherwise
+	 */
+	public boolean isManualCheckInRequired();
+
+	/**
+	 * Sets whether this document library file entry is manual check in required.
+	 *
+	 * @param manualCheckInRequired the manual check in required of this document library file entry
+	 */
+	public void setManualCheckInRequired(boolean manualCheckInRequired);
+
 	public boolean isNew();
 
 	public void setNew(boolean n);
@@ -492,6 +515,8 @@ public interface DLFileEntryModel extends BaseModel<DLFileEntry>, GroupedModel {
 	public CacheModel<DLFileEntry> toCacheModel();
 
 	public DLFileEntry toEscapedModel();
+
+	public DLFileEntry toUnescapedModel();
 
 	public String toString();
 

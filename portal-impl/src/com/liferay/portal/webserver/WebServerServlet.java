@@ -34,7 +34,7 @@ import com.liferay.portal.kernel.template.TemplateContextType;
 import com.liferay.portal.kernel.template.TemplateManager;
 import com.liferay.portal.kernel.template.TemplateManagerUtil;
 import com.liferay.portal.kernel.template.TemplateResource;
-import com.liferay.portal.kernel.template.TemplateResourceLoaderUtil;
+import com.liferay.portal.kernel.template.URLTemplateResource;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
@@ -108,6 +108,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import java.net.URL;
 
 import java.text.Format;
 
@@ -192,6 +194,17 @@ public class WebServerServlet extends HttpServlet {
 
 		_lastModified = GetterUtil.getBoolean(
 			servletConfig.getInitParameter("last_modified"), true);
+
+		Class<?> clazz = getClass();
+
+		ClassLoader classLoader = clazz.getClassLoader();
+
+		String templateId =
+			"com/liferay/portal/webserver/dependencies/template.ftl";
+
+		URL url = classLoader.getResource(templateId);
+
+		_templateResource = new URLTemplateResource(templateId, url);
 	}
 
 	@Override
@@ -584,8 +597,10 @@ public class WebServerServlet extends HttpServlet {
 			return null;
 		}
 
-		if ((image.getHeight() > PropsValues.USERS_IMAGE_MAX_HEIGHT) ||
-			(image.getWidth() > PropsValues.USERS_IMAGE_MAX_WIDTH)) {
+		if (((PropsValues.USERS_IMAGE_MAX_HEIGHT > 0) &&
+			 (image.getHeight() > PropsValues.USERS_IMAGE_MAX_HEIGHT)) ||
+			((PropsValues.USERS_IMAGE_MAX_WIDTH > 0) &&
+			 (image.getWidth() > PropsValues.USERS_IMAGE_MAX_WIDTH))) {
 
 			User user = UserLocalServiceUtil.getUserByPortraitId(imageId);
 
@@ -678,10 +693,11 @@ public class WebServerServlet extends HttpServlet {
 			String[] pathArray)
 		throws Exception {
 
-		if (pathArray.length == 4) {
+		if (pathArray.length == 5) {
 			String className = GetterUtil.getString(pathArray[1]);
 			long classPK = GetterUtil.getLong(pathArray[2]);
 			String fieldName = GetterUtil.getString(pathArray[3]);
+			int valueIndex = GetterUtil.getInteger(pathArray[4]);
 
 			Field field = null;
 
@@ -702,7 +718,7 @@ public class WebServerServlet extends HttpServlet {
 				field = fields.get(fieldName);
 			}
 
-			DDMUtil.sendFieldFile(request, response, field);
+			DDMUtil.sendFieldFile(request, response, field, valueIndex);
 		}
 	}
 
@@ -847,6 +863,18 @@ public class WebServerServlet extends HttpServlet {
 					throw new PrincipalException();
 				}
 			}
+		}
+
+		if ((ParamUtil.getInteger(request, "height") > 0) ||
+			(ParamUtil.getInteger(request, "width") > 0)) {
+
+			InputStream inputStream = fileVersion.getContentStream(true);
+
+			Image image = ImageLocalServiceUtil.getImage(inputStream);
+
+			writeImage(image, request, response);
+
+			return;
 		}
 
 		String fileName = fileVersion.getTitle();
@@ -1023,7 +1051,7 @@ public class WebServerServlet extends HttpServlet {
 
 		InputStream inputStream = fileEntry.getContentStream();
 
-		ServletResponseUtil.write(response, inputStream);
+		ServletResponseUtil.write(response, inputStream, fileEntry.getSize());
 	}
 
 	protected void sendFileWithRangeHeader(
@@ -1109,12 +1137,8 @@ public class WebServerServlet extends HttpServlet {
 			List<WebServerEntry> webServerEntries)
 		throws Exception {
 
-		TemplateResource templateResource =
-			TemplateResourceLoaderUtil.getTemplateResource(
-				TemplateManager.FREEMARKER, _TEMPLATE_FTL);
-
 		Template template = TemplateManagerUtil.getTemplate(
-			TemplateManager.FREEMARKER, templateResource,
+			TemplateManager.FREEMARKER, _templateResource,
 			TemplateContextType.RESTRICTED);
 
 		template.put("dateFormat", _dateFormat);
@@ -1284,9 +1308,6 @@ public class WebServerServlet extends HttpServlet {
 
 	private static final String _PATH_DDM = "ddm";
 
-	private static final String _TEMPLATE_FTL =
-		"com/liferay/portal/webserver/dependencies/template.ftl";
-
 	private static final boolean _WEB_SERVER_SERVLET_VERSION_VERBOSITY_DEFAULT =
 		PropsValues.WEB_SERVER_SERVLET_VERSION_VERBOSITY.equalsIgnoreCase(
 			ReleaseInfo.getName());
@@ -1304,5 +1325,6 @@ public class WebServerServlet extends HttpServlet {
 		FastDateFormatFactoryUtil.getSimpleDateFormat(_DATE_FORMAT_PATTERN);
 
 	private boolean _lastModified = true;
+	private TemplateResource _templateResource;
 
 }

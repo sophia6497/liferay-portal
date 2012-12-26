@@ -31,7 +31,7 @@ import com.liferay.portal.kernel.lar.UserIdStrategy;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.MessageBusUtil;
 import com.liferay.portal.kernel.messaging.MessageStatus;
-import com.liferay.portal.kernel.scheduler.SchedulerEngineUtil;
+import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
 import com.liferay.portal.kernel.staging.LayoutStagingUtil;
 import com.liferay.portal.kernel.staging.Staging;
 import com.liferay.portal.kernel.staging.StagingConstants;
@@ -60,6 +60,7 @@ import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.LayoutBranch;
 import com.liferay.portal.model.LayoutRevision;
 import com.liferay.portal.model.LayoutSet;
+import com.liferay.portal.model.LayoutSetBranch;
 import com.liferay.portal.model.LayoutSetBranchConstants;
 import com.liferay.portal.model.Lock;
 import com.liferay.portal.model.Portlet;
@@ -80,7 +81,6 @@ import com.liferay.portal.service.LayoutSetLocalServiceUtil;
 import com.liferay.portal.service.LockLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextThreadLocal;
-import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
 import com.liferay.portal.service.http.GroupServiceHttp;
 import com.liferay.portal.service.http.LayoutServiceHttp;
@@ -132,9 +132,15 @@ public class StagingImpl implements Staging {
 		}
 
 		sb.append(remoteAddress);
-		sb.append(StringPool.COLON);
-		sb.append(remotePort);
-		sb.append(remotePathContext);
+
+		if (remotePort > 0) {
+			sb.append(StringPool.COLON);
+			sb.append(remotePort);
+		}
+
+		if (Validator.isNotNull(remotePathContext)) {
+			sb.append(remotePathContext);
+		}
 
 		if (remoteGroupId > 0) {
 			sb.append("/c/my_sites/view?");
@@ -216,7 +222,7 @@ public class StagingImpl implements Staging {
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
 
-		User user = UserLocalServiceUtil.getUser(permissionChecker.getUserId());
+		User user = permissionChecker.getUser();
 
 		StringBundler sb = new StringBundler(4);
 
@@ -367,15 +373,31 @@ public class StagingImpl implements Staging {
 			portalPreferences, layoutSetBranchId, plid);
 	}
 
+	@Deprecated
 	public void disableStaging(
 			Group scopeGroup, Group liveGroup, ServiceContext serviceContext)
 		throws Exception {
 
-		disableStaging(null, scopeGroup, liveGroup, serviceContext);
+		disableStaging((PortletRequest)null, liveGroup, serviceContext);
+	}
+
+	public void disableStaging(Group liveGroup, ServiceContext serviceContext)
+		throws Exception {
+
+		disableStaging((PortletRequest)null, liveGroup, serviceContext);
+	}
+
+	@Deprecated
+	public void disableStaging(
+			PortletRequest portletRequest, Group scopeGroup, Group liveGroup,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		disableStaging(portletRequest, liveGroup, serviceContext);
 	}
 
 	public void disableStaging(
-			PortletRequest portletRequest, Group scopeGroup, Group liveGroup,
+			PortletRequest portletRequest, Group liveGroup,
 			ServiceContext serviceContext)
 		throws Exception {
 
@@ -435,7 +457,7 @@ public class StagingImpl implements Staging {
 		throws Exception {
 
 		if (liveGroup.isStagedRemotely()) {
-			disableStaging(scopeGroup, liveGroup, serviceContext);
+			disableStaging(liveGroup, serviceContext);
 		}
 
 		UnicodeProperties typeSettingsProperties =
@@ -519,7 +541,7 @@ public class StagingImpl implements Staging {
 			remoteGroupId);
 
 		if (liveGroup.hasStagingGroup()) {
-			disableStaging(scopeGroup, liveGroup, serviceContext);
+			disableStaging(liveGroup, serviceContext);
 		}
 
 		UnicodeProperties typeSettingsProperties =
@@ -1327,8 +1349,7 @@ public class StagingImpl implements Staging {
 
 		if (stagingType == StagingConstants.TYPE_NOT_STAGED) {
 			if (liveGroup.hasStagingGroup() || liveGroup.isStagedRemotely()) {
-				disableStaging(
-					portletRequest, scopeGroup, liveGroup, serviceContext);
+				disableStaging(portletRequest, liveGroup, serviceContext);
 			}
 		}
 		else if (stagingType == StagingConstants.TYPE_LOCAL_STAGING) {
@@ -1388,11 +1409,22 @@ public class StagingImpl implements Staging {
 				liveGroup.getDescriptiveName());
 
 			try {
-				LayoutSetBranchLocalServiceUtil.addLayoutSetBranch(
-					userId, targetGroupId, false,
-					LayoutSetBranchConstants.MASTER_BRANCH_NAME, description,
-					true, LayoutSetBranchConstants.ALL_BRANCHES,
-					serviceContext);
+				LayoutSetBranch layoutSetBranch =
+					LayoutSetBranchLocalServiceUtil.addLayoutSetBranch(
+						userId, targetGroupId, false,
+						LayoutSetBranchConstants.MASTER_BRANCH_NAME,
+						description, true,
+						LayoutSetBranchConstants.ALL_BRANCHES, serviceContext);
+
+				List<LayoutRevision> layoutRevisions =
+					LayoutRevisionLocalServiceUtil.getLayoutRevisions(
+						layoutSetBranch.getLayoutSetBranchId(), false);
+
+				for (LayoutRevision layoutRevision : layoutRevisions) {
+					LayoutRevisionLocalServiceUtil.updateStatus(
+						userId, layoutRevision.getLayoutRevisionId(),
+						WorkflowConstants.STATUS_APPROVED, serviceContext);
+				}
 			}
 			catch (LayoutSetBranchNameException lsbne) {
 			}
@@ -1407,11 +1439,22 @@ public class StagingImpl implements Staging {
 				liveGroup.getDescriptiveName());
 
 			try {
-				LayoutSetBranchLocalServiceUtil.addLayoutSetBranch(
-					userId, targetGroupId, true,
-					LayoutSetBranchConstants.MASTER_BRANCH_NAME, description,
-					true, LayoutSetBranchConstants.ALL_BRANCHES,
-					serviceContext);
+				LayoutSetBranch layoutSetBranch =
+					LayoutSetBranchLocalServiceUtil.addLayoutSetBranch(
+						userId, targetGroupId, true,
+						LayoutSetBranchConstants.MASTER_BRANCH_NAME,
+						description, true,
+						LayoutSetBranchConstants.ALL_BRANCHES, serviceContext);
+
+				List<LayoutRevision> layoutRevisions =
+					LayoutRevisionLocalServiceUtil.getLayoutRevisions(
+						layoutSetBranch.getLayoutSetBranchId(), false);
+
+				for (LayoutRevision layoutRevision : layoutRevisions) {
+					LayoutRevisionLocalServiceUtil.updateStatus(
+						userId, layoutRevision.getLayoutRevisionId(),
+						WorkflowConstants.STATUS_APPROVED, serviceContext);
+				}
 			}
 			catch (LayoutSetBranchNameException lsbne) {
 			}
@@ -1710,21 +1753,13 @@ public class StagingImpl implements Staging {
 			LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
 				sourceGroupId, privateLayout);
 
-			UnicodeProperties settingsProperties =
-				layoutSet.getSettingsProperties();
-
 			long lastPublishDate = GetterUtil.getLong(
-				settingsProperties.getProperty("last-publish-date"));
+				layoutSet.getSettingsProperty("last-publish-date"));
 
 			if (lastPublishDate > 0) {
-				Calendar cal = Calendar.getInstance(
-					themeDisplay.getTimeZone(), themeDisplay.getLocale());
+				endDate = new Date();
 
-				endDate = cal.getTime();
-
-				cal.setTimeInMillis(lastPublishDate);
-
-				startDate = cal.getTime();
+				startDate = new Date(lastPublishDate);
 			}
 		}
 		else if (range.equals("last")) {
@@ -1747,7 +1782,7 @@ public class StagingImpl implements Staging {
 			Calendar startCal = getDate(
 				portletRequest, "schedulerStartDate", true);
 
-			String cronText = SchedulerEngineUtil.getCronText(
+			String cronText = SchedulerEngineHelperUtil.getCronText(
 				portletRequest, startCal, true, recurrenceType);
 
 			Date schedulerEndDate = null;
@@ -1920,21 +1955,13 @@ public class StagingImpl implements Staging {
 			LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
 				groupId, privateLayout);
 
-			UnicodeProperties layoutTypeSettingsProperties =
-				layoutSet.getSettingsProperties();
-
 			long lastPublishDate = GetterUtil.getLong(
-				layoutTypeSettingsProperties.getProperty("last-publish-date"));
+				layoutSet.getSettingsProperty("last-publish-date"));
 
 			if (lastPublishDate > 0) {
-				Calendar cal = Calendar.getInstance(
-					themeDisplay.getTimeZone(), themeDisplay.getLocale());
+				endDate = new Date();
 
-				endDate = cal.getTime();
-
-				cal.setTimeInMillis(lastPublishDate);
-
-				startDate = cal.getTime();
+				startDate = new Date(lastPublishDate);
 			}
 		}
 		else if (range.equals("last")) {
@@ -1957,7 +1984,7 @@ public class StagingImpl implements Staging {
 			Calendar startCal = getDate(
 				portletRequest, "schedulerStartDate", true);
 
-			String cronText = SchedulerEngineUtil.getCronText(
+			String cronText = SchedulerEngineHelperUtil.getCronText(
 				portletRequest, startCal, true, recurrenceType);
 
 			Date schedulerEndDate = null;
@@ -2185,7 +2212,7 @@ public class StagingImpl implements Staging {
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
 
-		User user = UserLocalServiceUtil.getUser(permissionChecker.getUserId());
+		User user = permissionChecker.getUser();
 
 		String url = buildRemoteURL(
 			remoteAddress, remotePort, remotePathContext, secureConnection,

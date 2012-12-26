@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.Repository;
+import com.liferay.portal.kernel.repository.RepositoryException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
@@ -29,6 +30,7 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Query;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
+import com.liferay.portal.kernel.transaction.TransactionCommitCallbackRegistryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -40,7 +42,6 @@ import com.liferay.portal.model.Lock;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.spring.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.model.DLFileShortcut;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
@@ -454,6 +455,15 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 	}
 
 	/**
+	 * @deprecated {@link #checkInFileEntry(long, String, ServiceContext)}
+	 */
+	public void checkInFileEntry(long fileEntryId, String lockUuid)
+		throws PortalException, SystemException {
+
+		checkInFileEntry(fileEntryId, lockUuid, new ServiceContext());
+	}
+
+	/**
 	 * Checks in the file entry using the lock's UUID. If a user has not checked
 	 * out the specified file entry, invoking this method will result in no
 	 * changes. This method is primarily used by WebDAV.
@@ -471,12 +481,14 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 	 *
 	 * @param  fileEntryId the primary key of the file entry to check in
 	 * @param  lockUuid the lock's universally unique identifier
+	 * @param  serviceContext the service context to be applied
 	 * @throws PortalException if the file entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 * @see    #cancelCheckOut(long)
 	 * @see    #checkOutFileEntry(long, String, long, ServiceContext)
 	 */
-	public void checkInFileEntry(long fileEntryId, String lockUuid)
+	public void checkInFileEntry(
+			long fileEntryId, String lockUuid, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		Repository repository = getRepository(0, fileEntryId, 0);
@@ -485,7 +497,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 
 		FileVersion oldFileVersion = oldFileEntry.getFileVersion();
 
-		repository.checkInFileEntry(fileEntryId, lockUuid);
+		repository.checkInFileEntry(fileEntryId, lockUuid, serviceContext);
 
 		FileEntry fileEntry = getFileEntry(fileEntryId);
 
@@ -1065,19 +1077,23 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 			return repository.getFileEntryByUuid(uuid);
 		}
 		catch (NoSuchFileEntryException nsfee) {
-			List<com.liferay.portal.model.Repository> repositories =
-				repositoryPersistence.findByGroupId(groupId);
+		}
+		catch (RepositoryException re) {
+			throw new NoSuchFileEntryException(re);
+		}
 
-			for (int i = 0; i < repositories.size(); i++) {
-				try {
-					long repositoryId = repositories.get(i).getRepositoryId();
+		List<com.liferay.portal.model.Repository> repositories =
+			repositoryPersistence.findByGroupId(groupId);
 
-					Repository repository = getRepository(repositoryId);
+		for (int i = 0; i < repositories.size(); i++) {
+			try {
+				long repositoryId = repositories.get(i).getRepositoryId();
 
-					return repository.getFileEntryByUuid(uuid);
-				}
-				catch (NoSuchFileEntryException nsfee2) {
-				}
+				Repository repository = getRepository(repositoryId);
+
+				return repository.getFileEntryByUuid(uuid);
+			}
+			catch (NoSuchFileEntryException nsfee) {
 			}
 		}
 
@@ -1956,21 +1972,31 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 		return TempFileUtil.getTempFileEntryNames(getUserId(), tempFolderName);
 	}
 
+	/**
+	 * @deprecated {@link #checkOutFileEntry(long, ServiceContext)}
+	 */
 	public Lock lockFileEntry(long fileEntryId)
 		throws PortalException, SystemException {
 
-		Repository repository = getRepository(0, fileEntryId, 0);
+		checkOutFileEntry(fileEntryId, new ServiceContext());
 
-		return repository.lockFileEntry(fileEntryId);
+		FileEntry fileEntry = getFileEntry(fileEntryId);
+
+		return fileEntry.getLock();
 	}
 
+	/**
+	 * @deprecated {@link #checkOutFileEntry(long, String, long,
+	 *             ServiceContext)}
+	 */
 	public Lock lockFileEntry(
 			long fileEntryId, String owner, long expirationTime)
 		throws PortalException, SystemException {
 
-		Repository repository = getRepository(0, fileEntryId, 0);
+		FileEntry fileEntry = checkOutFileEntry(
+			fileEntryId, owner, expirationTime, new ServiceContext());
 
-		return repository.lockFileEntry(fileEntryId, owner, expirationTime);
+		return fileEntry.getLock();
 	}
 
 	/**
@@ -2131,7 +2157,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 */
 	public DLFileShortcut moveFileShortcutFromTrash(
-			long fileShortcutId, long newFolderId, long toFileEntryId,
+			long fileShortcutId, long newFolderId,
 			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
@@ -2141,8 +2167,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 			getPermissionChecker(), fileShortcut, ActionKeys.UPDATE);
 
 		return dlAppHelperLocalService.moveFileShortcutFromTrash(
-			getUserId(), fileShortcut, newFolderId, toFileEntryId,
-			serviceContext);
+			getUserId(), fileShortcut, newFolderId, serviceContext);
 	}
 
 	/**
@@ -2446,20 +2471,24 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 		}
 	}
 
+	/**
+	 * @deprecated Use {@link #checkInFileEntry(long, boolean, String,
+	 *             ServiceContext)}.
+	 */
 	public void unlockFileEntry(long fileEntryId)
 		throws PortalException, SystemException {
 
-		Repository repository = getRepository(0, fileEntryId, 0);
-
-		repository.unlockFileEntry(fileEntryId);
+		checkInFileEntry(
+			fileEntryId, false, StringPool.BLANK, new ServiceContext());
 	}
 
+	/**
+	 * @deprecated Use {@link #checkInFileEntry(long, String)}.
+	 */
 	public void unlockFileEntry(long fileEntryId, String lockUuid)
 		throws PortalException, SystemException {
 
-		Repository repository = getRepository(0, fileEntryId, 0);
-
-		repository.unlockFileEntry(fileEntryId, lockUuid);
+		checkInFileEntry(fileEntryId, lockUuid);
 	}
 
 	/**
@@ -2790,15 +2819,15 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 	 * @param  serviceContext the service context to be applied. In a Liferay
 	 *         repository, it may include:  <ul> <li> defaultFileEntryTypeId -
 	 *         the file entry type to default all Liferay file entries to </li>
-	 *         <li> fileEntryTypeSearchContainerPrimaryKeys - a comma-delimited
-	 *         list of file entry type primary keys allowed in the given folder
-	 *         and all descendants </li> <li> overrideFileEntryTypes - boolean
-	 *         specifying whether to override ancestral folder's restriction of
-	 *         file entry types allowed </li> <li> workflowDefinitionXYZ - the
-	 *         workflow definition name specified per file entry type. The
-	 *         parameter name must be the string <code>workflowDefinition</code>
-	 *         appended by the <code>fileEntryTypeId</code> (optionally
-	 *         <code>0</code>). </li> </ul>
+	 *         <li> dlFileEntryTypesSearchContainerPrimaryKeys - a
+	 *         comma-delimited list of file entry type primary keys allowed in
+	 *         the given folder and all descendants </li> <li>
+	 *         overrideFileEntryTypes - boolean specifying whether to override
+	 *         ancestral folder's restriction of file entry types allowed </li>
+	 *         <li> workflowDefinitionXYZ - the workflow definition name
+	 *         specified per file entry type. The parameter name must be the
+	 *         string <code>workflowDefinition</code> appended by the <code>
+	 *         fileEntryTypeId</code> (optionally <code>0</code>). </li> </ul>
 	 * @return the folder
 	 * @throws PortalException if the current or new parent folder could not be
 	 *         found or if the new parent folder's information was invalid
@@ -2890,7 +2919,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 			StringPool.BLANK, latestFileVersion.getContentStream(false),
 			latestFileVersion.getSize(), serviceContext);
 
-		for (int i = fileVersions.size() - 2; i >= 0 ; i--) {
+		for (int i = fileVersions.size() - 2; i >= 0; i--) {
 			FileVersion fileVersion = fileVersions.get(i);
 
 			FileVersion previousFileVersion = fileVersions.get(i + 1);
@@ -2979,7 +3008,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 			}
 		}
 
-		TransactionCommitCallbackUtil.registerCallback(
+		TransactionCommitCallbackRegistryUtil.registerCallback(
 			new Callable<Void>() {
 
 				public Void call() throws Exception {

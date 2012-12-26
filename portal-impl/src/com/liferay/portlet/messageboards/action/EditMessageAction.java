@@ -17,6 +17,7 @@ package com.liferay.portlet.messageboards.action;
 import com.liferay.portal.kernel.captcha.CaptchaMaxChallengesException;
 import com.liferay.portal.kernel.captcha.CaptchaTextException;
 import com.liferay.portal.kernel.captcha.CaptchaUtil;
+import com.liferay.portal.kernel.sanitizer.SanitizerException;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
@@ -132,7 +133,8 @@ public class EditMessageAction extends PortletAction {
 					 e instanceof FileSizeException ||
 					 e instanceof LockedThreadException ||
 					 e instanceof MessageBodyException ||
-					 e instanceof MessageSubjectException) {
+					 e instanceof MessageSubjectException ||
+					 e instanceof SanitizerException) {
 
 				SessionErrors.add(actionRequest, e.getClass());
 			}
@@ -142,7 +144,14 @@ public class EditMessageAction extends PortletAction {
 				SessionErrors.add(actionRequest, e.getClass(), e);
 			}
 			else {
-				throw e;
+				Throwable cause = e.getCause();
+
+				if (cause instanceof SanitizerException) {
+					SessionErrors.add(actionRequest, SanitizerException.class);
+				}
+				else {
+					throw e;
+				}
 			}
 		}
 	}
@@ -322,7 +331,7 @@ public class EditMessageAction extends PortletAction {
 					InputStream inputStream =
 						uploadPortletRequest.getFileAsStream("msgFile" + i);
 
-					if (inputStream == null) {
+					if ((inputStream == null) || Validator.isNull(fileName)) {
 						continue;
 					}
 
@@ -376,9 +385,8 @@ public class EditMessageAction extends PortletAction {
 					// Post reply
 
 					message = MBMessageServiceUtil.addMessage(
-						groupId, categoryId, threadId, parentMessageId, subject,
-						body, format, inputStreamOVPs, anonymous, priority,
-						allowPingbacks, serviceContext);
+						parentMessageId, subject, body, format, inputStreamOVPs,
+						anonymous, priority, allowPingbacks, serviceContext);
 				}
 			}
 			else {

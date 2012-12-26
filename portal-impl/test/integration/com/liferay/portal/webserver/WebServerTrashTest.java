@@ -16,6 +16,7 @@ package com.liferay.portal.webserver;
 
 import com.liferay.portal.NoSuchRoleException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -31,13 +32,13 @@ import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
 import com.liferay.portal.test.MainServletExecutionTestListener;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portal.webdav.methods.Method;
 import com.liferay.portlet.documentlibrary.service.DLAppServiceUtil;
+import com.liferay.portlet.documentlibrary.util.DLAppTestUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 		super.setUp();
 
 		_user = ServiceTestUtil.addUser(
-			null, true, new long[]{TestPropsValues.getGroupId()});
+			null, true, new long[] {group.getGroupId()});
 
 		try {
 			_role = RoleLocalServiceUtil.getRole(
@@ -68,8 +69,8 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 		}
 		catch (NoSuchRoleException nsre) {
 			_role = RoleLocalServiceUtil.addRole(
-				TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
-				"Trash Admin", null, null, RoleConstants.TYPE_REGULAR);
+				TestPropsValues.getUserId(), null, 0, "Trash Admin", null, null,
+				RoleConstants.TYPE_REGULAR, null);
 		}
 
 		ResourcePermissionLocalServiceUtil.addResourcePermission(
@@ -95,33 +96,37 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 
 	@Test
 	public void testRequestFileInTrash() throws Exception {
-		FileEntry fileEntry = addFileEntry(false, "Test Trash.txt");
+		FileEntry fileEntry = DLAppTestUtil.addFileEntry(
+			group.getGroupId(), parentFolder.getFolderId(), false,
+			"Test Trash.txt");
 
-		MockHttpServletResponse response =  testRequestFile(
+		MockHttpServletResponse mockHttpServletResponse =  testRequestFile(
 			fileEntry, _user, false);
 
 		Assert.assertEquals(
-			MockHttpServletResponse.SC_OK, response.getStatus());
+			MockHttpServletResponse.SC_OK, mockHttpServletResponse.getStatus());
 
 		DLAppServiceUtil.moveFileEntryToTrash(fileEntry.getFileEntryId());
 
-		response = testRequestFile(fileEntry, _user, false);
+		mockHttpServletResponse = testRequestFile(fileEntry, _user, false);
 
 		Assert.assertEquals(
-			MockHttpServletResponse.SC_NOT_FOUND, response.getStatus());
+			MockHttpServletResponse.SC_NOT_FOUND,
+			mockHttpServletResponse.getStatus());
 
-		response = testRequestFile(fileEntry, _user, true);
+		mockHttpServletResponse = testRequestFile(fileEntry, _user, true);
 
 		Assert.assertEquals(
-			MockHttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
+			MockHttpServletResponse.SC_UNAUTHORIZED,
+			mockHttpServletResponse.getStatus());
 
 		RoleLocalServiceUtil.addUserRoles(
 			_user.getUserId(), new long[] {_role.getRoleId()});
 
-		response = testRequestFile(fileEntry, _user, true);
+		mockHttpServletResponse = testRequestFile(fileEntry, _user, true);
 
 		Assert.assertEquals(
-			MockHttpServletResponse.SC_OK, response.getStatus());
+			MockHttpServletResponse.SC_OK, mockHttpServletResponse.getStatus());
 	}
 
 	protected void resetPermissionThreadLocal() throws Exception {
@@ -151,12 +156,12 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 				"status", String.valueOf(WorkflowConstants.STATUS_IN_TRASH));
 		}
 
-		MockHttpServletResponse response = service(
+		MockHttpServletResponse mockHttpServletResponse = service(
 			Method.GET, path, null, params, user, null);
 
 		resetPermissionThreadLocal();
 
-		return response;
+		return mockHttpServletResponse;
 	}
 
 	private Role _role;

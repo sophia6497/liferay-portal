@@ -57,7 +57,6 @@ public class DDMTemplateServiceUtil {
 
 	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplate addTemplate(
 		long groupId, long classNameId, long classPK,
-		java.lang.String templateKey,
 		java.util.Map<java.util.Locale, java.lang.String> nameMap,
 		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
 		java.lang.String type, java.lang.String mode,
@@ -66,8 +65,37 @@ public class DDMTemplateServiceUtil {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
+				   .addTemplate(groupId, classNameId, classPK, nameMap,
+			descriptionMap, type, mode, language, script, serviceContext);
+	}
+
+	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplate addTemplate(
+		long groupId, long classNameId, long classPK,
+		java.lang.String templateKey,
+		java.util.Map<java.util.Locale, java.lang.String> nameMap,
+		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
+		java.lang.String type, java.lang.String mode,
+		java.lang.String language, java.lang.String script, boolean cacheable,
+		boolean smallImage, java.lang.String smallImageURL,
+		java.io.File smallImageFile,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
 				   .addTemplate(groupId, classNameId, classPK, templateKey,
-			nameMap, descriptionMap, type, mode, language, script,
+			nameMap, descriptionMap, type, mode, language, script, cacheable,
+			smallImage, smallImageURL, smallImageFile, serviceContext);
+	}
+
+	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplate copyTemplate(
+		long templateId,
+		java.util.Map<java.util.Locale, java.lang.String> nameMap,
+		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .copyTemplate(templateId, nameMap, descriptionMap,
 			serviceContext);
 	}
 
@@ -105,6 +133,15 @@ public class DDMTemplateServiceUtil {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService().getTemplate(groupId, templateKey);
+	}
+
+	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplate getTemplate(
+		long groupId, java.lang.String templateKey,
+		boolean includeGlobalTemplates)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getTemplate(groupId, templateKey, includeGlobalTemplates);
 	}
 
 	public static java.util.List<com.liferay.portlet.dynamicdatamapping.model.DDMTemplate> getTemplates(
@@ -217,13 +254,16 @@ public class DDMTemplateServiceUtil {
 		java.util.Map<java.util.Locale, java.lang.String> nameMap,
 		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
 		java.lang.String type, java.lang.String mode,
-		java.lang.String language, java.lang.String script,
+		java.lang.String language, java.lang.String script, boolean cacheable,
+		boolean smallImage, java.lang.String smallImageURL,
+		java.io.File smallImageFile,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .updateTemplate(templateId, nameMap, descriptionMap, type,
-			mode, language, script, serviceContext);
+			mode, language, script, cacheable, smallImage, smallImageURL,
+			smallImageFile, serviceContext);
 	}
 
 	public static DDMTemplateService getService() {

@@ -22,12 +22,12 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.MembershipRequest;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -124,7 +124,7 @@ public class MembershipRequestPersistenceTest {
 
 		newMembershipRequest.setStatusId(ServiceTestUtil.nextInt());
 
-		_persistence.update(newMembershipRequest, false);
+		_persistence.update(newMembershipRequest);
 
 		MembershipRequest existingMembershipRequest = _persistence.findByPrimaryKey(newMembershipRequest.getPrimaryKey());
 
@@ -291,7 +291,7 @@ public class MembershipRequestPersistenceTest {
 
 		membershipRequest.setStatusId(ServiceTestUtil.nextInt());
 
-		_persistence.update(membershipRequest, false);
+		_persistence.update(membershipRequest);
 
 		return membershipRequest;
 	}

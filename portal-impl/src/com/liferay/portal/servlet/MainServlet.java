@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
+import com.liferay.portal.kernel.servlet.NonSerializableObjectRequestWrapper;
 import com.liferay.portal.kernel.servlet.PortalSessionThreadLocal;
 import com.liferay.portal.kernel.servlet.PortletSessionTracker;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
@@ -42,6 +43,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalLifecycleUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -53,6 +55,7 @@ import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.Layout;
+import com.liferay.portal.model.LayoutConstants;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.model.PortletApp;
 import com.liferay.portal.model.PortletFilter;
@@ -97,6 +100,7 @@ import com.liferay.util.ContentUtil;
 import com.liferay.util.servlet.EncryptedServletRequest;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import java.util.List;
 import java.util.Locale;
@@ -109,7 +113,6 @@ import javax.portlet.PortletException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -186,6 +189,8 @@ public class MainServlet extends ActionServlet {
 		}
 
 		ServletContext servletContext = getServletContext();
+
+		servletContext.setAttribute(MainServlet.class.getName(), Boolean.TRUE);
 
 		callParentInit();
 
@@ -423,6 +428,12 @@ public class MainServlet extends ActionServlet {
 		checkPortletSessionTracker(request);
 		checkPortletRequestProcessor(request);
 		checkTilesDefinitionsFactory();
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Handle non-serializable request");
+		}
+
+		request = handleNonSerializableRequest(request);
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Encrypt request");
@@ -733,6 +744,16 @@ public class MainServlet extends ActionServlet {
 
 	protected long getUserId(HttpServletRequest request) {
 		return PortalUtil.getUserId(request);
+	}
+
+	protected HttpServletRequest handleNonSerializableRequest(
+		HttpServletRequest request) {
+
+		if (ServerDetector.isWebLogic()) {
+			request = new NonSerializableObjectRequestWrapper(request);
+		}
+
+		return request;
 	}
 
 	protected boolean hasAbsoluteRedirect(HttpServletRequest request) {
@@ -1078,9 +1099,9 @@ public class MainServlet extends ActionServlet {
 
 		html = StringUtil.replace(html, "[$MESSAGE$]", message);
 
-		ServletOutputStream servletOutputStream = response.getOutputStream();
+		PrintWriter printWriter = response.getWriter();
 
-		servletOutputStream.print(html);
+		printWriter.print(html);
 	}
 
 	protected boolean processMaintenanceRequest(
@@ -1109,17 +1130,6 @@ public class MainServlet extends ActionServlet {
 		}
 		catch (Exception e) {
 			_log.error(e, e);
-		}
-
-		if (_HTTP_HEADER_VERSION_VERBOSITY_DEFAULT) {
-		}
-		else if (_HTTP_HEADER_VERSION_VERBOSITY_PARTIAL) {
-			response.addHeader(
-				_LIFERAY_PORTAL_REQUEST_HEADER, ReleaseInfo.getName());
-		}
-		else {
-			response.addHeader(
-				_LIFERAY_PORTAL_REQUEST_HEADER, ReleaseInfo.getReleaseInfo());
 		}
 	}
 
@@ -1162,6 +1172,17 @@ public class MainServlet extends ActionServlet {
 			return true;
 		}
 
+		if (_HTTP_HEADER_VERSION_VERBOSITY_DEFAULT) {
+		}
+		else if (_HTTP_HEADER_VERSION_VERBOSITY_PARTIAL) {
+			response.addHeader(
+				_LIFERAY_PORTAL_REQUEST_HEADER, ReleaseInfo.getName());
+		}
+		else {
+			response.addHeader(
+				_LIFERAY_PORTAL_REQUEST_HEADER, ReleaseInfo.getReleaseInfo());
+		}
+
 		return false;
 	}
 
@@ -1189,15 +1210,17 @@ public class MainServlet extends ActionServlet {
 			try {
 				Layout layout = LayoutLocalServiceUtil.getLayout(plid);
 
-				if (layout.getGroup().isStagingGroup()) {
-					Group group = GroupLocalServiceUtil.getGroup(
+				Group group = layout.getGroup();
+
+				plid = group.getDefaultPublicPlid();
+
+				if ((plid == LayoutConstants.DEFAULT_PLID) ||
+					 group.isStagingGroup()) {
+
+					Group guestGroup = GroupLocalServiceUtil.getGroup(
 						layout.getCompanyId(), GroupConstants.GUEST);
 
-					plid = group.getDefaultPublicPlid();
-				}
-				else if (layout.isPrivateLayout()) {
-					plid = LayoutLocalServiceUtil.getDefaultPlid(
-						layout.getGroupId(), false);
+					plid = guestGroup.getDefaultPublicPlid();
 				}
 
 				redirect = HttpUtil.addParameter(redirect, "p_l_id", plid);

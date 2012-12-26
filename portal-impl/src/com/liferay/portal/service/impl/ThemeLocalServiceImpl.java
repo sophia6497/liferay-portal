@@ -657,8 +657,9 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 					String key = settingElement.attributeValue("key");
 					String[] options = StringUtil.split(
 						settingElement.attributeValue("options"));
-					String type = settingElement.attributeValue("type");
-					String value = settingElement.attributeValue("value");
+					String type = settingElement.attributeValue("type", "text");
+					String value = settingElement.attributeValue(
+						"value", StringPool.BLANK);
 					String script = settingElement.getTextTrim();
 
 					theme.addSetting(
@@ -755,6 +756,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 			}
 		}
 
+		String spriteRootDirName = PropsValues.SPRITE_ROOT_DIR;
 		String spriteFileName = resourcePath.concat(
 			PropsValues.SPRITE_FILE_NAME);
 		String spritePropertiesFileName = resourcePath.concat(
@@ -762,8 +764,8 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		String rootPath = ServletContextUtil.getRootPath(servletContext);
 
 		Properties spriteProperties = SpriteProcessorUtil.generate(
-			servletContext, imageURLs, spriteFileName, spritePropertiesFileName,
-			rootPath, 16, 16, 10240);
+			servletContext, imageURLs, spriteRootDirName, spriteFileName,
+			spritePropertiesFileName, rootPath, 16, 16, 10240);
 
 		if (spriteProperties == null) {
 			return;

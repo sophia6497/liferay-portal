@@ -99,6 +99,7 @@ public class EmailAddressModelImpl extends BaseModelImpl<EmailAddress>
 	public static long COMPANYID_COLUMN_BITMASK = 4L;
 	public static long PRIMARY_COLUMN_BITMASK = 8L;
 	public static long USERID_COLUMN_BITMASK = 16L;
+	public static long CREATEDATE_COLUMN_BITMASK = 32L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -472,17 +473,6 @@ public class EmailAddressModelImpl extends BaseModelImpl<EmailAddress>
 	}
 
 	@Override
-	public EmailAddress toEscapedModel() {
-		if (_escapedModelProxy == null) {
-			_escapedModelProxy = (EmailAddress)ProxyUtil.newProxyInstance(_classLoader,
-					_escapedModelProxyInterfaces,
-					new AutoEscapeBeanHandler(this));
-		}
-
-		return _escapedModelProxy;
-	}
-
-	@Override
 	public ExpandoBridge getExpandoBridge() {
 		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
 			EmailAddress.class.getName(), getPrimaryKey());
@@ -493,6 +483,16 @@ public class EmailAddressModelImpl extends BaseModelImpl<EmailAddress>
 		ExpandoBridge expandoBridge = getExpandoBridge();
 
 		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public EmailAddress toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (EmailAddress)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -729,7 +729,7 @@ public class EmailAddressModelImpl extends BaseModelImpl<EmailAddress>
 	}
 
 	private static ClassLoader _classLoader = EmailAddress.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			EmailAddress.class
 		};
 	private long _emailAddressId;
@@ -755,5 +755,5 @@ public class EmailAddressModelImpl extends BaseModelImpl<EmailAddress>
 	private boolean _originalPrimary;
 	private boolean _setOriginalPrimary;
 	private long _columnBitmask;
-	private EmailAddress _escapedModelProxy;
+	private EmailAddress _escapedModel;
 }

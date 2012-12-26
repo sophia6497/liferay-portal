@@ -22,128 +22,75 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
  */
 public class ImportLARTest extends BaseTestCase {
 	public void testImportLAR() throws Exception {
-		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
-		assertEquals(RuntimeVariables.replace("Go to"),
-			selenium.getText("//li[@id='_145_mySites']/a/span"));
-		selenium.mouseOver("//li[@id='_145_mySites']/a/span");
+		int label = 1;
 
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
+		while (label >= 1) {
+			switch (label) {
+			case 1:
+				selenium.selectWindow("null");
+				selenium.selectFrame("relative=top");
+				selenium.open("/web/guest/home/");
+				selenium.clickAt("//div[@id='dockbar']",
+					RuntimeVariables.replace("Dockbar"));
+				selenium.waitForElementPresent(
+					"//script[contains(@src,'/aui/aui-editable/aui-editable-min.js')]");
+				assertEquals(RuntimeVariables.replace("Go to"),
+					selenium.getText("//li[@id='_145_mySites']/a/span"));
+				selenium.mouseOver("//li[@id='_145_mySites']/a/span");
+				selenium.waitForVisible("link=Control Panel");
+				selenium.clickAt("link=Control Panel",
+					RuntimeVariables.replace("Control Panel"));
+				selenium.waitForPageToLoad("30000");
+				selenium.clickAt("link=Bookmarks",
+					RuntimeVariables.replace("Bookmarks"));
+				selenium.waitForPageToLoad("30000");
+				assertEquals(RuntimeVariables.replace("Options"),
+					selenium.getText("//span[@title='Options']/ul/li/strong/a"));
+				selenium.clickAt("//span[@title='Options']/ul/li/strong/a",
+					RuntimeVariables.replace("Options"));
+				selenium.waitForVisible(
+					"//div[@class='lfr-component lfr-menu-list']/ul/li/a[contains(.,' Export / Import ')]");
+				assertEquals(RuntimeVariables.replace("Export / Import"),
+					selenium.getText(
+						"//div[@class='lfr-component lfr-menu-list']/ul/li/a[contains(.,' Export / Import ')]"));
+				selenium.click(RuntimeVariables.replace(
+						"//div[@class='lfr-component lfr-menu-list']/ul/li/a[contains(.,' Export / Import ')]"));
+				selenium.waitForPageToLoad("30000");
+				selenium.waitForVisible("link=Import");
+				selenium.clickAt("link=Import",
+					RuntimeVariables.replace("Import"));
+				selenium.waitForPageToLoad("30000");
+				selenium.uploadFile("//input[@id='_86_importFileName']",
+					RuntimeVariables.replace(
+						"L:\\portal\\build\\portal-web\\test\\com\\liferay\\portalweb\\portal\\controlpanel\\bookmarks\\dependencies\\Selenium-Bookmarks.portlet.lar"));
 
-			try {
-				if (selenium.isVisible("link=Control Panel")) {
-					break;
+				boolean deletePortletDataBeforeImportingCheckbox = selenium.isChecked(
+						"//input[@id='_86_DELETE_PORTLET_DATACheckbox']");
+
+				if (deletePortletDataBeforeImportingCheckbox) {
+					label = 2;
+
+					continue;
 				}
-			}
-			catch (Exception e) {
-			}
 
-			Thread.sleep(1000);
+				selenium.clickAt("//input[@id='_86_DELETE_PORTLET_DATACheckbox']",
+					RuntimeVariables.replace(
+						"Delete portlet data before importing Checkbox"));
+
+			case 2:
+				assertTrue(selenium.isChecked(
+						"//input[@id='_86_DELETE_PORTLET_DATACheckbox']"));
+				selenium.clickAt("//input[@value='Import']",
+					RuntimeVariables.replace("Import"));
+				selenium.waitForPageToLoad("30000");
+				selenium.waitForVisible("//div[@class='portlet-msg-success']");
+				assertEquals(RuntimeVariables.replace(
+						"Your request completed successfully."),
+					selenium.getText("//div[@class='portlet-msg-success']"));
+
+			case 100:
+				label = -1;
+			}
 		}
-
-		selenium.clickAt("link=Control Panel",
-			RuntimeVariables.replace("Control Panel"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		selenium.clickAt("link=Bookmarks", RuntimeVariables.replace("Bookmarks"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible("//menu/span/ul/li/strong/a")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		selenium.clickAt("//menu/span/ul/li/strong/a",
-			RuntimeVariables.replace("Options"));
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible(
-							"//div[@class='lfr-component lfr-menu-list']/ul/li/a")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		assertEquals(RuntimeVariables.replace("Export / Import"),
-			selenium.getText(
-				"//div[@class='lfr-component lfr-menu-list']/ul/li/a"));
-		selenium.click(RuntimeVariables.replace(
-				"//div[@class='lfr-component lfr-menu-list']/ul/li/a"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible("link=Import")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		selenium.clickAt("link=Import", RuntimeVariables.replace("Import"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		selenium.type("//input[@id='_86_importFileName']",
-			RuntimeVariables.replace(
-				"L:\\portal\\build\\portal-web\\test\\com\\liferay\\portalweb\\portal\\controlpanel\\bookmarks\\dependencies\\Selenium-Bookmarks.portlet.lar"));
-		selenium.clickAt("//input[@id='_86_DELETE_PORTLET_DATACheckbox']",
-			RuntimeVariables.replace(
-				"Delete portlet data before importing Checkbox"));
-		selenium.clickAt("//input[@value='Import']",
-			RuntimeVariables.replace("Import"));
-		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible("//div[@class='portlet-msg-success']")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		assertEquals(RuntimeVariables.replace(
-				"Your request completed successfully."),
-			selenium.getText("//div[@class='portlet-msg-success']"));
 	}
 }

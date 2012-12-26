@@ -34,7 +34,7 @@ boolean publicLayoutSetPrototypeLinkEnabled = true;
 
 if (showPrototypes && (group != null)) {
 	try {
-		LayoutLocalServiceUtil.getLayouts(liveGroup.getGroupId(), false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
+		LayoutLocalServiceUtil.getLayouts(liveGroup.getGroupId(), true, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
 
 		privateLayoutSet = LayoutSetLocalServiceUtil.getLayoutSet(liveGroup.getGroupId(), true);
 
@@ -84,7 +84,7 @@ if (showPrototypes && (group != null)) {
 		<liferay-ui:message key="the-site-cannot-be-deleted-or-deactivated-because-you-are-accessing-the-site" />
 	</c:if>
 
-	<c:if test="<%=rge.getType() == RequiredGroupException.PARENT_GROUP%>">
+	<c:if test="<%= rge.getType() == RequiredGroupException.PARENT_GROUP %>">
 		<liferay-ui:message key="you-cannot-delete-sites-that-have-subsites" />
 	</c:if>
 
@@ -146,7 +146,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 									String servletContextName = settingsProperties.getProperty("customJspServletContextName", StringPool.BLANK);
 								%>
 
-									<aui:option data-servletContextName="<%= servletContextName %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
+									<aui:option data-servletContextName="<%= servletContextName %>" disabled="<%= (privateLayoutSetPrototype != null) && (curLayoutSetPrototype.getLayoutSetPrototypeId() == privateLayoutSetPrototype.getLayoutSetPrototypeId()) %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
 
 								<%
 								}
@@ -218,7 +218,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 									String servletContextName = settingsProperties.getProperty("customJspServletContextName", StringPool.BLANK);
 								%>
 
-									<aui:option data-servletContextName="<%= servletContextName %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
+									<aui:option data-servletContextName="<%= servletContextName %>" disabled="<%= (publicLayoutSetPrototype != null) && (curLayoutSetPrototype.getLayoutSetPrototypeId() == publicLayoutSetPrototype.getLayoutSetPrototypeId()) %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
 
 								<%
 								}

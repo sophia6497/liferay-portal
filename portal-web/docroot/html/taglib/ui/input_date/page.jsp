@@ -133,7 +133,7 @@ else if (yearNullable) {
 			</c:choose>
 		</div>
 		<div class="aui-datepicker-button-wrapper">
-			<button class="aui-buttonitem aui-buttonitem-content aui-buttonitem-icon-only aui-component aui-state-default yui3-widget" id="buttonTest" type="button">
+			<button class="aui-buttonitem aui-buttonitem-content aui-buttonitem-icon-only aui-component aui-state-default yui3-widget" id="buttonTest" title="<liferay-ui:message key="display-a-datepicker" />" type="button">
 				<span class="aui-buttonitem-icon aui-icon aui-icon-calendar"></span>
 			</button>
 		</div>
@@ -150,6 +150,8 @@ else if (yearNullable) {
 		function() {
 			if (handle) {
 				handle.detach();
+
+				handle = null;
 			}
 
 			return new A.DatePickerSelect(
@@ -174,16 +176,6 @@ else if (yearNullable) {
 					appendOrder: '<%= dateFormatOrder %>',
 					boundingBox: displayDateNode,
 					calendar: {
-						dates: [
-							<c:if test="<%= !monthEmpty && !dayEmpty && !yearEmpty %>">
-								new Date(
-									<%= cal.get(Calendar.YEAR) %>,
-									<%= cal.get(Calendar.MONTH) %>,
-									<%= cal.get(Calendar.DATE) %>
-								)
-							</c:if>
-						],
-
 						<c:choose>
 							<c:when test="<%= dateFormatOrder.equals(_DATE_FORMAT_ORDER_MDY) %>">
 								dateFormat: '%m/%d/%y',
@@ -196,6 +188,14 @@ else if (yearNullable) {
 							</c:otherwise>
 						</c:choose>
 
+						<c:if test="<%= !monthEmpty && !dayEmpty && !yearEmpty %>">
+							selectedDates: new Date(
+								<%= cal.get(Calendar.YEAR) %>,
+								<%= cal.get(Calendar.MONTH) %>,
+								<%= cal.get(Calendar.DATE) %>
+							),
+						</c:if>
+
 						firstDayOfWeek: <%= firstDayOfWeek %>,
 						locale: '<%= LanguageUtil.getLanguageId(request) %>',
 						strings: {
@@ -205,6 +205,7 @@ else if (yearNullable) {
 							today: '<liferay-ui:message key="today" />'
 						}
 					},
+					datePickerConfig: {},
 					dayNode: '#<%= dayParam %>',
 					disabled: <%= disabled %>,
 					monthNode: '#<%= monthParam %>',

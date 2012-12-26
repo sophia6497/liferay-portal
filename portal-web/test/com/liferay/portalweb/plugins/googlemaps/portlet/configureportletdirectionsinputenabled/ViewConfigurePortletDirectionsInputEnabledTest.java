@@ -23,47 +23,25 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
 public class ViewConfigurePortletDirectionsInputEnabledTest extends BaseTestCase {
 	public void testViewConfigurePortletDirectionsInputEnabled()
 		throws Exception {
+		selenium.selectWindow("null");
+		selenium.selectFrame("relative=top");
 		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
 		selenium.clickAt("link=Google Maps Test Page",
 			RuntimeVariables.replace("Google Maps Test Page"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
 		Thread.sleep(5000);
 		assertEquals("205 W. Wacker Dr, Suite 513 Chicago, IL, 60606",
 			selenium.getValue("//input[contains(@name,'_directionsAddress')]"));
 		assertTrue(selenium.isVisible("//input[@value='Get Directions']"));
 		assertEquals(RuntimeVariables.replace(
-				"1220 Brea Canyon Road, Diamond Bar, CA, 91789"),
-			selenium.getText("//div[@style='overflow: auto;']"));
+				"From 1220 Brea Canyon Road, Diamond Bar, CA, 91789"),
+			selenium.getText("//div[@class='aui-field-wrapper-content']"));
 		selenium.clickAt("//input[@value='Get Directions']",
 			RuntimeVariables.replace("Get Directions"));
 		Thread.sleep(5000);
-		selenium.selectWindow("name=undefined");
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isVisible("//div[2]/input")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		assertEquals("205 W. Wacker Dr, Suite 513 Chicago, IL, 60606 to 1220 Brea Canyon Road, Diamond Bar, CA, 91789",
-			selenium.getValue("//div[2]/input"));
-		assertEquals("205 W. Wacker Dr, Suite 513 Chicago, IL, 60606",
-			selenium.getValue("//input[@id='d_d']"));
-		assertEquals("1220 Brea Canyon Road, Diamond Bar, CA, 91789",
-			selenium.getValue("//input[@id='d_daddr']"));
-		selenium.close();
-		selenium.selectWindow("null");
+		assertEquals(RuntimeVariables.replace("Map"),
+			selenium.getText("//div[@title='Show street map']"));
+		assertEquals(RuntimeVariables.replace("Satellite"),
+			selenium.getText("//div[@title='Show satellite imagery']"));
 	}
 }

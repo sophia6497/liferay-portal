@@ -45,6 +45,8 @@ import java.util.TimeZone;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.PortletConfig;
+import javax.portlet.PortletException;
 import javax.portlet.PortletMode;
 import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
@@ -358,6 +360,26 @@ public interface Portal {
 		throws PortalException, SystemException;
 
 	/**
+	 * Returns the canonical URL of the page, to distinguish it among its
+	 * translations.
+	 *
+	 * @param  completeURL the complete URL of the page
+	 * @param  themeDisplay the current theme display
+	 * @param  layout the layout. If it is <code>null</code>, then it is
+	 *         generated for the current layout
+	 * @param  forceLayoutFriendlyURL adds the page friendly URL to the
+	 *         canonical URL even if it is not needed
+	 * @return the canonical URL
+	 * @throws PortalException if a friendly URL or the group could not be
+	 *         retrieved
+	 * @throws SystemException if a system exception occurred
+	 */
+	public String getCanonicalURL(
+			String completeURL, ThemeDisplay themeDisplay, Layout layout,
+			boolean forceLayoutFriendlyURL)
+		throws PortalException, SystemException;
+
+	/**
 	 * @deprecated Replaced by the more general {@link #getCDNHost(boolean)}
 	 */
 	public String getCDNHost();
@@ -378,7 +400,7 @@ public interface Portal {
 	 * Returns the insecure (HTTP) content distribution network (CDN) host
 	 * address
 	 *
-	 * @param  companyId the company ID of a site TODO?
+	 * @param  companyId the company ID of a site
 	 * @return the CDN host address
 	 */
 	public String getCDNHostHttp(long companyId);
@@ -387,7 +409,7 @@ public interface Portal {
 	 * Returns the secure (HTTPS) content distribution network (CDN) host
 	 * address
 	 *
-	 * @param  companyId the company ID of a site TODO?
+	 * @param  companyId the company ID of a site
 	 * @return the CDN host address
 	 */
 	public String getCDNHostHttps(long companyId);
@@ -450,6 +472,12 @@ public interface Portal {
 
 	public String getControlPanelFullURL(
 			long scopeGroupId, String ppid, Map<String, String[]> params)
+		throws PortalException, SystemException;
+
+	public long getControlPanelPlid(long companyId)
+		throws PortalException, SystemException;
+
+	public long getControlPanelPlid(PortletRequest portletRequest)
 		throws PortalException, SystemException;
 
 	public Set<Portlet> getControlPanelPortlets(long companyId, String category)
@@ -617,13 +645,30 @@ public interface Portal {
 			Group group, boolean privateLayoutSet, ThemeDisplay themeDisplay)
 		throws PortalException, SystemException;
 
+	public String getGroupFriendlyURL(
+			Group group, boolean privateLayoutSet, ThemeDisplay themeDisplay,
+			Locale locale)
+		throws PortalException, SystemException;
+
 	public String[] getGroupPermissions(HttpServletRequest request);
+
+	public String[] getGroupPermissions(
+		HttpServletRequest request, String className);
 
 	public String[] getGroupPermissions(PortletRequest portletRequest);
 
+	public String[] getGroupPermissions(
+		PortletRequest portletRequest, String className);
+
 	public String[] getGuestPermissions(HttpServletRequest request);
 
+	public String[] getGuestPermissions(
+		HttpServletRequest request, String className);
+
 	public String[] getGuestPermissions(PortletRequest portletRequest);
+
+	public String[] getGuestPermissions(
+		PortletRequest portletRequest, String className);
 
 	public String getHomeURL(HttpServletRequest request)
 		throws PortalException, SystemException;
@@ -643,7 +688,7 @@ public interface Portal {
 			Map<String, String[]> params, Map<String, Object> requestContext)
 		throws PortalException, SystemException;
 
-	public String getJsSafePortletId(String portletId) ;
+	public String getJsSafePortletId(String portletId);
 
 	public String getLayoutActualURL(Layout layout);
 
@@ -729,8 +774,6 @@ public interface Portal {
 	public HttpServletRequest getOriginalServletRequest(
 		HttpServletRequest request);
 
-	public String getOuterPortletId(HttpServletRequest request);
-
 	public long getParentGroupId(long scopeGroupId)
 		throws PortalException, SystemException;
 
@@ -800,6 +843,10 @@ public interface Portal {
 	public List<BreadcrumbEntry> getPortletBreadcrumbs(
 		HttpServletRequest request);
 
+	public PortletConfig getPortletConfig(
+			long companyId, String portletId, ServletContext servletContext)
+		throws PortletException, SystemException;
+
 	public String getPortletDescription(
 		Portlet portlet, ServletContext servletContext, Locale locale);
 
@@ -840,6 +887,8 @@ public interface Portal {
 	public String getPortletTitle(Portlet portlet, String languageId);
 
 	public String getPortletTitle(Portlet portlet, User user);
+
+	public String getPortletTitle(RenderRequest renderRequest);
 
 	public String getPortletTitle(RenderResponse renderResponse);
 
@@ -961,6 +1010,8 @@ public interface Portal {
 
 	public long getUserId(PortletRequest portletRequest);
 
+	public String getUserName(BaseModel<?> baseModel);
+
 	public String getUserName(long userId, String defaultUserName);
 
 	public String getUserName(
@@ -995,6 +1046,11 @@ public interface Portal {
 		throws PortalException, SystemException;
 
 	public void initCustomSQL();
+
+	public void invokeTaglibDiscussion(
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
+		throws Exception;
 
 	public boolean isAllowAddPortletDefaultResource(
 			HttpServletRequest request, Portlet portlet)
@@ -1038,6 +1094,9 @@ public interface Portal {
 
 	public boolean isGroupAdmin(User user, long groupId) throws Exception;
 
+	public boolean isGroupFriendlyURL(
+		String fullURL, String groupFriendlyURL, String layoutFriendlyURL);
+
 	public boolean isGroupOwner(User user, long groupId) throws Exception;
 
 	public boolean isLayoutDescendant(Layout layout, long layoutId)
@@ -1066,6 +1125,8 @@ public interface Portal {
 	public boolean isOmniadmin(long userId);
 
 	public boolean isReservedParameter(String name);
+
+	public boolean isRSSFeedsEnabled();
 
 	public boolean isSecure(HttpServletRequest request);
 
@@ -1104,6 +1165,14 @@ public interface Portal {
 	public void sendError(
 			int status, Exception e, HttpServletRequest request,
 			HttpServletResponse response)
+		throws IOException, ServletException;
+
+	public void sendRSSFeedsDisabledError(
+			HttpServletRequest request, HttpServletResponse response)
+		throws IOException, ServletException;
+
+	public void sendRSSFeedsDisabledError(
+			PortletRequest portletRequest, PortletResponse portletResponse)
 		throws IOException, ServletException;
 
 	/**

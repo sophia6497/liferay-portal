@@ -22,28 +22,17 @@ import com.liferay.portalweb.portal.util.RuntimeVariables;
  */
 public class AssertAdSensePresentTest extends BaseTestCase {
 	public void testAssertAdSensePresent() throws Exception {
+		selenium.selectWindow("null");
+		selenium.selectFrame("relative=top");
 		selenium.open("/web/guest/home/");
-		loadRequiredJavaScriptModules();
-
-		for (int second = 0;; second++) {
-			if (second >= 90) {
-				fail("timeout");
-			}
-
-			try {
-				if (selenium.isElementPresent("link=Google Adsense Test Page")) {
-					break;
-				}
-			}
-			catch (Exception e) {
-			}
-
-			Thread.sleep(1000);
-		}
-
-		selenium.click(RuntimeVariables.replace("link=Google Adsense Test Page"));
+		selenium.clickAt("link=Google Adsense Test Page",
+			RuntimeVariables.replace("Google Adsense Test Page"));
 		selenium.waitForPageToLoad("30000");
-		loadRequiredJavaScriptModules();
-		assertTrue(selenium.isElementPresent("//img[@alt='AdChoices']"));
+		selenium.waitForVisible("//iframe[@id='aswift_0']");
+		selenium.selectFrame("//iframe[@id='aswift_0']");
+		selenium.waitForVisible("//iframe[@id='google_ads_frame1']");
+		selenium.selectFrame("//iframe[@id='google_ads_frame1']");
+		assertTrue(selenium.isVisible("//img[@alt='AdChoices']"));
+		selenium.selectFrame("relative=top");
 	}
 }

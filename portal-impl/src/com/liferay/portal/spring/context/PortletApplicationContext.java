@@ -46,7 +46,6 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see    PortletContextLoader
  * @see    PortletContextLoaderListener
  */
 public class PortletApplicationContext extends XmlWebApplicationContext {
@@ -172,8 +171,8 @@ public class PortletApplicationContext extends XmlWebApplicationContext {
 			try {
 				clazz = Class.forName(className);
 			}
-			catch (ClassNotFoundException e) {
-				_log.error(e, e);
+			catch (ClassNotFoundException cnfe) {
+				_log.error(cnfe, cnfe);
 			}
 
 			_classes.put(clazz.getName(), clazz);

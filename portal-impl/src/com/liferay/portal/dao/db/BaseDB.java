@@ -31,6 +31,7 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.velocity.VelocityUtil;
 import com.liferay.util.SimpleCounter;
@@ -541,6 +542,12 @@ public abstract class BaseDB implements DB {
 			String sqlDir, String databaseName, int population)
 		throws IOException;
 
+	protected String[] buildTableNameTokens(String line) {
+		String[] words = StringUtil.split(line, StringPool.SPACE);
+
+		return new String[] {words[1], words[2]};
+	}
+
 	protected String buildTemplate(String sqlDir, String fileName)
 		throws IOException {
 
@@ -699,6 +706,7 @@ public abstract class BaseDB implements DB {
 		Map<String, Object> variables = new HashMap<String, Object>();
 
 		variables.put("counter", new SimpleCounter());
+		variables.put("portalUUIDUtil", PortalUUIDUtil.class);
 
 		ClassLoader classLoader = PACLClassLoaderUtil.getContextClassLoader();
 
@@ -734,6 +742,32 @@ public abstract class BaseDB implements DB {
 		template = StringUtil.replace(template, "\n\n\n", "\n\n");
 
 		return template;
+	}
+
+	protected String getCreateTablesContent(String sqlDir, String suffix)
+		throws IOException {
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(sqlDir);
+
+		if (!sqlDir.endsWith("/WEB-INF/sql")) {
+			sb.append("/portal");
+			sb.append(suffix);
+			sb.append("/portal");
+		}
+		else {
+			sb.append("/tables");
+			sb.append(suffix);
+			sb.append("/tables");
+		}
+
+		sb.append(suffix);
+		sb.append(StringPool.DASH);
+		sb.append(getServerName());
+		sb.append(".sql");
+
+		return readFile(sb.toString());
 	}
 
 	protected abstract String getServerName();
@@ -832,8 +866,8 @@ public abstract class BaseDB implements DB {
 				String portalTableData = portalData.substring(x, y);
 
 				for (int i = 0; i < columns.length; i++) {
-					if (portalTableData.indexOf(
-							columns[i].trim() + " BOOLEAN") != -1) {
+					if (portalTableData.contains(
+							columns[i].trim() + " BOOLEAN")) {
 
 						append = false;
 
@@ -957,9 +991,15 @@ public abstract class BaseDB implements DB {
 
 	protected static final String ALTER_COLUMN_TYPE = "alter_column_type ";
 
+	protected static final String ALTER_TABLE_NAME = "alter_table_name ";
+
 	protected static final String DROP_INDEX = "drop index";
 
 	protected static final String DROP_PRIMARY_KEY = "drop primary key";
+
+	protected static final String[] RENAME_TABLE_TEMPLATE = {
+		"@old-table@", "@new-table@"
+	};
 
 	protected static final String[] REWORD_TEMPLATE = {
 		"@table@", "@old-column@", "@new-column@", "@type@", "@nullable@"

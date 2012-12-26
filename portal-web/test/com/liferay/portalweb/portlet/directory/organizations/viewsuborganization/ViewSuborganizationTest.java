@@ -27,35 +27,18 @@ public class ViewSuborganizationTest extends BaseTestCase {
 		while (label >= 1) {
 			switch (label) {
 			case 1:
+				selenium.selectWindow("null");
+				selenium.selectFrame("relative=top");
 				selenium.open("/web/guest/home/");
-				loadRequiredJavaScriptModules();
-
-				for (int second = 0;; second++) {
-					if (second >= 90) {
-						fail("timeout");
-					}
-
-					try {
-						if (selenium.isVisible("link=Directory Test Page")) {
-							break;
-						}
-					}
-					catch (Exception e) {
-					}
-
-					Thread.sleep(1000);
-				}
-
 				selenium.clickAt("link=Directory Test Page",
 					RuntimeVariables.replace("Directory Test Page"));
 				selenium.waitForPageToLoad("30000");
-				loadRequiredJavaScriptModules();
 				selenium.clickAt("link=Organizations",
 					RuntimeVariables.replace("Organizations"));
 				selenium.waitForPageToLoad("30000");
-				loadRequiredJavaScriptModules();
 
-				boolean basicVisible = selenium.isVisible("link=\u00ab Basic");
+				boolean basicVisible = selenium.isVisible(
+						"//a[.='\u00ab Basic']");
 
 				if (!basicVisible) {
 					label = 2;
@@ -63,7 +46,7 @@ public class ViewSuborganizationTest extends BaseTestCase {
 					continue;
 				}
 
-				selenium.clickAt("link=\u00ab Basic",
+				selenium.clickAt("//a[.='\u00ab Basic']",
 					RuntimeVariables.replace("\u00ab Basic"));
 
 			case 2:
@@ -72,7 +55,6 @@ public class ViewSuborganizationTest extends BaseTestCase {
 				selenium.clickAt("//input[@value='Search']",
 					RuntimeVariables.replace("Search"));
 				selenium.waitForPageToLoad("30000");
-				loadRequiredJavaScriptModules();
 				assertEquals(RuntimeVariables.replace("Test Child"),
 					selenium.getText("//tr[3]/td[1]/a"));
 				assertEquals(RuntimeVariables.replace("Test Organization"),
@@ -99,31 +81,14 @@ public class ViewSuborganizationTest extends BaseTestCase {
 					selenium.getText("//tr[4]/td[6]/a"));
 				selenium.clickAt("//tr[4]/td[7]/span/ul/li/strong/a",
 					RuntimeVariables.replace("Actions"));
-
-				for (int second = 0;; second++) {
-					if (second >= 90) {
-						fail("timeout");
-					}
-
-					try {
-						if (selenium.isVisible(
-									"//div[@class='lfr-component lfr-menu-list']/ul/li[2]/a")) {
-							break;
-						}
-					}
-					catch (Exception e) {
-					}
-
-					Thread.sleep(1000);
-				}
-
+				selenium.waitForVisible(
+					"//div[@class='lfr-component lfr-menu-list']/ul/li[2]/a");
 				assertEquals(RuntimeVariables.replace("View Suborganizations"),
 					selenium.getText(
 						"//div[@class='lfr-component lfr-menu-list']/ul/li[2]/a"));
 				selenium.click(RuntimeVariables.replace(
 						"//div[@class='lfr-component lfr-menu-list']/ul/li[2]/a"));
 				selenium.waitForPageToLoad("30000");
-				loadRequiredJavaScriptModules();
 				assertEquals(RuntimeVariables.replace("Test Child"),
 					selenium.getText("//td[1]/a"));
 				assertEquals(RuntimeVariables.replace("Test Organization"),
@@ -139,7 +104,6 @@ public class ViewSuborganizationTest extends BaseTestCase {
 				selenium.clickAt("//td[1]/a",
 					RuntimeVariables.replace("Test Child"));
 				selenium.waitForPageToLoad("30000");
-				loadRequiredJavaScriptModules();
 				assertEquals(RuntimeVariables.replace("Test Child"),
 					selenium.getText(
 						"//div[@class='organization-information']/div[1]/h2"));
@@ -151,9 +115,14 @@ public class ViewSuborganizationTest extends BaseTestCase {
 					selenium.getText("//dl[@class='property-list']/dt[2]"));
 				assertEquals(RuntimeVariables.replace("Test Organization"),
 					selenium.getText("//dl[@class='property-list']/dd[2]"));
-				assertEquals(RuntimeVariables.replace(
-						"Billing 11111 Main Street USA\n 90210, Cerritos (Mailing)"),
-					selenium.getText("//li[@class='primary']"));
+				assertEquals(RuntimeVariables.replace("Billing"),
+					selenium.getText("//li[@class='primary']/em"));
+				assertTrue(selenium.isPartialText("//li[@class='primary']",
+						"11111 Main Street USA"));
+				assertTrue(selenium.isPartialText("//li[@class='primary']",
+						"90210, Cerritos"));
+				assertTrue(selenium.isPartialText("//li[@class='primary']",
+						"(Mailing)"));
 
 			case 100:
 				label = -1;

@@ -22,11 +22,11 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.model.UserGroupGroupRole;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -107,7 +107,7 @@ public class UserGroupGroupRolePersistenceTest {
 
 		UserGroupGroupRole newUserGroupGroupRole = _persistence.create(pk);
 
-		_persistence.update(newUserGroupGroupRole, false);
+		_persistence.update(newUserGroupGroupRole);
 
 		UserGroupGroupRole existingUserGroupGroupRole = _persistence.findByPrimaryKey(newUserGroupGroupRole.getPrimaryKey());
 
@@ -251,7 +251,7 @@ public class UserGroupGroupRolePersistenceTest {
 
 		UserGroupGroupRole userGroupGroupRole = _persistence.create(pk);
 
-		_persistence.update(userGroupGroupRole, false);
+		_persistence.update(userGroupGroupRole);
 
 		return userGroupGroupRole;
 	}

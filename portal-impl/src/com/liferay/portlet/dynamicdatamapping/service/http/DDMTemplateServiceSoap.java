@@ -52,9 +52,8 @@ import java.util.Map;
  * </p>
  *
  * <p>
- * You can see a list of services at
- * http://localhost:8080/api/secure/axis. Set the property
- * <b>axis.servlet.hosts.allowed</b> in portal.properties to configure
+ * You can see a list of services at http://localhost:8080/api/axis. Set the
+ * property <b>axis.servlet.hosts.allowed</b> in portal.properties to configure
  * security.
  * </p>
  *
@@ -71,7 +70,7 @@ import java.util.Map;
 public class DDMTemplateServiceSoap {
 	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap addTemplate(
 		long groupId, long classNameId, long classPK,
-		java.lang.String templateKey, java.lang.String[] nameMapLanguageIds,
+		java.lang.String[] nameMapLanguageIds,
 		java.lang.String[] nameMapValues,
 		java.lang.String[] descriptionMapLanguageIds,
 		java.lang.String[] descriptionMapValues, java.lang.String type,
@@ -87,8 +86,34 @@ public class DDMTemplateServiceSoap {
 
 			com.liferay.portlet.dynamicdatamapping.model.DDMTemplate returnValue =
 				DDMTemplateServiceUtil.addTemplate(groupId, classNameId,
-					classPK, templateKey, nameMap, descriptionMap, type, mode,
-					language, script, serviceContext);
+					classPK, nameMap, descriptionMap, type, mode, language,
+					script, serviceContext);
+
+			return com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap.toSoapModel(returnValue);
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
+	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap copyTemplate(
+		long templateId, java.lang.String[] nameMapLanguageIds,
+		java.lang.String[] nameMapValues,
+		java.lang.String[] descriptionMapLanguageIds,
+		java.lang.String[] descriptionMapValues,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws RemoteException {
+		try {
+			Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(nameMapLanguageIds,
+					nameMapValues);
+			Map<Locale, String> descriptionMap = LocalizationUtil.getLocalizationMap(descriptionMapLanguageIds,
+					descriptionMapValues);
+
+			com.liferay.portlet.dynamicdatamapping.model.DDMTemplate returnValue =
+				DDMTemplateServiceUtil.copyTemplate(templateId, nameMap,
+					descriptionMap, serviceContext);
 
 			return com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap.toSoapModel(returnValue);
 		}
@@ -164,6 +189,23 @@ public class DDMTemplateServiceSoap {
 		try {
 			com.liferay.portlet.dynamicdatamapping.model.DDMTemplate returnValue =
 				DDMTemplateServiceUtil.getTemplate(groupId, templateKey);
+
+			return com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap.toSoapModel(returnValue);
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
+	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap getTemplate(
+		long groupId, java.lang.String templateKey,
+		boolean includeGlobalTemplates) throws RemoteException {
+		try {
+			com.liferay.portlet.dynamicdatamapping.model.DDMTemplate returnValue =
+				DDMTemplateServiceUtil.getTemplate(groupId, templateKey,
+					includeGlobalTemplates);
 
 			return com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap.toSoapModel(returnValue);
 		}
@@ -369,34 +411,6 @@ public class DDMTemplateServiceSoap {
 					mode, language, andOperator);
 
 			return returnValue;
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-
-			throw new RemoteException(e.getMessage());
-		}
-	}
-
-	public static com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap updateTemplate(
-		long templateId, java.lang.String[] nameMapLanguageIds,
-		java.lang.String[] nameMapValues,
-		java.lang.String[] descriptionMapLanguageIds,
-		java.lang.String[] descriptionMapValues, java.lang.String type,
-		java.lang.String mode, java.lang.String language,
-		java.lang.String script,
-		com.liferay.portal.service.ServiceContext serviceContext)
-		throws RemoteException {
-		try {
-			Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(nameMapLanguageIds,
-					nameMapValues);
-			Map<Locale, String> descriptionMap = LocalizationUtil.getLocalizationMap(descriptionMapLanguageIds,
-					descriptionMapValues);
-
-			com.liferay.portlet.dynamicdatamapping.model.DDMTemplate returnValue =
-				DDMTemplateServiceUtil.updateTemplate(templateId, nameMap,
-					descriptionMap, type, mode, language, script, serviceContext);
-
-			return com.liferay.portlet.dynamicdatamapping.model.DDMTemplateSoap.toSoapModel(returnValue);
 		}
 		catch (Exception e) {
 			_log.error(e, e);

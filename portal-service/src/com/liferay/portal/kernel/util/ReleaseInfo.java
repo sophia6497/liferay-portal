@@ -53,6 +53,8 @@ public class ReleaseInfo {
 
 	public static final int RELEASE_5_2_8_BUILD_NUMBER = 5208;
 
+	public static final int RELEASE_5_2_9_BUILD_NUMBER = 5209;
+
 	public static final int RELEASE_6_0_0_BUILD_NUMBER = 6000;
 
 	public static final int RELEASE_6_0_1_BUILD_NUMBER = 6001;
@@ -134,11 +136,11 @@ public class ReleaseInfo {
 
 	private static final String _BUILD = "6200";
 
-	private static final int _BUILD_NUMBER = Integer.parseInt(_BUILD);
+	private static final int _BUILD_NUMBER = GetterUtil.getInteger(_BUILD);
 
 	private static final String _CODE_NAME = "Newton";
 
-	private static final String _DATE = "June 1, 2012";
+	private static final String _DATE = "November 19, 2012";
 
 	private static final String _NAME = "Liferay Portal Community Edition";
 

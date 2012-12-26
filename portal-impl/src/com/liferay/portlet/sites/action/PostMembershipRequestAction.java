@@ -56,7 +56,7 @@ public class PostMembershipRequestAction extends PortletAction {
 			MembershipRequestServiceUtil.addMembershipRequest(
 				groupId, comments, serviceContext);
 
-			SessionMessages.add(actionRequest, "membership_request_sent");
+			SessionMessages.add(actionRequest, "membershipRequestSent");
 
 			sendRedirect(actionRequest, actionResponse);
 		}
@@ -103,8 +103,9 @@ public class PostMembershipRequestAction extends PortletAction {
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.sites_admin.post_membership_request"));
+		return mapping.findForward(
+			getForward(
+				renderRequest, "portlet.sites_admin.post_membership_request"));
 	}
 
 }

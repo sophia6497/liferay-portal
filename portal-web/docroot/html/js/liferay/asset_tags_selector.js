@@ -15,33 +15,35 @@ AUI.add(
 
 		var CSS_TAGS_LIST = 'lfr-tags-selector-list';
 
-		var MAP_INVALID_CHARACTERS = {
-			'&': 1,
-			'\'': 1,
-			'@': 1,
-			'\\': 1,
-			']': 1,
-			'}': 1,
-			':': 1,
-			',': 1,
-			'=': 1,
-			'>': 1,
-			'/': 1,
-			'<': 1,
-			'\n': 1,
-			'[': 1,
-			'{': 1,
-			'%': 1,
-			'|': 1,
-			'+': 1,
-			'#': 1,
-			'?': 1,
-			'"': 1,
-			'\r': 1,
-			';': 1,
-			'*': 1,
-			'~': 1
-		};
+		var MAP_INVALID_CHARACTERS = AArray.hash(
+			[
+				'&',
+				'\'',
+				'@',
+				'\\',
+				']',
+				'}',
+				':',
+				',',
+				'=',
+				'>',
+				'/',
+				'<',
+				'\n',
+				'[',
+				'{',
+				'%',
+				'|',
+				'+',
+				'#',
+				'?',
+				'"',
+				'\r',
+				';',
+				'*',
+				'~'
+			]
+		);
 
 		var TPL_CHECKED = ' checked="checked" ';
 
@@ -295,7 +297,8 @@ AUI.add(
 							{
 								on: {
 									request: function(event) {
-										var term = event.request;
+										var term = decodeURIComponent(event.request);
+
 										var key = term;
 
 										if (term == '*') {
@@ -619,7 +622,7 @@ AUI.add(
 
 									suggestionsIO.start();
 								},
-								until: function () {
+								until: function() {
 									return length <= start;
 								}
 							}

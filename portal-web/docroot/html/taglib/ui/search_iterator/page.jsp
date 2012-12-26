@@ -118,7 +118,7 @@ int sortColumnIndex = -1;
 				else if (i == 0) {
 					cssClass = "first";
 				}
-				else if (i == headerNames.size() - 1) {
+				else if (i == (headerNames.size() - 1)) {
 					cssClass = "last";
 				}
 
@@ -231,7 +231,7 @@ int sortColumnIndex = -1;
 			String rowClassName = _ROW_CLASS_NAME_ALTERNATE + " results-row alt";
 			String rowClassHoverName = _ROW_CLASS_NAME_ALTERNATE_HOVER + " results-row alt " + _CLASS_NAME_HOVER;
 
-			primaryKeys.add(row.getPrimaryKey());
+			primaryKeys.add(HtmlUtil.escape(row.getPrimaryKey()));
 
 			if (MathUtil.isEven(i)) {
 				rowClassName = _ROW_CLASS_NAME_BODY + " results-row";
@@ -276,7 +276,7 @@ int sortColumnIndex = -1;
 				textSearchEntry.setAlign(rowChecker.getAlign());
 				textSearchEntry.setColspan(rowChecker.getColspan());
 				textSearchEntry.setCssClass(rowChecker.getCssClass());
-				textSearchEntry.setName(rowChecker.getRowCheckBox(rowIsChecked, rowIsDisabled, row.getPrimaryKey()));
+				textSearchEntry.setName(rowChecker.getRowCheckBox(request, rowIsChecked, rowIsDisabled, row.getPrimaryKey()));
 				textSearchEntry.setValign(rowChecker.getValign());
 
 				row.addSearchEntry(0, textSearchEntry);

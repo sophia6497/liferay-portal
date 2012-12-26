@@ -16,8 +16,10 @@
 
 <%@ include file="/html/portlet/init.jsp" %>
 
-<%@ page import="com.liferay.portal.kernel.template.PortletDisplayTemplateHandler" %><%@
-page import="com.liferay.portal.kernel.template.PortletDisplayTemplateHandlerRegistryUtil" %><%@
+<%@ page import="com.liferay.portal.LocaleException" %><%@
+page import="com.liferay.portal.kernel.editor.EditorUtil" %><%@
+page import="com.liferay.portal.kernel.portletdisplaytemplate.PortletDisplayTemplateHandler" %><%@
+page import="com.liferay.portal.kernel.portletdisplaytemplate.PortletDisplayTemplateHandlerRegistryUtil" %><%@
 page import="com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata" %><%@
 page import="com.liferay.portlet.documentlibrary.model.DLFolderConstants" %><%@
 page import="com.liferay.portlet.dynamicdatalists.model.DDLRecordSet" %><%@
@@ -29,6 +31,8 @@ page import="com.liferay.portlet.dynamicdatamapping.StructureNameException" %><%
 page import="com.liferay.portlet.dynamicdatamapping.StructureXsdException" %><%@
 page import="com.liferay.portlet.dynamicdatamapping.TemplateNameException" %><%@
 page import="com.liferay.portlet.dynamicdatamapping.TemplateScriptException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.TemplateSmallImageNameException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.TemplateSmallImageSizeException" %><%@
 page import="com.liferay.portlet.dynamicdatamapping.model.DDMStructure" %><%@
 page import="com.liferay.portlet.dynamicdatamapping.model.DDMStructureConstants" %><%@
 page import="com.liferay.portlet.dynamicdatamapping.model.DDMTemplate" %><%@
@@ -62,6 +66,7 @@ String scopeStructureName = ParamUtil.getString(request, "scopeStructureName");
 String scopeStructureType = ParamUtil.getString(request, "scopeStructureType");
 String scopeTemplateMode = ParamUtil.getString(request, "scopeTemplateMode");
 String scopeTemplateType = ParamUtil.getString(request, "scopeTemplateType");
+String scopeTitle = ParamUtil.getString(request, "scopeTitle");
 boolean showGlobalScope = ParamUtil.getBoolean(request, "showGlobalScope");
 boolean showManageTemplates = ParamUtil.getBoolean(request, "showManageTemplates", true);
 boolean showToolbar = ParamUtil.getBoolean(request, "showToolbar", true);
@@ -81,11 +86,11 @@ String templateHeaderTitle = ParamUtil.getString(request, "templateHeaderTitle")
 
 String templateTypeValue = StringPool.BLANK;
 
-if (scopeTemplateType.equals(DDMTemplateConstants.TEMPLATE_TYPE_DETAIL)) {
-	templateTypeValue = DDMTemplateConstants.TEMPLATE_TYPE_DETAIL;
+if (scopeTemplateType.equals(DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY)) {
+	templateTypeValue = DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY;
 }
-else if (scopeStorageType.equals(DDMTemplateConstants.TEMPLATE_TYPE_LIST)) {
-	templateTypeValue = DDMTemplateConstants.TEMPLATE_TYPE_LIST;
+else if (scopeTemplateType.equals(DDMTemplateConstants.TEMPLATE_TYPE_FORM)) {
+	templateTypeValue = DDMTemplateConstants.TEMPLATE_TYPE_FORM;
 }
 
 Format dateFormatDateTime = FastDateFormatFactoryUtil.getDateTime(locale, timeZone);

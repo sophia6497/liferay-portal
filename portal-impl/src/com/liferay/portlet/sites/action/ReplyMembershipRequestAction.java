@@ -78,7 +78,7 @@ public class ReplyMembershipRequestAction extends PortletAction {
 					new long[] {membershipRequest.getUserId()});
 			}
 
-			SessionMessages.add(actionRequest, "membership_reply_sent");
+			SessionMessages.add(actionRequest, "membershipReplySent");
 
 			sendRedirect(actionRequest, actionResponse);
 		}
@@ -125,8 +125,9 @@ public class ReplyMembershipRequestAction extends PortletAction {
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.sites_admin.reply_membership_request"));
+		return mapping.findForward(
+			getForward(
+				renderRequest, "portlet.sites_admin.reply_membership_request"));
 	}
 
 }

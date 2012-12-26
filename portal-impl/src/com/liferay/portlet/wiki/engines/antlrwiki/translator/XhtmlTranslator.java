@@ -16,6 +16,7 @@ package com.liferay.portlet.wiki.engines.antlrwiki.translator;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
@@ -44,10 +45,10 @@ import javax.portlet.PortletURL;
 public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 	public String translate(
-		WikiPage wikiPage, PortletURL viewPageURL, PortletURL editPageURL,
+		WikiPage page, PortletURL viewPageURL, PortletURL editPageURL,
 		String attachmentURLPrefix, WikiPageNode wikiPageNode) {
 
-		_wikiPage = wikiPage;
+		_page = page;
 		_viewPageURL = viewPageURL;
 		_editPageURL = editPageURL;
 		_attachmentURLPrefix = attachmentURLPrefix;
@@ -63,7 +64,7 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 		String unformattedText = getUnformattedHeadingText(headingNode);
 
-		String markup = getHeadingMarkup(_wikiPage.getTitle(), unformattedText);
+		String markup = getHeadingMarkup(_page.getTitle(), unformattedText);
 
 		append(" id=\"");
 		append(markup);
@@ -198,7 +199,7 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 				}
 
 				append(StringPool.POUND);
-				append(getHeadingMarkup(_wikiPage.getTitle(), content));
+				append(getHeadingMarkup(_page.getTitle(), content));
 				append("\">");
 				append(content);
 				append("</a>");
@@ -217,7 +218,7 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 		try {
 			page = WikiPageLocalServiceUtil.getPage(
-				_wikiPage.getNodeId(), linkNode.getLink());
+				_page.getNodeId(), linkNode.getLink());
 		}
 		catch (NoSuchPageException nspe) {
 		}
@@ -243,14 +244,14 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 			append(_viewPageURL.toString());
 
-			_viewPageURL.setParameter("title", _wikiPage.getTitle());
+			_viewPageURL.setParameter("title", _page.getTitle());
 		}
 		else if (_editPageURL != null) {
 			_editPageURL.setParameter("title", pageTitle);
 
 			append(_editPageURL.toString());
 
-			_editPageURL.setParameter("title", _wikiPage.getTitle());
+			_editPageURL.setParameter("title", _page.getTitle());
 		}
 	}
 
@@ -274,25 +275,16 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 	}
 
 	protected String searchLinkInAttachments(LinkNode linkNode) {
-		String[] attachments = null;
-
 		try {
-			attachments = _wikiPage.getAttachmentsFiles();
+			for (FileEntry fileEntry : _page.getAttachmentsFileEntries()) {
+				String title = fileEntry.getTitle();
+
+				if (title.equals(linkNode.getLink())) {
+					return title;
+				}
+			}
 		}
 		catch (Exception e) {
-			return null;
-		}
-
-		String link =
-			StringPool.SLASH + _wikiPage.getAttachmentsDir() +
-				StringPool.SLASH + linkNode.getLink();
-
-		for (String attachment : attachments) {
-			if (attachment.equals(link)) {
-				int pos = attachment.lastIndexOf(StringPool.SLASH);
-
-				return attachment.substring(pos + 1);
-			}
 		}
 
 		return null;
@@ -304,8 +296,8 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 	private String _attachmentURLPrefix;
 	private PortletURL _editPageURL;
+	private WikiPage _page;
 	private WikiPageNode _rootWikiPageNode;
 	private PortletURL _viewPageURL;
-	private WikiPage _wikiPage;
 
 }

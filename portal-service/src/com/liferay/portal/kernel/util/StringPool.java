@@ -14,6 +14,8 @@
 
 package com.liferay.portal.kernel.util;
 
+import java.nio.charset.Charset;
+
 /**
  * @author Brian Wing Shun Chan
  */
@@ -53,7 +55,12 @@ public class StringPool {
 
 	public static final String COMMA_AND_SPACE = ", ";
 
+	public static final String CONTENT = "content";
+
 	public static final String DASH = "-";
+
+	public static final String DEFAULT_CHARSET_NAME =
+		Charset.defaultCharset().name();
 
 	public static final String DOLLAR = "$";
 
@@ -109,6 +116,8 @@ public class StringPool {
 
 	public static final String ISO_8859_1 = "ISO-8859-1";
 
+	public static final String LAQUO = "&laquo;";
+
 	public static final String LESS_THAN = "<";
 
 	public static final String LESS_THAN_OR_EQUAL = "<=";
@@ -150,6 +159,8 @@ public class StringPool {
 	public static final String QUESTION = "?";
 
 	public static final String QUOTE = "\"";
+
+	public static final String RAQUO = "&raquo;";
 
 	public static final String RETURN = "\r";
 

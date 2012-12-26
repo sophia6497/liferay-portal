@@ -57,8 +57,33 @@ PortletPreferencesIds portletPreferencesIds = PortletPreferencesFactoryUtil.getP
 
 PortletPreferences portletPreferences = null;
 
+Group group = null;
+
+if (layout instanceof VirtualLayout) {
+	VirtualLayout virtualLayout = (VirtualLayout)layout;
+
+	Layout sourceLayout = virtualLayout.getSourceLayout();
+
+	group = sourceLayout.getGroup();
+}
+else {
+	group = layout.getGroup();
+}
+
 if (allowAddPortletDefaultResource) {
 	portletPreferences = PortletPreferencesLocalServiceUtil.getPreferences(portletPreferencesIds);
+
+	String scopeLayoutUuid = portletPreferences.getValue("lfrScopeLayoutUuid", null);
+
+	if (Validator.isNotNull(scopeLayoutUuid)) {
+		Layout scopeLayout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(scopeLayoutUuid, group.getGroupId());
+
+		if (scopeLayout != null) {
+			portletPreferencesIds = PortletPreferencesFactoryUtil.getPortletPreferencesIds(request, scopeLayout, portletId);
+
+			portletPreferences = PortletPreferencesLocalServiceUtil.getPreferences(portletPreferencesIds);
+		}
+	}
 }
 else {
 	portletPreferences = PortletPreferencesLocalServiceUtil.getStrictPreferences(portletPreferencesIds);
@@ -145,9 +170,9 @@ HttpServletRequest originalRequest = PortalUtil.getOriginalServletRequest(reques
 
 RenderRequestImpl renderRequestImpl = RenderRequestFactory.create(originalRequest, portlet, invokerPortlet, portletCtx, windowState, portletMode, portletPreferences, plid);
 
-StringServletResponse stringResponse = new StringServletResponse(response);
+BufferCacheServletResponse bufferCacheServletResponse = new BufferCacheServletResponse(response);
 
-RenderResponseImpl renderResponseImpl = RenderResponseFactory.create(renderRequestImpl, stringResponse, portletId, company.getCompanyId(), plid);
+RenderResponseImpl renderResponseImpl = RenderResponseFactory.create(renderRequestImpl, bufferCacheServletResponse, portletId, company.getCompanyId(), plid);
 
 if (stateMin) {
 	renderResponseImpl.setUseDefaultTemplate(true);
@@ -193,8 +218,6 @@ Boolean portletParallelRender = (Boolean)request.getAttribute(WebKeys.PORTLET_PA
 if ((portletParallelRender != null) && (portletParallelRender.booleanValue() == false)) {
 	showRefreshIcon = false;
 }
-
-Group group = layout.getGroup();
 
 if (!portletId.equals(PortletKeys.PORTLET_CONFIGURATION)) {
 	if ((!group.hasStagingGroup() || group.isStagingGroup()) &&
@@ -746,7 +769,7 @@ if (portlet.isActive() && portlet.isReady() && access && supportsMimeType && (in
 			request.setAttribute(WebKeys.PORTLET_CONFIGURATOR_VISIBILITY, portletVisibility);
 		}
 
-		renderResponseImpl.transferHeaders(stringResponse);
+		renderResponseImpl.transferHeaders(bufferCacheServletResponse);
 	}
 	catch (UnavailableException ue) {
 		portletException = true;
@@ -919,7 +942,7 @@ if ((layout.isTypePanel() || layout.isTypeControlPanel()) && !portletDisplay.get
 			}
 			else {
 				if (useDefaultTemplate) {
-					renderRequestImpl.setAttribute(WebKeys.PORTLET_CONTENT, stringResponse.getString());
+					renderRequestImpl.setAttribute(WebKeys.PORTLET_CONTENT, bufferCacheServletResponse.getString());
 		%>
 
 					<tiles:insert flush="false" template='<%= StrutsUtil.TEXT_HTML_DIR + "/common/themes/portlet.jsp" %>'>
@@ -929,12 +952,12 @@ if ((layout.isTypePanel() || layout.isTypeControlPanel()) && !portletDisplay.get
 		<%
 				}
 				else {
-					stringResponse.writeTo(pageContext.getOut());
+					pageContext.getOut().write(bufferCacheServletResponse.getString());
 				}
 			}
 		}
 		else {
-			renderRequestImpl.setAttribute(WebKeys.PORTLET_CONTENT, stringResponse.getString());
+			renderRequestImpl.setAttribute(WebKeys.PORTLET_CONTENT, bufferCacheServletResponse.getString());
 
 			String portletContent = StringPool.BLANK;
 

@@ -30,7 +30,6 @@ DDMTemplate template = (DDMTemplate)row.getObject();
 		<portlet:renderURL var="editURL">
 			<portlet:param name="struts_action" value="/dynamic_data_mapping/edit_template" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="backURL" value="<%= currentURL %>" />
 			<portlet:param name="groupId" value="<%= String.valueOf(template.getGroupId()) %>" />
 			<portlet:param name="templateId" value="<%= String.valueOf(template.getTemplateId()) %>" />
 			<portlet:param name="type" value="<%= template.getType() %>" />
@@ -54,6 +53,30 @@ DDMTemplate template = (DDMTemplate)row.getObject();
 		<liferay-ui:icon
 			image="permissions"
 			url="<%= permissionsURL %>"
+		/>
+	</c:if>
+
+	<c:if test="<%= DDMPermission.contains(permissionChecker, scopeGroupId, ddmResource, ActionKeys.ADD_TEMPLATE) %>">
+		<portlet:renderURL var="copyURL">
+			<portlet:param name="closeRedirect" value="<%= HttpUtil.encodeURL(currentURL) %>" />
+			<portlet:param name="struts_action" value="/dynamic_data_mapping/copy_template" />
+			<portlet:param name="templateId" value="<%= String.valueOf(template.getTemplateId()) %>" />
+		</portlet:renderURL>
+
+		<%
+		StringBundler sb = new StringBundler(6);
+
+		sb.append("javascript:");
+		sb.append(renderResponse.getNamespace());
+		sb.append("copyTemplate");
+		sb.append("('");
+		sb.append(copyURL);
+		sb.append("');");
+		%>
+
+		<liferay-ui:icon
+			image="copy"
+			url="<%= sb.toString() %>"
 		/>
 	</c:if>
 

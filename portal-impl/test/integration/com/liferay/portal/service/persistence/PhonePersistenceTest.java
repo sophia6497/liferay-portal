@@ -22,12 +22,12 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.Phone;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 
@@ -128,7 +128,7 @@ public class PhonePersistenceTest {
 
 		newPhone.setPrimary(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(newPhone, false);
+		_persistence.update(newPhone);
 
 		Phone existingPhone = _persistence.findByPrimaryKey(newPhone.getPrimaryKey());
 
@@ -292,7 +292,7 @@ public class PhonePersistenceTest {
 
 		phone.setPrimary(ServiceTestUtil.randomBoolean());
 
-		_persistence.update(phone, false);
+		_persistence.update(phone);
 
 		return phone;
 	}

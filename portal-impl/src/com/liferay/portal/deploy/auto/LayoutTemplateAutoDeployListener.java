@@ -29,7 +29,8 @@ import java.io.File;
 public class LayoutTemplateAutoDeployListener extends BaseAutoDeployListener {
 
 	public LayoutTemplateAutoDeployListener() {
-		_autoDeployer = new LayoutTemplateAutoDeployer();
+		_autoDeployer = new ThreadSafeAutoDeployer(
+			new LayoutTemplateAutoDeployer());
 	}
 
 	public void deploy(AutoDeploymentContext autoDeploymentContext)
@@ -49,9 +50,9 @@ public class LayoutTemplateAutoDeployListener extends BaseAutoDeployListener {
 			_log.info("Copying layout templates for " + file.getPath());
 		}
 
-		_autoDeployer.autoDeploy(autoDeploymentContext);
+		int code = _autoDeployer.autoDeploy(autoDeploymentContext);
 
-		if (_log.isInfoEnabled()) {
+		if ((code == AutoDeployer.CODE_DEFAULT) && _log.isInfoEnabled()) {
 			_log.info(
 				"Layout templates for " + file.getPath() +
 					" copied successfully. Deployment will start in a few " +

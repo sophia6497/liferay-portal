@@ -115,6 +115,7 @@ Group parentGroup = themeDisplay.getParentGroup();
 
 				<portlet:param name="treeId" value="treeContainerPublicPages" />
 				<portlet:param name="checkContentDisplayPage" value="<%= Boolean.TRUE.toString() %>" />
+				<portlet:param name="draggableTree" value="<%= Boolean.FALSE.toString() %>" />
 				<portlet:param name="expandFirstNode" value="<%= Boolean.TRUE.toString() %>" />
 				<portlet:param name="saveState" value="<%= Boolean.FALSE.toString() %>" />
 			</liferay-portlet:resourceURL>
@@ -429,7 +430,7 @@ Group parentGroup = themeDisplay.getParentGroup();
 				if (publicPages && treeViewPublic) {
 					tree = treeViewPublic;
 				}
-				else if (treeViewPrivate){
+				else if (treeViewPrivate) {
 					tree = treeViewPrivate;
 				}
 

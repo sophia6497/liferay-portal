@@ -73,6 +73,7 @@ import com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil;
 import com.liferay.portlet.asset.service.AssetCategoryPropertyLocalServiceUtil;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import com.liferay.portlet.asset.service.AssetTagPropertyLocalServiceUtil;
+import com.liferay.portlet.asset.service.AssetVocabularyLocalServiceUtil;
 import com.liferay.portlet.asset.service.persistence.AssetCategoryUtil;
 import com.liferay.portlet.asset.service.persistence.AssetVocabularyUtil;
 import com.liferay.portlet.expando.model.ExpandoColumn;
@@ -102,6 +103,7 @@ import org.apache.commons.lang.time.StopWatch;
  * @author Bruno Farache
  * @author Zsigmond Rab
  * @author Douglas Wong
+ * @author Mate Thurzo
  */
 public class PortletExporter {
 
@@ -264,6 +266,9 @@ public class PortletExporter {
 		Element headerElement = rootElement.addElement("header");
 
 		headerElement.addAttribute(
+			"available-locales",
+			StringUtil.merge(LanguageUtil.getAvailableLocales()));
+		headerElement.addAttribute(
 			"build-number", String.valueOf(ReleaseInfo.getBuildNumber()));
 		headerElement.addAttribute("export-date", Time.getRFC822());
 
@@ -366,17 +371,18 @@ public class PortletExporter {
 				entry.getKey(), CharPool.POUND);
 
 			String className = assetCategoryEntryParts[0];
-			long classPK = GetterUtil.getLong(assetCategoryEntryParts[1]);
+			String classPK = assetCategoryEntryParts[1];
 
 			Element assetElement = assetsElement.addElement("asset");
 
 			assetElement.addAttribute("class-name", className);
-			assetElement.addAttribute("class-pk", String.valueOf(classPK));
+			assetElement.addAttribute("class-pk", classPK);
 			assetElement.addAttribute(
 				"category-uuids", StringUtil.merge(entry.getValue()));
 
 			List<AssetCategory> assetCategories =
-				AssetCategoryLocalServiceUtil.getCategories(className, classPK);
+				AssetCategoryLocalServiceUtil.getCategories(
+					className, GetterUtil.getLong(classPK));
 
 			for (AssetCategory assestCategory : assetCategories) {
 				exportAssetCategory(
@@ -555,13 +561,13 @@ public class PortletExporter {
 			assetElement.addAttribute("class-pk", classPK);
 			assetElement.addAttribute(
 				"tags", StringUtil.merge(entry.getValue()));
-		}
 
-		List<AssetTag> assetTags = AssetTagLocalServiceUtil.getGroupTags(
-			portletDataContext.getScopeGroupId());
+			List<AssetTag> assetTags = AssetTagLocalServiceUtil.getTags(
+				className, GetterUtil.getLong(classPK));
 
-		for (AssetTag assetTag : assetTags) {
-			exportAssetTag(portletDataContext, assetTag, rootElement);
+			for (AssetTag assetTag : assetTags) {
+				exportAssetTag(portletDataContext, assetTag, rootElement);
+			}
 		}
 
 		portletDataContext.addZipEntry(
@@ -800,8 +806,8 @@ public class PortletExporter {
 
 		if (exportPortletData) {
 			javax.portlet.PortletPreferences jxPreferences =
-				PortletPreferencesFactoryUtil.getPortletSetup(
-					layout, portletId, StringPool.BLANK);
+				PortletPreferencesFactoryUtil.getStrictPortletSetup(
+					layout, portletId);
 
 			if (!portlet.isPreferencesUniquePerLayout()) {
 				StringBundler sb = new StringBundler(5);
@@ -931,12 +937,6 @@ public class PortletExporter {
 		element.addAttribute("portlet-id", portletId);
 		element.addAttribute("layout-id", String.valueOf(layoutId));
 		element.addAttribute("path", path);
-
-		Element availableLocalesElement = parentElement.addElement("locale");
-
-		availableLocalesElement.addAttribute(
-			"available-locales",
-			StringUtil.merge(LanguageUtil.getAvailableLocales()));
 
 		if (portletDataContext.isPathNotProcessed(path)) {
 			try {
@@ -1068,6 +1068,14 @@ public class PortletExporter {
 
 				jxPreferences.store();
 			}
+			catch (UnsupportedOperationException uoe) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"Not updating the portlet setup for " + portletId +
+							" because no setup was returned for the current " +
+								"page");
+				}
+			}
 			catch (Exception e) {
 				_log.error(e, e);
 			}
@@ -1090,6 +1098,10 @@ public class PortletExporter {
 
 		if (rootPotletId.equals(PortletKeys.ASSET_PUBLISHER)) {
 			preferencesXML = updateAssetPublisherPortletPreferences(
+				preferencesXML, plid);
+		}
+		else if (rootPotletId.equals(PortletKeys.TAGS_CATEGORIES_NAVIGATION)) {
+			preferencesXML = updateAssetCategoriesNavigationPortletPreferences(
 				preferencesXML, plid);
 		}
 
@@ -1392,9 +1404,29 @@ public class PortletExporter {
 		return sb.toString();
 	}
 
-	protected void updateAssetPublisherClassPKs(
-			javax.portlet.PortletPreferences jxPreferences, String key,
-			String className)
+	protected String updateAssetCategoriesNavigationPortletPreferences(
+			String xml, long plid)
+		throws Exception {
+
+		javax.portlet.PortletPreferences jxPreferences =
+			PortletPreferencesFactoryUtil.fromDefaultXML(xml);
+
+		Enumeration<String> enu = jxPreferences.getNames();
+
+		while (enu.hasMoreElements()) {
+			String name = enu.nextElement();
+
+			if (name.equals("assetVocabularyIds")) {
+				updatePreferencesClassPKs(
+					jxPreferences, name, AssetVocabulary.class.getName());
+			}
+		}
+
+		return PortletPreferencesFactoryUtil.toXML(jxPreferences);
+	}
+
+	protected void updateAssetPublisherClassNameIds(
+			javax.portlet.PortletPreferences jxPreferences, String key)
 		throws Exception {
 
 		String[] oldValues = jxPreferences.getValues(key, null);
@@ -1405,55 +1437,31 @@ public class PortletExporter {
 
 		String[] newValues = new String[oldValues.length];
 
-		for (int i = 0; i < oldValues.length; i++) {
-			String oldValue = oldValues[i];
+		int i = 0;
 
-			String newValue = oldValue;
+		for (String oldValue : oldValues) {
+			if (key.equals("anyAssetType") &&
+				(oldValue.equals("false") || oldValue.equals("true"))) {
 
-			String[] primaryKeys = StringUtil.split(oldValue);
+				newValues[i++] = oldValue;
 
-			for (String primaryKey : primaryKeys) {
-				if (!Validator.isNumber(primaryKey)) {
-					break;
-				}
-
-				long primaryKeyLong = GetterUtil.getLong(primaryKey);
-
-				String uuid = null;
-
-				if (className.equals(AssetCategory.class.getName())) {
-					AssetCategory category =
-						AssetCategoryLocalServiceUtil.fetchCategory(
-							primaryKeyLong);
-
-					if (category != null) {
-						uuid = category.getUuid();
-					}
-				}
-				else if (className.equals(JournalStructure.class.getName())) {
-					JournalStructure structure =
-						JournalStructureLocalServiceUtil.fetchJournalStructure(
-							primaryKeyLong);
-
-					if (structure != null) {
-						uuid = structure.getUuid();
-					}
-				}
-
-				if (Validator.isNull(uuid)) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Unable to get UUID for class " + className +
-								" with primary key " + primaryKeyLong);
-					}
-
-					continue;
-				}
-
-				newValue = StringUtil.replace(newValue, primaryKey, uuid);
+				continue;
 			}
 
-			newValues[i] = newValue;
+			try {
+				long classNameId = Long.parseLong(oldValue);
+
+				String className = PortalUtil.getClassName(classNameId);
+
+				newValues[i++] = className;
+			}
+			catch (Exception e) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to find class name ID for class name " +
+							oldValue);
+				}
+			}
 		}
 
 		jxPreferences.setValues(key, newValues);
@@ -1505,32 +1513,111 @@ public class PortletExporter {
 			String value = GetterUtil.getString(
 				jxPreferences.getValue(name, null));
 
-			String prefix = "queryName";
+			if (name.equals(
+					"anyClassTypeJournalArticleAssetRendererFactory") ||
+				name.equals(
+					"classTypeIdsJournalArticleAssetRendererFactory") ||
+				name.equals("classTypeIds")) {
 
-			if (value.equalsIgnoreCase("assetCategories") &&
-				name.startsWith(prefix)) {
-
-				String index = name.substring(prefix.length());
-
-				updateAssetPublisherClassPKs(
-					jxPreferences, "queryValues" + index,
-					AssetCategory.class.getName());
-			}
-			else if (name.equals(
-						"anyClassTypeJournalArticleAssetRendererFactory") ||
-					 name.equals(
-						"classTypeIdsJournalArticleAssetRendererFactory") ||
-					 name.equals("classTypeIds")) {
-
-				updateAssetPublisherClassPKs(
+				updatePreferencesClassPKs(
 					jxPreferences, name, JournalStructure.class.getName());
+			}
+			else if (name.equals("anyAssetType") ||
+					 name.equals("classNameIds")) {
+
+				updateAssetPublisherClassNameIds(jxPreferences, name);
 			}
 			else if (name.equals("defaultScope") || name.equals("scopeIds")) {
 				updateAssetPublisherGlobalScopeId(jxPreferences, name, plid);
 			}
+			else if (name.startsWith("queryName") &&
+					 value.equalsIgnoreCase("assetCategories")) {
+
+				String index = name.substring(9);
+
+				updatePreferencesClassPKs(
+					jxPreferences, "queryValues" + index,
+					AssetCategory.class.getName());
+			}
 		}
 
 		return PortletPreferencesFactoryUtil.toXML(jxPreferences);
+	}
+
+	protected void updatePreferencesClassPKs(
+			javax.portlet.PortletPreferences jxPreferences, String key,
+			String className)
+		throws Exception {
+
+		String[] oldValues = jxPreferences.getValues(key, null);
+
+		if (oldValues == null) {
+			return;
+		}
+
+		String[] newValues = new String[oldValues.length];
+
+		for (int i = 0; i < oldValues.length; i++) {
+			String oldValue = oldValues[i];
+
+			String newValue = oldValue;
+
+			String[] primaryKeys = StringUtil.split(oldValue);
+
+			for (String primaryKey : primaryKeys) {
+				if (!Validator.isNumber(primaryKey)) {
+					break;
+				}
+
+				long primaryKeyLong = GetterUtil.getLong(primaryKey);
+
+				String uuid = null;
+
+				if (className.equals(AssetCategory.class.getName())) {
+					AssetCategory assetCategory =
+						AssetCategoryLocalServiceUtil.fetchCategory(
+							primaryKeyLong);
+
+					if (assetCategory != null) {
+						uuid = assetCategory.getUuid();
+					}
+				}
+				else if (className.equals(AssetVocabulary.class.getName())) {
+					AssetVocabulary assetVocabulary =
+						AssetVocabularyLocalServiceUtil.fetchAssetVocabulary(
+							primaryKeyLong);
+
+					if (assetVocabulary != null) {
+						uuid = assetVocabulary.getUuid();
+					}
+				}
+				else if (className.equals(JournalStructure.class.getName())) {
+					JournalStructure journalStructure =
+						JournalStructureLocalServiceUtil.fetchJournalStructure(
+							primaryKeyLong);
+
+					if (journalStructure != null) {
+						uuid = journalStructure.getUuid();
+					}
+				}
+
+				if (Validator.isNull(uuid)) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							"Unable to get UUID for class " + className +
+								" with primary key " + primaryKeyLong);
+					}
+
+					continue;
+				}
+
+				newValue = StringUtil.replace(newValue, primaryKey, uuid);
+			}
+
+			newValues[i] = newValue;
+		}
+
+		jxPreferences.setValues(key, newValues);
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(PortletExporter.class);

@@ -1313,6 +1313,12 @@ public class JournalArticleWrapper implements JournalArticle,
 		_journalArticle.setExpandoBridgeAttributes(serviceContext);
 	}
 
+	public void prepareLocalizedFieldsForImport(
+		java.util.Locale defaultImportLocale)
+		throws com.liferay.portal.LocaleException {
+		_journalArticle.prepareLocalizedFieldsForImport(defaultImportLocale);
+	}
+
 	@Override
 	public java.lang.Object clone() {
 		return new JournalArticleWrapper((JournalArticle)_journalArticle.clone());
@@ -1334,6 +1340,10 @@ public class JournalArticleWrapper implements JournalArticle,
 
 	public com.liferay.portlet.journal.model.JournalArticle toEscapedModel() {
 		return new JournalArticleWrapper(_journalArticle.toEscapedModel());
+	}
+
+	public com.liferay.portlet.journal.model.JournalArticle toUnescapedModel() {
+		return new JournalArticleWrapper(_journalArticle.toUnescapedModel());
 	}
 
 	@Override

@@ -35,6 +35,7 @@ import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.service.BlogsEntryLocalServiceUtil;
+import com.liferay.portlet.blogs.service.BlogsStatsUserLocalServiceUtil;
 import com.liferay.portlet.blogs.service.persistence.BlogsEntryUtil;
 import com.liferay.portlet.journal.lar.JournalPortletDataHandlerImpl;
 
@@ -102,6 +103,9 @@ public class BlogsPortletDataHandlerImpl extends BasePortletDataHandler {
 				BlogsPortletDataHandlerImpl.class, "deleteData")) {
 
 			BlogsEntryLocalServiceUtil.deleteEntries(
+				portletDataContext.getScopeGroupId());
+
+			BlogsStatsUserLocalServiceUtil.deleteStatsUserByGroupId(
 				portletDataContext.getScopeGroupId());
 		}
 
@@ -360,6 +364,8 @@ public class BlogsPortletDataHandlerImpl extends BasePortletDataHandler {
 			BlogsEntry importedEntry = null;
 
 			if (portletDataContext.isDataStrategyMirror()) {
+				serviceContext.setAttribute("urlTitle", entry.getUrlTitle());
+
 				BlogsEntry existingEntry = BlogsEntryUtil.fetchByUUID_G(
 					entry.getUuid(), portletDataContext.getScopeGroupId());
 

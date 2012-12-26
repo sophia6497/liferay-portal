@@ -1,3 +1,5 @@
+@import "compass";
+
 .breadcrumbs {
 	margin-bottom: 10px;
 	margin-left: 0;
@@ -86,6 +88,24 @@
 	margin-bottom: 10px;
 }
 
+.lfr-portrait-preview {
+	float: left;
+
+	&:after {
+		clear: both;
+		content: ".";
+		display: block;
+		height: 0;
+		visibility: hidden;
+	}
+
+	.lfr-portrait-preview-img.loading {
+		border: 1px solid transparent;
+		min-height: 50px;
+		min-width: 50px;
+	}
+}
+
 .ie .float-container {
 	height: 1%;
 }
@@ -100,28 +120,21 @@
 	font-weight: bold;
 }
 
-.lfr-checkbox-preselected {
-	opacity: 0.5;
-}
-
-.lfr-configurator-visibility {
-	opacity: 0.5;
+.lfr-checkbox-preselected, .lfr-configurator-visibility {
+	@include opacity(0.5);
 }
 
 .lfr-change-logo {
-	background: url(@theme_image_path@/common/checkerboard.png);
+	background: url(@theme_image_path@/common/checkerboard.png) repeat 50%;
+}
+
+.lfr-portrait-preview .lfr-portrait-preview-img.loading {
+	background: #FFF url(@theme_image_path@/application/loading_indicator.gif) no-repeat 50%;
+	border-color: #ccc;
 }
 
 .ie {
-	.lfr-checkbox-preselected {
-		filter: alpha(opacity=50);
+	.lfr-checkbox-preselected, .lfr-configurator-visibility, .lfr-configurator-visibility .portlet-topper {
 		zoom: 1;
-	}
-
-	.lfr-configurator-visibility {
-		&, .portlet-topper {
-			filter: alpha(opacity=50);
-			zoom: 1;
-		}
 	}
 }

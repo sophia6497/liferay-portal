@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.messageboards.util;
 
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -72,6 +73,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 import javax.portlet.PortletPreferences;
+import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
 import javax.portlet.RenderResponse;
 
@@ -232,6 +234,42 @@ public class MBUtil {
 				}
 			}
 		}
+	}
+
+	public static String getAbsolutePath(
+			PortletRequest portletRequest, long mbCategoryId)
+		throws PortalException, SystemException {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		if (mbCategoryId == MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
+			return themeDisplay.translate("home");
+		}
+
+		MBCategory mbCategory = MBCategoryLocalServiceUtil.fetchMBCategory(
+			mbCategoryId);
+
+		List<MBCategory> categories = mbCategory.getAncestors();
+
+		Collections.reverse(categories);
+
+		StringBundler sb = new StringBundler((categories.size() * 3) + 6);
+
+		sb.append(themeDisplay.translate("home"));
+		sb.append(StringPool.SPACE);
+
+		for (MBCategory curCategory : categories) {
+			sb.append(StringPool.RAQUO);
+			sb.append(StringPool.SPACE);
+			sb.append(curCategory.getName());
+		}
+
+		sb.append(StringPool.RAQUO);
+		sb.append(StringPool.SPACE);
+		sb.append(mbCategory.getName());
+
+		return sb.toString();
 	}
 
 	public static long getCategoryId(
@@ -744,6 +782,21 @@ public class MBUtil {
 		}
 
 		return true;
+	}
+
+	public static String replaceMessageBodyPaths(
+		ThemeDisplay themeDisplay, String messageBody) {
+
+		return StringUtil.replace(
+			messageBody,
+			new String[] {
+				"@theme_images_path@", "href=\"/", "src=\"/"
+			},
+			new String[] {
+				themeDisplay.getPathThemeImages(),
+				"href=\"" + themeDisplay.getURLPortal() + "/",
+				"src=\"" + themeDisplay.getURLPortal() + "/"
+			});
 	}
 
 	private static String[] _findThreadPriority(

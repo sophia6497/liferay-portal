@@ -22,13 +22,13 @@ import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.PortletPreferences;
 import com.liferay.portal.model.impl.PortletPreferencesModelImpl;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.persistence.BasePersistence;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
 import com.liferay.portal.test.persistence.TransactionalPersistenceAdvice;
 import com.liferay.portal.util.PropsValues;
@@ -118,7 +118,7 @@ public class PortletPreferencesPersistenceTest {
 
 		newPortletPreferences.setPreferences(ServiceTestUtil.randomString());
 
-		_persistence.update(newPortletPreferences, false);
+		_persistence.update(newPortletPreferences);
 
 		PortletPreferences existingPortletPreferences = _persistence.findByPrimaryKey(newPortletPreferences.getPrimaryKey());
 
@@ -291,7 +291,7 @@ public class PortletPreferencesPersistenceTest {
 
 		portletPreferences.setPreferences(ServiceTestUtil.randomString());
 
-		_persistence.update(portletPreferences, false);
+		_persistence.update(portletPreferences);
 
 		return portletPreferences;
 	}

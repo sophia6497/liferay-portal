@@ -42,36 +42,29 @@ boolean showSyntaxHelp = ((toggleValue != null) && toggleValue.equals("block"));
 	<aui:layout>
 		<aui:column columnWidth="<%= showSyntaxHelp ? 70 : 100 %>" id="wikiEditorContainer">
 
-			<%
-			long resourcePrimKey = 0;
+		<%@ include file="/html/portlet/wiki/edit/editor_config.jspf" %>
 
-			String attachmentURLPrefix = StringPool.BLANK;
-
-			if (wikiPage != null) {
-				resourcePrimKey = wikiPage.getResourcePrimKey();
-
-				attachmentURLPrefix = themeDisplay.getPortalURL() + themeDisplay.getPathMain() + "/wiki/get_page_attachment?p_l_id=" + themeDisplay.getPlid() + "&nodeId=" + wikiPage.getNodeId() + "&title=" + HttpUtil.encodeURL(wikiPage.getTitle()) + "&fileName=";
-			}
-
-			Map<String,String> configParams = new HashMap();
-
-			configParams.put("attachmentURLPrefix", attachmentURLPrefix);
-			configParams.put("wikiPageResourcePrimKey", String.valueOf(resourcePrimKey));
-
-			Map<String,String> fileBrowserParams = new HashMap();
-
-			fileBrowserParams.put("attachmentURLPrefix", attachmentURLPrefix);
-			fileBrowserParams.put("Type", "Attachment");
-			fileBrowserParams.put("wikiPageResourcePrimKey", String.valueOf(resourcePrimKey));
-			%>
-
-			<liferay-ui:input-editor
-				configParams="<%= configParams %>"
-				editorImpl="<%= EDITOR_WYSIWYG_IMPL_KEY %>"
-				fileBrowserParams="<%= fileBrowserParams %>"
-				toolbarSet="creole"
-				width="100%"
-			/>
+		<c:choose>
+			<c:when test='<%= format.equals("creole") %>'>
+				<liferay-ui:input-editor
+					configParams="<%= configParams %>"
+					editorImpl="<%= EDITOR_WYSIWYG_IMPL_KEY %>"
+					fileBrowserParams="<%= fileBrowserParams %>"
+					toolbarSet="creole"
+					width="100%"
+				/>
+			</c:when>
+			<c:otherwise>
+				<liferay-ui:input-editor
+					configParams="<%= configParams %>"
+					editorImpl="<%= EDITOR_SIMPLE_IMPL_KEY %>"
+					fileBrowserParams="<%= fileBrowserParams %>"
+					name="content"
+					resizable="<%= false %>"
+					width="100%"
+				/>
+			</c:otherwise>
+		</c:choose>
 
 			<aui:input name="content" type="hidden" />
 		</aui:column>
@@ -142,5 +135,7 @@ boolean showSyntaxHelp = ((toggleValue != null) && toggleValue.equals("block"));
 </aui:script>
 
 <%!
+public static final String EDITOR_SIMPLE_IMPL_KEY = "editor.wysiwyg.portal-web.docroot.html.portlet.wiki.edit.mediawiki.jsp";
+
 public static final String EDITOR_WYSIWYG_IMPL_KEY = "editor.wysiwyg.portal-web.docroot.html.portlet.wiki.edit.creole.jsp";
 %>

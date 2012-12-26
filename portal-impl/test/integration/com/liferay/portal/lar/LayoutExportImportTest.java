@@ -15,6 +15,7 @@
 package com.liferay.portal.lar;
 
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
+import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Layout;
@@ -25,7 +26,6 @@ import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.PortletLocalServiceUtil;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.ExecutionTestListeners;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
 import com.liferay.portal.test.TransactionalCallbackAwareExecutionTestListener;
 import com.liferay.portlet.sites.util.SitesUtil;
@@ -58,31 +58,31 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 	@Test
 	@Transactional
 	public void testLSPLinkDisabled() throws Exception {
-		testLayoutSetPrototype(false, false, false, false, false);
+		runLayoutSetPrototype(false, false, false, false, false);
 	}
 
 	@Test
 	@Transactional
 	public void testLSPLinkDisabledWithPageAddition() throws Exception {
-		testLayoutSetPrototype(false, false, true, false, false);
+		runLayoutSetPrototype(false, false, true, false, false);
 	}
 
 	@Test
 	@Transactional
 	public void testLSPLinkDisabledWithPageDeletion() throws Exception {
-		testLayoutSetPrototype(false, false, true, true, false);
+		runLayoutSetPrototype(false, false, true, true, false);
 	}
 
 	@Test
 	@Transactional
 	public void testLSPLinkEnabled() throws Exception {
-		testLayoutSetPrototype(true, false, false, false, false);
+		runLayoutSetPrototype(true, false, false, false, false);
 	}
 
 	@Test
 	@Transactional
 	public void testLSPLinkEnabledwithPageAddition() throws Exception {
-		testLayoutSetPrototype(true, false, true, false, false);
+		runLayoutSetPrototype(true, false, true, false, false);
 	}
 
 	@Test
@@ -90,7 +90,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 	public void testLSPLinkEnabledwithPageAdditionFromLPLinkDisabled()
 		throws Exception {
 
-		testLayoutSetPrototype(true, false, true, false, true);
+		runLayoutSetPrototype(true, false, true, false, true);
 	}
 
 	@Test
@@ -98,24 +98,24 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 	public void testLSPLinkEnabledwithPageAdditionFromLPLinkEnabled()
 		throws Exception {
 
-		testLayoutSetPrototype(true, true, true, false, true);
+		runLayoutSetPrototype(true, true, true, false, true);
 	}
 
 	@Test
 	@Transactional
 	public void testLSPLinkEnabledwithPageDeletion() throws Exception {
-		testLayoutSetPrototype(true, false, true, true, false);
+		runLayoutSetPrototype(true, false, true, true, false);
 	}
 
 	@Test
 	@Transactional
 	public void testLSPLinkEnabledwithPageDeletionFromLP() throws Exception {
-		testLayoutSetPrototype(true, false, true, true, true);
+		runLayoutSetPrototype(true, false, true, true, true);
 	}
 
-	protected void testLayoutSetPrototype(
-			boolean layoutSetLinkEnabled, boolean layoutLinkEnabled,
-			boolean addPage, boolean deletePage, boolean useLayoutPrototype)
+	protected void runLayoutSetPrototype(
+		boolean layoutSetLinkEnabled, boolean layoutLinkEnabled,
+		boolean addPage, boolean deletePage, boolean useLayoutPrototype)
 		throws Exception {
 
 		LayoutSetPrototype layoutSetPrototype =
@@ -135,7 +135,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 			layoutSetPrototypeGroup.getGroupId(),
 			ServiceTestUtil.randomString(), true);
 
-		Group group = ServiceTestUtil.addGroup(ServiceTestUtil.randomString());
+		Group group = ServiceTestUtil.addGroup();
 
 		SitesUtil.updateLayoutSetPrototypesLinks(
 			group, layoutSetPrototype.getLayoutSetPrototypeId(), 0,
@@ -221,7 +221,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 
 			if (deletePage) {
 				LayoutLocalServiceUtil.deleteLayout(
-					layout.getPlid(), ServiceTestUtil.getServiceContext());
+					layout, true, ServiceTestUtil.getServiceContext());
 
 				groupLayoutsCount = LayoutLocalServiceUtil.getLayoutsCount(
 					group, false);

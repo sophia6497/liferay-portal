@@ -27,6 +27,7 @@ import com.liferay.portlet.dynamicdatalists.model.DDLRecordSet;
 import java.util.List;
 import java.util.Map;
 
+import javax.portlet.PortletPreferences;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -53,10 +54,11 @@ public class DDLUtil {
 
 	public static void getRecordFileUpload(
 			HttpServletRequest request, HttpServletResponse response,
-			DDLRecord record, String fieldName)
+			DDLRecord record, String fieldName, int valueIndex)
 		throws Exception {
 
-		getDDL().sendRecordFileUpload(request, response, record, fieldName);
+		getDDL().sendRecordFileUpload(
+			request, response, record, fieldName, valueIndex);
 	}
 
 	public static JSONObject getRecordJSONObject(DDLRecord record)
@@ -106,20 +108,36 @@ public class DDLUtil {
 			renderResponse);
 	}
 
-	public static void sendRecordFileUpload(
-			HttpServletRequest request, HttpServletResponse response,
-			DDLRecord record, String fieldName)
+	public static boolean isEditable(
+			HttpServletRequest request, String portletId, long groupId)
 		throws Exception {
 
-		getDDL().sendRecordFileUpload(request, response, record, fieldName);
+		return getDDL().isEditable(request, portletId, groupId);
+	}
+
+	public static boolean isEditable(
+			PortletPreferences preferences, String portletId, long groupId)
+		throws Exception {
+
+		return getDDL().isEditable(preferences, portletId, groupId);
 	}
 
 	public static void sendRecordFileUpload(
 			HttpServletRequest request, HttpServletResponse response,
-			long recordId, String fieldName)
+			DDLRecord record, String fieldName, int valueIndex)
 		throws Exception {
 
-		getDDL().sendRecordFileUpload(request, response, recordId, fieldName);
+		getDDL().sendRecordFileUpload(
+			request, response, record, fieldName, valueIndex);
+	}
+
+	public static void sendRecordFileUpload(
+			HttpServletRequest request, HttpServletResponse response,
+			long recordId, String fieldName, int valueIndex)
+		throws Exception {
+
+		getDDL().sendRecordFileUpload(
+			request, response, recordId, fieldName, valueIndex);
 	}
 
 	public static DDLRecord updateRecord(
@@ -141,12 +159,11 @@ public class DDLUtil {
 			recordId, recordSetId, mergeFields, serviceContext);
 	}
 
-	public static String uploadRecordFieldFile(
+	public static void uploadRecordFieldFile(
 			DDLRecord record, String fieldName, ServiceContext serviceContext)
 		throws Exception {
 
-		return getDDL().uploadRecordFieldFile(
-			record, fieldName, serviceContext);
+		getDDL().uploadRecordFieldFile(record, fieldName, serviceContext);
 	}
 
 	public void setDDL(DDL ddl) {
