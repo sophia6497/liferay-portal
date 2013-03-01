@@ -14,8 +14,6 @@
 
 package com.liferay.portal.model;
 
-import com.liferay.portal.model.ModelWrapper;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -524,6 +522,16 @@ public class GroupWrapper implements Group, ModelWrapper<Group> {
 
 	public com.liferay.portlet.expando.model.ExpandoBridge getExpandoBridge() {
 		return _group.getExpandoBridge();
+	}
+
+	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_group.setExpandoBridgeAttributes(baseModel);
+	}
+
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_group.setExpandoBridgeAttributes(expandoBridge);
 	}
 
 	public void setExpandoBridgeAttributes(

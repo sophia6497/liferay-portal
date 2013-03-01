@@ -373,6 +373,8 @@ public class ServicePreAction extends Action {
 			request, "doAsUserLanguageId");
 		long doAsGroupId = ParamUtil.getLong(request, "doAsGroupId");
 
+		long refererGroupId = ParamUtil.getLong(request, "refererGroupId");
+
 		long refererPlid = ParamUtil.getLong(request, "refererPlid");
 
 		if (LayoutLocalServiceUtil.fetchLayout(refererPlid) == null) {
@@ -721,7 +723,7 @@ public class ServicePreAction extends Action {
 			scopeGroupId = doAsGroupId;
 		}
 
-		long parentGroupId = PortalUtil.getParentGroupId(scopeGroupId);
+		long siteGroupId = PortalUtil.getSiteGroupId(scopeGroupId);
 
 		// Theme and color scheme
 
@@ -811,6 +813,7 @@ public class ServicePreAction extends Action {
 		themeDisplay.setDoAsUserId(doAsUserId);
 		themeDisplay.setDoAsUserLanguageId(doAsUserLanguageId);
 		themeDisplay.setDoAsGroupId(doAsGroupId);
+		themeDisplay.setRefererGroupId(refererGroupId);
 		themeDisplay.setRefererPlid(refererPlid);
 		themeDisplay.setControlPanelCategory(controlPanelCategory);
 		themeDisplay.setLayoutSet(layoutSet);
@@ -822,7 +825,7 @@ public class ServicePreAction extends Action {
 		themeDisplay.setPpid(ppid);
 		themeDisplay.setLayoutTypePortlet(layoutTypePortlet);
 		themeDisplay.setScopeGroupId(scopeGroupId);
-		themeDisplay.setParentGroupId(parentGroupId);
+		themeDisplay.setSiteGroupId(siteGroupId);
 		themeDisplay.setSignedIn(signedIn);
 		themeDisplay.setPermissionChecker(permissionChecker);
 		themeDisplay.setLocale(locale);
@@ -899,9 +902,9 @@ public class ServicePreAction extends Action {
 
 			siteContentPortlets.remove(siteSettingsPortlet);
 
-			showSiteContentIcon = PortletPermissionUtil.contains(
-				permissionChecker, scopeGroupId, controlPanelPlid,
-				siteContentPortlets, ActionKeys.VIEW);
+			showSiteContentIcon =
+				PortletPermissionUtil.hasControlPanelAccessPermission(
+					permissionChecker, scopeGroupId, siteContentPortlets);
 		}
 
 		themeDisplay.setShowSiteContentIcon(showSiteContentIcon);
@@ -930,6 +933,23 @@ public class ServicePreAction extends Action {
 		if (scopeGroupId > 0) {
 			urlControlPanel = HttpUtil.addParameter(
 				urlControlPanel, "doAsGroupId", scopeGroupId);
+		}
+
+		if (refererGroupId > 0) {
+			urlControlPanel = HttpUtil.addParameter(
+				urlControlPanel, "refererGroupId", refererGroupId);
+		}
+		else if (scopeGroupId > 0) {
+			Layout refererLayout = LayoutLocalServiceUtil.fetchLayout(plid);
+
+			if (refererLayout != null) {
+				Group refererLayoutGroup = refererLayout.getGroup();
+
+				if (refererLayoutGroup.isUserGroup()) {
+					urlControlPanel = HttpUtil.addParameter(
+						urlControlPanel, "refererGroupId", scopeGroupId);
+				}
+			}
 		}
 
 		if (refererPlid > 0) {

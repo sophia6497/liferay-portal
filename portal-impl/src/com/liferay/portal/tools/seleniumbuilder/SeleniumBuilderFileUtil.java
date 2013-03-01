@@ -38,6 +38,31 @@ public class SeleniumBuilderFileUtil {
 		return _baseDir;
 	}
 
+	public String getClassName(String fileName) {
+		String classSuffix = getClassSuffix(fileName);
+
+		return getClassName(fileName, classSuffix);
+	}
+
+	public String getClassName(String fileName, String classSuffix) {
+		return
+			getPackageName(fileName) + "." +
+				getSimpleClassName(fileName, classSuffix);
+	}
+
+	public String getClassSuffix(String fileName) {
+		int x = fileName.indexOf(CharPool.PERIOD);
+
+		return StringUtil.upperCaseFirstLetter(fileName.substring(x + 1));
+	}
+
+	public String getName(String fileName) {
+		int x = fileName.lastIndexOf(StringPool.SLASH);
+		int y = fileName.indexOf(CharPool.PERIOD);
+
+		return fileName.substring(x + 1, y);
+	}
+
 	public String getNormalizedContent(String fileName) throws Exception {
 		String content = readFile(fileName);
 
@@ -52,6 +77,27 @@ public class SeleniumBuilderFileUtil {
 		return content;
 	}
 
+	public String getPackageName(String fileName) {
+		String packagePath = getPackagePath(fileName);
+
+		return StringUtil.replace(
+			packagePath, StringPool.SLASH, StringPool.PERIOD);
+	}
+
+	public String getPackagePath(String fileName) {
+		int x = fileName.lastIndexOf(StringPool.SLASH);
+
+		return fileName.substring(0, x);
+	}
+
+	public String getReturnType(String name) {
+		if (name.startsWith("Is")) {
+			return "boolean";
+		}
+
+		return "void";
+	}
+
 	public Element getRootElement(String fileName) throws Exception {
 		String content = getNormalizedContent(fileName);
 
@@ -62,6 +108,28 @@ public class SeleniumBuilderFileUtil {
 		validateDocument(fileName, rootElement);
 
 		return rootElement;
+	}
+
+	public String getSimpleClassName(String fileName) {
+		String classSuffix = getClassSuffix(fileName);
+
+		return getSimpleClassName(fileName, classSuffix);
+	}
+
+	public String getSimpleClassName(String fileName, String classSuffix) {
+		return getName(fileName) + classSuffix;
+	}
+
+	public int getTargetCount(Element rootElement) {
+		String xml = rootElement.asXML();
+
+		for (int i = 1;; i++) {
+			if (xml.contains("${target" + i +"}")) {
+				continue;
+			}
+
+			return i;
+		}
 	}
 
 	public String normalizeFileName(String fileName) {

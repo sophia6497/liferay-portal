@@ -524,6 +524,12 @@ public class PortalUtil {
 		return getPortal().getFirstPageLayoutTypes(pageContext);
 	}
 
+	public static String getFullName(
+		String firstName, String middleName, String lastName) {
+
+		return getPortal().getFullName(firstName, middleName, lastName);
+	}
+
 	public static String getGlobalLibDir() {
 		return getPortal().getGlobalLibDir();
 	}
@@ -818,6 +824,9 @@ public class PortalUtil {
 		return getPortal().getOriginalServletRequest(request);
 	}
 
+	/**
+	 * @deprecated As of 6.2 renamed to {@link #getSiteGroupId(long)}
+	 */
 	public static long getParentGroupId(long scopeGroupId)
 		throws PortalException, SystemException {
 
@@ -846,6 +855,10 @@ public class PortalUtil {
 
 	public static String getPathMain() {
 		return getPortal().getPathMain();
+	}
+
+	public static String getPathModule() {
+		return getPortal().getPathModule();
 	}
 
 	public static String getPathProxy() {
@@ -1186,6 +1199,12 @@ public class PortalUtil {
 		throws PortalException, SystemException {
 
 		return getPortal().getSiteAndCompanyGroupIds(themeDisplay);
+	}
+
+	public static long getSiteGroupId(long scopeGroupId)
+		throws PortalException, SystemException {
+
+		return getPortal().getSiteGroupId(scopeGroupId);
 	}
 
 	public static String getSiteLoginURL(ThemeDisplay themeDisplay)

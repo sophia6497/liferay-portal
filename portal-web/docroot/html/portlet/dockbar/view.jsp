@@ -219,14 +219,10 @@ boolean hasLayoutUpdatePermission = LayoutPermissionUtil.contains(permissionChec
 				if (refererLayout != null) {
 					Group refererGroup = refererLayout.getGroup();
 
-					if (refererGroup.isUserGroup()) {
-						Group scopeGroup = themeDisplay.getScopeGroup();
+					if (refererGroup.isUserGroup() && (themeDisplay.getRefererGroupId() > 0)) {
+						refererGroup = GroupLocalServiceUtil.getGroup(themeDisplay.getRefererGroupId());
 
-						if (scopeGroup.isUser()) {
-							refererGroup = scopeGroup;
-
-							refererLayout = new VirtualLayout(refererLayout, refererGroup);
-						}
+						refererLayout = new VirtualLayout(refererLayout, refererGroup);
 					}
 
 					refererGroupDescriptiveName = refererGroup.getDescriptiveName(locale);
@@ -312,13 +308,26 @@ boolean hasLayoutUpdatePermission = LayoutPermissionUtil.contains(permissionChec
 				myAccountURL = HttpUtil.setParameter(myAccountURL, "controlPanelCategory", controlPanelCategory);
 				%>
 
-				<aui:a cssClass='<%= "user-portrait" + useDialog %>' href="<%= myAccountURL %>" title="manage-my-account">
+				<liferay-util:buffer var="userName">
 					<img alt="<liferay-ui:message key="manage-my-account" />" src="<%= HtmlUtil.escape(user.getPortraitURL(themeDisplay)) %>" />
 
 					<span class="user-full-name">
 						<%= HtmlUtil.escape(user.getFullName()) %>
 					</span>
-				</aui:a>
+				</liferay-util:buffer>
+
+				<c:choose>
+					<c:when test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.VIEW_CONTROL_PANEL) %>">
+						<aui:a cssClass='<%= "user-portrait" + useDialog %>' href="<%= myAccountURL %>" title="manage-my-account">
+							<%= userName %>
+						</aui:a>
+					</c:when>
+					<c:otherwise>
+						<span class="user-portrait">
+							<%= userName %>
+						</span>
+					</c:otherwise>
+				</c:choose>
 
 				<c:if test="<%= themeDisplay.isShowSignOutIcon() %>">
 					<span class="sign-out">(<aui:a href="<%= themeDisplay.getURLSignOut() %>" label="sign-out" />)</span>
@@ -426,7 +435,7 @@ boolean hasLayoutUpdatePermission = LayoutPermissionUtil.contains(permissionChec
 		<aui:form action="<%= resetPrototypeURL %>" cssClass="reset-prototype" name="resetFm">
 			<input name="<%= Constants.CMD %>" type="hidden" value="reset_prototype" />
 			<input name="redirect" type="hidden" value="<%= PortalUtil.getLayoutURL(themeDisplay) %>" />
-			<input name="groupId" type="hidden" value="<%= String.valueOf(themeDisplay.getParentGroupId()) %>" />
+			<input name="groupId" type="hidden" value="<%= String.valueOf(themeDisplay.getSiteGroupId()) %>" />
 
 			<aui:button name="submit" type="submit" value="reset" />
 		</aui:form>
@@ -489,7 +498,7 @@ boolean hasLayoutUpdatePermission = LayoutPermissionUtil.contains(permissionChec
 
 			<liferay-portlet:actionURL portletName="<%= PortletKeys.LAYOUTS_ADMIN %>" var="resetCustomizationViewURL">
 				<portlet:param name="struts_action" value="/layouts_admin/edit_layouts" />
-				<portlet:param name="groupId" value="<%= String.valueOf(themeDisplay.getParentGroupId()) %>" />
+				<portlet:param name="groupId" value="<%= String.valueOf(themeDisplay.getSiteGroupId()) %>" />
 				<portlet:param name="<%= Constants.CMD %>" value="reset_customized_view" />
 			</liferay-portlet:actionURL>
 

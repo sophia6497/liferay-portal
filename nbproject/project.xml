@@ -6,7 +6,6 @@
             <name>Liferay Portal</name>
         </general-data>
         <general-data xmlns="http://www.netbeans.org/ns/freeform-project/2">
-            <!-- Do not use Project Properties customizer when editing this file manually. -->
             <name>Liferay Portal</name>
             <properties/>
             <folders>
@@ -22,9 +21,15 @@
                     <encoding>UTF-8</encoding>
                 </source-folder>
                 <source-folder>
-                    <label>osgi\modules\log-bridge</label>
+                    <label>osgi\modules\http-service\src</label>
                     <type>java</type>
-                    <location>osgi/modules/log-bridge</location>
+                    <location>osgi/modules/http-service/src</location>
+                    <encoding>UTF-8</encoding>
+                </source-folder>
+                <source-folder>
+                    <label>osgi\modules\log-bridge\src</label>
+                    <type>java</type>
+                    <location>osgi/modules/log-bridge/src</location>
                     <encoding>UTF-8</encoding>
                 </source-folder>
                 <source-folder>
@@ -146,7 +151,11 @@
                         <location>osgi/bootstrap/src</location>
                     </source-folder>
                     <source-folder style="packages">
-                        <label>osgi\modules\log-bridge</label>
+                        <label>osgi\modules\http-service\src</label>
+                        <location>osgi/modules/http-service/src</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>osgi\modules\log-bridge\src</label>
                         <location>osgi/modules/log-bridge/src</location>
                     </source-folder>
                     <source-folder style="packages">
@@ -380,7 +389,6 @@
                 <classpath mode="compile">lib/portal/eclipse-core-runtime.jar</classpath>
                 <classpath mode="compile">lib/portal/ecs.jar</classpath>
                 <classpath mode="compile">lib/portal/ehcache-core.jar</classpath>
-                <classpath mode="compile">lib/portal/ehcache-jgroupsreplication.jar</classpath>
                 <classpath mode="compile">lib/portal/fastutil.jar</classpath>
                 <classpath mode="compile">lib/portal/felix-fileinstall.jar</classpath>
                 <classpath mode="compile">lib/portal/flexjson.jar</classpath>
@@ -430,7 +438,6 @@
                 <classpath mode="compile">lib/portal/jgroups.jar</classpath>
                 <classpath mode="compile">lib/portal/jhlabs-filters.jar</classpath>
                 <classpath mode="compile">lib/portal/jodconverter.jar</classpath>
-                <classpath mode="compile">lib/portal/jodd-wot.jar</classpath>
                 <classpath mode="compile">lib/portal/jodd.jar</classpath>
                 <classpath mode="compile">lib/portal/jrcs-diff.jar</classpath>
                 <classpath mode="compile">lib/portal/jruby.jar</classpath>

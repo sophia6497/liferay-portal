@@ -31,12 +31,14 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapperThreadLocal;
+import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.portlet.LiferayPortletMode;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletBag;
 import com.liferay.portal.kernel.portlet.PortletBagPool;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
@@ -112,6 +114,8 @@ import com.liferay.portal.plugin.PluginPackageUtil;
 import com.liferay.portal.security.auth.AuthException;
 import com.liferay.portal.security.auth.AuthTokenUtil;
 import com.liferay.portal.security.auth.CompanyThreadLocal;
+import com.liferay.portal.security.auth.FullNameGenerator;
+import com.liferay.portal.security.auth.FullNameGeneratorFactory;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
@@ -146,11 +150,8 @@ import com.liferay.portal.upload.UploadServletRequestImpl;
 import com.liferay.portal.util.comparator.PortletControlPanelWeightComparator;
 import com.liferay.portal.webserver.WebServerServlet;
 import com.liferay.portlet.ActionResponseImpl;
-import com.liferay.portlet.ControlPanelEntry;
-import com.liferay.portlet.DefaultControlPanelEntryFactory;
 import com.liferay.portlet.InvokerPortlet;
 import com.liferay.portlet.PortletConfigFactoryUtil;
-import com.liferay.portlet.PortletConfigImpl;
 import com.liferay.portlet.PortletInstanceFactoryUtil;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portlet.PortletPreferencesImpl;
@@ -169,6 +170,7 @@ import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.bookmarks.model.BookmarksEntry;
+import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.calendar.model.CalEvent;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
@@ -179,6 +181,7 @@ import com.liferay.portlet.journal.NoSuchFeedException;
 import com.liferay.portlet.journal.asset.JournalArticleAssetRendererFactory;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalArticleConstants;
+import com.liferay.portlet.journal.model.JournalFolder;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.login.util.LoginUtil;
 import com.liferay.portlet.messageboards.action.EditDiscussionAction;
@@ -258,6 +261,7 @@ import org.apache.struts.Globals;
  * @author Hugo Huijser
  * @author Juan Fernández
  */
+@DoPrivileged
 public class PortalImpl implements Portal {
 
 	public PortalImpl() {
@@ -311,6 +315,7 @@ public class PortalImpl implements Portal {
 		_pathFriendlyURLPublic = _pathContext + _PUBLIC_GROUP_SERVLET_MAPPING;
 		_pathImage = _pathContext + PATH_IMAGE;
 		_pathMain = _pathContext + PATH_MAIN;
+		_pathModule = _pathContext + PATH_MODULE;
 
 		// Groups
 
@@ -805,8 +810,9 @@ public class PortalImpl implements Portal {
 		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		if (themeDisplay.isLifecycleResource() ||
-			themeDisplay.isStateExclusive() || themeDisplay.isAjax()) {
+		if (themeDisplay.isAjax() || themeDisplay.isIsolated() ||
+			themeDisplay.isLifecycleResource() ||
+			themeDisplay.isStateExclusive()) {
 
 			return PwdGenerator.getPassword(PwdGenerator.KEY3, 4);
 		}
@@ -1436,7 +1442,7 @@ public class PortalImpl implements Portal {
 		Set<Portlet> portlets = getControlPanelPortlets(
 			themeDisplay.getCompanyId(), category);
 
-		return filterControlPanelPortlets(portlets, category, themeDisplay);
+		return filterControlPanelPortlets(portlets, themeDisplay);
 	}
 
 	public String getCreateAccountURL(
@@ -2099,6 +2105,15 @@ public class PortalImpl implements Portal {
 		}
 
 		return sb.toString();
+	}
+
+	public String getFullName(
+		String firstName, String middleName, String lastName) {
+
+		FullNameGenerator fullNameGenerator =
+			FullNameGeneratorFactory.getInstance();
+
+		return fullNameGenerator.getFullName(firstName, middleName, lastName);
 	}
 
 	public String getGlobalLibDir() {
@@ -2857,22 +2872,13 @@ public class PortalImpl implements Portal {
 		return originalRequest;
 	}
 
+	/**
+	 * @deprecated As of 6.2 renamed to #getSiteGroupId(groupId)
+	 */
 	public long getParentGroupId(long groupId)
 		throws PortalException, SystemException {
 
-		if (groupId <= 0) {
-			return 0;
-		}
-
-		Group group = GroupLocalServiceUtil.getGroup(groupId);
-
-		long parentGroupId = groupId;
-
-		if (group.isLayout()) {
-			parentGroupId = group.getParentGroupId();
-		}
-
-		return parentGroupId;
+		return getSiteGroupId(groupId);
 	}
 
 	public String getPathContext() {
@@ -2897,6 +2903,10 @@ public class PortalImpl implements Portal {
 
 	public String getPathMain() {
 		return _pathMain;
+	}
+
+	public String getPathModule() {
+		return _pathModule;
 	}
 
 	public String getPathProxy() {
@@ -3102,7 +3112,11 @@ public class PortalImpl implements Portal {
 
 			String virtualHostname = layoutSet.getVirtualHostname();
 
-			if (Validator.isNotNull(virtualHostname)) {
+			String domain = HttpUtil.getDomain(themeDisplay.getURLPortal());
+
+			if (Validator.isNotNull(virtualHostname) &&
+				domain.startsWith(virtualHostname)) {
+
 				serverName = virtualHostname;
 			}
 		}
@@ -3428,12 +3442,12 @@ public class PortalImpl implements Portal {
 	}
 
 	public String getPortletId(HttpServletRequest request) {
-		PortletConfigImpl portletConfigImpl =
-			(PortletConfigImpl)request.getAttribute(
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)request.getAttribute(
 				JavaConstants.JAVAX_PORTLET_CONFIG);
 
-		if (portletConfigImpl != null) {
-			return portletConfigImpl.getPortletId();
+		if (liferayPortletConfig != null) {
+			return liferayPortletConfig.getPortletId();
 		}
 		else {
 			return null;
@@ -3441,12 +3455,12 @@ public class PortalImpl implements Portal {
 	}
 
 	public String getPortletId(PortletRequest portletRequest) {
-		PortletConfigImpl portletConfigImpl =
-			(PortletConfigImpl)portletRequest.getAttribute(
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)portletRequest.getAttribute(
 				JavaConstants.JAVAX_PORTLET_CONFIG);
 
-		if (portletConfigImpl != null) {
-			return portletConfigImpl.getPortletId();
+		if (liferayPortletConfig != null) {
+			return liferayPortletConfig.getPortletId();
 		}
 		else {
 			return null;
@@ -3867,7 +3881,8 @@ public class PortalImpl implements Portal {
 
 		if (scopeGroup.isLayout()) {
 			return new long[] {
-				scopeGroup.getParentGroupId(), companyGroup.getGroupId()
+				groupId, scopeGroup.getParentGroupId(),
+				companyGroup.getGroupId()
 			};
 		}
 		else if (scopeGroup.isLayoutSetPrototype() ||
@@ -3884,6 +3899,24 @@ public class PortalImpl implements Portal {
 		throws PortalException, SystemException {
 
 		return getSiteAndCompanyGroupIds(themeDisplay.getScopeGroupId());
+	}
+
+	public long getSiteGroupId(long groupId)
+		throws PortalException, SystemException {
+
+		if (groupId <= 0) {
+			return 0;
+		}
+
+		Group group = GroupLocalServiceUtil.getGroup(groupId);
+
+		long siteGroupId = groupId;
+
+		if (group.isLayout()) {
+			siteGroupId = group.getParentGroupId();
+		}
+
+		return siteGroupId;
 	}
 
 	public String getSiteLoginURL(ThemeDisplay themeDisplay)
@@ -4603,11 +4636,15 @@ public class PortalImpl implements Portal {
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.BLOGS.MODEL.BLOGSENTRY$]",
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.BOOKMARKS.MODEL." +
 				"BOOKMARKSENTRY$]",
+			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.BOOKMARKS.MODEL." +
+				"BOOKMARKSFOLDER$]",
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.CALENDAR.MODEL.CALEVENT$]",
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.DOCUMENTLIBRARY.MODEL." +
 				"DLFILEENTRY$]",
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.DOCUMENTLIBRARY.MODEL." +
 				"DLFOLDER$]",
+			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.JOURNAL.MODEL." +
+				"JOURNALFOLDER$]",
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.MESSAGEBOARDS.MODEL." +
 				"MBMESSAGE$]",
 			"[$CLASS_NAME_ID_COM.LIFERAY.PORTLET.MESSAGEBOARDS.MODEL." +
@@ -4637,10 +4674,12 @@ public class PortalImpl implements Portal {
 			getClassNameId(User.class), getClassNameId(UserGroup.class),
 			getClassNameId(BlogsEntry.class),
 			getClassNameId(BookmarksEntry.class),
+			getClassNameId(BookmarksFolder.class),
 			getClassNameId(CalEvent.class), getClassNameId(DLFileEntry.class),
-			getClassNameId(DLFolder.class), getClassNameId(MBMessage.class),
-			getClassNameId(MBThread.class), getClassNameId(WikiPage.class),
-			ResourceConstants.SCOPE_COMPANY, ResourceConstants.SCOPE_GROUP,
+			getClassNameId(DLFolder.class), getClassNameId(JournalFolder.class),
+			getClassNameId(MBMessage.class), getClassNameId(MBThread.class),
+			getClassNameId(WikiPage.class), ResourceConstants.SCOPE_COMPANY,
+			ResourceConstants.SCOPE_GROUP,
 			ResourceConstants.SCOPE_GROUP_TEMPLATE,
 			ResourceConstants.SCOPE_INDIVIDUAL,
 			SocialRelationConstants.TYPE_BI_COWORKER,
@@ -4946,26 +4985,30 @@ public class PortalImpl implements Portal {
 			String portletId, String category, ThemeDisplay themeDisplay)
 		throws SystemException {
 
-		List<Portlet> portlets = getControlPanelPortlets(
-			category, themeDisplay);
+		Portlet portlet = PortletLocalServiceUtil.getPortletById(
+			themeDisplay.getCompanyId(), portletId);
 
-		for (Portlet portlet : portlets) {
-			if (portlet.getPortletId().equals(portletId)) {
-				return true;
-			}
+		String controlPanelEntryCategory =
+			portlet.getControlPanelEntryCategory();
+
+		if (!controlPanelEntryCategory.equals(category)) {
+			return false;
 		}
 
-		return false;
+		return isControlPanelPortlet(portletId, themeDisplay);
 	}
 
 	public boolean isControlPanelPortlet(
 			String portletId, ThemeDisplay themeDisplay)
 		throws SystemException {
 
-		for (String category : PortletCategoryKeys.ALL) {
-			if (isControlPanelPortlet(portletId, category, themeDisplay)) {
-				return true;
-			}
+		try {
+			return PortletPermissionUtil.hasControlPanelAccessPermission(
+				themeDisplay.getPermissionChecker(),
+				themeDisplay.getScopeGroupId(), portletId);
+		}
+		catch (PortalException e) {
+			_log.warn("Unable to check control panel access permission", e);
 		}
 
 		return false;
@@ -5884,22 +5927,9 @@ public class PortalImpl implements Portal {
 	}
 
 	protected List<Portlet> filterControlPanelPortlets(
-		Set<Portlet> portlets, String category, ThemeDisplay themeDisplay) {
+		Set<Portlet> portlets, ThemeDisplay themeDisplay) {
 
-		Group group = themeDisplay.getScopeGroup();
-
-		List<Portlet> filteredPortlets = new ArrayList<Portlet>();
-
-		if (category.equals(PortletCategoryKeys.CONTENT) && group.isLayout()) {
-			for (Portlet portlet : portlets) {
-				if (portlet.isScopeable()) {
-					filteredPortlets.add(portlet);
-				}
-			}
-		}
-		else {
-			filteredPortlets.addAll(portlets);
-		}
+		List<Portlet> filteredPortlets = new ArrayList<Portlet>(portlets);
 
 		Iterator<Portlet> itr = filteredPortlets.iterator();
 
@@ -5907,16 +5937,9 @@ public class PortalImpl implements Portal {
 			Portlet portlet = itr.next();
 
 			try {
-				ControlPanelEntry controlPanelEntry =
-					portlet.getControlPanelEntryInstance();
-
-				if (controlPanelEntry == null) {
-					controlPanelEntry =
-						DefaultControlPanelEntryFactory.getInstance();
-				}
-
-				if (!controlPanelEntry.hasAccessPermission(
-						themeDisplay.getPermissionChecker(), group, portlet)) {
+				if (!PortletPermissionUtil.hasControlPanelAccessPermission(
+						themeDisplay.getPermissionChecker(),
+						themeDisplay.getScopeGroupId(), portlet)) {
 
 					itr.remove();
 				}
@@ -6454,6 +6477,7 @@ public class PortalImpl implements Portal {
 	private String _pathFriendlyURLPublic;
 	private String _pathImage;
 	private String _pathMain;
+	private String _pathModule;
 	private String _pathProxy;
 	private Map<String, Long> _plidToPortletIdMap =
 		new ConcurrentHashMap<String, Long>();

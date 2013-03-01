@@ -65,6 +65,7 @@ import com.liferay.portal.service.ServiceContextThreadLocal;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.asset.model.AssetCategory;
+import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -101,6 +102,10 @@ public abstract class BaseIndexer implements Indexer {
 
 	public static final int INDEX_FILTER_SEARCH_LIMIT = GetterUtil.getInteger(
 		PropsUtil.get(PropsKeys.INDEX_FILTER_SEARCH_LIMIT));
+
+	public BaseIndexer() {
+		_document = new DocumentImpl();
+	}
 
 	public void addRelatedEntryFields(Document document, Object obj)
 		throws Exception {
@@ -281,7 +286,7 @@ public abstract class BaseIndexer implements Indexer {
 	public String getSortField(String orderByCol) {
 		String sortField = doGetSortField(orderByCol);
 
-		if (DocumentImpl.isSortableTextField(sortField)) {
+		if (_document.isDocumentSortableTextField(sortField)) {
 			return DocumentImpl.getSortableFieldName(sortField);
 		}
 
@@ -1200,7 +1205,7 @@ public abstract class BaseIndexer implements Indexer {
 			BaseModel<?> workflowedBaseModel)
 		throws SystemException {
 
-		Document document = new DocumentImpl();
+		Document document = newDocument();
 
 		String className = baseModel.getModelClassName();
 
@@ -1236,6 +1241,14 @@ public abstract class BaseIndexer implements Indexer {
 			className, classPK);
 
 		document.addText(Field.ASSET_TAG_NAMES, assetTagNames);
+
+		List<AssetTag> assetTags = AssetTagLocalServiceUtil.getTags(
+			className, classPK);
+
+		long[] assetTagsIds = StringUtil.split(
+			ListUtil.toString(assetTags, AssetTag.TAG_ID_ACCESSOR), 0L);
+
+		document.addKeyword(Field.ASSET_TAG_IDS, assetTagsIds);
 
 		document.addKeyword(Field.ENTRY_CLASS_NAME, className);
 		document.addKeyword(Field.ENTRY_CLASS_PK, classPK);
@@ -1274,7 +1287,7 @@ public abstract class BaseIndexer implements Indexer {
 			groupedModel = (GroupedModel)baseModel;
 
 			document.addKeyword(
-				Field.GROUP_ID, getParentGroupId(groupedModel.getGroupId()));
+				Field.GROUP_ID, getSiteGroupId(groupedModel.getGroupId()));
 			document.addKeyword(
 				Field.SCOPE_GROUP_ID, groupedModel.getGroupId());
 		}
@@ -1318,23 +1331,30 @@ public abstract class BaseIndexer implements Indexer {
 		return countryNames;
 	}
 
+	/**
+	 * @deprecated As of 6.2 renamed to {@link #getSiteGroupId(long)}
+	 */
 	protected long getParentGroupId(long groupId) {
-		long parentGroupId = groupId;
+		return getSiteGroupId(groupId);
+	}
+
+	protected abstract String getPortletId(SearchContext searchContext);
+
+	protected long getSiteGroupId(long groupId) {
+		long siteGroupId = groupId;
 
 		try {
 			Group group = GroupLocalServiceUtil.getGroup(groupId);
 
 			if (group.isLayout()) {
-				parentGroupId = group.getParentGroupId();
+				siteGroupId = group.getParentGroupId();
 			}
 		}
 		catch (Exception e) {
 		}
 
-		return parentGroupId;
+		return siteGroupId;
 	}
-
-	protected abstract String getPortletId(SearchContext searchContext);
 
 	protected Locale getSnippetLocale(Document document, Locale locale) {
 		String prefix = Field.SNIPPET + StringPool.UNDERLINE;
@@ -1354,6 +1374,10 @@ public abstract class BaseIndexer implements Indexer {
 		}
 
 		return null;
+	}
+
+	protected Document newDocument() {
+		return (Document)_document.clone();
 	}
 
 	protected void populateAddresses(
@@ -1442,12 +1466,17 @@ public abstract class BaseIndexer implements Indexer {
 		_permissionAware = permissionAware;
 	}
 
+	protected void setSortableTextFields(String[] sortableTextFields) {
+		_document.setSortableTextFields(sortableTextFields);
+	}
+
 	protected void setStagingAware(boolean stagingAware) {
 		_stagingAware = stagingAware;
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(BaseIndexer.class);
 
+	private Document _document;
 	private boolean _filterSearch;
 	private boolean _indexerEnabled = true;
 	private IndexerPostProcessor[] _indexerPostProcessors =

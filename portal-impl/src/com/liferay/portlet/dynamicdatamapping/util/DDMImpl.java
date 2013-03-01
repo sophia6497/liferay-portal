@@ -18,8 +18,10 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.upload.UploadRequest;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -29,19 +31,18 @@ import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.util.UnicodeFormatter;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.documentlibrary.DuplicateDirectoryException;
-import com.liferay.portlet.documentlibrary.DuplicateFileException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata;
 import com.liferay.portlet.documentlibrary.model.DLFileEntryMetadataModel;
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 import com.liferay.portlet.documentlibrary.store.DLStoreUtil;
+import com.liferay.portlet.documentlibrary.store.Store;
 import com.liferay.portlet.dynamicdatalists.model.DDLRecord;
 import com.liferay.portlet.dynamicdatalists.model.DDLRecordModel;
 import com.liferay.portlet.dynamicdatalists.model.DDLRecordVersion;
@@ -59,6 +60,8 @@ import com.liferay.portlet.dynamicdatamapping.util.comparator.StructureModifiedD
 import com.liferay.portlet.dynamicdatamapping.util.comparator.TemplateIdComparator;
 import com.liferay.portlet.dynamicdatamapping.util.comparator.TemplateModifiedDateComparator;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 
@@ -78,6 +81,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Eduardo Garcia
  * @author Marcellus Tavares
  */
+@DoPrivileged
 public class DDMImpl implements DDM {
 
 	public static final String FIELDS_DISPLAY_NAME = "_fieldsDisplay";
@@ -125,21 +129,31 @@ public class DDMImpl implements DDM {
 				continue;
 			}
 
+			Field field = new Field();
+
+			field.setDDMStructureId(ddmStructureId);
+
 			String languageId = GetterUtil.getString(
 				serviceContext.getAttribute("languageId"),
 				serviceContext.getLanguageId());
 
 			Locale locale = LocaleUtil.fromLanguageId(languageId);
 
-			Field field = new Field(
-				ddmStructureId, fieldName, fieldValues, locale);
-
 			String defaultLanguageId = GetterUtil.getString(
 				serviceContext.getAttribute("defaultLanguageId"));
 
 			Locale defaultLocale = LocaleUtil.fromLanguageId(defaultLanguageId);
 
+			if (ddmStructure.isFieldPrivate(fieldName)) {
+				locale = LocaleUtil.getDefault();
+
+				defaultLocale = LocaleUtil.getDefault();
+			}
+
 			field.setDefaultLocale(defaultLocale);
+
+			field.setName(fieldName);
+			field.setValues(locale, fieldValues);
 
 			fields.put(field);
 		}
@@ -302,13 +316,11 @@ public class DDMImpl implements DDM {
 			return;
 		}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
 		DDMStructure structure = field.getDDMStructure();
 
-		Serializable fieldValue = field.getValue(
-			themeDisplay.getLocale(), valueIndex);
+		Locale locale = PortalUtil.getLocale(request);
+
+		Serializable fieldValue = field.getValue(locale, valueIndex);
 
 		JSONObject fileJSONObject = JSONFactoryUtil.createJSONObject(
 			String.valueOf(fieldValue));
@@ -364,7 +376,8 @@ public class DDMImpl implements DDM {
 			try {
 				String fileName = uploadRequest.getFileName(fieldNameValue);
 
-				inputStream = uploadRequest.getFileAsStream(fieldName, true);
+				inputStream = uploadRequest.getFileAsStream(
+					fieldNameValue, true);
 
 				if (inputStream != null) {
 					String filePath = storeFieldFile(
@@ -490,6 +503,30 @@ public class DDMImpl implements DDM {
 					fieldValue = String.valueOf(fieldValueDate.getTime());
 				}
 			}
+			else if (fieldDataType.equals(FieldConstants.IMAGE) &&
+					 Validator.isNull(fieldValue)) {
+
+				HttpServletRequest request = serviceContext.getRequest();
+
+				if (!(request instanceof UploadRequest)) {
+					return null;
+				}
+
+				UploadRequest uploadRequest = (UploadRequest)request;
+
+				File file = uploadRequest.getFile(fieldNameValue);
+
+				try {
+					byte[] bytes = FileUtil.getBytes(file);
+
+					if ((bytes != null) && (bytes.length > 0)) {
+						fieldValue = UnicodeFormatter.bytesToHex(bytes);
+					}
+				}
+				catch (IOException ioe) {
+					return null;
+				}
+			}
 
 			if ((fieldValue == null) ||
 				fieldDataType.equals(FieldConstants.FILE_UPLOAD)) {
@@ -520,27 +557,32 @@ public class DDMImpl implements DDM {
 	protected String storeFieldFile(
 			BaseModel<?> baseModel, String fieldName, InputStream inputStream,
 			ServiceContext serviceContext)
-		throws Exception {
+		throws PortalException, SystemException {
+
+		long companyId = serviceContext.getCompanyId();
 
 		String dirName = getFileUploadPath(baseModel);
 
-		try {
+		if (!DLStoreUtil.hasDirectory(
+				companyId, CompanyConstants.SYSTEM, dirName)) {
+
 			DLStoreUtil.addDirectory(
-				serviceContext.getCompanyId(), CompanyConstants.SYSTEM,
-				dirName);
-		}
-		catch (DuplicateDirectoryException dde) {
+				companyId, CompanyConstants.SYSTEM, dirName);
 		}
 
 		String fileName = dirName + StringPool.SLASH + fieldName;
 
-		try {
-			DLStoreUtil.addFile(
-				serviceContext.getCompanyId(), CompanyConstants.SYSTEM,
-				fileName, inputStream);
+		if (DLStoreUtil.hasFile(
+				companyId, CompanyConstants.SYSTEM, fileName,
+				Store.VERSION_DEFAULT)) {
+
+			DLStoreUtil.deleteFile(
+				companyId, CompanyConstants.SYSTEM, fileName,
+				Store.VERSION_DEFAULT);
 		}
-		catch (DuplicateFileException dfe) {
-		}
+
+		DLStoreUtil.addFile(
+			companyId, CompanyConstants.SYSTEM, fileName, false, inputStream);
 
 		return fileName;
 	}

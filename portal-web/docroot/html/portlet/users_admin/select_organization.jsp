@@ -17,14 +17,22 @@
 <%@ include file="/html/portlet/users_admin/init.jsp" %>
 
 <%
+String eventName = ParamUtil.getString(request, "eventName", "selectOrganization");
 String target = ParamUtil.getString(request, "target");
+
+User selUser = PortalUtil.getSelectedUser(request);
 
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/users_admin/select_organization");
+portletURL.setParameter("eventName", eventName);
 
 if (Validator.isNotNull(target)) {
 	portletURL.setParameter("target", target);
+}
+
+if (selUser != null) {
+	portletURL.setParameter("p_u_i_d", String.valueOf(selUser.getUserId()));
 }
 %>
 
@@ -69,33 +77,7 @@ if (Validator.isNotNull(target)) {
 			keyProperty="organizationId"
 			modelVar="organization"
 		>
-
-			<%
-			String rowHREF = null;
-
-			if (OrganizationPermissionUtil.contains(permissionChecker, organization.getOrganizationId(), ActionKeys.ASSIGN_MEMBERS)) {
-				StringBundler sb = new StringBundler(13);
-
-				sb.append("javascript:Liferay.Util.getOpener().");
-				sb.append(renderResponse.getNamespace());
-				sb.append("selectOrganization('");
-				sb.append(organization.getOrganizationId());
-				sb.append("', '");
-				sb.append(organization.getGroup().getGroupId());
-				sb.append("', '");
-				sb.append(UnicodeFormatter.toString(organization.getName()));
-				sb.append("', '");
-				sb.append(UnicodeLanguageUtil.get(pageContext, organization.getType()));
-				sb.append("', '");
-				sb.append(target);
-				sb.append("');Liferay.Util.getWindow().close();");
-
-				rowHREF = sb.toString();
-			}
-			%>
-
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="name"
 				orderable="<%= true %>"
 				property="name"
@@ -103,7 +85,6 @@ if (Validator.isNotNull(target)) {
 
 			<liferay-ui:search-container-column-text
 				buffer="buffer"
-				href="<%= rowHREF %>"
 				name="parent-organization"
 			>
 
@@ -126,29 +107,41 @@ if (Validator.isNotNull(target)) {
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="type"
 				orderable="<%= true %>"
 				value="<%= LanguageUtil.get(pageContext, organization.getType()) %>"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="city"
 				property="address.city"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="region"
 				property="address.region.name"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="country"
 				property="address.country.name"
 			/>
+
+			<liferay-ui:search-container-column-text>
+				<c:if test="<%= MembershipPolicyUtil.isMembershipAllowed(organization, selUser) %>">
+
+					<%
+					Map<String, Object> data = new HashMap<String, Object>();
+
+					data.put("groupid", organization.getGroupId());
+					data.put("name", HtmlUtil.escape(organization.getName()));
+					data.put("organizationid", organization.getOrganizationId());
+					data.put("type", LanguageUtil.get(pageContext, organization.getType()));
+					%>
+
+					<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+				</c:if>
+			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator />
@@ -157,4 +150,20 @@ if (Validator.isNotNull(target)) {
 
 <aui:script>
 	Liferay.Util.focusFormField(document.<portlet:namespace />selectOrganizationFm.<portlet:namespace />name);
+</aui:script>
+
+<aui:script use="aui-base">
+	var Util = Liferay.Util;
+
+	A.one('#<portlet:namespace />selectOrganizationFm').delegate(
+		'click',
+		function(event) {
+			var result = Util.getAttributes(event.currentTarget, 'data-');
+
+			Util.getOpener().Liferay.fire('<portlet:namespace /><%= eventName %>', result);
+
+			Util.getWindow().close();
+		},
+		'.selector-button input'
+	);
 </aui:script>

@@ -1,53 +1,16 @@
 <#setting number_format = "0">
 
-<#assign groupIds = dataFactory.addUserToGroupIds(group.groupId)>
-<#assign organizationIds = []>
+<#assign groupIds = dataFactory.getNewUserGroupIds(group.groupId)>
 <#assign roleIds = [dataFactory.administratorRole.roleId, dataFactory.powerUserRole.roleId, dataFactory.userRole.roleId]>
 
-<#assign firstNames = dataFactory.userNames?first>
-<#assign lastNames = dataFactory.userNames?last>
+<#if (maxUserCount > 0)>
+	<#list 1..maxUserCount as userCount>
+		<#assign user = dataFactory.newUser(userCount)>
 
-<#assign userCounter = dataFactory.newInteger()>
+		<#assign userGroup = dataFactory.newGroup(counter.get(), dataFactory.userClassNameId, user.userId, stringUtil.valueOf(user.userId), "/" + user.screenName, false)>
 
-<#list lastNames as lastName>
-	<#list firstNames as firstName>
-		<#assign userCounterIncrement = userCounter.increment()>
+		${sampleSQLBuilder.insertGroup(userGroup, [dataFactory.newLayout(1, "Home", "/home", "", "33,")])}
 
-		<#assign contact = dataFactory.addContact(firstName, lastName)>
-		<#assign user = dataFactory.addUser(false, "test" + userScreenNameIncrementer.get())>
-
-		<#assign userGroup = dataFactory.addGroup(counter.get(), dataFactory.userClassNameId, user.userId, stringUtil.valueOf(user.userId), "/" + user.screenName, false)>
-
-		${sampleSQLBuilder.insertGroup(userGroup, [], [dataFactory.addLayout(1, "Home", "/home", "", "33,")])}
-
-		${sampleSQLBuilder.insertUser(contact, groupIds, organizationIds, roleIds, user)}
-
-		<#assign blogsStatsUser = dataFactory.addBlogsStatsUser(groupId, user.userId)>
-
-		insert into BlogsStatsUser (statsUserId, groupId, companyId, userId) values (${counter.get()}, ${blogsStatsUser.groupId}, ${companyId}, ${blogsStatsUser.userId});
-
-		<#assign mbStatsUser = dataFactory.addMBStatsUser(groupId, user.userId)>
-
-		insert into MBStatsUser (statsUserId, groupId, userId) values (${counter.get()}, ${mbStatsUser.groupId}, ${mbStatsUser.userId});
-
-		${writerUserCSV.write(user.getScreenName() + "," + userGroup.groupId + ",")}
-
-		<#if (userCounter.value < maxUserCount)>
-			${writerUserCSV.write("\n")}
-		</#if>
-
-		<#if (lastName_index = 0) && (firstName_index = 0)>
-			<#assign firstUserId = user.userId>
-		</#if>
-
-		<#if (userCounter.value >= maxUserCount)>
-			${writerUserCSV.write("\n")}
-
-			<#break>
-		</#if>
+		${sampleSQLBuilder.insertUser(groupIds, roleIds, user)}
 	</#list>
-
-	<#if (userCounter.value >= maxUserCount)>
-		<#break>
-	</#if>
-</#list>
+</#if>

@@ -520,7 +520,7 @@ public class GroupLocalServiceUtil {
 	}
 
 	/**
-	* Returns all the sites that are children of the parent group.
+	* Returns all the groups that are direct children of the parent group.
 	*
 	* @param companyId the primary key of the company
 	* @param parentGroupId the primary key of the parent group
@@ -536,6 +536,43 @@ public class GroupLocalServiceUtil {
 	}
 
 	/**
+	* Returns all the groups that are direct children of the parent group with
+	* the matching className.
+	*
+	* @param companyId the primary key of the company
+	* @param className the class name of the group
+	* @param parentGroupId the primary key of the parent group
+	* @return the matching groups, or <code>null</code> if no matches were
+	found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.Group> getGroups(
+		long companyId, java.lang.String className, long parentGroupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getGroups(companyId, className, parentGroupId);
+	}
+
+	/**
+	* Returns a range of all the groups that are direct children of the parent
+	* group with the matching className.
+	*
+	* @param companyId the primary key of the company
+	* @param className the class name of the group
+	* @param parentGroupId the primary key of the parent group
+	* @param start the lower bound of the range of results
+	* @param end the upper bound of the range of results (not inclusive)
+	* @return the range of matching groups
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.Group> getGroups(
+		long companyId, java.lang.String className, long parentGroupId,
+		int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getGroups(companyId, className, parentGroupId, start, end);
+	}
+
+	/**
 	* Returns the groups with the matching primary keys.
 	*
 	* @param groupIds the primary keys of the groups
@@ -548,6 +585,38 @@ public class GroupLocalServiceUtil {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService().getGroups(groupIds);
+	}
+
+	/**
+	* Returns the number of groups that are direct children of the parent
+	* group.
+	*
+	* @param companyId the primary key of the company
+	* @param parentGroupId the primary key of the parent group
+	* @param site whether the group is to be associated with a main site
+	* @return the number of matching groups
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int getGroupsCount(long companyId, long parentGroupId,
+		boolean site)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getGroupsCount(companyId, parentGroupId, site);
+	}
+
+	/**
+	* Returns the number of groups that are direct children of the parent group
+	* with the matching className.
+	*
+	* @param companyId the primary key of the company
+	* @param className the class name of the group
+	* @param parentGroupId the primary key of the parent group
+	* @return the number of matching groups
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int getGroupsCount(long companyId,
+		java.lang.String className, long parentGroupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getGroupsCount(companyId, className, parentGroupId);
 	}
 
 	/**
@@ -1309,8 +1378,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param parentGroupId the primary key of the parent group
 	* @param keywords the keywords (space separated), which may occur in the
 	sites's name, or description (optionally <code>null</code>)
@@ -1355,8 +1424,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the group's class name IDs (optionally
-	<code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param parentGroupId the primary key of the parent group
 	* @param keywords the keywords (space separated), which may occur in the
 	sites's name, or description (optionally <code>null</code>)
@@ -1403,8 +1472,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param parentGroupId the primary key of the parent group
 	* @param name the group's name (optionally <code>null</code>)
 	* @param description the group's description (optionally
@@ -1452,8 +1521,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the group's class name IDs (optionally
-	<code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param parentGroupId the primary key of the parent group
 	* @param name the group's name (optionally <code>null</code>)
 	* @param description the group's description (optionally
@@ -1503,8 +1572,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param keywords the keywords (space separated), which may occur in the
 	sites's name, or description (optionally <code>null</code>)
 	* @param params the finder params (optionally <code>null</code>). To
@@ -1545,8 +1614,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the group's class name IDs (optionally
-	<code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param keywords the keywords (space separated), which may occur in the
 	sites's name, or description (optionally <code>null</code>)
 	* @param params the finder params (optionally <code>null</code>). To
@@ -1591,8 +1660,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param name the group's name (optionally <code>null</code>)
 	* @param description the group's description (optionally
 	<code>null</code>)
@@ -1639,8 +1708,8 @@ public class GroupLocalServiceUtil {
 	* </p>
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the group's class name IDs (optionally
-	<code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param name the group's name (optionally <code>null</code>)
 	* @param description the group's description (optionally
 	<code>null</code>)
@@ -1907,8 +1976,8 @@ public class GroupLocalServiceUtil {
 	* included.
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param parentGroupId the primary key of the parent group
 	* @param keywords the keywords (space separated), which may occur in the
 	sites's name, or description (optionally <code>null</code>)
@@ -1937,8 +2006,8 @@ public class GroupLocalServiceUtil {
 	* are not included.
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param parentGroupId the primary key of the parent group
 	* @param name the group's name (optionally <code>null</code>)
 	* @param description the group's description (optionally
@@ -1971,8 +2040,8 @@ public class GroupLocalServiceUtil {
 	* groups. System and staged groups are not included.
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param keywords the keywords (space separated), which may occur in the
 	sites's name, or description (optionally <code>null</code>)
 	* @param params the finder params (optionally <code>null</code>). To
@@ -1998,8 +2067,8 @@ public class GroupLocalServiceUtil {
 	* groups and user groups. System and staged groups are not included.
 	*
 	* @param companyId the primary key of the company
-	* @param classNameIds the class names of entities to include in the search
-	(optionally <code>null</code>)
+	* @param classNameIds the primary keys of the class names of the entities
+	the groups are related to (optionally <code>null</code>)
 	* @param name the group's name (optionally <code>null</code>)
 	* @param description the group's description (optionally
 	<code>null</code>)

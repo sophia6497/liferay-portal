@@ -891,6 +891,16 @@ public class DLFileEntryWrapper implements DLFileEntry,
 	}
 
 	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_dlFileEntry.setExpandoBridgeAttributes(baseModel);
+	}
+
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_dlFileEntry.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_dlFileEntry.setExpandoBridgeAttributes(serviceContext);
 	}
@@ -1032,11 +1042,6 @@ public class DLFileEntryWrapper implements DLFileEntry,
 	public void setExtraSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties extraSettingsProperties) {
 		_dlFileEntry.setExtraSettingsProperties(extraSettingsProperties);
-	}
-
-	public void setFileVersion(
-		com.liferay.portlet.documentlibrary.model.DLFileVersion dlFileVersion) {
-		_dlFileEntry.setFileVersion(dlFileVersion);
 	}
 
 	/**

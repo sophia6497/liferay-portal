@@ -295,6 +295,7 @@ alter table DLFileEntry add classNameId LONG;
 alter table DLFileEntry add classPK LONG;
 alter table DLFileEntry add manualCheckInRequired BOOLEAN;
 
+alter table DLFileRank add uuid_ VARCHAR(75) null;
 alter table DLFileRank add active_ BOOLEAN;
 
 COMMIT_TRANSACTION;
@@ -350,11 +351,17 @@ create table JournalFolder (
 	modifiedDate DATE null,
 	parentFolderId LONG,
 	name VARCHAR(100) null,
-	description STRING null
+	description STRING null,
+	status INTEGER,
+	statusByUserId LONG,
+	statusByUserName VARCHAR(75) null,
+	statusDate DATE null
 );
 
 drop index IX_228562AD on Lock_;
 drop index IX_DD635956 on Lock_;
+
+alter table MBBan add uuid_ VARCHAR(75) null;
 
 alter table MBCategory add status INTEGER;
 alter table MBCategory add statusByUserId LONG;
@@ -372,6 +379,12 @@ update MBMessage set status = 2 where status = 9;
 
 alter table MBMessage drop column attachments;
 
+alter table MBThreadFlag add uuid_ VARCHAR(75) null;
+alter table MBThreadFlag add groupId LONG;
+alter table MBThreadFlag add companyId LONG;
+alter table MBThreadFlag add userName VARCHAR(75) null;
+alter table MBThreadFlag add createdDate DATE null;
+
 drop table OrgGroupPermission;
 
 alter table PasswordPolicy add regex VARCHAR(75) null;
@@ -381,6 +394,11 @@ drop index IX_ED7CF243 on PasswordPolicyRel;
 
 drop table Permission_;
 
+alter table RepositoryEntry add companyId LONG;
+alter table RepositoryEntry add userId LONG;
+alter table RepositoryEntry add userName VARCHAR(75) null;
+alter table RepositoryEntry add createDate DATE null;
+alter table RepositoryEntry add modifiedDate DATE null;
 alter table RepositoryEntry add manualCheckInRequired BOOLEAN;
 
 drop table Resource_;
@@ -395,11 +413,26 @@ drop index IX_8DB864A9 on ResourcePermission;
 
 drop table Roles_Permissions;
 
+alter table SocialActivity add activitySetId LONG;
+
 alter table SocialActivityCounter add active_ BOOLEAN;
 
 COMMIT_TRANSACTION;
 
 update SocialActivityCounter set active_ = TRUE;
+
+create table SocialActivitySet (
+	activitySetId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	createDate LONG,
+	modifiedDate LONG,
+	classNameId LONG,
+	classPK LONG,
+	type_ INTEGER,
+	activityCount INTEGER
+);
 
 create table TrashEntry (
 	entryId LONG not null primary key,

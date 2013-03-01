@@ -24,6 +24,7 @@ import java.util.List;
 
 /**
  * @author Marcellus Tavares
+ * @author Eduardo Lundgren
  */
 public class FieldConstants {
 
@@ -45,6 +46,8 @@ public class FieldConstants {
 
 	public static final String HTML = "html";
 
+	public static final String IMAGE = "image";
+
 	public static final String INTEGER = "integer";
 
 	public static final String LABEL = "label";
@@ -55,7 +58,7 @@ public class FieldConstants {
 
 	public static final String NUMBER = "number";
 
-	public static final String PREDIFINED_VALUE = "predefinedValue";
+	public static final String PREDEFINED_VALUE = "predefinedValue";
 
 	public static final String REQUIRED = "required";
 
@@ -106,6 +109,10 @@ public class FieldConstants {
 	public static final Serializable getSerializable(
 		String type, String value) {
 
+		if (isNumericType(type) && Validator.isNull(value)) {
+			return null;
+		}
+
 		if (type.equals(BOOLEAN)) {
 			return GetterUtil.getBoolean(value);
 		}
@@ -133,6 +140,16 @@ public class FieldConstants {
 		else {
 			return value;
 		}
+	}
+
+	public static final boolean isNumericType(String type) {
+		if (type.equals(DOUBLE) || type.equals(FLOAT) || type.equals(INTEGER) ||
+			type.equals(LONG) || type.equals(NUMBER) || type.equals(SHORT)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 }

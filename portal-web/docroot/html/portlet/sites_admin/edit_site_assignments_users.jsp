@@ -57,6 +57,8 @@ userSearch.setEmptyResultsMessage(emptyResultsMessage);
 <aui:input name="addUserIds" type="hidden" />
 <aui:input name="removeUserIds" type="hidden" />
 
+<liferay-ui:membership-policy-error />
+
 <liferay-ui:search-container
 	rowChecker="<%= userGroupChecker %>"
 	searchContainer="<%= userSearch %>"
@@ -75,7 +77,7 @@ userSearch.setEmptyResultsMessage(emptyResultsMessage);
 	LinkedHashMap<String, Object> userParams = new LinkedHashMap<String, Object>();
 
 	if (tabs1.equals("summary") || tabs2.equals("current")) {
-		userParams.put("inherit", true);
+		userParams.put("inherit", Boolean.TRUE);
 		userParams.put("usersGroups", new Long(group.getGroupId()));
 	}
 	%>

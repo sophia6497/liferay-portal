@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.bookmarks.service.impl;
 
+import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -23,6 +24,7 @@ import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.service.base.BookmarksFolderServiceBaseImpl;
 import com.liferay.portlet.bookmarks.service.permission.BookmarksFolderPermission;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -80,6 +82,19 @@ public class BookmarksFolderServiceImpl extends BookmarksFolderServiceBaseImpl {
 		return folder;
 	}
 
+	public List<Long> getFolderIds(long groupId, long folderId)
+		throws PortalException, SystemException {
+
+		BookmarksFolderPermission.check(
+			getPermissionChecker(), groupId, folderId, ActionKeys.VIEW);
+
+		List<Long> folderIds = getSubfolderIds(groupId, folderId, true);
+
+		folderIds.add(0, folderId);
+
+		return folderIds;
+	}
+
 	public List<BookmarksFolder> getFolders(long groupId)
 		throws SystemException {
 
@@ -116,6 +131,51 @@ public class BookmarksFolderServiceImpl extends BookmarksFolderServiceBaseImpl {
 		}
 	}
 
+	public List<Object> getFoldersAndEntries(long groupId, long folderId)
+		throws SystemException {
+
+		return getFoldersAndEntries(
+			groupId, folderId, WorkflowConstants.STATUS_ANY);
+	}
+
+	public List<Object> getFoldersAndEntries(
+			long groupId, long folderId, int status)
+		throws SystemException {
+
+		QueryDefinition queryDefinition = new QueryDefinition(status);
+
+		return bookmarksFolderFinder.filterFindBF_E_ByG_F(
+			groupId, folderId, queryDefinition);
+	}
+
+	public List<Object> getFoldersAndEntries(
+			long groupId, long folderId, int status, int start, int end)
+		throws SystemException {
+
+		QueryDefinition queryDefinition = new QueryDefinition(
+			status, start, end, null);
+
+		return bookmarksFolderFinder.filterFindBF_E_ByG_F(
+			groupId, folderId, queryDefinition);
+	}
+
+	public int getFoldersAndEntriesCount(long groupId, long folderId)
+		throws SystemException {
+
+		return getFoldersAndEntriesCount(
+			groupId, folderId, WorkflowConstants.STATUS_ANY);
+	}
+
+	public int getFoldersAndEntriesCount(
+			long groupId, long folderId, int status)
+		throws SystemException {
+
+		QueryDefinition queryDefinition = new QueryDefinition(status);
+
+		return bookmarksFolderFinder.filterCountF_E_ByG_F(
+			groupId, folderId, queryDefinition);
+	}
+
 	public int getFoldersCount(long groupId, long parentFolderId)
 		throws SystemException {
 
@@ -145,11 +205,26 @@ public class BookmarksFolderServiceImpl extends BookmarksFolderServiceBaseImpl {
 				groupId, folderId, WorkflowConstants.STATUS_APPROVED);
 
 		for (BookmarksFolder folder : folders) {
+			if (folder.isInTrashContainer()) {
+				continue;
+			}
+
 			folderIds.add(folder.getFolderId());
 
 			getSubfolderIds(
 				folderIds, folder.getGroupId(), folder.getFolderId());
 		}
+	}
+
+	public List<Long> getSubfolderIds(
+			long groupId, long folderId, boolean recurse)
+		throws SystemException {
+
+		List<Long> folderIds = new ArrayList<Long>();
+
+		getSubfolderIds(folderIds, groupId, folderId);
+
+		return folderIds;
 	}
 
 	public BookmarksFolder moveFolder(long folderId, long parentFolderId)
@@ -235,8 +310,8 @@ public class BookmarksFolderServiceImpl extends BookmarksFolderServiceBaseImpl {
 			getPermissionChecker(), folder, ActionKeys.UPDATE);
 
 		return bookmarksFolderLocalService.updateFolder(
-			folderId, parentFolderId, name, description, mergeWithParentFolder,
-			serviceContext);
+			getUserId(), folderId, parentFolderId, name, description,
+			mergeWithParentFolder, serviceContext);
 	}
 
 }

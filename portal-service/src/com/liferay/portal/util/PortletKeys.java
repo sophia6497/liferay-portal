@@ -77,6 +77,8 @@ public class PortletKeys {
 
 	public static final String FLAGS = "142";
 
+	public static final String FRIENDS_DIRECTORY = "186";
+
 	public static final String GROUP_PAGES = "156";
 
 	public static final String GROUP_STATISTICS = "181";
@@ -127,6 +129,8 @@ public class PortletKeys {
 	public static final String MY_PAGES = "140";
 
 	public static final String MY_SITES = "29";
+
+	public static final String MY_SITES_DIRECTORY = "188";
 
 	public static final String MY_WORKFLOW_INSTANCES = "158";
 
@@ -195,6 +199,8 @@ public class PortletKeys {
 	public static final String SITE_BROWSER = "185";
 
 	public static final String SITE_MAP = "85";
+
+	public static final String SITE_MEMBERS_DIRECTORY = "187";
 
 	public static final String SITE_MEMBERSHIPS_ADMIN = "174";
 

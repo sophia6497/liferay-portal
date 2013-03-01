@@ -19,7 +19,10 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.search.BaseIndexer;
+import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
@@ -27,9 +30,11 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PortletKeys;
+import com.liferay.portlet.journal.asset.JournalFolderAssetRendererFactory;
 import com.liferay.portlet.journal.model.JournalFolder;
 import com.liferay.portlet.journal.service.JournalFolderLocalServiceUtil;
 import com.liferay.portlet.journal.service.permission.JournalFolderPermission;
@@ -39,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 
+import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
+import javax.portlet.WindowStateException;
 
 /**
  * @author Eduardo Garcia
@@ -77,6 +84,20 @@ public class JournalFolderIndexer extends BaseIndexer {
 	}
 
 	@Override
+	public void postProcessContextQuery(
+			BooleanQuery contextQuery, SearchContext searchContext)
+		throws Exception {
+
+		int status = GetterUtil.getInteger(
+				searchContext.getAttribute(Field.STATUS),
+				WorkflowConstants.STATUS_APPROVED);
+
+		if (status != WorkflowConstants.STATUS_ANY) {
+			contextQuery.addRequiredTerm(Field.STATUS, status);
+		}
+	}
+
+	@Override
 	protected void doDelete(Object obj) throws Exception {
 		JournalFolder folder = (JournalFolder)obj;
 
@@ -103,6 +124,24 @@ public class JournalFolderIndexer extends BaseIndexer {
 		document.addKeyword(Field.FOLDER_ID, folder.getParentFolderId());
 		document.addText(Field.TITLE, folder.getName());
 
+		if (!folder.isInTrash() && folder.isInTrashContainer()) {
+			JournalFolder trashedFolder = folder.getTrashContainer();
+
+			if (trashedFolder != null) {
+				addTrashFields(
+					document, JournalFolder.class.getName(),
+					trashedFolder.getFolderId(), null, null,
+					JournalFolderAssetRendererFactory.TYPE);
+
+				document.addKeyword(
+					Field.ROOT_ENTRY_CLASS_NAME, JournalFolder.class.getName());
+				document.addKeyword(
+					Field.ROOT_ENTRY_CLASS_PK, trashedFolder.getFolderId());
+				document.addKeyword(
+					Field.STATUS, WorkflowConstants.STATUS_IN_TRASH);
+			}
+		}
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("Document " + folder + " indexed successfully");
 		}
@@ -115,7 +154,28 @@ public class JournalFolderIndexer extends BaseIndexer {
 		Document document, Locale locale, String snippet,
 		PortletURL portletURL) {
 
-		return null;
+		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
+
+		liferayPortletURL.setLifecycle(PortletRequest.ACTION_PHASE);
+
+		try {
+			liferayPortletURL.setWindowState(LiferayWindowState.EXCLUSIVE);
+		}
+		catch (WindowStateException wse) {
+		}
+
+		String folderId = document.get(Field.ENTRY_CLASS_PK);
+
+		portletURL.setParameter("struts_action", "/journal/view");
+		portletURL.setParameter("folderId", folderId);
+
+		Summary summary = createSummary(
+			document, Field.TITLE, Field.DESCRIPTION);
+
+		summary.setMaxContentLength(200);
+		summary.setPortletURL(portletURL);
+
+		return summary;
 	}
 
 	@Override

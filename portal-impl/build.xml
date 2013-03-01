@@ -74,13 +74,14 @@ svn://svn.liferay.com/repos/public/alloy/trunk/sandbox/taglibs.
 		<java
 			classname="org.antlr.Tool"
 			classpathref="antlr.classpath"
+			dir="src/com/liferay/portal/parsers/creole/grammar"
 			fork="true"
 			maxmemory="1024m"
 			newenvironment="true"
 		>
 			<arg value="-o" />
-			<arg path="src/com/liferay/portal/parsers/creole/parser" />
-			<arg path="src/com/liferay/portal/parsers/creole/grammar/Creole10.g" />
+			<arg value="../parser" />
+			<arg value="Creole10.g" />
 		</java>
 
 		<replace file="src/com/liferay/portal/parsers/creole/parser/Creole10Lexer.java">
@@ -1305,6 +1306,35 @@ public class Creole10Parser]]></replacevalue>
 		<ant dir="../util-bridges" target="jar" inheritAll="false" />
 		<ant dir="../util-java" target="jar" inheritAll="false" />
 		<ant dir="../util-taglib" target="jar" inheritAll="false" />
+
+		<copy todir="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies/osgi/core">
+			<fileset dir="${project.dir}/osgi/lib/${module.framework.implementation}/core" includes="*.jar" />
+		</copy>
+
+		<fileset dir="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies/osgi/core" id="osgi.core.jars">
+			<include name="*.jar" />
+		</fileset>
+
+		<pathconvert property="osgi.core.jars.list" pathsep="," refid="osgi.core.jars">
+			<flattenmapper />
+		</pathconvert>
+
+		<echo file="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies/osgi/core/jars.txt">${osgi.core.jars.list}</echo>
+
+		<copy todir="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies/osgi/portal">
+			<fileset dir="${project.dir}/osgi/lib/common/portal" includes="*.jar" />
+			<fileset dir="${project.dir}/osgi/lib/${module.framework.implementation}/portal" includes="*.jar" />
+		</copy>
+
+		<fileset dir="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies/osgi/portal" id="osgi.portal.jars">
+			<include name="*.jar" />
+		</fileset>
+
+		<pathconvert property="osgi.portal.jars.list" pathsep="," refid="osgi.portal.jars">
+			<flattenmapper />
+		</pathconvert>
+
+		<echo file="${portal-impl.classes.dir}/com/liferay/portal/deploy/dependencies/osgi/portal/jars.txt">${osgi.portal.jars.list}</echo>
 
 		<if>
 			<not>

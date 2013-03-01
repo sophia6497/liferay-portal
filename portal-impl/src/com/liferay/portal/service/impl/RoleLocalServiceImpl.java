@@ -49,8 +49,10 @@ import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.Shard;
 import com.liferay.portal.model.Team;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.auth.MembershipPolicyUtil;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.RoleLocalServiceBaseImpl;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
@@ -66,6 +68,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The implementation of the role local service.
@@ -92,7 +95,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 *             primary key could not be found
 	 * @throws     SystemException if a system exception occurred
 	 * @deprecated {@link #addRole(long, String, long, String, Map, Map, int,
-	 *             String)}
+	 *             String, ServiceContext)}
 	 */
 	public Role addRole(
 			long userId, long companyId, String name,
@@ -101,7 +104,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		throws PortalException, SystemException {
 
 		return addRole(
-			userId, null, 0, name, titleMap, descriptionMap, type, null);
+			userId, null, 0, name, titleMap, descriptionMap, type, null, null);
 	}
 
 	/**
@@ -126,7 +129,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 *             primary key could not be found
 	 * @throws     SystemException if a system exception occurred
 	 * @deprecated {@link #addRole(long, String, long, String, Map, Map, int,
-	 *             String)}
+	 *             String, ServiceContext)}
 	 */
 	public Role addRole(
 			long userId, long companyId, String name,
@@ -136,7 +139,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 
 		return addRole(
 			userId, className, classPK, name, titleMap, descriptionMap, type,
-			null);
+			null, null);
 	}
 
 	/**
@@ -155,6 +158,9 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 *         <code>null</code>)
 	 * @param  type the role's type (optionally <code>0</code>)
 	 * @param  subType the role's subtype (optionally <code>null</code>)
+	 * @param  serviceContext the roles's service context (optionally
+	 *         <code>null</code>). Can set expando bridge attributes for the
+	 *         role.
 	 * @return the role
 	 * @throws PortalException if the class name or the role name were invalid,
 	 *         if the role is a duplicate, or if a user with the primary key
@@ -164,7 +170,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	public Role addRole(
 			long userId, String className, long classPK, String name,
 			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
-			int type, String subType)
+			int type, String subType, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		// Role
@@ -192,6 +198,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		role.setDescriptionMap(descriptionMap);
 		role.setType(type);
 		role.setSubtype(subType);
+		role.setExpandoBridgeAttributes(serviceContext);
 
 		rolePersistence.update(role);
 
@@ -234,6 +241,26 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		indexer.reindex(userId);
 
 		PermissionCacheUtil.clearCache();
+	}
+
+	public void checkMembershipPolicy(User user)
+		throws PortalException, SystemException {
+
+		List<Role> roles = getUserRoles(user.getUserId());
+
+		for (Role role : roles) {
+			if (!MembershipPolicyUtil.isMembershipAllowed(role, user)) {
+				unsetUserRoles(user.getUserId(), new long[] {role.getRoleId()});
+			}
+		}
+
+		Set<Role> mandatoryRoles = MembershipPolicyUtil.getMandatoryRoles(user);
+
+		for (Role role : mandatoryRoles) {
+			if (!hasUserRole(user.getUserId(), role.getRoleId())) {
+				addUserRoles(user.getUserId(), new long[] {role.getRoleId()});
+			}
+		}
 	}
 
 	/**
@@ -414,6 +441,11 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		// Role
 
 		rolePersistence.remove(role);
+
+		// Expando
+
+		expandoValueLocalService.deleteValues(
+			Role.class.getName(), role.getRoleId());
 
 		// Permission cache
 
@@ -1221,6 +1253,9 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 * @param  descriptionMap the new localized descriptions (optionally
 	 *         <code>null</code>) to replace those existing for the role
 	 * @param  subtype the role's new subtype (optionally <code>null</code>)
+	 * @param  serviceContext the roles's service context (optionally
+	 *         <code>null</code>). Can set expando bridge attributes for the
+	 *         role.
 	 * @return the role with the primary key
 	 * @throws PortalException if a role with the primary could not be found or
 	 *         if the role's name was invalid
@@ -1228,7 +1263,8 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 */
 	public Role updateRole(
 			long roleId, String name, Map<Locale, String> titleMap,
-			Map<Locale, String> descriptionMap, String subtype)
+			Map<Locale, String> descriptionMap, String subtype,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		Role role = rolePersistence.findByPrimaryKey(roleId);
@@ -1244,6 +1280,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		role.setTitleMap(titleMap);
 		role.setDescriptionMap(descriptionMap);
 		role.setSubtype(subtype);
+		role.setExpandoBridgeAttributes(serviceContext);
 
 		rolePersistence.update(role);
 
@@ -1277,7 +1314,7 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 
 			role = roleLocalService.addRole(
 				user.getUserId(), null, 0, name, null, descriptionMap, type,
-				null);
+				null, null);
 
 			if (name.equals(RoleConstants.USER)) {
 				initPersonalControlPanelPortletsPermissions(role);

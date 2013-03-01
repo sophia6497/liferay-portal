@@ -1309,6 +1309,16 @@ public class JournalArticleWrapper implements JournalArticle,
 	}
 
 	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_journalArticle.setExpandoBridgeAttributes(baseModel);
+	}
+
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_journalArticle.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_journalArticle.setExpandoBridgeAttributes(serviceContext);
 	}
@@ -1397,6 +1407,14 @@ public class JournalArticleWrapper implements JournalArticle,
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _journalArticle.getSmallImageType();
+	}
+
+	public com.liferay.portlet.journal.model.JournalFolder getTrashContainer() {
+		return _journalArticle.getTrashContainer();
+	}
+
+	public boolean isInTrashContainer() {
+		return _journalArticle.isInTrashContainer();
 	}
 
 	public boolean isTemplateDriven() {

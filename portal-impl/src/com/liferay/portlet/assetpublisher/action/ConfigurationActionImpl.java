@@ -26,14 +26,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.LayoutTypePortletConstants;
 import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
-import com.liferay.portal.service.permission.GroupPermissionUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
@@ -43,7 +40,6 @@ import com.liferay.portlet.asset.AssetTagException;
 import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import com.liferay.portlet.assetpublisher.util.AssetPublisherUtil;
-import com.liferay.portlet.sites.util.SitesUtil;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -174,7 +170,6 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 			scopeIds = ArrayUtil.append(scopeIds, scopeId);
 		}
 
-		preferences.setValue("defaultScope", Boolean.FALSE.toString());
 		preferences.setValues("scopeIds", scopeIds);
 	}
 
@@ -186,33 +181,17 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 
 		Layout layout = themeDisplay.getLayout();
 
-		long groupId = AssetPublisherUtil.getGroupIdFromScopeId(
-			scopeId, themeDisplay.getScopeGroupId(), layout.isPrivateLayout());
+		if (!AssetPublisherUtil.isScopeIdSelectable(
+				themeDisplay.getPermissionChecker(), scopeId,
+				themeDisplay.getCompanyGroupId(), layout)) {
 
-		if (scopeId.startsWith(
-				AssetPublisherUtil.SCOPE_ID_PARENT_GROUP_PREFIX)) {
-
-			Group scopeGroup = themeDisplay.getScopeGroup();
-
-			if (!scopeGroup.hasAncestor(groupId)) {
-				throw new PrincipalException();
-			}
-
-			if (!SitesUtil.isContentSharingWithChildrenEnabled(scopeGroup)) {
-				GroupPermissionUtil.check(
-					themeDisplay.getPermissionChecker(), groupId,
-					ActionKeys.UPDATE);
-			}
-		}
-		else if (groupId != themeDisplay.getCompanyGroupId()) {
-			GroupPermissionUtil.check(
-				themeDisplay.getPermissionChecker(), groupId,
-				ActionKeys.UPDATE);
+			throw new PrincipalException();
 		}
 	}
 
 	protected String[] getClassTypeIds(
-		ActionRequest actionRequest, String[] classNameIds) throws Exception {
+			ActionRequest actionRequest, String[] classNameIds)
+		throws Exception {
 
 		String anyAssetTypeString = getParameter(actionRequest, "anyAssetType");
 
@@ -242,7 +221,7 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 				className);
 
 		long[] groupIds = {
-			themeDisplay.getCompanyGroupId(), themeDisplay.getScopeGroupId()
+			themeDisplay.getCompanyGroupId(), themeDisplay.getSiteGroupId()
 		};
 
 		if (assetRendererFactory.getClassTypes(
@@ -374,11 +353,9 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 			ActionRequest actionRequest, PortletPreferences preferences)
 		throws Exception {
 
-		String defaultScope = getParameter(actionRequest, "defaultScope");
 		String[] scopeIds = StringUtil.split(
 			getParameter(actionRequest, "scopeIds"));
 
-		preferences.setValue("defaultScope", defaultScope);
 		preferences.setValues("scopeIds", scopeIds);
 	}
 
@@ -471,7 +448,7 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 			WebKeys.THEME_DISPLAY);
 
 		long userId = themeDisplay.getUserId();
-		long groupId = themeDisplay.getScopeGroupId();
+		long groupId = themeDisplay.getSiteGroupId();
 
 		int[] queryRulesIndexes = StringUtil.split(
 			ParamUtil.getString(actionRequest, "queryLogicIndexes"), 0);

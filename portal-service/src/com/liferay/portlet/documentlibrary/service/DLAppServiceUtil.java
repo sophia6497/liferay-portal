@@ -259,32 +259,32 @@ public class DLAppServiceUtil {
 	* @param fileName the file's original name
 	* @param tempFolderName the temporary folder's name
 	* @param file Name the file's original name
+	* @param mimeType the file's MIME type
 	* @return the file's name
-	* @throws IOException if a problem occurred in the access or storage of the
-	file
 	* @throws PortalException if the file name was invalid
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.kernel.util.TempFileUtil
 	*/
-	public static java.lang.String addTempFileEntry(long groupId,
-		long folderId, java.lang.String fileName,
-		java.lang.String tempFolderName, java.io.File file)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException,
-			java.io.IOException {
-		return getService()
-				   .addTempFileEntry(groupId, folderId, fileName,
-			tempFolderName, file);
-	}
-
-	public static java.lang.String addTempFileEntry(long groupId,
-		long folderId, java.lang.String fileName,
-		java.lang.String tempFolderName, java.io.InputStream inputStream)
+	public static com.liferay.portal.kernel.repository.model.FileEntry addTempFileEntry(
+		long groupId, long folderId, java.lang.String fileName,
+		java.lang.String tempFolderName, java.io.File file,
+		java.lang.String mimeType)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .addTempFileEntry(groupId, folderId, fileName,
-			tempFolderName, inputStream);
+			tempFolderName, file, mimeType);
+	}
+
+	public static com.liferay.portal.kernel.repository.model.FileEntry addTempFileEntry(
+		long groupId, long folderId, java.lang.String fileName,
+		java.lang.String tempFolderName, java.io.InputStream inputStream,
+		java.lang.String mimeType)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .addTempFileEntry(groupId, folderId, fileName,
+			tempFolderName, inputStream, mimeType);
 	}
 
 	/**

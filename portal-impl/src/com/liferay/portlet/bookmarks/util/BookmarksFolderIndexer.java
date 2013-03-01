@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Document;
@@ -32,7 +34,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PortletKeys;
-import com.liferay.portlet.bookmarks.asset.BookmarksEntryAssetRendererFactory;
+import com.liferay.portlet.bookmarks.asset.BookmarksFolderAssetRendererFactory;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.service.BookmarksFolderLocalServiceUtil;
 import com.liferay.portlet.bookmarks.service.permission.BookmarksFolderPermission;
@@ -42,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 
+import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
+import javax.portlet.WindowStateException;
 
 /**
  * @author Eduardo Garcia
@@ -128,7 +132,7 @@ public class BookmarksFolderIndexer extends BaseIndexer {
 				addTrashFields(
 					document, BookmarksFolder.class.getName(),
 					trashedFolder.getFolderId(), null, null,
-					BookmarksEntryAssetRendererFactory.TYPE);
+					BookmarksFolderAssetRendererFactory.TYPE);
 
 				document.addKeyword(
 					Field.ROOT_ENTRY_CLASS_NAME,
@@ -152,7 +156,28 @@ public class BookmarksFolderIndexer extends BaseIndexer {
 		Document document, Locale locale, String snippet,
 		PortletURL portletURL) {
 
-		return null;
+		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
+
+		liferayPortletURL.setLifecycle(PortletRequest.ACTION_PHASE);
+
+		try {
+			liferayPortletURL.setWindowState(LiferayWindowState.EXCLUSIVE);
+		}
+		catch (WindowStateException wse) {
+		}
+
+		String folderId = document.get(Field.ENTRY_CLASS_PK);
+
+		portletURL.setParameter("struts_action", "/bookmarks/view");
+		portletURL.setParameter("folderId", folderId);
+
+		Summary summary = createSummary(
+			document, Field.TITLE, Field.DESCRIPTION);
+
+		summary.setMaxContentLength(200);
+		summary.setPortletURL(portletURL);
+
+		return summary;
 	}
 
 	@Override

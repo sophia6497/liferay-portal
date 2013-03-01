@@ -26,7 +26,15 @@ AUI.add(
 						setter: A.one
 					},
 
+					namespace: {
+					},
+
 					portletNamespace: {
+					},
+
+					repeatable: {
+						validator: Lang.isBoolean,
+						value: false
 					}
 				},
 
@@ -87,6 +95,7 @@ AUI.add(
 									classNameId: instance.get('classNameId'),
 									classPK: instance.get('classPK'),
 									fieldName: fieldName,
+									namespace: instance.get('namespace'),
 									p_p_isolated: true,
 									portletNamespace: instance.get('portletNamespace'),
 									readOnly: instance.get('readOnly')
@@ -167,7 +176,9 @@ AUI.add(
 					renderRepeatableUI: function(fieldNode) {
 						var instance = this;
 
-						if (fieldNode.getData('repeatable') === 'true') {
+						var fieldRepeatable = A.DataType.Boolean.parse(fieldNode.getData('repeatable'));
+
+						if (instance.get('repeatable') && fieldRepeatable) {
 							if (!fieldNode.getData('rendered-toolbar')) {
 								var fieldName = fieldNode.getData('fieldName');
 
@@ -187,13 +198,13 @@ AUI.add(
 
 								fieldNode.setData('rendered-toolbar', true);
 							}
-
-							instance.getFieldsList(null, fieldNode).each(
-								function(item, index, collection) {
-									instance.renderRepeatableUI(item);
-								}
-							);
 						}
+
+						instance.getFieldsList(null, fieldNode).each(
+							function(item, index, collection) {
+								instance.renderRepeatableUI(item);
+							}
+						);
 					},
 
 					syncFieldsTreeUI: function() {
@@ -245,6 +256,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-base', 'aui-io-request', 'aui-parse-content']
+		requires: ['aui-base', 'aui-datatype', 'aui-io-request', 'aui-parse-content']
 	}
 );

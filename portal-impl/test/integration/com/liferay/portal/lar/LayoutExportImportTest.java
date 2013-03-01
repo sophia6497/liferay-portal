@@ -24,9 +24,11 @@ import com.liferay.portal.model.LayoutSetPrototype;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.PortletLocalServiceUtil;
 import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
+import com.liferay.portal.test.MainServletExecutionTestListener;
 import com.liferay.portal.test.TransactionalCallbackAwareExecutionTestListener;
+import com.liferay.portal.util.GroupTestUtil;
+import com.liferay.portal.util.LayoutTestUtil;
 import com.liferay.portlet.sites.util.SitesUtil;
 
 import org.junit.Assert;
@@ -38,10 +40,11 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 /**
  * @author Julio Camarero
+ * @author Eduardo Garcia
  */
 @ExecutionTestListeners(
 	listeners = {
-		EnvironmentExecutionTestListener.class,
+		MainServletExecutionTestListener.class,
 		TransactionalCallbackAwareExecutionTestListener.class
 	})
 @PrepareForTest({PortletLocalServiceUtil.class})
@@ -56,82 +59,87 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 
 	@Test
 	public void testLSPLinkDisabled() throws Exception {
-		runLayoutSetPrototype(false, false, false, false, false, false);
+		runLayoutSetPrototype(false, false, false, false, false, false, false);
 	}
 
 	@Test
 	public void testLSPLinkDisabledWithPageAddition() throws Exception {
-		runLayoutSetPrototype(false, false, true, false, false, false);
+		runLayoutSetPrototype(false, false, true, false, false, false, false);
 	}
 
 	@Test
 	public void testLSPLinkDisabledWithPageDeletion() throws Exception {
-		runLayoutSetPrototype(false, false, true, true, false, false);
+		runLayoutSetPrototype(false, false, true, true, false, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabled() throws Exception {
-		runLayoutSetPrototype(true, false, false, false, false, false);
+		runLayoutSetPrototype(true, false, false, false, false, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageAddition() throws Exception {
-		runLayoutSetPrototype(true, false, true, false, false, false);
+		runLayoutSetPrototype(true, false, true, false, false, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageAdditionFromLPLinkDisabled()
 		throws Exception {
 
-		runLayoutSetPrototype(true, false, true, false, true, false);
+		runLayoutSetPrototype(true, false, true, false, true, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageAdditionFromLPLinkEnabled()
 		throws Exception {
 
-		runLayoutSetPrototype(true, true, true, false, true, false);
+		runLayoutSetPrototype(true, true, true, false, true, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageAdditionFromLPToLSPLinkDisabled()
 		throws Exception {
 
-		runLayoutSetPrototype(true, false, true, false, true, true);
+		runLayoutSetPrototype(true, false, true, false, true, true, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageAdditionFromLPToLSPLinkEnabled()
 		throws Exception {
 
-		runLayoutSetPrototype(true, true, true, false, true, true);
+		runLayoutSetPrototype(true, true, true, false, true, true, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageDeletion() throws Exception {
-		runLayoutSetPrototype(true, false, true, true, false, false);
+		runLayoutSetPrototype(true, false, true, true, false, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageDeletionFromLP() throws Exception {
-		runLayoutSetPrototype(true, false, true, true, true, false);
+		runLayoutSetPrototype(true, false, true, true, true, false, false);
 	}
 
 	@Test
 	public void testLSPLinkEnabledWithPageDeletionFromLPToLSP()
 		throws Exception {
 
-		runLayoutSetPrototype(true, false, true, true, true, true);
+		runLayoutSetPrototype(true, false, true, true, true, true, false);
+	}
+
+	@Test
+	public void testLSPLinkEnabledWithReset() throws Exception {
+		runLayoutSetPrototype(true, false, false, false, false, false, true);
 	}
 
 	protected void runLayoutSetPrototype(
 			boolean layoutSetLinkEnabled, boolean layoutLinkEnabled,
 			boolean addPage, boolean deletePage, boolean useLayoutPrototype,
-			boolean layoutPrototypeToLayoutSetPrototype)
+			boolean layoutPrototypeToLayoutSetPrototype, boolean reset)
 		throws Exception {
 
 		LayoutSetPrototype layoutSetPrototype =
-			ServiceTestUtil.addLayoutSetPrototype(
+			LayoutTestUtil.addLayoutSetPrototype(
 				ServiceTestUtil.randomString());
 
 		Group layoutSetPrototypeGroup = layoutSetPrototype.getGroup();
@@ -140,14 +148,14 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 			LayoutLocalServiceUtil.getLayoutsCount(
 				layoutSetPrototypeGroup, true);
 
-		ServiceTestUtil.addLayout(
+		Layout layoutSetPrototypeLayout1 = LayoutTestUtil.addLayout(
 			layoutSetPrototypeGroup.getGroupId(),
 			ServiceTestUtil.randomString(), true);
-		ServiceTestUtil.addLayout(
+		Layout layoutSetPrototypeLayout2 = LayoutTestUtil.addLayout(
 			layoutSetPrototypeGroup.getGroupId(),
 			ServiceTestUtil.randomString(), true);
 
-		Group group = ServiceTestUtil.addGroup();
+		Group group = GroupTestUtil.addGroup();
 
 		SitesUtil.updateLayoutSetPrototypesLinks(
 			group, layoutSetPrototype.getLayoutSetPrototypeId(), 0,
@@ -159,7 +167,14 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 			group, false);
 
 		Assert.assertEquals(
-			groupLayoutsCount, layoutSetPrototypeLayoutsCount + 2);
+			layoutSetPrototypeLayoutsCount + 2, groupLayoutsCount);
+
+		Layout layout1 = LayoutLocalServiceUtil.getFriendlyURLLayout(
+			group.getGroupId(), false,
+			layoutSetPrototypeLayout1.getFriendlyURL());
+		Layout layout2 = LayoutLocalServiceUtil.getFriendlyURLLayout(
+			group.getGroupId(), false,
+			layoutSetPrototypeLayout2.getFriendlyURL());
 
 		if (addPage) {
 			if (!useLayoutPrototype || layoutPrototypeToLayoutSetPrototype) {
@@ -175,7 +190,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 
 			if (useLayoutPrototype) {
 				LayoutPrototype layoutPrototype =
-					ServiceTestUtil.addLayoutPrototype(
+					LayoutTestUtil.addLayoutPrototype(
 						ServiceTestUtil.randomString());
 
 				Layout layoutPrototypeLayout = layoutPrototype.getLayout();
@@ -183,10 +198,13 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 				updateLayoutTemplateId(layoutPrototypeLayout, "2_2_columns");
 
 				if (layoutPrototypeToLayoutSetPrototype) {
-					Layout layoutSetPrototypeLayout = ServiceTestUtil.addLayout(
+					Layout layoutSetPrototypeLayout = LayoutTestUtil.addLayout(
 						layoutSetPrototypeGroup.getGroupId(),
 						ServiceTestUtil.randomString(), true, layoutPrototype,
 						layoutLinkEnabled);
+
+					layoutSetPrototypeLayout = propagateChanges(
+						layoutSetPrototypeLayout);
 
 					propagateChanges(group);
 
@@ -195,7 +213,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 						layoutSetPrototypeLayout.getFriendlyURL());
 				}
 				else {
-					layout = ServiceTestUtil.addLayout(
+					layout = LayoutTestUtil.addLayout(
 						group.getGroupId(), ServiceTestUtil.randomString(),
 						false, layoutPrototype, layoutLinkEnabled);
 				}
@@ -214,7 +232,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 				}
 			}
 			else {
-				layout = ServiceTestUtil.addLayout(
+				layout = LayoutTestUtil.addLayout(
 					layoutSetPrototypeGroup.getGroupId(),
 					ServiceTestUtil.randomString(), true);
 			}
@@ -224,7 +242,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 					group, false);
 
 				Assert.assertEquals(
-					groupLayoutsCount, layoutSetPrototypeLayoutsCount + 2);
+					layoutSetPrototypeLayoutsCount + 2, groupLayoutsCount);
 			}
 
 			propagateChanges(group);
@@ -234,7 +252,7 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 
 			if (layoutSetLinkEnabled) {
 				Assert.assertEquals(
-					groupLayoutsCount, layoutSetPrototypeLayoutsCount + 3);
+					layoutSetPrototypeLayoutsCount + 3, groupLayoutsCount);
 
 				if (useLayoutPrototype) {
 					if (layoutLinkEnabled) {
@@ -258,8 +276,8 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 				if (layoutSetLinkEnabled) {
 					if (!useLayoutPrototype) {
 						Assert.assertEquals(
-							groupLayoutsCount,
-							layoutSetPrototypeLayoutsCount + 3);
+							layoutSetPrototypeLayoutsCount + 3,
+							groupLayoutsCount);
 
 						propagateChanges(group);
 					}
@@ -269,8 +287,33 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 				}
 
 				Assert.assertEquals(
-					groupLayoutsCount, layoutSetPrototypeLayoutsCount + 2);
+					layoutSetPrototypeLayoutsCount + 2, groupLayoutsCount);
 			}
+		}
+
+		if (reset) {
+			SitesUtil.resetPrototype(layout1);
+			SitesUtil.resetPrototype(layout2);
+
+			propagateChanges(group);
+
+			layout1 = updateLayoutTemplateId(layout1, "1_column");
+
+			Assert.assertTrue(
+				SitesUtil.isLayoutModifiedSinceLastMerge(layout1));
+			Assert.assertFalse(
+				SitesUtil.isLayoutModifiedSinceLastMerge(layout2));
+
+			layout2 = updateLayoutTemplateId(layout2, "1_column");
+
+			SitesUtil.resetPrototype(layout1);
+
+			layout1 = propagateChanges(layout1);
+
+			Assert.assertFalse(
+				SitesUtil.isLayoutModifiedSinceLastMerge(layout1));
+			Assert.assertTrue(
+				SitesUtil.isLayoutModifiedSinceLastMerge(layout2));
 		}
 	}
 

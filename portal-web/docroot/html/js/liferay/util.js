@@ -329,6 +329,52 @@
 			return str.replace(regex, A.bind('_escapeHTML', Util, !!preventDoubleEscape, entities, entitiesValues));
 		},
 
+		getAttributes: function(el, attributeGetter) {
+			var instance = this;
+
+			var result = null;
+
+			if (el) {
+				if (Lang.isFunction(el.getDOM)) {
+					el = el.getDOM();
+				}
+
+				result = {};
+
+				var isGetterString = Lang.isString(attributeGetter);
+				var isGetterFn = Lang.isFunction(attributeGetter);
+
+				var attrs = el.attributes;
+				var length = attrs.length;
+
+				while (length--) {
+					var attr = attrs[length];
+					var name = attr.nodeName;
+					var value = attr.nodeValue;
+
+					if (isGetterString) {
+						if (name.indexOf(attributeGetter) === 0) {
+							name = name.substr(attributeGetter.length);
+						}
+						else {
+							continue;
+						}
+					}
+					else if (isGetterFn) {
+						value = attributeGetter(value, name, attrs);
+
+						if (value === false) {
+							continue;
+						}
+					}
+
+					result[name] = value;
+				}
+			}
+
+			return result;
+		},
+
 		getColumnId: function(str) {
 			var columnId = str.replace(/layout-column_/, '');
 
@@ -1057,6 +1103,36 @@
 
 	Liferay.provide(
 		Util,
+		'disableSelectBoxes',
+		function(toggleBoxId, value, selectBoxId) {
+			var selectBox = A.one('#' + selectBoxId);
+			var toggleBox = A.one('#' + toggleBoxId);
+
+			if (selectBox && toggleBox) {
+				var dynamicValue = Lang.isFunction(value);
+
+				var disabled = function() {
+					var currentValue = selectBox.val();
+
+					var visible = (value == currentValue);
+
+					if (dynamicValue) {
+						visible = value(currentValue, value);
+					}
+
+					toggleBox.set('disabled', !visible);
+				};
+
+				disabled();
+
+				selectBox.on('change', disabled);
+			}
+		},
+		['aui-base']
+	);
+
+	Liferay.provide(
+		Util,
 		'disableTextareaTabs',
 		function(textarea) {
 			textarea = A.one(textarea);
@@ -1221,6 +1297,11 @@
 			ddmURL.setParameter('ddmResource', config.ddmResource);
 			ddmURL.setParameter('ddmResourceActionId', config.ddmResourceActionId);
 			ddmURL.setParameter('groupId', config.groupId);
+
+			if ('refererPortletName' in config) {
+				ddmURL.setParameter('refererPortletName', config.refererPortletName);
+			}
+
 			ddmURL.setParameter('saveCallback', config.saveCallback);
 			ddmURL.setParameter('scopeAvailableFields', config.availableFields);
 			ddmURL.setParameter('scopeStorageType', config.storageType);
@@ -1546,6 +1627,19 @@
 			);
 		},
 		['aui-io']
+	);
+
+	Liferay.provide(
+		Util,
+		'selectEntity',
+		function(config, callback) {
+			this.openWindow(config);
+
+			var eventName = config.eventName || config.id;
+
+			Liferay.on(eventName, callback);
+		},
+		['aui-base']
 	);
 
 	Liferay.provide(

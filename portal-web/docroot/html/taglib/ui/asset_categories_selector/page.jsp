@@ -28,20 +28,13 @@ int maxEntries = GetterUtil.getInteger(PropsUtil.get(PropsKeys.ASSET_CATEGORIES_
 
 List<AssetVocabulary> vocabularies = new ArrayList<AssetVocabulary>();
 
-Group group = themeDisplay.getScopeGroup();
+Group siteGroup = themeDisplay.getSiteGroup();
 
 StringBundler vocabularyGroupIds = new StringBundler(3);
 
-if (group.isLayout()) {
-	vocabularies.addAll(AssetVocabularyServiceUtil.getGroupVocabularies(group.getParentGroupId(), false));
+vocabularies.addAll(AssetVocabularyServiceUtil.getGroupVocabularies(siteGroup.getGroupId(), false));
 
-	vocabularyGroupIds.append(group.getParentGroupId());
-}
-else {
-	vocabularies.addAll(AssetVocabularyServiceUtil.getGroupVocabularies(scopeGroupId, false));
-
-	vocabularyGroupIds.append(scopeGroupId);
-}
+vocabularyGroupIds.append(siteGroup.getGroupId());
 
 if (scopeGroupId != themeDisplay.getCompanyGroupId()) {
 	vocabularies.addAll(AssetVocabularyServiceUtil.getGroupVocabularies(themeDisplay.getCompanyGroupId(), false));
@@ -118,6 +111,7 @@ if (Validator.isNotNull(className)) {
 					maxEntries: <%= maxEntries %>,
 					portalModelResource: <%= Validator.isNotNull(className) && (ResourceActionsUtil.isPortalModelResource(className) || className.equals(Group.class.getName())) %>,
 					singleSelect: <%= !vocabulary.isMultiValued() %>,
+					title: '<%= UnicodeLanguageUtil.format(pageContext, "select-x", vocabulary.getTitle(locale)) %>',
 					vocabularyGroupIds: '<%= vocabulary.getGroupId() %>',
 					vocabularyIds: '<%= String.valueOf(vocabulary.getVocabularyId()) %>'
 				}

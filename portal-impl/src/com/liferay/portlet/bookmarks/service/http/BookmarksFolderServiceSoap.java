@@ -121,6 +121,21 @@ public class BookmarksFolderServiceSoap {
 		}
 	}
 
+	public static java.lang.Long[] getFolderIds(long groupId, long folderId)
+		throws RemoteException {
+		try {
+			java.util.List<java.lang.Long> returnValue = BookmarksFolderServiceUtil.getFolderIds(groupId,
+					folderId);
+
+			return returnValue.toArray(new java.lang.Long[returnValue.size()]);
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
 	public static com.liferay.portlet.bookmarks.model.BookmarksFolderSoap[] getFolders(
 		long groupId) throws RemoteException {
 		try {
@@ -185,6 +200,36 @@ public class BookmarksFolderServiceSoap {
 		}
 	}
 
+	public static int getFoldersAndEntriesCount(long groupId, long folderId)
+		throws RemoteException {
+		try {
+			int returnValue = BookmarksFolderServiceUtil.getFoldersAndEntriesCount(groupId,
+					folderId);
+
+			return returnValue;
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
+	public static int getFoldersAndEntriesCount(long groupId, long folderId,
+		int status) throws RemoteException {
+		try {
+			int returnValue = BookmarksFolderServiceUtil.getFoldersAndEntriesCount(groupId,
+					folderId, status);
+
+			return returnValue;
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
 	public static int getFoldersCount(long groupId, long parentFolderId)
 		throws RemoteException {
 		try {
@@ -220,6 +265,21 @@ public class BookmarksFolderServiceSoap {
 		try {
 			BookmarksFolderServiceUtil.getSubfolderIds(ListUtil.toList(
 					folderIds), groupId, folderId);
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+
+			throw new RemoteException(e.getMessage());
+		}
+	}
+
+	public static java.lang.Long[] getSubfolderIds(long groupId, long folderId,
+		boolean recurse) throws RemoteException {
+		try {
+			java.util.List<java.lang.Long> returnValue = BookmarksFolderServiceUtil.getSubfolderIds(groupId,
+					folderId, recurse);
+
+			return returnValue.toArray(new java.lang.Long[returnValue.size()]);
 		}
 		catch (Exception e) {
 			_log.error(e, e);

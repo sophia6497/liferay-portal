@@ -38,6 +38,8 @@ _sass_cache_*.css
 /benchmarks/lib
 /benchmarks/log
 
+/cobertura-agent/classes
+
 /classes/Test.class
 
 /intellij
@@ -199,6 +201,7 @@ _sass_cache_*.css
 /tools/liferay-doclet
 
 /tools/selenium/*.exe
+/tools/selenium/extensions/ide.*.js
 
 /tools/tck
 
@@ -225,6 +228,15 @@ _sass_cache_*.css
 /util-java/test-results
 /util-java/util-java*.asc
 /util-java/util-java*.jar
+
+/util-slf4j/*.iml
+/util-slf4j/*.ipr
+/util-slf4j/*.iws
+/util-slf4j/classes
+/util-slf4j/test-classes
+/util-slf4j/test-results
+/util-slf4j/util-slf4j*.asc
+/util-slf4j/util-slf4j*.jar
 
 /util-taglib/*.iml
 /util-taglib/*.ipr

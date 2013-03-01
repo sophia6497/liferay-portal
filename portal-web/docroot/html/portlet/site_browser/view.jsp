@@ -79,7 +79,16 @@ portletURL.setParameter("target", target);
 				additionalSites++;
 			}
 
-			if (filterManageableGroups) {
+			if (type.equals("childSites")) {
+				Group parentGroup = GroupLocalServiceUtil.getGroup(groupId);
+
+				List<Group> parentGroups = new ArrayList<Group>();
+
+				parentGroups.add(parentGroup);
+
+				groupParams.put("groupsTree", parentGroups);
+			}
+			else if (filterManageableGroups) {
 				groupParams.put("usersGroups", user.getUserId());
 			}
 
@@ -95,7 +104,12 @@ portletURL.setParameter("target", target);
 
 			List<Group> groups = null;
 
-			if (type.equals("parentSites")) {
+			if (type.equals("layoutScopes")) {
+				groups = GroupLocalServiceUtil.getGroups(company.getCompanyId(), Layout.class.getName(), groupId, start, end);
+
+				total = GroupLocalServiceUtil.getGroupsCount(company.getCompanyId(), Layout.class.getName(), groupId);
+			}
+			else if (type.equals("parentSites")) {
 				Group group = GroupLocalServiceUtil.getGroup(groupId);
 
 				groups = group.getAncestors();

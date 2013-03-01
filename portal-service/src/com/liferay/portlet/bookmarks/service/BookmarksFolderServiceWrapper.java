@@ -79,6 +79,13 @@ public class BookmarksFolderServiceWrapper implements BookmarksFolderService,
 		return _bookmarksFolderService.getFolder(folderId);
 	}
 
+	public java.util.List<java.lang.Long> getFolderIds(long groupId,
+		long folderId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getFolderIds(groupId, folderId);
+	}
+
 	public java.util.List<com.liferay.portlet.bookmarks.model.BookmarksFolder> getFolders(
 		long groupId)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -105,6 +112,38 @@ public class BookmarksFolderServiceWrapper implements BookmarksFolderService,
 			status, start, end);
 	}
 
+	public java.util.List<java.lang.Object> getFoldersAndEntries(long groupId,
+		long folderId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getFoldersAndEntries(groupId, folderId);
+	}
+
+	public java.util.List<java.lang.Object> getFoldersAndEntries(long groupId,
+		long folderId, int status)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getFoldersAndEntries(groupId, folderId,
+			status);
+	}
+
+	public java.util.List<java.lang.Object> getFoldersAndEntries(long groupId,
+		long folderId, int status, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getFoldersAndEntries(groupId, folderId,
+			status, start, end);
+	}
+
+	public int getFoldersAndEntriesCount(long groupId, long folderId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getFoldersAndEntriesCount(groupId,
+			folderId);
+	}
+
+	public int getFoldersAndEntriesCount(long groupId, long folderId, int status)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getFoldersAndEntriesCount(groupId,
+			folderId, status);
+	}
+
 	public int getFoldersCount(long groupId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _bookmarksFolderService.getFoldersCount(groupId, parentFolderId);
@@ -120,6 +159,13 @@ public class BookmarksFolderServiceWrapper implements BookmarksFolderService,
 		long groupId, long folderId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_bookmarksFolderService.getSubfolderIds(folderIds, groupId, folderId);
+	}
+
+	public java.util.List<java.lang.Long> getSubfolderIds(long groupId,
+		long folderId, boolean recurse)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _bookmarksFolderService.getSubfolderIds(groupId, folderId,
+			recurse);
 	}
 
 	public com.liferay.portlet.bookmarks.model.BookmarksFolder moveFolder(

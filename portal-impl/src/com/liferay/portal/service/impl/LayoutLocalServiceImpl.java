@@ -63,9 +63,9 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.model.impl.LayoutImpl;
 import com.liferay.portal.model.impl.PortletPreferencesImpl;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.LayoutLocalServiceBaseImpl;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.comparator.LayoutComparator;
@@ -73,6 +73,7 @@ import com.liferay.portal.util.comparator.LayoutPriorityComparator;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portlet.expando.model.ExpandoBridge;
 import com.liferay.portlet.mobiledevicerules.model.MDRRuleGroupInstance;
+import com.liferay.portlet.sites.util.Sites;
 import com.liferay.portlet.sites.util.SitesUtil;
 
 import java.io.File;
@@ -228,14 +229,14 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		layout.setPriority(priority);
 
 		boolean layoutUpdateable = ParamUtil.getBoolean(
-			serviceContext, SitesUtil.LAYOUT_UPDATEABLE, true);
+			serviceContext, Sites.LAYOUT_UPDATEABLE, true);
 
 		if (!layoutUpdateable) {
 			UnicodeProperties typeSettingsProperties =
 				layout.getTypeSettingsProperties();
 
 			typeSettingsProperties.put(
-				SitesUtil.LAYOUT_UPDATEABLE, String.valueOf(layoutUpdateable));
+				Sites.LAYOUT_UPDATEABLE, String.valueOf(layoutUpdateable));
 
 			layout.setTypeSettingsProperties(typeSettingsProperties);
 		}
@@ -339,7 +340,8 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Adds a layout.
+	 * Adds a layout with single entry maps for name, title, and description to
+	 * the default locale.
 	 *
 	 * <p>
 	 * This method handles the creation of the layout including its resources,
@@ -1245,6 +1247,7 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 	/**
 	 * Returns all the layouts without resource permissions
 	 *
+	 * @param  roleId the primary key of the role
 	 * @return all the layouts without resource permissions
 	 * @throws SystemException if a system exception occurred
 	 */
@@ -1804,13 +1807,13 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		}
 
 		boolean layoutUpdateable = ParamUtil.getBoolean(
-			serviceContext, SitesUtil.LAYOUT_UPDATEABLE, true);
+			serviceContext, Sites.LAYOUT_UPDATEABLE, true);
 
 		UnicodeProperties typeSettingsProperties =
 			layout.getTypeSettingsProperties();
 
 		typeSettingsProperties.put(
-			SitesUtil.LAYOUT_UPDATEABLE, String.valueOf(layoutUpdateable));
+			Sites.LAYOUT_UPDATEABLE, String.valueOf(layoutUpdateable));
 
 		layout.setTypeSettingsProperties(typeSettingsProperties);
 
@@ -2245,13 +2248,13 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		DynamicQuery portletPreferencesDynamicQuery =
 			DynamicQueryFactoryUtil.forClass(
 				PortletPreferences.class, PortletPreferencesImpl.TABLE_NAME,
-				PACLClassLoaderUtil.getPortalClassLoader());
+				ClassLoaderUtil.getPortalClassLoader());
 
 		Property plidProperty = PropertyFactoryUtil.forName("plid");
 
 		DynamicQuery layoutDynamicQuery = DynamicQueryFactoryUtil.forClass(
 			Layout.class, LayoutImpl.TABLE_NAME,
-			PACLClassLoaderUtil.getPortalClassLoader());
+			ClassLoaderUtil.getPortalClassLoader());
 
 		Projection plidProjection = ProjectionFactoryUtil.property("plid");
 

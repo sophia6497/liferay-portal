@@ -22,8 +22,8 @@ import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.lang.PortalSecurityManagerThreadLocal;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.security.pacl.PACLClassUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
 
 import java.security.AccessController;
 import java.security.Permission;
@@ -56,7 +56,60 @@ public class RuntimeChecker extends BaseReflectChecker {
 		initEnvironmentVariables();
 	}
 
-	public void checkPermission(Permission permission) {
+	@Override
+	public AuthorizationProperty generateAuthorizationProperty(
+		Object... arguments) {
+
+		if ((arguments == null) || (arguments.length != 1) ||
+			!(arguments[0] instanceof Permission)) {
+
+			return null;
+		}
+
+		Permission permission = (Permission)arguments[0];
+
+		String name = permission.getName();
+
+		String key = null;
+		String value = null;
+
+		if (name.startsWith(RUNTIME_PERMISSION_GET_CLASSLOADER)) {
+			key = "security-manager-class-loader-reference-ids";
+
+			if (name.equals(RUNTIME_PERMISSION_GET_CLASSLOADER)) {
+				value = "portal";
+			}
+			else {
+				value = name.substring(
+					RUNTIME_PERMISSION_GET_CLASSLOADER.length() + 1);
+			}
+		}
+		else if (name.startsWith(RUNTIME_PERMISSION_GET_ENV)) {
+			key = "security-manager-environment-variables";
+
+			value = name.substring(RUNTIME_PERMISSION_GET_ENV.length() + 1);
+
+			// Since we are using a regular expression, we cannot allow a lone *
+			// as the rule
+
+			if (value.equals(StringPool.STAR)) {
+				value = StringPool.DOUBLE_BACK_SLASH + value;
+			}
+		}
+		else {
+			return null;
+		}
+
+		AuthorizationProperty authorizationProperty =
+			new AuthorizationProperty();
+
+		authorizationProperty.setKey(key);
+		authorizationProperty.setValue(value);
+
+		return authorizationProperty;
+	}
+
+	public boolean implies(Permission permission) {
 		String name = permission.getName();
 
 		if (name.startsWith(RUNTIME_PERMISSION_ACCESS_CLASS_IN_PACKAGE)) {
@@ -65,14 +118,18 @@ public class RuntimeChecker extends BaseReflectChecker {
 			String pkg = name.substring(pos + 1);
 
 			if (!hasAccessClassInPackage(pkg)) {
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to access package " + pkg);
+
+				return false;
 			}
 		}
 		else if (name.equals(RUNTIME_PERMISSION_ACCESS_DECLARED_MEMBERS)) {
 			if (!hasReflect(permission)) {
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to access declared members");
+
+				return false;
 			}
 		}
 		else if (name.equals(RUNTIME_PERMISSION_CREATE_CLASS_LOADER)) {
@@ -80,14 +137,18 @@ public class RuntimeChecker extends BaseReflectChecker {
 				!isJSPCompiler(permission.getName(), permission.getActions()) &&
 				!hasCreateClassLoader()) {
 
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to create a class loader");
+
+				return false;
 			}
 		}
 		else if (name.equals(RUNTIME_PERMISSION_CREATE_SECURITY_MANAGER)) {
 			if (!hasCreateSecurityManager()) {
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to create a security manager");
+
+				return false;
 			}
 		}
 		else if (name.startsWith(RUNTIME_PERMISSION_GET_CLASSLOADER)) {
@@ -95,13 +156,17 @@ public class RuntimeChecker extends BaseReflectChecker {
 				!isJSPCompiler(permission.getName(), permission.getActions()) &&
 				!hasGetClassLoader(name)) {
 
-				throwSecurityException(_log, "Attempted to get class loader");
+				logSecurityException(_log, "Attempted to get class loader");
+
+				return false;
 			}
 		}
 		else if (name.startsWith(RUNTIME_PERMISSION_GET_PROTECTION_DOMAIN)) {
 			if (!hasGetProtectionDomain()) {
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to get protection domain");
+
+				return false;
 			}
 		}
 		else if (name.startsWith(RUNTIME_PERMISSION_GET_ENV)) {
@@ -110,35 +175,44 @@ public class RuntimeChecker extends BaseReflectChecker {
 			String envName = name.substring(pos + 1);
 
 			if (!hasGetEnv(envName)) {
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to get environment name " + envName);
+
+				return false;
 			}
 		}
 		else if (name.startsWith(RUNTIME_PERMISSION_LOAD_LIBRARY)) {
 			if (!hasLoadLibrary()) {
-				throwSecurityException(_log, "Attempted to load library");
+				logSecurityException(_log, "Attempted to load library");
+
+				return false;
 			}
 		}
 		else if (name.equals(RUNTIME_PERMISSION_READ_FILE_DESCRIPTOR)) {
 			if (PortalSecurityManagerThreadLocal.isCheckReadFileDescriptor() &&
 				!hasReadFileDescriptor()) {
 
-				throwSecurityException(
-					_log, "Attempted to read file descriptor");
+				logSecurityException(_log, "Attempted to read file descriptor");
+
+				return false;
 			}
 		}
 		else if (name.equals(RUNTIME_PERMISSION_SET_CONTEXT_CLASS_LOADER)) {
 		}
 		else if (name.equals(RUNTIME_PERMISSION_SET_SECURITY_MANAGER)) {
-			throwSecurityException(
+			logSecurityException(
 				_log, "Attempted to set another security manager");
+
+			return false;
 		}
 		else if (name.equals(RUNTIME_PERMISSION_WRITE_FILE_DESCRIPTOR)) {
 			if (PortalSecurityManagerThreadLocal.isCheckWriteFileDescriptor() &&
 				!hasWriteFileDescriptor()) {
 
-				throwSecurityException(
+				logSecurityException(
 					_log, "Attempted to write file descriptor");
+
+				return false;
 			}
 		}
 		else {
@@ -146,11 +220,14 @@ public class RuntimeChecker extends BaseReflectChecker {
 				Thread.dumpStack();
 			}
 
-			throwSecurityException(
-				_log,
-				"Attempted to " + permission.getName() + " on " +
+			logSecurityException(
+				_log, "Attempted to " + permission.getName() + " on " +
 					permission.getActions());
+
+			return false;
 		}
+
+		return true;
 	}
 
 	protected boolean hasAccessClassInPackage(String pkg) {
@@ -361,11 +438,11 @@ public class RuntimeChecker extends BaseReflectChecker {
 			boolean allow = false;
 
 			ClassLoader contextClassLoader =
-				PACLClassLoaderUtil.getContextClassLoader();
+				ClassLoaderUtil.getContextClassLoader();
 			ClassLoader portalClassLoader = getPortalClassLoader();
 
 			if (contextClassLoader == portalClassLoader) {
-				if (PACLClassLoaderUtil.getClassLoader(callerClass7) !=
+				if (ClassLoaderUtil.getClassLoader(callerClass7) !=
 						getClassLoader()) {
 
 					allow = true;

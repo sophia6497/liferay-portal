@@ -325,6 +325,12 @@ public class UserGroupLocalServiceWrapper implements UserGroupLocalService,
 			description, serviceContext);
 	}
 
+	public void checkMembershipPolicy(com.liferay.portal.model.User user)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_userGroupLocalService.checkMembershipPolicy(user);
+	}
+
 	/**
 	* Clears all associations between the user and its user groups and clears
 	* the permissions cache.
@@ -339,6 +345,22 @@ public class UserGroupLocalServiceWrapper implements UserGroupLocalService,
 	public void clearUserUserGroups(long userId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_userGroupLocalService.clearUserUserGroups(userId);
+	}
+
+	/**
+	* Copies the user group's layout to the user.
+	*
+	* @param userGroupId the primary key of the user group
+	* @param userId the primary key of the user
+	* @throws PortalException if a user with the primary key could not be
+	found or if a portal exception occurred
+	* @throws SystemException if a system exception occurred
+	* @deprecated
+	*/
+	public void copyUserGroupLayouts(long userGroupId, long userId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_userGroupLocalService.copyUserGroupLayouts(userGroupId, userId);
 	}
 
 	/**
@@ -372,22 +394,6 @@ public class UserGroupLocalServiceWrapper implements UserGroupLocalService,
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_userGroupLocalService.copyUserGroupLayouts(userGroupIds, userId);
-	}
-
-	/**
-	* Copies the user group's layout to the user.
-	*
-	* @param userGroupId the primary key of the user group
-	* @param userId the primary key of the user
-	* @throws PortalException if a user with the primary key could not be
-	found or if a portal exception occurred
-	* @throws SystemException if a system exception occurred
-	* @deprecated
-	*/
-	public void copyUserGroupLayouts(long userGroupId, long userId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		_userGroupLocalService.copyUserGroupLayouts(userGroupId, userId);
 	}
 
 	/**

@@ -14,11 +14,14 @@
 
 package com.liferay.portal.security.auth;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroup;
+import com.liferay.portal.security.permission.PermissionChecker;
 
 import java.util.Set;
 
@@ -53,12 +56,36 @@ public interface MembershipPolicy {
 
 	public boolean isApplicableUser(User user);
 
+	public boolean isMembershipAllowed(Group group, Role role, User user);
+
 	public boolean isMembershipAllowed(Group group, User user);
+
+	public boolean isMembershipAllowed(
+		Organization organization, Role role, User user);
 
 	public boolean isMembershipAllowed(Organization organization, User user);
 
 	public boolean isMembershipAllowed(Role role, User user);
 
 	public boolean isMembershipAllowed(UserGroup userGroup, User user);
+
+	public boolean isMembershipProtected(
+			PermissionChecker permissionChecker, Group group, Role role,
+			User user)
+		throws PortalException, SystemException;
+
+	public boolean isMembershipProtected(
+			PermissionChecker permissionChecker, Group group, User user)
+		throws PortalException, SystemException;
+
+	public boolean isMembershipProtected(
+			PermissionChecker permissionChecker, Organization organization,
+			Role role, User user)
+		throws SystemException;
+
+	public boolean isMembershipProtected(
+			PermissionChecker permissionChecker, Organization organization,
+			User user)
+		throws PortalException, SystemException;
 
 }

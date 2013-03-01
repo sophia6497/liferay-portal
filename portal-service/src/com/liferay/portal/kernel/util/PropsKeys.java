@@ -115,6 +115,8 @@ public interface PropsKeys {
 
 	public static final String ASSET_PUBLISHER_DISPLAY_TEMPLATES_HELP = "asset.publisher.display.templates.help";
 
+	public static final String ASSET_PUBLISHER_DYNAMIC_SUBSCRIPTION_LIMIT = "asset.publisher.dynamic.subscription.limit";
+
 	public static final String ASSET_PUBLISHER_EMAIL_ASSET_ENTRY_ADDED_BODY = "asset.publisher.email.asset.entry.added.body";
 
 	public static final String ASSET_PUBLISHER_EMAIL_ASSET_ENTRY_ADDED_ENABLED = "asset.publisher.email.asset.entry.added.enabled";
@@ -124,6 +126,8 @@ public interface PropsKeys {
 	public static final String ASSET_PUBLISHER_EMAIL_FROM_ADDRESS = "asset.publisher.email.from.address";
 
 	public static final String ASSET_PUBLISHER_EMAIL_FROM_NAME = "asset.publisher.email.from.name";
+
+	public static final String ASSET_PUBLISHER_SEARCH_WITH_INDEX = "asset.publisher.search.with.index";
 
 	public static final String ASSET_RENDERER_ENABLED = "asset.renderer.enabled.";
 
@@ -302,6 +306,8 @@ public interface PropsKeys {
 	public static final String BROWSER_CACHE_DISABLED = "browser.cache.disabled";
 
 	public static final String BROWSER_CACHE_SIGNED_IN_DISABLED = "browser.cache.signed.in.disabled";
+
+	public static final String BROWSER_COMPATIBILITY_IE_VERSIONS = "browser.compatibility.ie.versions";
 
 	public static final String BROWSER_LAUNCHER_URL = "browser.launcher.url";
 
@@ -755,17 +761,11 @@ public interface PropsKeys {
 
 	public static final String DOCKBAR_SHOW_SITE_CONTENT_ICON = "dockbar.show.site.content.icon";
 
-	public static final String DYNAMIC_DATA_LISTS_ERROR_TEMPLATE_FREEMARKER = "dynamic.data.lists.error.template.freemarker";
-
-	public static final String DYNAMIC_DATA_LISTS_ERROR_TEMPLATE_VELOCITY = "dynamic.data.lists.error.template.velocity";
-
-	public static final String DYNAMIC_DATA_LISTS_ERROR_TEMPLATE_XSL = "dynamic.data.lists.error.template.xsl";
+	public static final String DYNAMIC_DATA_LISTS_ERROR_TEMPLATE = "dynamic.data.lists.error.template";
 
 	public static final String DYNAMIC_DATA_LISTS_RECORD_SET_FORCE_AUTOGENERATE_KEY = "dynamic.data.lists.record.set.force.autogenerate.key";
 
 	public static final String DYNAMIC_DATA_LISTS_STORAGE_TYPE = "dynamic.data.lists.storage.type";
-
-	public static final String DYNAMIC_DATA_LISTS_TEMPLATE_LANGUAGE_PARSER = "dynamic.data.lists.template.language.parser";
 
 	public static final String DYNAMIC_DATA_LISTS_TRANSFORMER_LISTENER = "dynamic.data.lists.transformer.listener";
 
@@ -1097,11 +1097,7 @@ public interface PropsKeys {
 
 	public static final String JOURNAL_EMAIL_FROM_NAME = "journal.email.from.name";
 
-	public static final String JOURNAL_ERROR_TEMPLATE_FREEMARKER = "journal.error.template.freemarker";
-
-	public static final String JOURNAL_ERROR_TEMPLATE_VELOCITY = "journal.error.template.velocity";
-
-	public static final String JOURNAL_ERROR_TEMPLATE_XSL = "journal.error.template.xsl";
+	public static final String JOURNAL_ERROR_TEMPLATE = "journal.error.template";
 
 	public static final String JOURNAL_FEED_FORCE_AUTOGENERATE_ID = "journal.feed.force.autogenerate.id";
 
@@ -1120,8 +1116,6 @@ public interface PropsKeys {
 	public static final String JOURNAL_TEMPLATE_FREEMARKER_RESTRICTED_VARIABLES = "journal.template.freemarker.restricted.variables";
 
 	public static final String JOURNAL_TEMPLATE_LANGUAGE_CONTENT = "journal.template.language.content";
-
-	public static final String JOURNAL_TEMPLATE_LANGUAGE_PARSER = "journal.template.language.parser";
 
 	public static final String JOURNAL_TEMPLATE_VELOCITY_RESTRICTED_VARIABLES = "journal.template.velocity.restricted.variables";
 
@@ -1585,7 +1579,7 @@ public interface PropsKeys {
 
 	public static final String MODULE_FRAMEWORK_INITIAL_BUNDLES = "module.framework.initial.bundles";
 
-	public static final String MODULE_FRAMEWORK_LIB_DIR = "module.framework.lib.dir";
+	public static final String MODULE_FRAMEWORK_PORTAL_DIR = "module.framework.portal.dir";
 
 	public static final String MODULE_FRAMEWORK_PROPERTIES = "module.framework.properties.";
 
@@ -1620,6 +1614,8 @@ public interface PropsKeys {
 	public static final String MSN_PASSWORD = "msn.password";
 
 	public static final String MULTI_VALUE_MAP = "multi.value.map.";
+
+	public static final String MY_SITES_DIRECTORY_SITE_EXCLUDES = "my.sites.directory.site.excludes";
 
 	public static final String MY_SITES_DISPLAY_STYLE = "my.sites.display.style";
 
@@ -1902,6 +1898,8 @@ public interface PropsKeys {
 	public static final String PORTLET_DISPLAY_TEMPLATES_HELP = "portlet.display.templates.help";
 
 	public static final String PORTLET_EVENT_DISTRIBUTION = "portlet.event.distribution";
+
+	public static final String PORTLET_FILTERS_SYSTEM = "portlet.filters.system";
 
 	public static final String PORTLET_PUBLIC_RENDER_PARAMETER_DISTRIBUTION = "portlet.public.render.parameter.distribution";
 

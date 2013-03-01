@@ -62,8 +62,9 @@ public class UserServiceUtil {
 	* @param userIds the primary keys of the users
 	* @param serviceContext the service context (optionally <code>null</code>)
 	* @throws PortalException if a group or user with the primary key could not
-	be found, or if the user did not have permission to assign group
-	members
+	be found, if the user did not have permission to assign group
+	members, or if the operation was not allowed by the membership
+	policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void addGroupUsers(long groupId, long[] userIds,
@@ -80,8 +81,9 @@ public class UserServiceUtil {
 	* @param userIds the primary keys of the users
 	* @throws PortalException if an organization or user with the primary key
 	could not be found, if the user did not have permission to assign
-	organization members, or if current user did not have an
-	organization in common with a given user
+	organization members, if current user did not have an
+	organization in common with a given user, or if the operation was
+	not allowed by the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void addOrganizationUsers(long organizationId, long[] userIds)
@@ -113,8 +115,9 @@ public class UserServiceUtil {
 	* @param roleId the primary key of the role
 	* @param userIds the primary keys of the users
 	* @throws PortalException if a role or user with the primary key could not
-	be found or if the user did not have permission to assign role
-	members
+	be found, if the user did not have permission to assign role
+	members, or if the operation was not allowed by the membership
+	policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void addRoleUsers(long roleId, long[] userIds)
@@ -184,6 +187,7 @@ public class UserServiceUtil {
 	bridge attributes for the user.
 	* @return the new user
 	* @throws PortalException if the user's information was invalid, if the
+	operation was not allowed by the membership policy, if the
 	creator did not have permission to add users, or if the email
 	address was reserved
 	* @throws SystemException if a system exception occurred
@@ -260,7 +264,8 @@ public class UserServiceUtil {
 	* @return the new user
 	* @throws PortalException if the user's information was invalid, if the
 	creator did not have permission to add users, if the email
-	address was reserved, or some other portal exception occurred
+	address was reserved, if the operation was not allowed by the
+	membership policy, or if some other portal exception occurred
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.model.User addUser(long companyId,
@@ -297,8 +302,9 @@ public class UserServiceUtil {
 	* @param userGroupId the primary key of the user group
 	* @param userIds the primary keys of the users
 	* @throws PortalException if a user group or user with the primary could
-	could not be found, or if the current user did not have
-	permission to assign group members
+	could not be found, if the current user did not have permission
+	to assign group members, or if the operation was not allowed by
+	the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void addUserGroupUsers(long userGroupId, long[] userIds)
@@ -352,6 +358,7 @@ public class UserServiceUtil {
 	bridge attributes for the user.
 	* @return the new user
 	* @throws PortalException if the user's information was invalid, if the
+	operation was not allowed by the membership policy, if the
 	creator did not have permission to add users, or if the email
 	address was reserved
 	* @throws SystemException if a system exception occurred
@@ -428,8 +435,9 @@ public class UserServiceUtil {
 	bridge attributes for the user.
 	* @return the new user
 	* @throws PortalException if the user's information was invalid, if the
+	operation was not allowed by the membership policy, if the
 	creator did not have permission to add users, if the email
-	address was reserved, or some other portal exception occurred
+	address was reserved, or if some other portal exception occurred
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.model.User addUserWithWorkflow(
@@ -749,7 +757,8 @@ public class UserServiceUtil {
 	* @param roleId the primary key of the role
 	* @param userIds the primary keys of the users
 	* @throws PortalException if the current user did not have permission to
-	assign role members
+	assign role members or if the operation was not allowed by the
+	membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void setRoleUsers(long roleId, long[] userIds)
@@ -796,7 +805,8 @@ public class UserServiceUtil {
 	* @param userIds the primary keys of the users
 	* @param serviceContext the service context (optionally <code>null</code>)
 	* @throws PortalException if the current user did not have permission to
-	modify group assignments
+	modify group assignments or if the operation was not allowed by
+	the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void unsetGroupUsers(long groupId, long[] userIds,
@@ -812,7 +822,8 @@ public class UserServiceUtil {
 	* @param organizationId the primary key of the organization
 	* @param userIds the primary keys of the users
 	* @throws PortalException if the current user did not have permission to
-	modify organization assignments
+	modify organization assignments or if the operation was not
+	allowed by the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void unsetOrganizationUsers(long organizationId,
@@ -844,7 +855,8 @@ public class UserServiceUtil {
 	* @param roleId the primary key of the role
 	* @param userIds the primary keys of the users
 	* @throws PortalException if the current user did not have permission to
-	modify role assignments
+	modify role assignments or if the operation was not allowed by
+	the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void unsetRoleUsers(long roleId, long[] userIds)
@@ -874,7 +886,8 @@ public class UserServiceUtil {
 	* @param userGroupId the primary key of the user group
 	* @param userIds the primary keys of the users
 	* @throws PortalException if the current user did not have permission to
-	modify user group assignments
+	modify user group assignments or if the operation was not allowed
+	by the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void unsetUserGroupUsers(long userGroupId, long[] userIds)
@@ -1195,8 +1208,9 @@ public class UserServiceUtil {
 	bridge attributes for the user.
 	* @return the user
 	* @throws PortalException if a user with the primary key could not be
-	found, if the new information was invalid, or if the current user
-	did not have permission to update the user
+	found, if the new information was invalid, if the current user
+	did not have permission to update the user, or if the operation
+	was not allowed by the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.model.User updateUser(long userId,
@@ -1292,8 +1306,9 @@ public class UserServiceUtil {
 	bridge attributes for the user.
 	* @return the user
 	* @throws PortalException if a user with the primary key could not be
-	found, if the new information was invalid, or if the current user
-	did not have permission to update the user
+	found, if the new information was invalid, if the current user
+	did not have permission to update the user, or if the operation
+	was not allowed by the membership policy
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.model.User updateUser(long userId,

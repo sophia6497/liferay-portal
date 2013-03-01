@@ -5,7 +5,7 @@
 
 	<property name="war.file" value="${ant.project.name}" />
 
-	<property name="alloy.file" value="alloy-1.7.0pr3.zip" />
+	<property name="alloy.file" value="alloy-1.7.0.zip" />
 
 	<!--
 	When upgrading CKEditor, make sure to delete
@@ -73,7 +73,7 @@
 
 				<!-- JavaScript -->
 
-				<copy todir="docroot/html/js/aui" overwrite="true" preservelastmodified="true">
+				<copy todir="docroot/html/js/aui" overwrite="true">
 					<fileset dir="docroot/html/ALLOY_ZIP/build/" />
 				</copy>
 
@@ -301,7 +301,7 @@
 					tofile="docroot/html/js/editor/ckeditor_diffs/ckeditor.js"
 				/>
 
-				<copy todir="docroot/html/js/editor/ckeditor" overwrite="true" preservelastmodified="true">
+				<copy todir="docroot/html/js/editor/ckeditor" overwrite="true">
 					<fileset dir="docroot/html/js/editor/ckeditor_diffs" />
 				</copy>
 			</then>
@@ -456,7 +456,7 @@
 					<fileset dir="docroot/html/js/editor/fckeditor/editor/filemanager/browser/default" />
 				</copy>
 
-				<copy todir="docroot/html/js/editor/fckeditor" overwrite="true" preservelastmodified="true">
+				<copy todir="docroot/html/js/editor/fckeditor" overwrite="true">
 					<fileset dir="docroot/html/js/editor/fckeditor_diffs" />
 				</copy>
 
@@ -832,6 +832,29 @@
 		</antcall>
 	</target>
 
+	<target name="build-selenium-user-extensions">
+		<property file="${project.dir}/test.${user.name}.properties" />
+		<property file="${project.dir}/test.${env.COMPUTERNAME}.properties" />
+		<property file="${project.dir}/test.${env.HOST}.properties" />
+		<property file="${project.dir}/test.${env.HOSTNAME}.properties" />
+		<property file="${project.dir}/test.properties" />
+
+		<propertyregex
+			property="basedir.double.slash"
+			input="${basedir}"
+			regexp="\\"
+			replace="\\\\\\\\"
+		/>
+
+		<loadfile property="ide.js.content" srcfile="${project.dir}/tools/selenium/extensions/ide.js">
+			<filterchain>
+				<expandproperties />
+			</filterchain>
+		</loadfile>
+
+		<echo file="${project.dir}/tools/selenium/extensions/ide.${user.name}.js">${ide.js.content}</echo>
+	</target>
+
 	<target name="build-themes">
 		<antcall target="build-alloy" />
 
@@ -868,14 +891,14 @@
 					</then>
 				</if>
 
-				<copy todir="@{module.name}" overwrite="true" preservelastmodified="true">
+				<copy todir="@{module.name}" overwrite="true">
 					<fileset
 						dir="docroot/html/themes/_unstyled"
 						excludes="templates/init.ftl,templates/init.vm"
 					/>
 				</copy>
 
-				<copy todir="@{module.name}" overwrite="true" preservelastmodified="true">
+				<copy todir="@{module.name}" overwrite="true">
 					<fileset
 						dir="docroot/html/themes/_styled"
 					/>
@@ -884,7 +907,7 @@
 				<if>
 					<available file="@{module.name}/_diffs" />
 					<then>
-						<copy todir="@{module.name}" overwrite="true" preservelastmodified="true">
+						<copy todir="@{module.name}" overwrite="true">
 							<fileset
 								dir="@{module.name}/_diffs"
 							/>
@@ -970,7 +993,7 @@
 
 				<move file="docroot/html/js/editor/tinymce/jscripts/tiny_mce" todir="docroot/html/js/editor" />
 
-				<copy todir="docroot/html/js/editor/tiny_mce" overwrite="true" preservelastmodified="true">
+				<copy todir="docroot/html/js/editor/tiny_mce" overwrite="true">
 					<fileset dir="docroot/html/js/editor/tiny_mce_diffs" />
 				</copy>
 

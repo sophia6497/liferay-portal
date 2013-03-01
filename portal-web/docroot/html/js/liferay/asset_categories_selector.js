@@ -46,6 +46,7 @@ AUI.add(
 		 * hiddenInput {string}: The hidden input used to pass in the current categories.
 		 * instanceVar {string}: The instance variable for this class.
 		 * labelNode {String|A.Node}: The node of the label element for this selector.
+		 * title {String}: The title of the button element for this selector.
 		 * vocabularyIds (string): The ids of the vocabularies.
 		 * vocabularyGroupIds (string): The groupIds of the vocabularies.
 		 *
@@ -94,6 +95,9 @@ AUI.add(
 					singleSelect: {
 						validator: Lang.isBoolean,
 						value: false
+					},
+					title: {
+						value: Liferay.Language.get('select-categories')
 					},
 					vocabularyIds: {
 						setter: function(value) {
@@ -215,7 +219,7 @@ AUI.add(
 
 								var newTreeNode = {
 									after: {
-										checkedChange: A.bind(instance._onCheckedChange, instance)
+										checkedChange: A.bind('_onCheckedChange', instance)
 									},
 									checked: checked,
 									id: treeId,
@@ -278,8 +282,8 @@ AUI.add(
 							);
 						}
 						else {
-							if (!portalModelResource && (themeDisplay.getParentGroupId() != themeDisplay.getCompanyGroupId())) {
-								groupIds.push(themeDisplay.getParentGroupId());
+							if (!portalModelResource && (themeDisplay.getSiteGroupId() != themeDisplay.getCompanyGroupId())) {
+								groupIds.push(themeDisplay.getSiteGroupId());
 							}
 
 							groupIds.push(themeDisplay.getCompanyGroupId());
@@ -331,7 +335,7 @@ AUI.add(
 							instance._searchResultsNode = searchResults;
 
 							var processSearchResults = A.bind(
-								instance._processSearchResults,
+								'_processSearchResults',
 								instance,
 								searchResults
 							);
@@ -472,7 +476,8 @@ AUI.add(
 											fn: instance._showSelectPopup
 										},
 										icon: 'search',
-										label: Liferay.Language.get('select')
+										label: Liferay.Language.get('select'),
+										title: instance.get('title')
 									}
 								]
 							}
@@ -598,7 +603,7 @@ AUI.add(
 								children: [vocabularyRootNode],
 								io: {
 									cfg: {
-										data: A.bind(instance._formatRequestData, instance),
+										data: A.bind('_formatRequestData', instance),
 										on: {
 											success: function(event) {
 												var treeViews = instance.TREEVIEWS;
@@ -615,7 +620,7 @@ AUI.add(
 											}
 										}
 									},
-									formatter: A.bind(instance._formatJSONResult, instance),
+									formatter: A.bind('_formatJSONResult', instance),
 									url: themeDisplay.getPathMain() + '/asset/get_categories'
 								},
 								paginator: paginatorConfig

@@ -606,11 +606,14 @@ create table DLFileEntryTypes_DLFolders (
 );
 
 create table DLFileRank (
+	uuid_ VARCHAR(75) null,
 	fileRankId LONG not null primary key,
 	groupId LONG,
 	companyId LONG,
 	userId LONG,
+	userName VARCHAR(75) null,
 	createDate DATE null,
+	modifiedDate DATE null,
 	fileEntryId LONG,
 	active_ BOOLEAN
 );
@@ -898,7 +901,11 @@ create table JournalFolder (
 	modifiedDate DATE null,
 	parentFolderId LONG,
 	name VARCHAR(100) null,
-	description STRING null
+	description STRING null,
+	status INTEGER,
+	statusByUserId LONG,
+	statusByUserName VARCHAR(75) null,
+	statusDate DATE null
 );
 
 create table JournalStructure (
@@ -1104,6 +1111,7 @@ create table Lock_ (
 );
 
 create table MBBan (
+	uuid_ VARCHAR(75) null,
 	banId LONG not null primary key,
 	groupId LONG,
 	companyId LONG,
@@ -1228,8 +1236,13 @@ create table MBThread (
 );
 
 create table MBThreadFlag (
+	uuid_ VARCHAR(75) null,
 	threadFlagId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
 	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
 	modifiedDate DATE null,
 	threadId LONG
 );
@@ -1558,6 +1571,11 @@ create table RepositoryEntry (
 	uuid_ VARCHAR(75) null,
 	repositoryEntryId LONG not null primary key,
 	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
+	modifiedDate DATE null,
 	repositoryId LONG,
 	mappedId VARCHAR(75) null,
 	manualCheckInRequired BOOLEAN
@@ -1891,6 +1909,7 @@ create table SocialActivity (
 	companyId LONG,
 	userId LONG,
 	createDate LONG,
+	activitySetId LONG,
 	mirrorActivityId LONG,
 	classNameId LONG,
 	classPK LONG,
@@ -1935,6 +1954,19 @@ create table SocialActivityLimit (
 	activityType INTEGER,
 	activityCounterName VARCHAR(75) null,
 	value VARCHAR(75) null
+);
+
+create table SocialActivitySet (
+	activitySetId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	createDate LONG,
+	modifiedDate LONG,
+	classNameId LONG,
+	classPK LONG,
+	type_ INTEGER,
+	activityCount INTEGER
 );
 
 create table SocialActivitySetting (

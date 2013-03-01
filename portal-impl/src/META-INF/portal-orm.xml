@@ -893,12 +893,22 @@
 				<column name="UUID_" />
 			</basic>
 			<basic name="groupId" />
+			<basic name="companyId" />
+			<basic name="userId" />
+			<basic name="userName" />
+			<basic name="createDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<basic name="modifiedDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
 			<basic name="repositoryId" />
 			<basic name="mappedId" />
 			<basic name="manualCheckInRequired" />
 			<transient name="modelAttributes" />
 			<transient name="primaryKey" />
 			<transient name="primaryKeyObj" />
+			<transient name="userUuid" />
 		</attributes>
 	</mapped-superclass>
 	<mapped-superclass class="com.liferay.portal.model.impl.ResourceActionModelImpl">
@@ -1931,10 +1941,17 @@
 	<mapped-superclass class="com.liferay.portlet.documentlibrary.model.impl.DLFileRankModelImpl">
 		<attributes>
 			<id name="fileRankId" />
+			<basic name="uuid">
+				<column name="UUID_" />
+			</basic>
 			<basic name="groupId" />
 			<basic name="companyId" />
 			<basic name="userId" />
+			<basic name="userName" />
 			<basic name="createDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<basic name="modifiedDate">
 				<temporal>TIMESTAMP</temporal>
 			</basic>
 			<basic name="fileEntryId" />
@@ -2548,9 +2565,18 @@
 			<basic name="parentFolderId" />
 			<basic name="name" />
 			<basic name="description" />
+			<basic name="status" />
+			<basic name="statusByUserId" />
+			<basic name="statusByUserName" />
+			<basic name="statusDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<transient name="containerModelId" />
 			<transient name="modelAttributes" />
+			<transient name="parentContainerModelId" />
 			<transient name="primaryKey" />
 			<transient name="primaryKeyObj" />
+			<transient name="statusByUserUuid" />
 			<transient name="userUuid" />
 		</attributes>
 	</mapped-superclass>
@@ -2628,6 +2654,9 @@
 	<mapped-superclass class="com.liferay.portlet.messageboards.model.impl.MBBanModelImpl">
 		<attributes>
 			<id name="banId" />
+			<basic name="uuid">
+				<column name="UUID_" />
+			</basic>
 			<basic name="groupId" />
 			<basic name="companyId" />
 			<basic name="userId" />
@@ -2832,7 +2861,16 @@
 	<mapped-superclass class="com.liferay.portlet.messageboards.model.impl.MBThreadFlagModelImpl">
 		<attributes>
 			<id name="threadFlagId" />
+			<basic name="uuid">
+				<column name="UUID_" />
+			</basic>
+			<basic name="groupId" />
+			<basic name="companyId" />
 			<basic name="userId" />
+			<basic name="userName" />
+			<basic name="createDate">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
 			<basic name="modifiedDate">
 				<temporal>TIMESTAMP</temporal>
 			</basic>
@@ -3333,6 +3371,7 @@
 			<basic name="companyId" />
 			<basic name="userId" />
 			<basic name="createDate" />
+			<basic name="activitySetId" />
 			<basic name="mirrorActivityId" />
 			<basic name="classNameId" />
 			<basic name="classPK" />
@@ -3398,6 +3437,27 @@
 			<basic name="activityType" />
 			<basic name="activityCounterName" />
 			<basic name="value" />
+			<transient name="className" />
+			<transient name="modelAttributes" />
+			<transient name="primaryKey" />
+			<transient name="primaryKeyObj" />
+			<transient name="userUuid" />
+		</attributes>
+	</mapped-superclass>
+	<mapped-superclass class="com.liferay.portlet.social.model.impl.SocialActivitySetModelImpl">
+		<attributes>
+			<id name="activitySetId" />
+			<basic name="groupId" />
+			<basic name="companyId" />
+			<basic name="userId" />
+			<basic name="createDate" />
+			<basic name="modifiedDate" />
+			<basic name="classNameId" />
+			<basic name="classPK" />
+			<basic name="type">
+				<column name="TYPE_" />
+			</basic>
+			<basic name="activityCount" />
 			<transient name="className" />
 			<transient name="modelAttributes" />
 			<transient name="primaryKey" />
@@ -3922,7 +3982,7 @@
 			<transient name="scopeable" />
 			<transient name="showPortletAccessDenied" />
 			<transient name="showPortletInactive" />
-			<transient name="socialActivityInterpreterClass" />
+			<transient name="socialActivityInterpreterClasses" />
 			<transient name="socialRequestInterpreterClass" />
 			<transient name="stagedModelDataHandlerClasses" />
 			<transient name="static" />
@@ -4147,7 +4207,6 @@
 		<table name="DLFileEntry" />
 		<attributes>
 			<transient name="extraSettingsProperties" />
-			<transient name="fileVersion" />
 		</attributes>
 	</entity>
 	<entity class="com.liferay.portlet.documentlibrary.model.impl.DLFileEntryMetadataImpl" name="DLFileEntryMetadata">
@@ -4421,6 +4480,10 @@
 		<attributes>
 			<transient name="count" />
 		</attributes>
+	</entity>
+	<entity class="com.liferay.portlet.social.model.impl.SocialActivitySetImpl" name="SocialActivitySet">
+		<table name="SocialActivitySet" />
+		<attributes />
 	</entity>
 	<entity class="com.liferay.portlet.social.model.impl.SocialActivitySettingImpl" name="SocialActivitySetting">
 		<table name="SocialActivitySetting" />

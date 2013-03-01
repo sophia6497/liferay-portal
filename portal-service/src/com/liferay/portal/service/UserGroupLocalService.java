@@ -298,6 +298,10 @@ public interface UserGroupLocalService extends BaseLocalService,
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
+	public void checkMembershipPolicy(com.liferay.portal.model.User user)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
 	/**
 	* Clears all associations between the user and its user groups and clears
 	* the permissions cache.
@@ -311,6 +315,20 @@ public interface UserGroupLocalService extends BaseLocalService,
 	*/
 	public void clearUserUserGroups(long userId)
 		throws com.liferay.portal.kernel.exception.SystemException;
+
+	/**
+	* Copies the user group's layout to the user.
+	*
+	* @param userGroupId the primary key of the user group
+	* @param userId the primary key of the user
+	* @throws PortalException if a user with the primary key could not be
+	found or if a portal exception occurred
+	* @throws SystemException if a system exception occurred
+	* @deprecated
+	*/
+	public void copyUserGroupLayouts(long userGroupId, long userId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
 
 	/**
 	* Copies the user group's layouts to the users who are not already members
@@ -338,20 +356,6 @@ public interface UserGroupLocalService extends BaseLocalService,
 	* @deprecated
 	*/
 	public void copyUserGroupLayouts(long[] userGroupIds, long userId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException;
-
-	/**
-	* Copies the user group's layout to the user.
-	*
-	* @param userGroupId the primary key of the user group
-	* @param userId the primary key of the user
-	* @throws PortalException if a user with the primary key could not be
-	found or if a portal exception occurred
-	* @throws SystemException if a system exception occurred
-	* @deprecated
-	*/
-	public void copyUserGroupLayouts(long userGroupId, long userId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 

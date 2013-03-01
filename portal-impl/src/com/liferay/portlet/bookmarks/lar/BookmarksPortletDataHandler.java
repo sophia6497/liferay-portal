@@ -72,7 +72,7 @@ public class BookmarksPortletDataHandler extends BasePortletDataHandler {
 		if (portletDataContext.addPrimaryKey(
 				BookmarksPortletDataHandler.class, "deleteData")) {
 
-			return null;
+			return portletPreferences;
 		}
 
 		BookmarksFolderLocalServiceUtil.deleteFolders(
@@ -82,7 +82,7 @@ public class BookmarksPortletDataHandler extends BasePortletDataHandler {
 			portletDataContext.getScopeGroupId(),
 			BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
-		return null;
+		return portletPreferences;
 	}
 
 	@Override
@@ -95,16 +95,14 @@ public class BookmarksPortletDataHandler extends BasePortletDataHandler {
 			"com.liferay.portlet.bookmarks",
 			portletDataContext.getScopeGroupId());
 
-		Document document = SAXReaderUtil.createDocument();
-
-		Element rootElement = document.addElement("bookmarks-data");
+		Element rootElement = addExportRootElement();
 
 		rootElement.addAttribute(
 			"group-id", String.valueOf(portletDataContext.getScopeGroupId()));
 
 		final Element foldersElement = rootElement.addElement("folders");
 
-		ActionableDynamicQuery foldersActionableDynamicQuery =
+		ActionableDynamicQuery folderActionableDynamicQuery =
 			new BookmarksFolderActionableDynamicQuery() {
 
 			@Override
@@ -123,14 +121,14 @@ public class BookmarksPortletDataHandler extends BasePortletDataHandler {
 
 		};
 
-		foldersActionableDynamicQuery.setGroupId(
+		folderActionableDynamicQuery.setGroupId(
 			portletDataContext.getScopeGroupId());
 
-		foldersActionableDynamicQuery.performActions();
+		folderActionableDynamicQuery.performActions();
 
 		final Element entriesElement = rootElement.addElement("entries");
 
-		ActionableDynamicQuery entriesActionableDynamicQuery =
+		ActionableDynamicQuery entryActionableDynamicQuery =
 			new BookmarksEntryActionableDynamicQuery() {
 
 			@Override
@@ -150,12 +148,12 @@ public class BookmarksPortletDataHandler extends BasePortletDataHandler {
 
 		};
 
-		entriesActionableDynamicQuery.setGroupId(
+		entryActionableDynamicQuery.setGroupId(
 			portletDataContext.getScopeGroupId());
 
-		entriesActionableDynamicQuery.performActions();
+		entryActionableDynamicQuery.performActions();
 
-		return document.formattedString();
+		return rootElement.formattedString();
 	}
 
 	@Override

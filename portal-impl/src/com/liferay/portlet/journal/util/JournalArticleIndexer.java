@@ -47,12 +47,15 @@ import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.portlet.journal.NoSuchStructureException;
+import com.liferay.portlet.journal.asset.JournalArticleAssetRendererFactory;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalArticleConstants;
+import com.liferay.portlet.journal.model.JournalFolder;
 import com.liferay.portlet.journal.model.JournalFolderConstants;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalFolderServiceUtil;
@@ -280,13 +283,30 @@ public class JournalArticleIndexer extends BaseIndexer {
 		if (Validator.isNotNull(article.getStructureId())) {
 			try {
 				ddmStructure = DDMStructureLocalServiceUtil.getStructure(
-					article.getGroupId(), article.getStructureId(), true);
+					article.getGroupId(),
+					PortalUtil.getClassNameId(JournalArticle.class),
+					article.getStructureId(), true);
 			}
 			catch (NoSuchStructureException nsse) {
 			}
 		}
 
 		processDDMStructure(ddmStructure, document, article.getContent());
+
+		if (!article.isInTrash() && article.isInTrashContainer()) {
+			JournalFolder folder = article.getTrashContainer();
+
+			addTrashFields(
+				document, JournalFolder.class.getName(), folder.getFolderId(),
+				null, null, JournalArticleAssetRendererFactory.TYPE);
+
+			document.addKeyword(
+				Field.ROOT_ENTRY_CLASS_NAME, JournalFolder.class.getName());
+			document.addKeyword(
+				Field.ROOT_ENTRY_CLASS_PK, folder.getFolderId());
+			document.addKeyword(
+				Field.STATUS, WorkflowConstants.STATUS_IN_TRASH);
+		}
 
 		return document;
 	}
