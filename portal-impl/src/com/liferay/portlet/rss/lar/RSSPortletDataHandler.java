@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,26 +15,21 @@
 package com.liferay.portlet.rss.lar;
 
 import com.liferay.portal.kernel.lar.BasePortletDataHandler;
+import com.liferay.portal.kernel.lar.DataLevel;
 import com.liferay.portal.kernel.lar.PortletDataContext;
-import com.liferay.portal.kernel.lar.PortletDataHandlerBoolean;
 import com.liferay.portal.kernel.lar.PortletDataHandlerControl;
+import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.lar.DLPortletDataHandler;
-import com.liferay.portlet.dynamicdatamapping.lar.DDMPortletDataHandler;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.journal.NoSuchArticleException;
-import com.liferay.portlet.journal.lar.JournalPortletDataHandler;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalContentSearchLocalServiceUtil;
@@ -53,31 +48,10 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 	public static final String NAMESPACE = "rss";
 
 	public RSSPortletDataHandler() {
-		setAlwaysExportable(true);
+		setDataLevel(DataLevel.PORTLET_INSTANCE);
 		setDataPortletPreferences("footerArticleValues", "headerArticleValues");
-			setExportControls(
-			new PortletDataHandlerBoolean(
-				NAMESPACE, "selected-web-content", true, true),
-			new PortletDataHandlerBoolean(NAMESPACE, "embedded-assets"));
-
-		JournalPortletDataHandler journalPortletDataHandler =
-			new JournalPortletDataHandler();
-		DLPortletDataHandler dlPortletDataHandler = new DLPortletDataHandler();
-
-		PortletDataHandlerControl[] exportMetadataControls = ArrayUtil.append(
-			journalPortletDataHandler.getExportMetadataControls(),
-			dlPortletDataHandler.getExportMetadataControls());
-
-		for (PortletDataHandlerControl portletDataHandlerControl :
-				exportMetadataControls) {
-
-			portletDataHandlerControl.setNamespace(NAMESPACE);
-		}
-
-		setExportMetadataControls(exportMetadataControls);
-
-		setImportControls(getExportControls()[0]);
-		setPublishToLiveByDefault(true);
+		setExportControls(new PortletDataHandlerControl[0]);
+		setPublishToLiveByDefault(PropsValues.RSS_PUBLISH_TO_LIVE_BY_DEFAULT);
 	}
 
 	@Override
@@ -110,7 +84,7 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 	}
 
 	@Override
-	protected String doExportData(
+	protected PortletPreferences doProcessExportPortletPreferences(
 			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
@@ -132,7 +106,7 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 						portletId);
 			}
 
-			return StringPool.BLANK;
+			return portletPreferences;
 		}
 
 		long footerArticleGroupId = GetterUtil.getLong(footerArticleValues[0]);
@@ -145,7 +119,7 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 						portletId);
 			}
 
-			return StringPool.BLANK;
+			return portletPreferences;
 		}
 
 		List<JournalArticle> articles = new ArrayList<JournalArticle>(2);
@@ -186,93 +160,33 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 			}
 		}
 
-		if ((footerArticle == null) && (headerArticle == null)) {
-			return StringPool.BLANK;
+		if (articles.isEmpty()) {
+			return portletPreferences;
 		}
-
-		Document document = SAXReaderUtil.createDocument();
-
-		Element rootElement = document.addElement("journal-content-data");
-
-		Element dlFileEntryTypesElement = rootElement.addElement(
-			"dl-file-entry-types");
-		Element dlFoldersElement = rootElement.addElement("dl-folders");
-		Element dlFilesElement = rootElement.addElement("dl-file-entries");
-		Element dlFileRanksElement = rootElement.addElement("dl-file-ranks");
-		Element dlRepositoriesElement = rootElement.addElement(
-			"dl-repositories");
-		Element dlRepositoryEntriesElement = rootElement.addElement(
-			"dl-repository-entries");
 
 		for (JournalArticle article : articles) {
-			String path = JournalPortletDataHandler.getArticlePath(
-				portletDataContext, article);
-
-			Element articleElement = null;
-
-			if (article == footerArticle) {
-				articleElement = rootElement.addElement("footer-article");
-			}
-			else {
-				articleElement = rootElement.addElement("header-article");
-			}
-
-			articleElement.addAttribute("path", path);
-
-			JournalPortletDataHandler.exportArticle(
-				portletDataContext, rootElement, rootElement, rootElement,
-				dlFileEntryTypesElement, dlFoldersElement, dlFilesElement,
-				dlFileRanksElement, dlRepositoriesElement,
-				dlRepositoryEntriesElement, article, false);
+			StagedModelDataHandlerUtil.exportReferenceStagedModel(
+				portletDataContext, portletId, article);
 		}
 
-		return document.formattedString();
+		return portletPreferences;
 	}
 
 	@Override
-	protected PortletPreferences doImportData(
+	protected PortletPreferences doProcessImportPortletPreferences(
 			PortletDataContext portletDataContext, String portletId,
-			PortletPreferences portletPreferences, String data)
+			PortletPreferences portletPreferences)
 		throws Exception {
 
-		if (Validator.isNull(data)) {
-			return null;
-		}
-
-		Document document = SAXReaderUtil.read(data);
-
-		Element rootElement = document.getRootElement();
-
-		JournalPortletDataHandler.importReferencedData(
-			portletDataContext, rootElement);
-
-		List<Element> structureElements = rootElement.elements("structure");
-
-		for (Element structureElement : structureElements) {
-			DDMPortletDataHandler.importStructure(
-				portletDataContext, structureElement);
-		}
-
-		List<Element> templateElements = rootElement.elements("template");
-
-		for (Element templateElement : templateElements) {
-			DDMPortletDataHandler.importTemplate(
-				portletDataContext, templateElement);
-		}
-
-		Map<String, String> articleIds =
-			(Map<String, String>)portletDataContext.getNewPrimaryKeysMap(
-				JournalArticle.class + ".articleId");
+		StagedModelDataHandlerUtil.importReferenceStagedModels(
+			portletDataContext, JournalArticle.class);
 
 		Layout layout = LayoutLocalServiceUtil.getLayout(
 			portletDataContext.getPlid());
 
-		Element footerArticleElement = rootElement.element("footer-article");
-
-		if (footerArticleElement != null) {
-			JournalPortletDataHandler.importArticle(
-				portletDataContext, footerArticleElement);
-		}
+		Map<String, String> articleIds =
+			(Map<String, String>)portletDataContext.getNewPrimaryKeysMap(
+				JournalArticle.class + ".articleId");
 
 		String[] footerArticleValues = portletPreferences.getValues(
 			"footerArticleValues", new String[] {"0", ""});
@@ -298,13 +212,6 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 				layout.getLayoutId(), portletId, footerArticleId, true);
 		}
 
-		Element headerArticleElement = rootElement.element("header-article");
-
-		if (headerArticleElement != null) {
-			JournalPortletDataHandler.importArticle(
-				portletDataContext, headerArticleElement);
-		}
-
 		String[] headerArticleValues = portletPreferences.getValues(
 			"headerArticleValues", new String[] {"0", ""});
 
@@ -314,9 +221,6 @@ public class RSSPortletDataHandler extends BasePortletDataHandler {
 			articleIds, headerArticleId, headerArticleId);
 
 		if (Validator.isNotNull(headerArticleId)) {
-			headerArticleId = MapUtil.getString(
-				articleIds, headerArticleId, headerArticleId);
-
 			portletPreferences.setValues(
 				"headerArticleValues",
 				new String[] {

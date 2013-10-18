@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,7 +24,6 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -95,7 +94,7 @@ public class DataAccess {
 	}
 
 	public static Connection getConnection() throws SQLException {
-		DataSource dataSource = InfrastructureUtil.getDataSource();
+		DataSource dataSource = _pacl.getDataSource();
 
 		return dataSource.getConnection();
 	}
@@ -103,12 +102,7 @@ public class DataAccess {
 	public static Connection getConnection(String location)
 		throws NamingException, SQLException {
 
-		Properties properties = PropsUtil.getProperties(
-			PropsKeys.JNDI_ENVIRONMENT, true);
-
-		Context context = new InitialContext(properties);
-
-		DataSource dataSource = (DataSource)JNDIUtil.lookup(context, location);
+		DataSource dataSource = _pacl.getDataSource(location);
 
 		return dataSource.getConnection();
 	}
@@ -117,14 +111,6 @@ public class DataAccess {
 		throws SQLException {
 
 		Connection con = getConnection();
-
-		DatabaseMetaData metaData = con.getMetaData();
-
-		String productName = metaData.getDatabaseProductName();
-
-		if (!productName.equals("Microsoft SQL Server")) {
-			return con;
-		}
 
 		Thread currentThread = Thread.currentThread();
 
@@ -135,6 +121,37 @@ public class DataAccess {
 			new UpgradeOptimizedConnectionHandler(con));
 	}
 
+	public static interface PACL {
+
+		public DataSource getDataSource();
+
+		public DataSource getDataSource(String location) throws NamingException;
+
+	}
+
 	private static Log _log = LogFactoryUtil.getLog(DataAccess.class);
+
+	private static PACL _pacl = new NoPACL();
+
+	private static class NoPACL implements PACL {
+
+		@Override
+		public DataSource getDataSource() {
+			return InfrastructureUtil.getDataSource();
+		}
+
+		@Override
+		public DataSource getDataSource(String location)
+			throws NamingException {
+
+			Properties properties = PropsUtil.getProperties(
+				PropsKeys.JNDI_ENVIRONMENT, true);
+
+			Context context = new InitialContext(properties);
+
+			return (DataSource)JNDIUtil.lookup(context, location);
+		}
+
+	}
 
 }

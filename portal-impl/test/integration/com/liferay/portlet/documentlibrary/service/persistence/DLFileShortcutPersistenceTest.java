@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,13 +15,18 @@
 package com.liferay.portlet.documentlibrary.service.persistence;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.portal.kernel.util.IntegerWrapper;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.ServiceTestUtil;
@@ -130,6 +135,8 @@ public class DLFileShortcutPersistenceTest {
 
 		newDLFileShortcut.setToFileEntryId(ServiceTestUtil.nextLong());
 
+		newDLFileShortcut.setTreePath(ServiceTestUtil.randomString());
+
 		newDLFileShortcut.setActive(ServiceTestUtil.randomBoolean());
 
 		newDLFileShortcut.setStatus(ServiceTestUtil.nextInt());
@@ -168,6 +175,8 @@ public class DLFileShortcutPersistenceTest {
 			newDLFileShortcut.getFolderId());
 		Assert.assertEquals(existingDLFileShortcut.getToFileEntryId(),
 			newDLFileShortcut.getToFileEntryId());
+		Assert.assertEquals(existingDLFileShortcut.getTreePath(),
+			newDLFileShortcut.getTreePath());
 		Assert.assertEquals(existingDLFileShortcut.getActive(),
 			newDLFileShortcut.getActive());
 		Assert.assertEquals(existingDLFileShortcut.getStatus(),
@@ -205,6 +214,27 @@ public class DLFileShortcutPersistenceTest {
 	}
 
 	@Test
+	public void testFindAll() throws Exception {
+		try {
+			_persistence.findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				getOrderByComparator());
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	protected OrderByComparator getOrderByComparator() {
+		return OrderByComparatorFactoryUtil.create("DLFileShortcut", "uuid",
+			true, "fileShortcutId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "repositoryId", true, "folderId", true,
+			"toFileEntryId", true, "treePath", true, "active", true, "status",
+			true, "statusByUserId", true, "statusByUserName", true,
+			"statusDate", true);
+	}
+
+	@Test
 	public void testFetchByPrimaryKeyExisting() throws Exception {
 		DLFileShortcut newDLFileShortcut = addDLFileShortcut();
 
@@ -220,6 +250,26 @@ public class DLFileShortcutPersistenceTest {
 		DLFileShortcut missingDLFileShortcut = _persistence.fetchByPrimaryKey(pk);
 
 		Assert.assertNull(missingDLFileShortcut);
+	}
+
+	@Test
+	public void testActionableDynamicQuery() throws Exception {
+		final IntegerWrapper count = new IntegerWrapper();
+
+		ActionableDynamicQuery actionableDynamicQuery = new DLFileShortcutActionableDynamicQuery() {
+				@Override
+				protected void performAction(Object object) {
+					DLFileShortcut dlFileShortcut = (DLFileShortcut)object;
+
+					Assert.assertNotNull(dlFileShortcut);
+
+					count.increment();
+				}
+			};
+
+		actionableDynamicQuery.performActions();
+
+		Assert.assertEquals(count.getValue(), _persistence.countAll());
 	}
 
 	@Test
@@ -339,6 +389,8 @@ public class DLFileShortcutPersistenceTest {
 		dlFileShortcut.setFolderId(ServiceTestUtil.nextLong());
 
 		dlFileShortcut.setToFileEntryId(ServiceTestUtil.nextLong());
+
+		dlFileShortcut.setTreePath(ServiceTestUtil.randomString());
 
 		dlFileShortcut.setActive(ServiceTestUtil.randomBoolean());
 

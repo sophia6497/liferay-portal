@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -43,6 +43,7 @@ public interface BaseModel<T>
 	 *
 	 * @return the expando bridge for this model instance
 	 */
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
 	public Map<String, Object> getModelAttributes();
@@ -52,6 +53,7 @@ public interface BaseModel<T>
 	 *
 	 * @return the primary key of this model instance
 	 */
+	@Override
 	public Serializable getPrimaryKeyObj();
 
 	/**
@@ -95,11 +97,15 @@ public interface BaseModel<T>
 	 */
 	public void setCachedModel(boolean cachedModel);
 
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
 	/**
 	 * Sets the expando bridge attributes for this model instance to the
 	 * attributes stored in the service context.
 	 *
-	 * @param serviceContext the service context
+	 * @param serviceContext the service context to be applied
 	 * @see   com.liferay.portal.service.ServiceContext#getExpandoBridgeAttributes(
 	 *        )
 	 */
@@ -119,6 +125,7 @@ public interface BaseModel<T>
 	 *
 	 * @param primaryKeyObj the primary key of this model instance
 	 */
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
 	/**

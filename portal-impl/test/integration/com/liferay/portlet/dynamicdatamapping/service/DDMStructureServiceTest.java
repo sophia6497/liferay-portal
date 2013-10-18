@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,7 @@ import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portlet.dynamicdatalists.model.DDLRecord;
 import com.liferay.portlet.dynamicdatamapping.RequiredStructureException;
+import com.liferay.portlet.dynamicdatamapping.StructureDuplicateElementException;
 import com.liferay.portlet.dynamicdatamapping.StructureDuplicateStructureKeyException;
 import com.liferay.portlet.dynamicdatamapping.StructureNameException;
 import com.liferay.portlet.dynamicdatamapping.StructureXsdException;
@@ -103,6 +104,60 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 	}
 
 	@Test
+	public void testAddStructureWithXsdContainingDuplicateElementName()
+		throws Exception {
+
+		String storageType = StorageType.XML.getValue();
+
+		try {
+			addStructure(
+				_classNameId, null, "Test Structure",
+				readText("ddm-structure-duplicate-element-name.xsd"),
+				storageType, DDMStructureConstants.TYPE_DEFAULT);
+
+			Assert.fail();
+		}
+		catch (StructureDuplicateElementException sdee) {
+		}
+	}
+
+	@Test
+	public void testAddStructureWithXsdContainingInvalidElementAttribute()
+		throws Exception {
+
+		String storageType = StorageType.XML.getValue();
+
+		try {
+			addStructure(
+				_classNameId, null, "Test Structure",
+				readText("ddm-structure-invalid-element-attribute.xsd"),
+				storageType, DDMStructureConstants.TYPE_DEFAULT);
+
+			Assert.fail();
+		}
+		catch (StructureXsdException sxe) {
+		}
+	}
+
+	@Test
+	public void testAddStructureWithXsdMissingRequiredElementAttribute()
+		throws Exception {
+
+		String storageType = StorageType.XML.getValue();
+
+		try {
+			addStructure(
+				_classNameId, null, "Test Structure",
+				readText("ddm-structure-required-element-attribute.xsd"),
+				storageType, DDMStructureConstants.TYPE_DEFAULT);
+
+			Assert.fail();
+		}
+		catch (StructureXsdException sxe) {
+		}
+	}
+
+	@Test
 	public void testCopyStructure() throws Exception {
 		DDMStructure structure = addStructure(_classNameId, "Test Structure");
 
@@ -150,7 +205,8 @@ public class DDMStructureServiceTest extends BaseDDMServiceTestCase {
 
 		Assert.assertNotNull(
 			DDMStructureLocalServiceUtil.fetchStructure(
-				structure.getGroupId(), structure.getStructureKey()));
+				structure.getGroupId(), _classNameId,
+				structure.getStructureKey()));
 	}
 
 	@Test

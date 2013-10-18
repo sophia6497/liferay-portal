@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,13 +16,18 @@ package com.liferay.portal.service.persistence;
 
 import com.liferay.portal.NoSuchEmailAddressException;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.portal.kernel.util.IntegerWrapper;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.EmailAddress;
 import com.liferay.portal.service.ServiceTestUtil;
@@ -106,6 +111,8 @@ public class EmailAddressPersistenceTest {
 
 		EmailAddress newEmailAddress = _persistence.create(pk);
 
+		newEmailAddress.setUuid(ServiceTestUtil.randomString());
+
 		newEmailAddress.setCompanyId(ServiceTestUtil.nextLong());
 
 		newEmailAddress.setUserId(ServiceTestUtil.nextLong());
@@ -130,6 +137,8 @@ public class EmailAddressPersistenceTest {
 
 		EmailAddress existingEmailAddress = _persistence.findByPrimaryKey(newEmailAddress.getPrimaryKey());
 
+		Assert.assertEquals(existingEmailAddress.getUuid(),
+			newEmailAddress.getUuid());
 		Assert.assertEquals(existingEmailAddress.getEmailAddressId(),
 			newEmailAddress.getEmailAddressId());
 		Assert.assertEquals(existingEmailAddress.getCompanyId(),
@@ -180,6 +189,25 @@ public class EmailAddressPersistenceTest {
 	}
 
 	@Test
+	public void testFindAll() throws Exception {
+		try {
+			_persistence.findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				getOrderByComparator());
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	protected OrderByComparator getOrderByComparator() {
+		return OrderByComparatorFactoryUtil.create("EmailAddress", "uuid",
+			true, "emailAddressId", true, "companyId", true, "userId", true,
+			"userName", true, "createDate", true, "modifiedDate", true,
+			"classNameId", true, "classPK", true, "address", true, "typeId",
+			true, "primary", true);
+	}
+
+	@Test
 	public void testFetchByPrimaryKeyExisting() throws Exception {
 		EmailAddress newEmailAddress = addEmailAddress();
 
@@ -195,6 +223,26 @@ public class EmailAddressPersistenceTest {
 		EmailAddress missingEmailAddress = _persistence.fetchByPrimaryKey(pk);
 
 		Assert.assertNull(missingEmailAddress);
+	}
+
+	@Test
+	public void testActionableDynamicQuery() throws Exception {
+		final IntegerWrapper count = new IntegerWrapper();
+
+		ActionableDynamicQuery actionableDynamicQuery = new EmailAddressActionableDynamicQuery() {
+				@Override
+				protected void performAction(Object object) {
+					EmailAddress emailAddress = (EmailAddress)object;
+
+					Assert.assertNotNull(emailAddress);
+
+					count.increment();
+				}
+			};
+
+		actionableDynamicQuery.performActions();
+
+		Assert.assertEquals(count.getValue(), _persistence.countAll());
 	}
 
 	@Test
@@ -275,6 +323,8 @@ public class EmailAddressPersistenceTest {
 		long pk = ServiceTestUtil.nextLong();
 
 		EmailAddress emailAddress = _persistence.create(pk);
+
+		emailAddress.setUuid(ServiceTestUtil.randomString());
 
 		emailAddress.setCompanyId(ServiceTestUtil.nextLong());
 

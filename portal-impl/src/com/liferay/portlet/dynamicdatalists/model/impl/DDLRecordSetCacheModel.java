@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -73,6 +73,7 @@ public class DDLRecordSetCacheModel implements CacheModel<DDLRecordSet>,
 		return sb.toString();
 	}
 
+	@Override
 	public DDLRecordSet toEntityModel() {
 		DDLRecordSetImpl ddlRecordSetImpl = new DDLRecordSetImpl();
 
@@ -140,6 +141,7 @@ public class DDLRecordSetCacheModel implements CacheModel<DDLRecordSet>,
 		return ddlRecordSetImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		uuid = objectInput.readUTF();
 		recordSetId = objectInput.readLong();
@@ -157,6 +159,7 @@ public class DDLRecordSetCacheModel implements CacheModel<DDLRecordSet>,
 		scope = objectInput.readInt();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		if (uuid == null) {

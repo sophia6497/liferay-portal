@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,15 +21,21 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.test.EnvironmentExecutionTestListener;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
+import com.liferay.portal.test.Sync;
+import com.liferay.portal.test.SynchronousDestinationExecutionTestListener;
 import com.liferay.portal.test.TransactionalExecutionTestListener;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portlet.asset.model.AssetEntry;
+import com.liferay.portlet.dynamicdatamapping.RequiredTemplateException;
 import com.liferay.portlet.dynamicdatamapping.TemplateDuplicateTemplateKeyException;
 import com.liferay.portlet.dynamicdatamapping.TemplateNameException;
 import com.liferay.portlet.dynamicdatamapping.TemplateScriptException;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplateConstants;
+import com.liferay.portlet.journal.model.JournalArticle;
+import com.liferay.portlet.journal.util.JournalTestUtil;
 
 import java.util.List;
 
@@ -43,9 +49,11 @@ import org.junit.runner.RunWith;
 @ExecutionTestListeners(
 	listeners = {
 		EnvironmentExecutionTestListener.class,
+		SynchronousDestinationExecutionTestListener.class,
 		TransactionalExecutionTestListener.class
 	})
 @RunWith(LiferayIntegrationJUnitTestRunner.class)
+@Sync
 @Transactional
 public class DDMTemplateServiceTest extends BaseDDMServiceTestCase {
 
@@ -57,12 +65,12 @@ public class DDMTemplateServiceTest extends BaseDDMServiceTestCase {
 		try {
 			addTemplate(
 				_classNameId, 0, templateKey, "Test Template 1",
-				DDMTemplateConstants.TEMPLATE_TYPE_FORM,
+				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
 				DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
 				getTestTemplateScript(language));
 			addTemplate(
 				_classNameId, 0, templateKey, "Test Template 2",
-				DDMTemplateConstants.TEMPLATE_TYPE_FORM,
+				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
 				DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
 				getTestTemplateScript(language));
 
@@ -79,7 +87,7 @@ public class DDMTemplateServiceTest extends BaseDDMServiceTestCase {
 		try {
 			addTemplate(
 				_classNameId, 0, null, StringPool.BLANK,
-				DDMTemplateConstants.TEMPLATE_TYPE_FORM,
+				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
 				DDMTemplateConstants.TEMPLATE_MODE_CREATE, language,
 				getTestTemplateScript(language));
 
@@ -127,13 +135,39 @@ public class DDMTemplateServiceTest extends BaseDDMServiceTestCase {
 	}
 
 	@Test
+	public void testDeleteTemplateReferencedByJournalArticles()
+		throws Exception {
+
+		DDMStructure structure = addStructure(
+			PortalUtil.getClassNameId(JournalArticle.class.getName()),
+			"Test Structure");
+
+		DDMTemplate template = addDisplayTemplate(
+			structure.getPrimaryKey(), "Test Display Template");
+
+		JournalTestUtil.addArticleWithXMLContent(
+			group.getGroupId(), "<title>Test Article</title>",
+			structure.getStructureKey(), template.getTemplateKey());
+
+		try {
+			DDMTemplateLocalServiceUtil.deleteTemplate(
+				template.getTemplateId());
+
+			Assert.fail();
+		}
+		catch (RequiredTemplateException rse) {
+		}
+	}
+
+	@Test
 	public void testFetchTemplate() throws Exception {
 		DDMTemplate template = addDisplayTemplate(
 			_classNameId, 0, "Test Template");
 
 		Assert.assertNotNull(
 			DDMTemplateLocalServiceUtil.fetchTemplate(
-				template.getGroupId(), template.getTemplateKey()));
+				template.getGroupId(), _classNameId,
+				template.getTemplateKey()));
 	}
 
 	@Test
@@ -221,11 +255,11 @@ public class DDMTemplateServiceTest extends BaseDDMServiceTestCase {
 		throws Exception {
 
 		return DDMTemplateLocalServiceUtil.updateTemplate(
-			template.getTemplateId(), template.getNameMap(),
-			template.getDescriptionMap(), template.getType(),
-			template.getMode(), template.getLanguage(), template.getScript(),
-			template.isCacheable(), template.isSmallImage(),
-			template.getSmallImageURL(), null,
+			template.getTemplateId(), template.getClassPK(),
+			template.getNameMap(), template.getDescriptionMap(),
+			template.getType(), template.getMode(), template.getLanguage(),
+			template.getScript(), template.isCacheable(),
+			template.isSmallImage(), template.getSmallImageURL(), null,
 			ServiceTestUtil.getServiceContext());
 	}
 

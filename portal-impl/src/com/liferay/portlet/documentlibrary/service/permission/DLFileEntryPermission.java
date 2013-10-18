@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -96,39 +96,28 @@ public class DLFileEntryPermission {
 			}
 		}
 
-		if (dlFileEntry.getFolderId() !=
-				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
-			try {
-				DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(
-					dlFileEntry.getFolderId());
+			long dlFolderId = dlFileEntry.getFolderId();
 
-				if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
+			if (dlFolderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+				try {
+					DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(
+						dlFolderId);
+
 					if (!DLFolderPermission.contains(
-							permissionChecker, dlFolder, ActionKeys.ACCESS) ||
+							permissionChecker, dlFolder, ActionKeys.ACCESS) &&
 						!DLFolderPermission.contains(
 							permissionChecker, dlFolder, ActionKeys.VIEW)) {
 
 						return false;
 					}
-
-					if (actionId.equals(ActionKeys.ACCESS) ||
-						actionId.equals(ActionKeys.VIEW)) {
-
-						return true;
+				}
+				catch (NoSuchFolderException nsfe) {
+					if (!dlFileEntry.isInTrash()) {
+						throw nsfe;
 					}
-				}
-
-				if (!actionId.equals(ActionKeys.OVERRIDE_CHECKOUT) &&
-					DLFolderPermission.contains(
-						permissionChecker, dlFolder, actionId)) {
-
-					return true;
-				}
-			}
-			catch (NoSuchFolderException nsfe) {
-				if (!latestDLFileVersion.isInTrash()) {
-					throw nsfe;
 				}
 			}
 		}

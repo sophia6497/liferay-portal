@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,7 +23,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousUser");
 %>
 
 <c:if test="<%= anonymousAccount && company.isStrangers() %>">
-	<div class="aui-helper-hidden lfr-message-response" id="<portlet:namespace />login-status-messages"></div>
+	<div class="hide lfr-message-response" id="<portlet:namespace />login-status-messages"></div>
 
 	<div class="anonymous-account">
 		<portlet:actionURL var="updateIncompleteUserURL">
@@ -33,7 +33,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousUser");
 		</portlet:actionURL>
 
 		<aui:form action="<%= updateIncompleteUserURL %>" method="post" name="fm">
-			<div class="portlet-msg-success">
+			<div class="alert alert-success">
 				<liferay-ui:message key="your-comment-has-already-been-posted.-would-you-like-to-create-an-account-with-the-provided-information" />
 			</div>
 
@@ -64,7 +64,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousUser");
 					},
 					on: {
 						failure: function(event, id, obj) {
-							message = Liferay.Language.get('your-request-failed-to-complete');
+							message = '<%= UnicodeLanguageUtil.get(pageContext, "your-request-failed-to-complete") %>';
 
 							<portlet:namespace />showStatusMessage('error', message);
 
@@ -92,7 +92,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousUser");
 								A.one('.anonymous-account').hide();
 							}
 							else {
-								message = Liferay.Language.get('your-request-failed-to-complete');
+								message = '<%= UnicodeLanguageUtil.get(pageContext, "your-request-failed-to-complete") %>';
 
 								<portlet:namespace />showStatusMessage('error', message);
 
@@ -130,10 +130,9 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousUser");
 
 			var messageContainer = A.one('#<portlet:namespace />login-status-messages');
 
-			messageContainer.removeClass('portlet-msg-error');
-			messageContainer.removeClass('portlet-msg-success');
+			messageContainer.removeClass('alert-error').removeClass('alert-success');
 
-			messageContainer.addClass('portlet-msg-' + type);
+			messageContainer.addClass('alert alert-' + type);
 
 			messageContainer.html(message);
 

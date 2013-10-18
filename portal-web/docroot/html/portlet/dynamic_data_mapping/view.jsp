@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,7 +19,7 @@
 <%
 String tabs1 = ParamUtil.getString(request, "tabs1", "structures");
 
-long groupId = ParamUtil.getLong(request, "groupId", scopeGroupId);
+long groupId = ParamUtil.getLong(request, "groupId", themeDisplay.getSiteGroupId());
 
 PortletURL portletURL = renderResponse.createRenderURL();
 
@@ -39,12 +39,6 @@ portletURL.setParameter("tabs1", tabs1);
 		<liferay-ui:message key="they-are-referenced-by-templates" />
 	</c:if>
 </liferay-ui:error>
-
-<c:if test="<%= showToolbar %>">
-	<liferay-util:include page="/html/portlet/dynamic_data_mapping/toolbar.jsp">
-		<liferay-util:param name="toolbarItem" value="view-all" />
-	</liferay-util:include>
-</c:if>
 
 <aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" />
@@ -75,9 +69,11 @@ portletURL.setParameter("tabs1", tabs1);
 		searchContainer="<%= new StructureSearch(renderRequest, portletURL) %>"
 	>
 
-		<liferay-ui:search-form
-			page="/html/portlet/dynamic_data_mapping/structure_search.jsp"
-		/>
+		<c:if test="<%= showToolbar %>">
+			<liferay-util:include page="/html/portlet/dynamic_data_mapping/toolbar.jsp">
+				<liferay-util:param name="groupId" value="<%= String.valueOf(groupId) %>" />
+			</liferay-util:include>
+		</c:if>
 
 		<liferay-ui:search-container-results>
 			<%@ include file="/html/portlet/dynamic_data_mapping/structure_search_results.jspf" %>
@@ -90,31 +86,14 @@ portletURL.setParameter("tabs1", tabs1);
 		>
 
 			<%
-			String rowHREF = null;
+			PortletURL rowURL = renderResponse.createRenderURL();
 
-			if (Validator.isNotNull(chooseCallback)) {
-				StringBundler sb = new StringBundler(7);
+			rowURL.setParameter("struts_action", "/dynamic_data_mapping/edit_structure");
+			rowURL.setParameter("redirect", currentURL);
+			rowURL.setParameter("classNameId", String.valueOf(PortalUtil.getClassNameId(DDMStructure.class)));
+			rowURL.setParameter("classPK", String.valueOf(structure.getStructureId()));
 
-				sb.append("javascript:Liferay.Util.getOpener()['");
-				sb.append(HtmlUtil.escapeJS(chooseCallback));
-				sb.append("']('");
-				sb.append(structure.getStructureId());
-				sb.append("', '");
-				sb.append(HtmlUtil.escape(structure.getName(locale)));
-				sb.append("', Liferay.Util.getWindow());");
-
-				rowHREF = sb.toString();
-			}
-			else {
-				PortletURL rowURL = renderResponse.createRenderURL();
-
-				rowURL.setParameter("struts_action", "/dynamic_data_mapping/edit_structure");
-				rowURL.setParameter("redirect", currentURL);
-				rowURL.setParameter("classNameId", String.valueOf(PortalUtil.getClassNameId(DDMStructure.class)));
-				rowURL.setParameter("classPK", String.valueOf(structure.getStructureId()));
-
-				rowHREF = rowURL.toString();
-			}
+			String rowHREF = rowURL.toString();
 			%>
 
 			<liferay-ui:search-container-column-text
@@ -129,6 +108,12 @@ portletURL.setParameter("tabs1", tabs1);
 				href="<%= rowHREF %>"
 				name="name"
 				value="<%= HtmlUtil.escape(structure.getName(locale)) %>"
+			/>
+
+			<liferay-ui:search-container-column-text
+				href="<%= rowHREF %>"
+				name="description"
+				value="<%= HtmlUtil.escape(structure.getDescription(locale)) %>"
 			/>
 
 			<c:if test="<%= Validator.isNull(storageTypeValue) %>">
@@ -153,19 +138,13 @@ portletURL.setParameter("tabs1", tabs1);
 				</liferay-ui:search-container-column-text>
 			</c:if>
 
-			<liferay-ui:search-container-column-text
-				buffer="buffer"
+			<liferay-ui:search-container-column-date
 				href="<%= rowHREF %>"
 				name="modified-date"
 				orderable="<%= true %>"
 				orderableProperty="modified-date"
-			>
-
-				<%
-				buffer.append(dateFormatDateTime.format(structure.getModifiedDate()));
-				%>
-
-			</liferay-ui:search-container-column-text>
+				value="<%= structure.getModifiedDate() %>"
+			/>
 
 			<liferay-ui:search-container-column-jsp
 				align="right"
@@ -175,7 +154,7 @@ portletURL.setParameter("tabs1", tabs1);
 
 		<c:if test="<%= total > 0 %>">
 			<aui:button-row>
-				<aui:button cssClass="delete-structures-button" onClick='<%= renderResponse.getNamespace() + "deleteStructures();" %>' value="delete" />
+				<aui:button cssClass="delete-structures-button" disabled="<%= true %>" name="delete" onClick='<%= renderResponse.getNamespace() + "deleteStructures();" %>' value="delete" />
 			</aui:button-row>
 
 			<div class="separator"><!-- --></div>
@@ -186,17 +165,14 @@ portletURL.setParameter("tabs1", tabs1);
 </aui:form>
 
 <aui:script>
+	Liferay.Util.toggleSearchContainerButton('#<portlet:namespace />delete', '#<portlet:namespace /><%= searchContainerReference.getId() %>SearchContainer', document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+
 	function <portlet:namespace />copyStructure(uri) {
 		Liferay.Util.openWindow(
 			{
-				dialog: {
-					align: Liferay.Util.Window.ALIGN_CENTER,
-					constrain: true,
-					width: 600
-				},
 				id: '<portlet:namespace />copyStructure',
 				refreshWindow: window,
-				title: '<%= UnicodeLanguageUtil.get(pageContext, "copy-data-definition") %>',
+				title: '<%= UnicodeLanguageUtil.format(pageContext, "copy-x", ddmDisplay.getStructureName(locale)) %>',
 				uri: uri
 			}
 		);
@@ -209,74 +185,11 @@ portletURL.setParameter("tabs1", tabs1);
 			if (confirm('<%= UnicodeLanguageUtil.get(pageContext, "are-you-sure-you-want-to-delete-this") %>')) {
 				document.<portlet:namespace />fm.method = "post";
 				document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= Constants.DELETE %>";
-				document.<portlet:namespace />fm.<portlet:namespace />deleteStructureIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, "<portlet:namespace />allRowIds");
+				document.<portlet:namespace />fm.<portlet:namespace />deleteStructureIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
 
 				submitForm(document.<portlet:namespace />fm, "<portlet:actionURL><portlet:param name="struts_action" value="/dynamic_data_mapping/edit_structure" /></portlet:actionURL>");
 			}
 		},
 		['liferay-util-list-fields']
 	);
-</aui:script>
-
-<aui:script use="aui-base">
-	var buttons = A.all('.delete-structures-button');
-
-	if (buttons.size()) {
-		var toggleDisabled = A.bind(Liferay.Util.toggleDisabled, Liferay.Util, ':button');
-
-		var resultsGrid = A.one('.results-grid');
-
-		if (resultsGrid) {
-			resultsGrid.delegate(
-					'click',
-					function(event) {
-						var disabled = (resultsGrid.one(':checked') == null);
-
-						toggleDisabled(disabled);
-					},
-					':checkbox'
-			);
-		}
-
-		toggleDisabled(true);
-	}
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />deleteStructures',
-		function() {
-			if (confirm('<%= UnicodeLanguageUtil.get(pageContext, "are-you-sure-you-want-to-delete-this") %>')) {
-				document.<portlet:namespace />fm.method = "post";
-				document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= Constants.DELETE %>";
-				document.<portlet:namespace />fm.<portlet:namespace />deleteStructureIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, "<portlet:namespace />allRowIds");
-
-				submitForm(document.<portlet:namespace />fm, "<portlet:actionURL><portlet:param name="struts_action" value="/dynamic_data_mapping/edit_structure" /></portlet:actionURL>");
-			}
-		},
-		['liferay-util-list-fields']
-	);
-</aui:script>
-
-<aui:script use="aui-base">
-	var buttons = A.all('.delete-structures-button');
-
-	if (buttons.size()) {
-		var toggleDisabled = A.bind(Liferay.Util.toggleDisabled, Liferay.Util, ':button');
-
-		var resultsGrid = A.one('.results-grid');
-
-		if (resultsGrid) {
-			resultsGrid.delegate(
-					'click',
-					function(event) {
-						var disabled = (resultsGrid.one(':checked') == null);
-
-						toggleDisabled(disabled);
-					},
-					':checkbox'
-			);
-		}
-
-		toggleDisabled(true);
-	}
 </aui:script>

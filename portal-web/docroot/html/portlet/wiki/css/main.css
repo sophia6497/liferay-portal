@@ -1,9 +1,15 @@
 .portlet-wiki {
-	.wiki-body pre {
-		background : #fff;
-		border: 1px dashed #2f6fab;
-		margin: 5px 0;
-		padding: 0.5em;
+	.wiki-body {
+		ol ol {
+			list-style: decimal outside;
+		}
+
+		pre {
+			background : #fff;
+			border: 1px dashed #2f6fab;
+			margin: 5px 0;
+			padding: 0.5em;
+		}
 	}
 
 	a.createpage {
@@ -20,7 +26,7 @@
 		}
 
 		ul {
-		 	margin-top: 0;
+			margin-top: 0;
 		}
 
 		li.toclevel-1 {
@@ -55,26 +61,6 @@
 		color: #7d7d7d;
 	}
 
-	.portlet-body h2 {
-		border-bottom: 1px solid #999;
-		font-size: 1.5em;
-		font-weight: normal;
-		margin-bottom: 0.5em;
-	}
-
-	.portlet-body h3 {
-		color: #222;
-		font-weight: bold;
-		font-size: 1.4em;
-		margin-bottom: 1em;
-	}
-
-	.portlet-body h4 {
-		color: #222;
-		font-size: 1.2em;
-		margin: 1em 0;
-	}
-
 	.portlet-body h2 a.hashlink,
 	.portlet-body h3 a.hashlink,
 	.portlet-body h4 a.hashlink {
@@ -107,7 +93,6 @@
 
 	.taglib-custom-attributes-list label {
 		display: block;
-		font-weight: bold;
 	}
 
 	.child-pages {
@@ -228,6 +213,14 @@
 
 	.page-actions {
 		margin-top: 1.5em;
+
+		&:after {
+			clear: both;
+			content: ".";
+			display: block;
+			height: 0;
+			visibility: hidden;
+		}
 	}
 
 	.page-actions .article-actions {
@@ -249,6 +242,20 @@
 
 	.page-actions.top-actions img {
 		margin-left: 5px;
+	}
+
+	.page-activities {
+		.activity-status {
+			color: #666;
+			font-weight: bold;
+			text-transform: uppercase;
+		}
+
+		.activity-summary {
+			color: #999;
+			display: block;
+			margin-left: 3em;
+		}
 	}
 
 	.entry-links h2 {
@@ -366,19 +373,11 @@
 }
 
 .trash-restore-popup {
-	.aui-form {
+	.form {
 		fieldset {
 			margin-bottom: 0;
 			padding: 0 15px;
 		}
-
-		.new-file-name .aui-field-input {
-			width: 100%;
-		}
-	}
-
-	.portlet-msg-alert {
-		margin: 10px 0;
 	}
 }
 

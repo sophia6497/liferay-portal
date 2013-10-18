@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.social.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link SocialRequestService}.
- * </p>
+ * Provides a wrapper for {@link SocialRequestService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       SocialRequestService
+ * @author Brian Wing Shun Chan
+ * @see SocialRequestService
  * @generated
  */
 public class SocialRequestServiceWrapper implements SocialRequestService,
@@ -37,6 +35,7 @@ public class SocialRequestServiceWrapper implements SocialRequestService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _socialRequestService.getBeanIdentifier();
 	}
@@ -46,10 +45,12 @@ public class SocialRequestServiceWrapper implements SocialRequestService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_socialRequestService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portlet.social.model.SocialRequest updateRequest(
 		long requestId, int status,
 		com.liferay.portal.theme.ThemeDisplay themeDisplay)
@@ -60,24 +61,26 @@ public class SocialRequestServiceWrapper implements SocialRequestService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public SocialRequestService getWrappedSocialRequestService() {
 		return _socialRequestService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedSocialRequestService(
 		SocialRequestService socialRequestService) {
 		_socialRequestService = socialRequestService;
 	}
 
+	@Override
 	public SocialRequestService getWrappedService() {
 		return _socialRequestService;
 	}
 
+	@Override
 	public void setWrappedService(SocialRequestService socialRequestService) {
 		_socialRequestService = socialRequestService;
 	}

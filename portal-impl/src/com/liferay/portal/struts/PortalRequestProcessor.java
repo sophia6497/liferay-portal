@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.liveusers.LiveUsers;
 import com.liferay.portal.model.Company;
@@ -126,6 +127,7 @@ public class PortalRequestProcessor extends TilesRequestProcessor {
 		_publicPaths.add(_PATH_PORTAL_LICENSE);
 		_publicPaths.add(_PATH_PORTAL_LOGIN);
 		_publicPaths.add(_PATH_PORTAL_RENDER_PORTLET);
+		_publicPaths.add(_PATH_PORTAL_RESILIENCY);
 		_publicPaths.add(_PATH_PORTAL_TCK);
 		_publicPaths.add(_PATH_PORTAL_UPDATE_PASSWORD);
 		_publicPaths.add(_PATH_PORTAL_VERIFY_EMAIL_ADDRESS);
@@ -639,7 +641,8 @@ public class PortalRequestProcessor extends TilesRequestProcessor {
 			if (themeDisplay.isLifecycleResource() ||
 				themeDisplay.isStateExclusive() ||
 				themeDisplay.isStatePopUp() ||
-				!request.getMethod().equalsIgnoreCase(HttpMethods.GET)) {
+				!StringUtil.equalsIgnoreCase(
+					request.getMethod(), HttpMethods.GET)) {
 
 				saveLastPath = false;
 			}
@@ -648,8 +651,8 @@ public class PortalRequestProcessor extends TilesRequestProcessor {
 
 			if (saveLastPath) {
 
-				// Was a last path set by another servlet that dispatched to
-				// the MainServlet? If so, use that last path instead.
+				// Was a last path set by another servlet that dispatched to the
+				// MainServlet? If so, use that last path instead.
 
 				LastPath lastPath = (LastPath)request.getAttribute(
 					WebKeys.LAST_PATH);
@@ -753,8 +756,11 @@ public class PortalRequestProcessor extends TilesRequestProcessor {
 			}
 
 			if ((user != null) && !user.isEmailAddressVerified() &&
-				emailAddressVerificationRequired &&
-				!path.equals(_PATH_PORTAL_UPDATE_EMAIL_ADDRESS)) {
+				emailAddressVerificationRequired) {
+
+				if (path.equals(_PATH_PORTAL_UPDATE_EMAIL_ADDRESS)) {
+					return _PATH_PORTAL_UPDATE_EMAIL_ADDRESS;
+				}
 
 				return _PATH_PORTAL_VERIFY_EMAIL_ADDRESS;
 			}
@@ -995,6 +1001,8 @@ public class PortalRequestProcessor extends TilesRequestProcessor {
 
 	private static final String _PATH_PORTAL_RENDER_PORTLET =
 		"/portal/render_portlet";
+
+	private static final String _PATH_PORTAL_RESILIENCY = "/portal/resiliency";
 
 	private static final String _PATH_PORTAL_SETUP_WIZARD =
 		"/portal/setup_wizard";

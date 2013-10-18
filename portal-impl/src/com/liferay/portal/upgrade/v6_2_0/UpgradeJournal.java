@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,19 @@
 package com.liferay.portal.upgrade.v6_2_0;
 
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.upgrade.RenameUpgradePortletPreferences;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.upgrade.BaseUpgradePortletPreferences;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.upgrade.v6_2_0.util.JournalFeedTable;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructureConstants;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
@@ -28,15 +35,18 @@ import com.liferay.portlet.dynamicdatamapping.model.DDMTemplateConstants;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalStructure;
 import com.liferay.portlet.journal.model.JournalTemplate;
+import com.liferay.portlet.journal.util.JournalConverterUtil;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.portlet.PortletPreferences;
 
 /**
  * @author Brian Wing Shun Chan
@@ -44,18 +54,14 @@ import java.util.Map;
  * @author Juan Fernández
  * @author Bruno Basto
  */
-public class UpgradeJournal extends RenameUpgradePortletPreferences {
-
-	public UpgradeJournal() {
-		_preferenceNamesMap.put("templateId", "ddmTemplateKey");
-	}
+public class UpgradeJournal extends BaseUpgradePortletPreferences {
 
 	protected void addDDMStructure(
 			String uuid_, long ddmStructureId, long groupId, long companyId,
-			long userId, String userName, Date createDate, Date modifiedDate,
-			long parentDDMStructureId, long classNameId, String ddmStructureKey,
-			String name, String description, String xsd, String storageType,
-			int type)
+			long userId, String userName, Timestamp createDate,
+			Timestamp modifiedDate, long parentDDMStructureId, long classNameId,
+			String ddmStructureKey, String name, String description, String xsd,
+			String storageType, int type)
 		throws Exception {
 
 		Connection con = null;
@@ -66,8 +72,8 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 
 			StringBundler sb = new StringBundler(6);
 
-			sb.append("insert into DDMStructure(uuid_, structureId, groupId, ");
-			sb.append("companyId, userId, userName, createDate, ");
+			sb.append("insert into DDMStructure (uuid_, structureId, ");
+			sb.append("groupId, companyId, userId, userName, createDate, ");
 			sb.append("modifiedDate, parentStructureId, classNameId, ");
 			sb.append("structureKey, name, description, xsd, storageType, ");
 			sb.append("type_) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ");
@@ -83,18 +89,25 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 			ps.setLong(4, companyId);
 			ps.setLong(5, userId);
 			ps.setString(6, userName);
-			ps.setDate(7, createDate);
-			ps.setDate(8, modifiedDate);
+			ps.setTimestamp(7, createDate);
+			ps.setTimestamp(8, modifiedDate);
 			ps.setLong(9, parentDDMStructureId);
 			ps.setLong(10, classNameId);
 			ps.setString(11, ddmStructureKey);
 			ps.setString(12, name);
 			ps.setString(13, description);
-			ps.setString(14, xsd);
+			ps.setString(14, JournalConverterUtil.getDDMXSD(xsd));
 			ps.setString(15, storageType);
 			ps.setInt(16, type);
 
 			ps.executeUpdate();
+		}
+		catch (Exception e) {
+			_log.error(
+				"Unable to upgrade dynamic data mapping structure with UUID " +
+					uuid_);
+
+			throw e;
 		}
 		finally {
 			DataAccess.cleanUp(con, ps);
@@ -103,9 +116,9 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 
 	protected void addDDMStructure(
 			String uuid_, long ddmStructureId, long groupId, long companyId,
-			long userId, String userName, Date createDate, Date modifiedDate,
-			String parentStructureId, String ddmStructureKey, String name,
-			String description, String xsd)
+			long userId, String userName, Timestamp createDate,
+			Timestamp modifiedDate, String parentStructureId,
+			String ddmStructureKey, String name, String description, String xsd)
 		throws Exception {
 
 		long parentDDMStructureId = 0;
@@ -123,13 +136,13 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 			DDMStructureConstants.TYPE_DEFAULT);
 	}
 
-	protected long addDDMTemplate(
+	protected void addDDMTemplate(
 			String uuid_, long ddmTemplateId, long groupId, long companyId,
-			long userId, String userName, Date createDate, Date modifiedDate,
-			long classNameId, long classPK, String templateKey, String name,
-			String description, String type, String mode, String language,
-			String script, boolean cacheable, boolean smallImage,
-			long smallImageId, String smallImageURL)
+			long userId, String userName, Timestamp createDate,
+			Timestamp modifiedDate, long classNameId, long classPK,
+			String templateKey, String name, String description, String type,
+			String mode, String language, String script, boolean cacheable,
+			boolean smallImage, long smallImageId, String smallImageURL)
 		throws Exception {
 
 		Connection con = null;
@@ -140,7 +153,7 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 
 			StringBundler sb = new StringBundler(6);
 
-			sb.append("insert into DDMTemplate(uuid_, templateId, groupId, ");
+			sb.append("insert into DDMTemplate (uuid_, templateId, groupId, ");
 			sb.append("companyId, userId, userName, createDate, modifiedDate,");
 			sb.append("classNameId, classPK , templateKey, name, description,");
 			sb.append("type_, mode_, language, script, cacheable, smallImage,");
@@ -157,8 +170,8 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 			ps.setLong(4, companyId);
 			ps.setLong(5, userId);
 			ps.setString(6, userName);
-			ps.setDate(7, createDate);
-			ps.setDate(8, modifiedDate);
+			ps.setTimestamp(7, createDate);
+			ps.setTimestamp(8, modifiedDate);
 			ps.setLong(9, classNameId);
 			ps.setLong(10, classPK);
 			ps.setString(11, templateKey);
@@ -175,11 +188,16 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 
 			ps.executeUpdate();
 		}
+		catch (Exception e) {
+			_log.error(
+				"Unable to upgrade dynamic data mapping template with UUID " +
+					uuid_);
+
+			throw e;
+		}
 		finally {
 			DataAccess.cleanUp(con, ps);
 		}
-
-		return ddmTemplateId;
 	}
 
 	@Override
@@ -199,17 +217,73 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 		updateStructures();
 		updateTemplates();
 
-		updatePortletPreferences();
+		super.doUpgrade();
+	}
+
+	protected long getDDMStructureId(long groupId, String structureId) {
+		if (Validator.isNull(structureId)) {
+			return 0;
+		}
+
+		Long ddmStructureId = _ddmStructureIds.get(groupId + "#" + structureId);
+
+		if (ddmStructureId == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to get the DDM structure ID for group " +
+						groupId + " and journal structure ID " + structureId);
+			}
+
+			return 0;
+		}
+
+		return ddmStructureId;
 	}
 
 	@Override
 	protected String[] getPortletIds() {
-		return new String[] {"56_INSTANCE_%"};
+		return new String[] {
+			"56_INSTANCE_%", "62_INSTANCE_%", "101_INSTANCE_%"
+		};
 	}
 
-	@Override
-	protected Map<String, String> getPreferenceNamesMap() {
-		return _preferenceNamesMap;
+	protected void updatePreferencesClassPKs(
+			PortletPreferences preferences, String key)
+		throws Exception {
+
+		String[] oldValues = preferences.getValues(key, null);
+
+		if (oldValues == null) {
+			return;
+		}
+
+		String[] newValues = new String[oldValues.length];
+
+		for (int i = 0; i < oldValues.length; i++) {
+			String oldValue = oldValues[i];
+
+			String newValue = oldValue;
+
+			String[] oldPrimaryKeys = StringUtil.split(oldValue);
+
+			for (String oldPrimaryKey : oldPrimaryKeys) {
+				if (!Validator.isNumber(oldPrimaryKey)) {
+					break;
+				}
+
+				Long newPrimaryKey = _ddmStructurePKs.get(
+					GetterUtil.getLong(oldPrimaryKey));
+
+				if (Validator.isNotNull(newPrimaryKey)) {
+					newValue = StringUtil.replace(
+						newValue, oldPrimaryKey, String.valueOf(newPrimaryKey));
+				}
+			}
+
+			newValues[i] = newValue;
+		}
+
+		preferences.setValues(key, newValues);
 	}
 
 	protected void updateResourcePermission(
@@ -217,18 +291,19 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 			long oldPrimKey, long newPrimKey)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(10);
+		StringBundler sb = new StringBundler(11);
 
 		sb.append("update ResourcePermission set name = '");
 		sb.append(newClassName);
-		sb.append("', primKey = ");
+		sb.append("', primKey = '");
 		sb.append(newPrimKey);
-		sb.append(" where companyId = ");
+		sb.append("' where companyId = ");
 		sb.append(companyId);
 		sb.append(" and name = '");
 		sb.append(oldClassName);
-		sb.append("' and primKey = ");
+		sb.append("' and primKey = '");
 		sb.append(oldPrimKey);
+		sb.append("'");
 
 		runSQL(sb.toString());
 	}
@@ -254,8 +329,8 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 				long companyId = rs.getLong("companyId");
 				long userId = rs.getLong("userId");
 				String userName = rs.getString("userName");
-				Date createDate = rs.getDate("createDate");
-				Date modifiedDate = rs.getDate("modifiedDate");
+				Timestamp createDate = rs.getTimestamp("createDate");
+				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
 				String parentStructureId = rs.getString("parentStructureId");
 				String name = rs.getString("name");
 				String description = rs.getString("description");
@@ -285,6 +360,13 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 
 			return 0;
 		}
+		catch (Exception e) {
+			_log.error(
+				"Unable to update journal structure with structure ID " +
+					structureId);
+
+			throw e;
+		}
 		finally {
 			DataAccess.cleanUp(con, ps, rs);
 		}
@@ -309,8 +391,8 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 				long companyId = rs.getLong("companyId");
 				long userId = rs.getLong("userId");
 				String userName = rs.getString("userName");
-				Date createDate = rs.getDate("createDate");
-				Date modifiedDate = rs.getDate("modifiedDate");
+				Timestamp createDate = rs.getTimestamp("createDate");
+				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
 				String structureId = rs.getString("structureId");
 				String parentStructureId = rs.getString("parentStructureId");
 				String name = rs.getString("name");
@@ -330,6 +412,7 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 
 				_ddmStructureIds.put(
 					groupId + "#" + structureId, ddmStructureId);
+				_ddmStructurePKs.put(id_, ddmStructureId);
 			}
 		}
 		finally {
@@ -358,8 +441,8 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 				long companyId = rs.getLong("companyId");
 				long userId = rs.getLong("userId");
 				String userName = rs.getString("userName");
-				Date createDate = rs.getDate("createDate");
-				Date modifiedDate = rs.getDate("modifiedDate");
+				Timestamp createDate = rs.getTimestamp("createDate");
+				Timestamp modifiedDate = rs.getTimestamp("modifiedDate");
 				String templateId = rs.getString("templateId");
 				String structureId = rs.getString("structureId");
 				String name = rs.getString("name");
@@ -371,17 +454,15 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 				long smallImageId = rs.getLong("smallImageId");
 				String smallImageURL = rs.getString("smallImageURL");
 
+				long ddmTemplateId = increment();
+
 				long classNameId = PortalUtil.getClassNameId(
 					DDMStructure.class.getName());
 
-				long classPK = 0;
+				long classPK = getDDMStructureId(groupId, structureId);
 
-				if (Validator.isNotNull(structureId)) {
-					classPK = _ddmStructureIds.get(structureId);
-				}
-
-				long ddmTemplateId = addDDMTemplate(
-					uuid_, increment(), groupId, companyId, userId, userName,
+				addDDMTemplate(
+					uuid_, ddmTemplateId, groupId, companyId, userId, userName,
 					createDate, modifiedDate, classNameId, classPK, templateId,
 					name, description,
 					DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY,
@@ -400,8 +481,49 @@ public class UpgradeJournal extends RenameUpgradePortletPreferences {
 		runSQL("drop table JournalTemplate");
 	}
 
+	@Override
+	protected String upgradePreferences(
+			long companyId, long ownerId, int ownerType, long plid,
+			String portletId, String xml)
+		throws Exception {
+
+		PortletPreferences preferences = PortletPreferencesFactoryUtil.fromXML(
+			companyId, ownerId, ownerType, plid, portletId, xml);
+
+		if (portletId.startsWith(PortletKeys.ASSET_PUBLISHER)) {
+			updatePreferencesClassPKs(
+				preferences, "anyClassTypeJournalArticleAssetRendererFactory");
+			updatePreferencesClassPKs(preferences, "classTypeIds");
+			updatePreferencesClassPKs(
+				preferences, "classTypeIdsJournalArticleAssetRendererFactory");
+		}
+		else if (portletId.startsWith(PortletKeys.JOURNAL_CONTENT)) {
+			String templateId = preferences.getValue(
+				"templateId", StringPool.BLANK);
+
+			if (Validator.isNotNull(templateId)) {
+				preferences.reset("templateId");
+
+				preferences.setValue("ddmTemplateKey", templateId);
+			}
+		}
+		else if (portletId.startsWith(PortletKeys.JOURNAL_CONTENT_LIST)) {
+			String structureId = preferences.getValue(
+				"structureId", StringPool.BLANK);
+
+			if (Validator.isNotNull(structureId)) {
+				preferences.reset("structureId");
+
+				preferences.setValue("ddmStructureKey", structureId);
+			}
+		}
+
+		return PortletPreferencesFactoryUtil.toXML(preferences);
+	}
+
+	private static Log _log = LogFactoryUtil.getLog(UpgradeJournal.class);
+
 	private Map<String, Long> _ddmStructureIds = new HashMap<String, Long>();
-	private Map<String, String> _preferenceNamesMap =
-		new HashMap<String, String>();
+	private Map<Long, Long> _ddmStructurePKs = new HashMap<Long, Long>();
 
 }

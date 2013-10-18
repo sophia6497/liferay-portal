@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,10 +33,10 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBThread;
 import com.liferay.portlet.messageboards.service.MBCategoryLocalServiceUtil;
-import com.liferay.portlet.messageboards.service.MBCategoryServiceUtil;
 import com.liferay.portlet.messageboards.service.MBThreadLocalServiceUtil;
 import com.liferay.portlet.messageboards.service.permission.MBCategoryPermission;
 import com.liferay.portlet.messageboards.util.MBUtil;
+import com.liferay.portlet.trash.model.TrashEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,26 +51,18 @@ import javax.portlet.PortletURL;
  */
 public class MBCategoryTrashHandler extends BaseTrashHandler {
 
-	public static final String CLASS_NAME = MBCategory.class.getName();
-
-	public void deleteTrashEntries(long[] classPKs, boolean checkPermission)
+	@Override
+	public void deleteTrashEntry(long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			if (checkPermission) {
-				MBCategoryServiceUtil.deleteCategory(classPK, false);
-			}
-			else {
-				MBCategory category = MBCategoryLocalServiceUtil.getCategory(
-					classPK);
+		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
-				MBCategoryLocalServiceUtil.deleteCategory(category, false);
-			}
-		}
+		MBCategoryLocalServiceUtil.deleteCategory(category, false);
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return MBCategory.class.getName();
 	}
 
 	@Override
@@ -150,32 +142,28 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 	}
 
 	@Override
-	public String getRestoreLink(PortletRequest portletRequest, long classPK)
+	public String getRestoreContainedModelLink(
+			PortletRequest portletRequest, long classPK)
 		throws PortalException, SystemException {
-
-		String portletId = PortletKeys.MESSAGE_BOARDS;
 
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
-		long plid = PortalUtil.getPlidFromPortletId(
-			category.getGroupId(), PortletKeys.MESSAGE_BOARDS);
+		PortletURL portletURL = getRestoreURL(portletRequest, classPK);
 
-		if (plid == LayoutConstants.DEFAULT_PLID) {
-			portletId = PortletKeys.MESSAGE_BOARDS_ADMIN;
+		portletURL.setParameter(
+			"mbCategoryId", String.valueOf(category.getCategoryId()));
 
-			plid = PortalUtil.getControlPanelPlid(portletRequest);
-		}
+		return portletURL.toString();
+	}
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			portletRequest, portletId, plid, PortletRequest.RENDER_PHASE);
+	@Override
+	public String getRestoreContainerModelLink(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
 
-		if (portletId.equals(PortletKeys.MESSAGE_BOARDS)) {
-			portletURL.setParameter("struts_action", "/message_boards/view");
-		}
-		else {
-			portletURL.setParameter(
-				"struts_action", "/message_boards_admin/view");
-		}
+		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
+
+		PortletURL portletURL = getRestoreURL(portletRequest, classPK);
 
 		portletURL.setParameter(
 			"mbCategoryId", String.valueOf(category.getParentCategoryId()));
@@ -210,7 +198,7 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
 		return MBThreadLocalServiceUtil.getThreadsCount(
-			category.getGroupId(), classPK, WorkflowConstants.STATUS_APPROVED);
+			category.getGroupId(), classPK, WorkflowConstants.STATUS_IN_TRASH);
 	}
 
 	@Override
@@ -223,7 +211,7 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
 		List<MBThread> threads = MBThreadLocalServiceUtil.getThreads(
-			category.getGroupId(), classPK, WorkflowConstants.STATUS_APPROVED,
+			category.getGroupId(), classPK, WorkflowConstants.STATUS_IN_TRASH,
 			start, end);
 
 		for (MBThread thread : threads) {
@@ -252,7 +240,7 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
 		return MBCategoryLocalServiceUtil.getCategoriesCount(
-			category.getGroupId(), classPK, WorkflowConstants.STATUS_APPROVED);
+			category.getGroupId(), classPK, WorkflowConstants.STATUS_IN_TRASH);
 	}
 
 	@Override
@@ -265,7 +253,7 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
 		List<MBCategory> categories = MBCategoryLocalServiceUtil.getCategories(
-			category.getGroupId(), classPK, WorkflowConstants.STATUS_APPROVED,
+			category.getGroupId(), classPK, WorkflowConstants.STATUS_IN_TRASH,
 			start, end);
 
 		for (MBCategory curCategory : categories) {
@@ -280,6 +268,15 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		}
 
 		return trashRenderers;
+	}
+
+	@Override
+	public TrashEntry getTrashEntry(long classPK)
+		throws PortalException, SystemException {
+
+		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
+
+		return category.getTrashEntry();
 	}
 
 	@Override
@@ -299,7 +296,7 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 
 		if (trashActionId.equals(TrashActionKeys.MOVE)) {
 			return MBCategoryPermission.contains(
-				permissionChecker, groupId, classPK, ActionKeys.ADD_FOLDER);
+				permissionChecker, groupId, classPK, ActionKeys.ADD_CATEGORY);
 		}
 
 		return super.hasTrashPermission(
@@ -311,16 +308,13 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		return true;
 	}
 
+	@Override
 	public boolean isInTrash(long classPK)
 		throws PortalException, SystemException {
 
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
-		if (category.isInTrash() || category.isInTrashContainer()) {
-			return true;
-		}
-
-		return false;
+		return category.isInTrash();
 	}
 
 	@Override
@@ -343,31 +337,41 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 
 		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
 
+		if ((category.getParentCategoryId() > 0) &&
+			(MBCategoryLocalServiceUtil.fetchMBCategory(
+				category.getParentCategoryId()) == null)) {
+
+			return false;
+		}
+
 		return !category.isInTrashContainer();
 	}
 
 	@Override
 	public void moveEntry(
-			long classPK, long containerModelId, ServiceContext serviceContext)
+			long userId, long classPK, long containerModelId,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
-		MBCategoryServiceUtil.moveCategory(classPK, containerModelId, false);
+		MBCategoryLocalServiceUtil.moveCategory(
+			classPK, containerModelId, false);
 	}
 
 	@Override
 	public void moveTrashEntry(
-			long classPK, long containerModelId, ServiceContext serviceContext)
+			long userId, long classPK, long containerModelId,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
-		MBCategoryServiceUtil.moveCategoryFromTrash(classPK, containerModelId);
+		MBCategoryLocalServiceUtil.moveCategoryFromTrash(
+			userId, classPK, containerModelId);
 	}
 
-	public void restoreTrashEntries(long[] classPKs)
+	@Override
+	public void restoreTrashEntry(long userId, long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			MBCategoryServiceUtil.restoreCategoryFromTrash(classPK);
-		}
+		MBCategoryLocalServiceUtil.restoreCategoryFromTrash(userId, classPK);
 	}
 
 	@Override
@@ -379,6 +383,37 @@ public class MBCategoryTrashHandler extends BaseTrashHandler {
 		category.setName(name);
 
 		MBCategoryLocalServiceUtil.updateMBCategory(category);
+	}
+
+	protected PortletURL getRestoreURL(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
+
+		String portletId = PortletKeys.MESSAGE_BOARDS;
+
+		MBCategory category = MBCategoryLocalServiceUtil.getCategory(classPK);
+
+		long plid = PortalUtil.getPlidFromPortletId(
+			category.getGroupId(), PortletKeys.MESSAGE_BOARDS);
+
+		if (plid == LayoutConstants.DEFAULT_PLID) {
+			portletId = PortletKeys.MESSAGE_BOARDS_ADMIN;
+
+			plid = PortalUtil.getControlPanelPlid(portletRequest);
+		}
+
+		PortletURL portletURL = PortletURLFactoryUtil.create(
+			portletRequest, portletId, plid, PortletRequest.RENDER_PHASE);
+
+		if (portletId.equals(PortletKeys.MESSAGE_BOARDS)) {
+			portletURL.setParameter("struts_action", "/message_boards/view");
+		}
+		else {
+			portletURL.setParameter(
+				"struts_action", "/message_boards_admin/view");
+		}
+
+		return portletURL;
 	}
 
 	@Override

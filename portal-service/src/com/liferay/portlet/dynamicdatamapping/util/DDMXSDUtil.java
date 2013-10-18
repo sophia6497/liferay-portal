@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
+import com.liferay.portlet.dynamicdatamapping.storage.Field;
 import com.liferay.portlet.dynamicdatamapping.storage.Fields;
 
 import java.util.Locale;
@@ -40,73 +41,85 @@ public class DDMXSDUtil {
 		return _ddmXSD;
 	}
 
-	public static String getFieldHTML(
-			PageContext pageContext, Element element, Fields fields,
+	public static String getFieldHTMLByName(
+			PageContext pageContext, long classNameId, long classPK,
+			String fieldName, Fields fields, String portletNamespace,
 			String namespace, String mode, boolean readOnly, Locale locale)
 		throws Exception {
 
-		return getDDMXSD().getFieldHTML(
-			pageContext, element, fields, namespace, mode, readOnly, locale);
-	}
-
-	public static String getFieldHTMLByName(
-			PageContext pageContext, long classNameId, long classPK,
-			String fieldName, Fields fields, String namespace, String mode,
-			boolean readOnly, Locale locale)
-		throws Exception {
-
 		return getDDMXSD().getFieldHTMLByName(
-			pageContext, classNameId, classPK, fieldName, fields, namespace,
-			mode, readOnly, locale);
+			pageContext, classNameId, classPK, fieldName, fields,
+			portletNamespace, namespace, mode, readOnly, locale);
 	}
 
 	public static String getHTML(
 			PageContext pageContext, DDMStructure ddmStructure, Fields fields,
-			String namespace, boolean readOnly, Locale locale)
+			String portletNamespace, String namespace, boolean readOnly,
+			Locale locale)
 		throws Exception {
 
 		return getDDMXSD().getHTML(
-			pageContext, ddmStructure, fields, namespace, readOnly, locale);
+			pageContext, ddmStructure, fields, portletNamespace, namespace,
+			readOnly, locale);
 	}
 
 	public static String getHTML(
 			PageContext pageContext, DDMTemplate ddmTemplate, Fields fields,
-			String namespace, boolean readOnly, Locale locale)
+			String portletNamespace, String namespace, boolean readOnly,
+			Locale locale)
 		throws Exception {
 
 		return getDDMXSD().getHTML(
-			pageContext, ddmTemplate, fields, namespace, readOnly, locale);
-	}
-
-	public static String getHTML(
-			PageContext pageContext, String xml, Fields fields, Locale locale)
-		throws Exception {
-
-		return getDDMXSD().getHTML(pageContext, xml, fields, locale);
+			pageContext, ddmTemplate, fields, portletNamespace, namespace,
+			readOnly, locale);
 	}
 
 	public static String getHTML(
 			PageContext pageContext, String xml, Fields fields,
-			String namespace, boolean readOnly, Locale locale)
+			String portletNamespace, Locale locale)
 		throws Exception {
 
 		return getDDMXSD().getHTML(
-			pageContext, xml, fields, namespace, readOnly, locale);
+			pageContext, xml, fields, portletNamespace, locale);
 	}
 
 	public static String getHTML(
 			PageContext pageContext, String xml, Fields fields,
-			String namespace, Locale locale)
+			String portletNamespace, String namespace, boolean readOnly,
+			Locale locale)
 		throws Exception {
 
-		return getDDMXSD().getHTML(pageContext, xml, fields, namespace, locale);
+		return getDDMXSD().getHTML(
+			pageContext, xml, fields, portletNamespace, namespace, readOnly,
+			locale);
 	}
 
 	public static String getHTML(
-			PageContext pageContext, String xml, Locale locale)
+			PageContext pageContext, String xml, Fields fields,
+			String portletNamespace, String namespace, Locale locale)
 		throws Exception {
 
-		return getDDMXSD().getHTML(pageContext, xml, locale);
+		return getDDMXSD().getHTML(
+			pageContext, xml, fields, portletNamespace, namespace, locale);
+	}
+
+	public static String getHTML(
+			PageContext pageContext, String xml, Fields fields,
+			String portletNamespace, String namespace, String mode,
+			boolean readOnly, Locale locale)
+		throws Exception {
+
+		return getDDMXSD().getHTML(
+			pageContext, xml, fields, portletNamespace, namespace, mode,
+			readOnly, locale);
+	}
+
+	public static String getHTML(
+			PageContext pageContext, String xml, String portletNamespace,
+			Locale locale)
+		throws Exception {
+
+		return getDDMXSD().getHTML(pageContext, xml, portletNamespace, locale);
 	}
 
 	public static JSONArray getJSONArray(DDMStructure structure, String xsd)
@@ -131,6 +144,28 @@ public class DDMXSDUtil {
 		throws PortalException, SystemException {
 
 		return getDDMXSD().getJSONArray(xml);
+	}
+
+	public static String getSimpleFieldHTML(
+			PageContext pageContext, Element element, Field field,
+			String portletNamespace, String namespace, String mode,
+			boolean readOnly, Locale locale)
+		throws Exception {
+
+		return getDDMXSD().getSimpleFieldHTML(
+			pageContext, element, field, portletNamespace, namespace, mode,
+			readOnly, locale);
+	}
+
+	public static String getSimpleFieldHTMLByName(
+			PageContext pageContext, long classNameId, long classPK,
+			Field field, String portletNamespace, String namespace, String mode,
+			boolean readOnly, Locale locale)
+		throws Exception {
+
+		return getDDMXSD().getSimpleFieldHTMLByName(
+			pageContext, classNameId, classPK, field, portletNamespace,
+			namespace, mode, readOnly, locale);
 	}
 
 	public static String getXSD(long classNameId, long classPK)

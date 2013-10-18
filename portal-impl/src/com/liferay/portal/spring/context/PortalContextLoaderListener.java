@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,20 +34,24 @@ import com.liferay.portal.kernel.servlet.DirectServletRegistryUtil;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.template.TemplateResourceLoaderUtil;
 import com.liferay.portal.kernel.util.CharBufferPool;
+import com.liferay.portal.kernel.util.ClassLoaderPool;
 import com.liferay.portal.kernel.util.ClearThreadLocalUtil;
 import com.liferay.portal.kernel.util.ClearTimerThreadUtil;
 import com.liferay.portal.kernel.util.InstancePool;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.PortalLifecycleUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 import com.liferay.portal.kernel.util.ReflectionUtil;
+import com.liferay.portal.kernel.util.ServerDetector;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
 import com.liferay.portal.module.framework.ModuleFrameworkUtilAdapter;
-import com.liferay.portal.security.lang.PortalSecurityManagerThreadLocal;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
 import com.liferay.portal.servlet.filters.cache.CacheUtil;
 import com.liferay.portal.spring.bean.BeanReferenceRefreshUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebAppPool;
@@ -55,6 +59,8 @@ import com.liferay.portlet.PortletContextBagPool;
 import com.liferay.portlet.wiki.util.WikiCacheUtil;
 
 import java.beans.PropertyDescriptor;
+
+import java.io.File;
 
 import java.lang.reflect.Field;
 
@@ -76,6 +82,14 @@ import org.springframework.web.context.ContextLoaderListener;
  * @author Raymond Augé
  */
 public class PortalContextLoaderListener extends ContextLoaderListener {
+
+	public static String getPortalServlerContextName() {
+		return _portalServlerContextName;
+	}
+
+	public static String getPortalServletContextPath() {
+		return _portalServletContextPath;
+	}
 
 	@Override
 	public void contextDestroyed(ServletContextEvent servletContextEvent) {
@@ -118,25 +132,28 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 			_log.error(e, e);
 		}
 
-		if (PropsValues.MODULE_FRAMEWORK_ENABLED) {
-			try {
-				ModuleFrameworkUtilAdapter.stopRuntime();
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
+		try {
+			ModuleFrameworkUtilAdapter.stopRuntime();
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+		}
+
+		try {
+			PortalLifecycleUtil.reset();
+		}
+		catch (Exception e) {
+			_log.error(e, e);
 		}
 
 		try {
 			super.contextDestroyed(servletContextEvent);
 
-			if (PropsValues.MODULE_FRAMEWORK_ENABLED) {
-				try {
-					ModuleFrameworkUtilAdapter.stopFramework();
-				}
-				catch (Exception e) {
-					_log.error(e, e);
-				}
+			try {
+				ModuleFrameworkUtilAdapter.stopFramework();
+			}
+			catch (Exception e) {
+				_log.error(e, e);
 			}
 		}
 		finally {
@@ -146,14 +163,13 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent servletContextEvent) {
-		PortalSecurityManagerThreadLocal.setEnabled(false);
+		SystemProperties.reload();
 
 		DBFactoryUtil.reset();
 		DeployManagerUtil.reset();
 		InstancePool.reset();
 		MethodCache.reset();
 		PortalBeanLocatorUtil.reset();
-		PortalLifecycleUtil.reset();
 		PortletBagPool.reset();
 
 		ReferenceRegistry.releaseReferences();
@@ -162,6 +178,20 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 
 		ServletContext servletContext = servletContextEvent.getServletContext();
 
+		_portalServlerContextName = servletContext.getServletContextName();
+
+		if (_portalServlerContextName == null) {
+			_portalServlerContextName = StringPool.BLANK;
+		}
+
+		if (ServerDetector.isJetty() &&
+			_portalServlerContextName.equals(StringPool.SLASH)) {
+
+			_portalServlerContextName = StringPool.BLANK;
+		}
+
+		_portalServletContextPath = servletContext.getContextPath();
+
 		ClassPathUtil.initializeClassPaths(servletContext);
 
 		CacheRegistryUtil.clear();
@@ -169,13 +199,17 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		PortletContextBagPool.clear();
 		WebAppPool.clear();
 
-		if (PropsValues.MODULE_FRAMEWORK_ENABLED) {
-			try {
-				ModuleFrameworkUtilAdapter.startFramework();
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
+		File tempDir = (File)servletContext.getAttribute(
+			JavaConstants.JAVAX_SERVLET_CONTEXT_TEMPDIR);
+
+		PropsValues.LIFERAY_WEB_PORTAL_CONTEXT_TEMPDIR =
+			tempDir.getAbsolutePath();
+
+		try {
+			ModuleFrameworkUtilAdapter.startFramework();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 
 		PortalContextLoaderLifecycleThreadLocal.setInitializing(true);
@@ -185,8 +219,6 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		}
 		finally {
 			PortalContextLoaderLifecycleThreadLocal.setInitializing(false);
-
-			PortalSecurityManagerThreadLocal.setEnabled(true);
 		}
 
 		ApplicationContext applicationContext =
@@ -215,13 +247,14 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		SingleVMPoolUtil.clear();
 		WebCachePoolUtil.clear();
 
-		ClassLoader portalClassLoader =
-			PACLClassLoaderUtil.getPortalClassLoader();
+		ClassLoader portalClassLoader = ClassLoaderUtil.getPortalClassLoader();
+
+		ClassLoaderPool.register(_portalServlerContextName, portalClassLoader);
+
+		ServletContextPool.put(_portalServlerContextName, servletContext);
 
 		BeanLocatorImpl beanLocatorImpl = new BeanLocatorImpl(
 			portalClassLoader, applicationContext);
-
-		beanLocatorImpl.setPACLWrapPersistence(true);
 
 		PortalBeanLocatorUtil.setBeanLocator(beanLocatorImpl);
 
@@ -238,16 +271,14 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 
 		clearFilteredPropertyDescriptorsCache(autowireCapableBeanFactory);
 
-		if (PropsValues.MODULE_FRAMEWORK_ENABLED) {
-			try {
-				ModuleFrameworkUtilAdapter.registerContext(applicationContext);
-				ModuleFrameworkUtilAdapter.registerContext(servletContext);
+		try {
+			ModuleFrameworkUtilAdapter.registerContext(applicationContext);
+			ModuleFrameworkUtilAdapter.registerContext(servletContext);
 
-				ModuleFrameworkUtilAdapter.startRuntime();
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
+			ModuleFrameworkUtilAdapter.startRuntime();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -272,6 +303,8 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		PortalContextLoaderListener.class);
 
 	private static Field _filteredPropertyDescriptorsCacheField;
+	private static String _portalServlerContextName = StringPool.BLANK;
+	private static String _portalServletContextPath = StringPool.SLASH;
 
 	static {
 		try {

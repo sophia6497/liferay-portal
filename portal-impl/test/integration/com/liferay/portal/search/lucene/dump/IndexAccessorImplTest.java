@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -51,7 +51,7 @@ import org.powermock.api.mockito.PowerMockito;
 public class IndexAccessorImplTest extends PowerMockito {
 
 	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
+	public static void tearDownClass() throws Exception {
 		System.gc();
 
 		String indexPath = PropsValues.LUCENE_DIR.concat(
@@ -239,6 +239,8 @@ public class IndexAccessorImplTest extends PowerMockito {
 		}
 
 		indexSearcher.close();
+
+		indexReader.close();
 	}
 
 	private void _deleteDocuments(String key) throws Exception {

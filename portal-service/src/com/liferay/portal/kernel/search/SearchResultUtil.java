@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,6 +26,7 @@ import com.liferay.portlet.asset.model.AssetRenderer;
 import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
+import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
 
@@ -75,7 +76,7 @@ public class SearchResultUtil {
 								entryClassPK);
 						}
 						else if (entryClassName.equals(
-							MBMessage.class.getName())) {
+									MBMessage.class.getName())) {
 
 							mbMessage = MBMessageLocalServiceUtil.getMessage(
 								entryClassPK);
@@ -100,11 +101,21 @@ public class SearchResultUtil {
 				}
 
 				if (fileEntry != null) {
-					searchResult.addFileEntry(fileEntry);
+					Summary summary = getSummary(
+						document, DLFileEntry.class.getName(),
+						fileEntry.getFileEntryId(), locale, portletURL);
+
+					searchResult.addFileEntry(fileEntry, summary);
 				}
 
 				if (mbMessage != null) {
 					searchResult.addMBMessage(mbMessage);
+				}
+
+				if (entryClassName.equals(JournalArticle.class.getName())) {
+					String version = document.get(Field.VERSION);
+
+					searchResult.addVersion(version);
 				}
 
 				if ((mbMessage == null) && (fileEntry == null)) {

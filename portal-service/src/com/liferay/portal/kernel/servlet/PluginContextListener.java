@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,6 +36,7 @@ public class PluginContextListener
 
 	public static final String PLUGIN_CLASS_LOADER = "PLUGIN_CLASS_LOADER";
 
+	@Override
 	public void attributeAdded(
 		ServletContextAttributeEvent servletContextAttributeEvent) {
 
@@ -56,6 +57,7 @@ public class PluginContextListener
 		}
 	}
 
+	@Override
 	public void attributeRemoved(
 		ServletContextAttributeEvent servletContextAttributeEvent) {
 
@@ -70,6 +72,7 @@ public class PluginContextListener
 		}
 	}
 
+	@Override
 	public void attributeReplaced(
 		ServletContextAttributeEvent servletContextAttributeEvent) {
 
@@ -85,6 +88,7 @@ public class PluginContextListener
 		}
 	}
 
+	@Override
 	public void contextDestroyed(ServletContextEvent servletContextEvent) {
 		ServletContext servletContext = servletContextEvent.getServletContext();
 
@@ -93,6 +97,7 @@ public class PluginContextListener
 		portalDestroy();
 	}
 
+	@Override
 	public void contextInitialized(ServletContextEvent servletContextEvent) {
 		servletContext = servletContextEvent.getServletContext();
 

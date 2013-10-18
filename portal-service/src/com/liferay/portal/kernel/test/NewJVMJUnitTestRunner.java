@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -61,6 +62,7 @@ public class NewJVMJUnitTestRunner extends BlockJUnit4ClassRunner {
 				message, 1000,
 				new ProcessExecutor.ShutdownHook() {
 
+					@Override
 					public boolean shutdown(
 						int shutdownCode, Throwable shutdownThrowable) {
 
@@ -78,10 +80,31 @@ public class NewJVMJUnitTestRunner extends BlockJUnit4ClassRunner {
 	protected List<String> createArguments(FrameworkMethod frameworkMethod) {
 		List<String> arguments = new ArrayList<String>();
 
+		String agentLine = System.getProperty("junit.cobertura.agent");
+
+		if (Validator.isNotNull(agentLine)) {
+			arguments.add(agentLine);
+			arguments.add("-Djunit.cobertura.agent=" + agentLine);
+		}
+
+		boolean coberturaParentDynamicallyInstrumented = Boolean.getBoolean(
+			"cobertura.parent.dynamically.instrumented");
+
+		if (coberturaParentDynamicallyInstrumented) {
+			arguments.add("-Dcobertura.parent.dynamically.instrumented=true");
+		}
+
+		boolean junitCodeCoverage = Boolean.getBoolean("junit.code.coverage");
+
+		if (junitCodeCoverage) {
+			arguments.add("-Djunit.code.coverage=true");
+		}
+
 		boolean junitDebug = Boolean.getBoolean("junit.debug");
 
 		if (junitDebug) {
 			arguments.add(_JPDA_OPTIONS);
+			arguments.add("-Djunit.debug=true");
 		}
 
 		arguments.add("-Djava.net.preferIPv4Stack=true");
@@ -146,6 +169,7 @@ public class NewJVMJUnitTestRunner extends BlockJUnit4ClassRunner {
 			_afterMethodKeys = afterMethodKeys;
 		}
 
+		@Override
 		public Serializable call() throws ProcessException {
 			attachProcess("Attached " + toString());
 
@@ -205,6 +229,8 @@ public class NewJVMJUnitTestRunner extends BlockJUnit4ClassRunner {
 			method.invoke(object);
 		}
 
+		private static final long serialVersionUID = 1L;
+
 		private List<MethodKey> _afterMethodKeys;
 		private List<MethodKey> _beforeMethodKeys;
 		private String _testClassName;
@@ -263,7 +289,7 @@ public class NewJVMJUnitTestRunner extends BlockJUnit4ClassRunner {
 				Throwable cause = ee.getCause();
 
 				while ((cause instanceof ProcessException) ||
-					(cause instanceof InvocationTargetException)) {
+					   (cause instanceof InvocationTargetException)) {
 
 					cause = cause.getCause();
 				}

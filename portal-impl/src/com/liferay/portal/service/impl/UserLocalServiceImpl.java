@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,8 +24,7 @@ import com.liferay.portal.DuplicateUserEmailAddressException;
 import com.liferay.portal.DuplicateUserScreenNameException;
 import com.liferay.portal.GroupFriendlyURLException;
 import com.liferay.portal.ModelListenerException;
-import com.liferay.portal.NoSuchContactException;
-import com.liferay.portal.NoSuchGroupException;
+import com.liferay.portal.NoSuchImageException;
 import com.liferay.portal.NoSuchOrganizationException;
 import com.liferay.portal.NoSuchRoleException;
 import com.liferay.portal.NoSuchTicketException;
@@ -44,7 +43,7 @@ import com.liferay.portal.UserPortraitTypeException;
 import com.liferay.portal.UserReminderQueryException;
 import com.liferay.portal.UserScreenNameException;
 import com.liferay.portal.UserSmsException;
-import com.liferay.portal.kernel.concurrent.PortalCallable;
+import com.liferay.portal.kernel.dao.shard.ShardCallable;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.image.ImageBag;
@@ -52,6 +51,9 @@ import com.liferay.portal.kernel.image.ImageToolUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.messaging.DestinationNames;
+import com.liferay.portal.kernel.messaging.Message;
+import com.liferay.portal.kernel.messaging.MessageBusUtil;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
@@ -117,8 +119,8 @@ import com.liferay.portal.security.auth.ScreenNameValidator;
 import com.liferay.portal.security.auth.ScreenNameValidatorFactory;
 import com.liferay.portal.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
+import com.liferay.portal.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.security.pwd.PwdAuthenticator;
-import com.liferay.portal.security.pwd.PwdEncryptor;
 import com.liferay.portal.security.pwd.PwdToolkitUtil;
 import com.liferay.portal.security.pwd.RegExpToolkit;
 import com.liferay.portal.service.BaseServiceImpl;
@@ -133,6 +135,7 @@ import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
 import com.liferay.util.Encryptor;
 import com.liferay.util.EncryptorException;
+import com.liferay.util.PwdGenerator;
 
 import java.awt.image.RenderedImage;
 
@@ -154,7 +157,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The implementation of the user local service.
+ * Provides the local service for accessing, adding, authenticating, deleting,
+ * and updating users.
  *
  * @author Brian Wing Shun Chan
  * @author Scott Lee
@@ -180,6 +184,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException n if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User addDefaultAdminUser(
 			long companyId, String screenName, String emailAddress,
 			Locale locale, String firstName, String middleName, String lastName)
@@ -191,7 +196,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		String password2 = password1;
 		boolean autoScreenName = false;
 
-		screenName = getScreenName(screenName);
+		screenName = getLogin(screenName);
 
 		for (int i = 1;; i++) {
 			User screenNameUser = userPersistence.fetchByC_SN(
@@ -260,6 +265,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addDefaultGroups(long userId)
 		throws PortalException, SystemException {
 
@@ -277,21 +283,20 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 			Account account = company.getAccount();
 
-			if (defaultGroupName.equalsIgnoreCase(account.getName())) {
+			if (StringUtil.equalsIgnoreCase(
+					defaultGroupName, account.getName())) {
+
 				defaultGroupName = GroupConstants.GUEST;
 			}
 
-			try {
-				Group group = groupPersistence.findByC_N(
-					user.getCompanyId(), defaultGroupName);
+			Group group = groupPersistence.fetchByC_N(
+				user.getCompanyId(), defaultGroupName);
 
-				if (!userPersistence.containsGroup(
-						userId, group.getGroupId())) {
+			if ((group != null) &&
+				!userPersistence.containsGroup(
+					userId, group.getGroupId())) {
 
-					groupIdsSet.add(group.getGroupId());
-				}
-			}
-			catch (NoSuchGroupException nsge) {
+				groupIdsSet.add(group.getGroupId());
 			}
 		}
 
@@ -307,17 +312,14 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			defaultOrganizationGroupName +=
 				GroupLocalServiceImpl.ORGANIZATION_NAME_SUFFIX;
 
-			try {
-				Group group = groupPersistence.findByC_N(
-					user.getCompanyId(), defaultOrganizationGroupName);
+			Group group = groupPersistence.fetchByC_N(
+				user.getCompanyId(), defaultOrganizationGroupName);
 
-				if (!userPersistence.containsGroup(
-						userId, group.getGroupId())) {
+			if ((group != null) &&
+				!userPersistence.containsGroup(
+					userId, group.getGroupId())) {
 
-					groupIdsSet.add(group.getGroupId());
-				}
-			}
-			catch (NoSuchGroupException nsge) {
+				groupIdsSet.add(group.getGroupId());
 			}
 		}
 
@@ -337,6 +339,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addDefaultRoles(long userId)
 		throws PortalException, SystemException {
 
@@ -379,6 +382,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@SuppressWarnings("deprecation")
 	public void addDefaultUserGroups(long userId)
 		throws PortalException, SystemException {
@@ -427,6 +431,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addGroupUsers(long groupId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -450,6 +455,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addOrganizationUsers(long organizationId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -470,6 +476,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  userIds the primary keys of the users
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addPasswordPolicyUsers(long passwordPolicyId, long[] userIds)
 		throws SystemException {
 
@@ -486,6 +493,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addRoleUsers(long roleId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -507,6 +515,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addTeamUsers(long teamId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -559,7 +568,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  userGroupIds the primary keys of the user's user groups
 	 * @param  sendEmail whether to send the user an email notification about
 	 *         their new account
-	 * @param  serviceContext the user's service context (optionally
+	 * @param  serviceContext the service context to be applied (optionally
 	 *         <code>null</code>). Can set the UUID (with the <code>uuid</code>
 	 *         attribute), asset category IDs, asset tag names, and expando
 	 *         bridge attributes for the user.
@@ -567,6 +576,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if the user's information was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User addUser(
 			long creatorUserId, long companyId, boolean autoPassword,
 			String password1, String password2, boolean autoScreenName,
@@ -583,6 +593,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		try {
 			WorkflowThreadLocal.setEnabled(false);
+
+			if (serviceContext == null) {
+				serviceContext = new ServiceContext();
+			}
+
+			if (serviceContext.getWorkflowAction() !=
+					WorkflowConstants.ACTION_PUBLISH) {
+
+				serviceContext.setWorkflowAction(
+					WorkflowConstants.ACTION_PUBLISH);
+			}
 
 			return addUserWithWorkflow(
 				creatorUserId, companyId, autoPassword, password1, password2,
@@ -606,6 +627,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@SuppressWarnings("deprecation")
 	public void addUserGroupUsers(long userGroupId, long[] userIds)
 		throws PortalException, SystemException {
@@ -663,7 +685,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  userGroupIds the primary keys of the user's user groups
 	 * @param  sendEmail whether to send the user an email notification about
 	 *         their new account
-	 * @param  serviceContext the user's service context (optionally
+	 * @param  serviceContext the service context to be applied (optionally
 	 *         <code>null</code>). Can set the UUID (with the <code>uuid</code>
 	 *         attribute), asset category IDs, asset tag names, and expando
 	 *         bridge attributes for the user.
@@ -671,6 +693,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if the user's information was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@SuppressWarnings("deprecation")
 	public User addUserWithWorkflow(
 			long creatorUserId, long companyId, boolean autoPassword,
@@ -687,7 +710,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		// User
 
 		Company company = companyPersistence.findByPrimaryKey(companyId);
-		screenName = getScreenName(screenName);
+		screenName = getLogin(screenName);
 		openId = StringUtil.trim(openId);
 		Date now = new Date();
 
@@ -710,10 +733,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			emailAddress = StringPool.BLANK;
 		}
 		else {
-			emailAddress = emailAddress.trim().toLowerCase();
+			emailAddress = StringUtil.toLowerCase(emailAddress.trim());
 		}
 
-		if (!PropsValues.USERS_EMAIL_ADDRESS_REQUIRED &&
+		if (!PrefsPropsUtil.getBoolean(
+				companyId, PropsKeys.USERS_EMAIL_ADDRESS_REQUIRED) &&
 			Validator.isNull(emailAddress)) {
 
 			emailAddress = emailAddressGenerator.generate(companyId, userId);
@@ -772,7 +796,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		user.setContactId(counterLocalService.increment());
 
 		if (Validator.isNotNull(password1)) {
-			user.setPassword(PwdEncryptor.encrypt(password1));
+			user.setPassword(PasswordEncryptorUtil.encrypt(password1));
 			user.setPasswordUnencrypted(password1);
 		}
 
@@ -881,7 +905,22 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		// Groups
 
 		if (groupIds != null) {
-			groupLocalService.addUserGroups(userId, groupIds);
+			List<Group> groups = new ArrayList<Group>();
+
+			for (long groupId : groupIds) {
+				Group group = groupLocalService.fetchGroup(groupId);
+
+				if (group != null) {
+					groups.add(group);
+				}
+				else {
+					if (_log.isWarnEnabled()) {
+						_log.warn("Group " + groupId + " does not exist");
+					}
+				}
+			}
+
+			groupLocalService.addUserGroups(userId, groups);
 		}
 
 		addDefaultGroups(userId);
@@ -946,9 +985,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		workflowServiceContext.setAttribute("autoPassword", autoPassword);
 		workflowServiceContext.setAttribute("sendEmail", sendEmail);
 
-		WorkflowHandlerRegistryUtil.startWorkflowInstance(
-			companyId, workflowUserId, User.class.getName(), userId, user,
-			workflowServiceContext);
+		startWorkflowInstance(
+			companyId, workflowUserId, userId, user, workflowServiceContext);
 
 		if (serviceContext != null) {
 			String passwordUnencrypted = (String)serviceContext.getAttribute(
@@ -986,6 +1024,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portal.security.auth.AuthPipeline
 	 */
+	@Override
 	public int authenticateByEmailAddress(
 			long companyId, String emailAddress, String password,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap,
@@ -1021,6 +1060,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portal.security.auth.AuthPipeline
 	 */
+	@Override
 	public int authenticateByScreenName(
 			long companyId, String screenName, String password,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap,
@@ -1056,6 +1096,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portal.security.auth.AuthPipeline
 	 */
+	@Override
 	public int authenticateByUserId(
 			long companyId, long userId, String password,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap,
@@ -1107,6 +1148,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public long authenticateForBasic(
 			long companyId, String authType, String login, String password)
@@ -1116,57 +1158,56 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			return 0;
 		}
 
-		try {
-			User user = null;
+		User user = null;
 
-			if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
-				user = getUserByEmailAddress(companyId, login);
-			}
-			else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
-				user = getUserByScreenName(companyId, login);
-			}
-			else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
-				user = getUserById(companyId, GetterUtil.getLong(login));
-			}
-
-			if (user.isDefaultUser()) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"Basic authentication is disabled for the default " +
-							"user");
-				}
-
-				return 0;
-			}
-			else if (!user.isActive()) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"Basic authentication is disabled for inactive user " +
-							user.getUserId());
-				}
-
-				return 0;
-			}
-
-			if (!PropsValues.BASIC_AUTH_PASSWORD_REQUIRED) {
-				return user.getUserId();
-			}
-
-			String userPassword = user.getPassword();
-
-			if (!user.isPasswordEncrypted()) {
-				userPassword = PwdEncryptor.encrypt(userPassword);
-			}
-
-			String encPassword = PwdEncryptor.encrypt(password);
-
-			if (userPassword.equals(password) ||
-				userPassword.equals(encPassword)) {
-
-				return user.getUserId();
-			}
+		if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
+			user = fetchUserByEmailAddress(companyId, login);
 		}
-		catch (NoSuchUserException nsue) {
+		else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
+			user = fetchUserByScreenName(companyId, login);
+		}
+		else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
+			user = userPersistence.fetchByPrimaryKey(GetterUtil.getLong(login));
+		}
+
+		if (user == null) {
+			return 0;
+		}
+
+		if (user.isDefaultUser()) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Basic authentication is disabled for the default " +
+						"user");
+			}
+
+			return 0;
+		}
+		else if (!user.isActive()) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Basic authentication is disabled for inactive user " +
+						user.getUserId());
+			}
+
+			return 0;
+		}
+
+		if (!PropsValues.BASIC_AUTH_PASSWORD_REQUIRED) {
+			return user.getUserId();
+		}
+
+		String userPassword = user.getPassword();
+
+		if (!user.isPasswordEncrypted()) {
+			userPassword = PasswordEncryptorUtil.encrypt(userPassword);
+		}
+
+		String encPassword = PasswordEncryptorUtil.encrypt(
+			password, userPassword);
+
+		if (userPassword.equals(password) || userPassword.equals(encPassword)) {
+			return user.getUserId();
 		}
 
 		return 0;
@@ -1190,6 +1231,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public long authenticateForDigest(
 			long companyId, String username, String realm, String nonce,
@@ -1202,29 +1244,19 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Get User
 
-		User user = null;
+		User user = fetchUserByEmailAddress(companyId, username);
 
-		try {
-			user = getUserByEmailAddress(companyId, username);
-		}
-		catch (NoSuchUserException nsue) {
+		if (user == null) {
+			user = fetchUserByScreenName(companyId, username);
 		}
 
 		if (user == null) {
-			try {
-				user = getUserByScreenName(companyId, username);
-			}
-			catch (NoSuchUserException nsue) {
-			}
+			user = userPersistence.fetchByPrimaryKey(
+				GetterUtil.getLong(username));
 		}
 
 		if (user == null) {
-			try {
-				user = getUserById(GetterUtil.getLong(username));
-			}
-			catch (NoSuchUserException nsue) {
-				return 0;
-			}
+			return 0;
 		}
 
 		if (user.isDefaultUser()) {
@@ -1281,6 +1313,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return <code>true</code> if authentication is successful;
 	 *         <code>false</code> otherwise
 	 */
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public boolean authenticateForJAAS(long userId, String encPassword) {
 		if (PropsValues.AUTH_LOGIN_DISABLED) {
@@ -1308,31 +1341,33 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				return false;
 			}
 
-			String password = user.getPassword();
+			String userPassword = user.getPassword();
 
 			if (user.isPasswordEncrypted()) {
-				if (password.equals(encPassword)) {
+				if (userPassword.equals(encPassword)) {
 					return true;
 				}
 
 				if (!PropsValues.PORTAL_JAAS_STRICT_PASSWORD) {
-					encPassword = PwdEncryptor.encrypt(encPassword, password);
+					encPassword = PasswordEncryptorUtil.encrypt(
+						encPassword, userPassword);
 
-					if (password.equals(encPassword)) {
+					if (userPassword.equals(encPassword)) {
 						return true;
 					}
 				}
 			}
 			else {
 				if (!PropsValues.PORTAL_JAAS_STRICT_PASSWORD) {
-					if (password.equals(encPassword)) {
+					if (userPassword.equals(encPassword)) {
 						return true;
 					}
 				}
 
-				password = PwdEncryptor.encrypt(password);
+				userPassword = PasswordEncryptorUtil.encrypt(
+					userPassword, encPassword);
 
-				if (password.equals(encPassword)) {
+				if (userPassword.equals(encPassword)) {
 					return true;
 				}
 			}
@@ -1352,6 +1387,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if the user was determined to still be locked out
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkLockout(User user)
 		throws PortalException, SystemException {
 
@@ -1361,50 +1397,51 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-		if (passwordPolicy.isLockout()) {
+		if (!passwordPolicy.isLockout()) {
+			return;
+		}
 
-			// Reset failure count
+		// Reset failure count
 
-			Date now = new Date();
-			int failedLoginAttempts = user.getFailedLoginAttempts();
+		Date now = new Date();
+		int failedLoginAttempts = user.getFailedLoginAttempts();
 
-			if (failedLoginAttempts > 0) {
-				long failedLoginTime = user.getLastFailedLoginDate().getTime();
-				long elapsedTime = now.getTime() - failedLoginTime;
-				long requiredElapsedTime =
-					passwordPolicy.getResetFailureCount() * 1000;
+		if (failedLoginAttempts > 0) {
+			long failedLoginTime = user.getLastFailedLoginDate().getTime();
+			long elapsedTime = now.getTime() - failedLoginTime;
+			long requiredElapsedTime =
+				passwordPolicy.getResetFailureCount() * 1000;
 
-				if ((requiredElapsedTime != 0) &&
-					(elapsedTime > requiredElapsedTime)) {
+			if ((requiredElapsedTime != 0) &&
+				(elapsedTime > requiredElapsedTime)) {
 
-					user.setLastFailedLoginDate(null);
-					user.setFailedLoginAttempts(0);
+				user.setLastFailedLoginDate(null);
+				user.setFailedLoginAttempts(0);
 
-					userPersistence.update(user);
-				}
+				userPersistence.update(user);
 			}
+		}
 
-			// Reset lockout
+		// Reset lockout
 
-			if (user.isLockout()) {
-				long lockoutTime = user.getLockoutDate().getTime();
-				long elapsedTime = now.getTime() - lockoutTime;
-				long requiredElapsedTime =
-					passwordPolicy.getLockoutDuration() * 1000;
+		if (user.isLockout()) {
+			long lockoutTime = user.getLockoutDate().getTime();
+			long elapsedTime = now.getTime() - lockoutTime;
+			long requiredElapsedTime =
+				passwordPolicy.getLockoutDuration() * 1000;
 
-				if ((requiredElapsedTime != 0) &&
-					(elapsedTime > requiredElapsedTime)) {
+			if ((requiredElapsedTime != 0) &&
+				(elapsedTime > requiredElapsedTime)) {
 
-					user.setLockout(false);
-					user.setLockoutDate(null);
+				user.setLockout(false);
+				user.setLockoutDate(null);
 
-					userPersistence.update(user);
-				}
+				userPersistence.update(user);
 			}
+		}
 
-			if (user.isLockout()) {
-				throw new UserLockoutException();
-			}
+		if (user.isLockout()) {
+			throw new UserLockoutException();
 		}
 	}
 
@@ -1415,6 +1452,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  user the user
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkLoginFailure(User user) throws SystemException {
 		Date now = new Date();
 
@@ -1436,6 +1474,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkLoginFailureByEmailAddress(
 			long companyId, String emailAddress)
 		throws PortalException, SystemException {
@@ -1453,6 +1492,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkLoginFailureById(long userId)
 		throws PortalException, SystemException {
 
@@ -1470,6 +1510,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the screen name could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkLoginFailureByScreenName(long companyId, String screenName)
 		throws PortalException, SystemException {
 
@@ -1488,6 +1529,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         login limit has been exceeded
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkPasswordExpired(User user)
 		throws PortalException, SystemException {
 
@@ -1535,6 +1577,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  organizationId the primary key of the organization
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void clearOrganizationUsers(long organizationId)
 		throws SystemException {
 
@@ -1549,6 +1592,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  userGroupId the primary key of the user group
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void clearUserGroupUsers(long userGroupId) throws SystemException {
 		userGroupPersistence.clearUsers(userGroupId);
 
@@ -1560,13 +1604,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * the confirmation email.
 	 *
 	 * @param  user the user
-	 * @param  serviceContext the user's service context. Can set whether a
-	 *         password should be generated (with the <code>autoPassword</code>
-	 *         attribute) and whether the confirmation email should be sent
-	 *         (with the <code>sendEmail</code> attribute) for the user.
+	 * @param  serviceContext the service context to be applied. Can set whether
+	 *         a password should be generated (with the
+	 *         <code>autoPassword</code> attribute) and whether the confirmation
+	 *         email should be sent (with the <code>sendEmail</code> attribute)
+	 *         for the user.
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void completeUserRegistration(
 			User user, ServiceContext serviceContext)
 		throws PortalException, SystemException {
@@ -1601,11 +1647,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				password = PwdToolkitUtil.generate(passwordPolicy);
 			}
 
-			user.setPassword(PwdEncryptor.encrypt(password));
-			user.setPasswordEncrypted(true);
+			user.setPassword(PasswordEncryptorUtil.encrypt(password));
 			user.setPasswordUnencrypted(password);
+			user.setPasswordEncrypted(true);
+			user.setPasswordModified(true);
+			user.setPasswordModifiedDate(new Date());
 
 			userPersistence.update(user);
+
+			user.setPasswordModified(false);
 		}
 
 		if (user.hasCompanyMx()) {
@@ -1649,6 +1699,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if the user's password was incorrect
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public KeyValuePair decryptUserId(
 			long companyId, String name, String password)
 		throws PortalException, SystemException {
@@ -1673,9 +1724,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			throw new SystemException(ee);
 		}
 
-		String encPassword = PwdEncryptor.encrypt(password);
+		String userPassword = user.getPassword();
+		String encPassword = PasswordEncryptorUtil.encrypt(
+			password, userPassword);
 
-		if (user.getPassword().equals(encPassword)) {
+		if (userPassword.equals(encPassword)) {
 			if (isPasswordExpired(user)) {
 				user.setPasswordReset(true);
 
@@ -1697,6 +1750,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if the user's portrait could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void deletePortrait(long userId)
 		throws PortalException, SystemException {
 
@@ -1722,6 +1776,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void deleteRoleUser(long roleId, long userId)
 		throws PortalException, SystemException {
 
@@ -1771,7 +1826,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Group
 
-		Group group = user.getGroup();
+		Group group = null;
+
+		if (!user.isDefaultUser()) {
+			group = user.getGroup();
+		}
 
 		if (group != null) {
 			groupLocalService.deleteGroup(group);
@@ -1779,7 +1838,14 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Portrait
 
-		imageLocalService.deleteImage(user.getPortraitId());
+		try {
+			imageLocalService.deleteImage(user.getPortraitId());
+		}
+		catch (NoSuchImageException nsie) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to delete image " + user.getPortraitId());
+			}
+		}
 
 		// Password policy relation
 
@@ -1817,8 +1883,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Expando
 
-		expandoValueLocalService.deleteValues(
-			User.class.getName(), user.getUserId());
+		expandoRowLocalService.deleteRows(user.getUserId());
 
 		// Message boards
 
@@ -1847,10 +1912,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Contact
 
-		try {
-			contactLocalService.deleteContact(user.getContactId());
-		}
-		catch (NoSuchContactException nsce) {
+		Contact contact = contactLocalService.fetchContact(user.getContactId());
+
+		if (contact != null) {
+			contactLocalService.deleteContact(contact);
 		}
 
 		// Resources
@@ -1888,6 +1953,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void deleteUserGroupUser(long userGroupId, long userId)
 		throws PortalException, SystemException {
 
@@ -1909,6 +1975,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public String encryptUserId(String name)
 		throws PortalException, SystemException {
@@ -1937,10 +2004,29 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         with the email address could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User fetchUserByEmailAddress(long companyId, String emailAddress)
 		throws SystemException {
 
+		emailAddress = getLogin(emailAddress);
+
 		return userPersistence.fetchByC_EA(companyId, emailAddress);
+	}
+
+	/**
+	 * Returns the user with the Facebook ID.
+	 *
+	 * @param  companyId the primary key of the user's company
+	 * @param  facebookId the user's Facebook ID
+	 * @return the user with the Facebook ID, or <code>null</code> if a user
+	 *         with the Facebook ID could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public User fetchUserByFacebookId(long companyId, long facebookId)
+		throws SystemException {
+
+		return userPersistence.fetchByC_FID(companyId, facebookId);
 	}
 
 	/**
@@ -1951,8 +2037,25 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User fetchUserById(long userId) throws SystemException {
 		return userPersistence.fetchByPrimaryKey(userId);
+	}
+
+	/**
+	 * Returns the user with the OpenID.
+	 *
+	 * @param  companyId the primary key of the user's company
+	 * @param  openId the user's OpenID
+	 * @return the user with the OpenID, or <code>null</code> if a user with the
+	 *         OpenID could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public User fetchUserByOpenId(long companyId, String openId)
+		throws SystemException {
+
+		return userPersistence.fetchByC_O(companyId, openId);
 	}
 
 	/**
@@ -1964,10 +2067,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         with the screen name could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User fetchUserByScreenName(long companyId, String screenName)
 		throws SystemException {
 
-		screenName = getScreenName(screenName);
+		screenName = getLogin(screenName);
 
 		return userPersistence.fetchByC_SN(companyId, screenName);
 	}
@@ -1991,6 +2095,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the range of users belonging to the company
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getCompanyUsers(long companyId, int start, int end)
 		throws SystemException {
 
@@ -2004,6 +2109,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the number of users belonging to the company
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getCompanyUsersCount(long companyId) throws SystemException {
 		return userPersistence.countByCompanyId(companyId);
 	}
@@ -2017,6 +2123,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Skip
 	public User getDefaultUser(long companyId)
 		throws PortalException, SystemException {
@@ -2041,6 +2148,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Skip
 	public long getDefaultUserId(long companyId)
 		throws PortalException, SystemException {
@@ -2057,30 +2165,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the primary keys of the users belonging to the group
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public long[] getGroupUserIds(long groupId) throws SystemException {
 		return getUserIds(getGroupUsers(groupId));
-	}
-
-	/**
-	 * Returns all the users belonging to the group.
-	 *
-	 * @param  groupId the primary key of the group
-	 * @return the users belonging to the group
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<User> getGroupUsers(long groupId) throws SystemException {
-		return groupPersistence.getUsers(groupId);
-	}
-
-	/**
-	 * Returns the number of users belonging to the group.
-	 *
-	 * @param  groupId the primary key of the group
-	 * @return the number of users belonging to the group
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int getGroupUsersCount(long groupId) throws SystemException {
-		return groupPersistence.getUsersSize(groupId);
 	}
 
 	/**
@@ -2093,6 +2180,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getGroupUsersCount(long groupId, int status)
 		throws PortalException, SystemException {
 
@@ -2114,6 +2202,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the users who have not had any annoucements of the type delivered
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getNoAnnouncementsDeliveries(String type)
 		throws SystemException {
 
@@ -2126,6 +2215,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the users who do not have any contacts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getNoContacts() throws SystemException {
 		return userFinder.findByNoContacts();
 	}
@@ -2137,6 +2227,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the users who do not belong to any groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getNoGroups() throws SystemException {
 		return userFinder.findByNoGroups();
 	}
@@ -2148,36 +2239,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the primary keys of the users belonging to the organization
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public long[] getOrganizationUserIds(long organizationId)
 		throws SystemException {
 
 		return getUserIds(getOrganizationUsers(organizationId));
-	}
-
-	/**
-	 * Returns all the users belonging to the organization.
-	 *
-	 * @param  organizationId the primary key of the organization
-	 * @return the users belonging to the organization
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<User> getOrganizationUsers(long organizationId)
-		throws SystemException {
-
-		return organizationPersistence.getUsers(organizationId);
-	}
-
-	/**
-	 * Returns the number of users belonging to the organization.
-	 *
-	 * @param  organizationId the primary key of the organization
-	 * @return the number of users belonging to the organization
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int getOrganizationUsersCount(long organizationId)
-		throws SystemException {
-
-		return organizationPersistence.getUsersSize(organizationId);
 	}
 
 	/**
@@ -2191,6 +2257,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getOrganizationUsersCount(long organizationId, int status)
 		throws PortalException, SystemException {
 
@@ -2212,55 +2279,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the primary keys of the users belonging to the role
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public long[] getRoleUserIds(long roleId) throws SystemException {
 		return getUserIds(getRoleUsers(roleId));
-	}
-
-	/**
-	 * Returns all the users belonging to the role.
-	 *
-	 * @param  roleId the primary key of the role
-	 * @return the users belonging to the role
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<User> getRoleUsers(long roleId) throws SystemException {
-		return rolePersistence.getUsers(roleId);
-	}
-
-	/**
-	 * Returns a range of all the users belonging to the role.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end -
-	 * start</code> instances. <code>start</code> and <code>end</code> are not
-	 * primary keys, they are indexes in the result set. Thus, <code>0</code>
-	 * refers to the first result in the set. Setting both <code>start</code>
-	 * and <code>end</code> to {@link
-	 * com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	 * result set.
-	 * </p>
-	 *
-	 * @param  roleId the primary key of the role
-	 * @param  start the lower bound of the range of users
-	 * @param  end the upper bound of the range of users (not inclusive)
-	 * @return the range of users belonging to the role
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<User> getRoleUsers(long roleId, int start, int end)
-		throws SystemException {
-
-		return rolePersistence.getUsers(roleId, start, end);
-	}
-
-	/**
-	 * Returns the number of users belonging to the role.
-	 *
-	 * @param  roleId the primary key of the role
-	 * @return the number of users belonging to the role
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int getRoleUsersCount(long roleId) throws SystemException {
-		return rolePersistence.getUsersSize(roleId);
 	}
 
 	/**
@@ -2273,6 +2294,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getRoleUsersCount(long roleId, int status)
 		throws PortalException, SystemException {
 
@@ -2313,6 +2335,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getSocialUsers(
 			long userId, int type, int start, int end, OrderByComparator obc)
 		throws PortalException, SystemException {
@@ -2352,6 +2375,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getSocialUsers(
 			long userId, int start, int end, OrderByComparator obc)
 		throws PortalException, SystemException {
@@ -2396,6 +2420,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getSocialUsers(
 			long userId1, long userId2, int type, int start, int end,
 			OrderByComparator obc)
@@ -2440,6 +2465,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<User> getSocialUsers(
 			long userId1, long userId2, int start, int end,
 			OrderByComparator obc)
@@ -2465,6 +2491,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getSocialUsersCount(long userId)
 		throws PortalException, SystemException {
 
@@ -2493,6 +2520,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getSocialUsersCount(long userId, int type)
 		throws PortalException, SystemException {
 
@@ -2518,6 +2546,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getSocialUsersCount(long userId1, long userId2)
 		throws PortalException, SystemException {
 
@@ -2547,6 +2576,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getSocialUsersCount(long userId1, long userId2, int type)
 		throws PortalException, SystemException {
 
@@ -2572,6 +2602,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the contact ID could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByContactId(long contactId)
 		throws PortalException, SystemException {
 
@@ -2588,10 +2619,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByEmailAddress(long companyId, String emailAddress)
 		throws PortalException, SystemException {
 
-		emailAddress = emailAddress.trim().toLowerCase();
+		emailAddress = getLogin(emailAddress);
 
 		return userPersistence.findByC_EA(companyId, emailAddress);
 	}
@@ -2605,6 +2637,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the Facebook ID could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByFacebookId(long companyId, long facebookId)
 		throws PortalException, SystemException {
 
@@ -2619,6 +2652,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserById(long userId)
 		throws PortalException, SystemException {
 
@@ -2635,6 +2669,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserById(long companyId, long userId)
 		throws PortalException, SystemException {
 
@@ -2650,6 +2685,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the OpenID could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByOpenId(long companyId, String openId)
 		throws PortalException, SystemException {
 
@@ -2664,6 +2700,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the portrait ID could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByPortraitId(long portraitId)
 		throws PortalException, SystemException {
 
@@ -2679,10 +2716,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the screen name could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByScreenName(long companyId, String screenName)
 		throws PortalException, SystemException {
 
-		screenName = getScreenName(screenName);
+		screenName = getLogin(screenName);
 
 		return userPersistence.findByC_SN(companyId, screenName);
 	}
@@ -2694,8 +2732,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return     the user with the UUID
 	 * @throws     PortalException if a user with the UUID could not be found
 	 * @throws     SystemException if a system exception occurred
-	 * @deprecated {@link #getUserByUuidAndCompanyId(String, long)}
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #getUserByUuidAndCompanyId(String, long)}
 	 */
+	@Override
 	public User getUserByUuid(String uuid)
 		throws PortalException, SystemException {
 
@@ -2718,6 +2758,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the UUID could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User getUserByUuidAndCompanyId(String uuid, long companyId)
 		throws PortalException, SystemException {
 
@@ -2732,30 +2773,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Returns all the users belonging to the user group.
-	 *
-	 * @param  userGroupId the primary key of the user group
-	 * @return the users belonging to the user group
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<User> getUserGroupUsers(long userGroupId)
-		throws SystemException {
-
-		return userGroupPersistence.getUsers(userGroupId);
-	}
-
-	/**
-	 * Returns the number of users belonging to the user group.
-	 *
-	 * @param  userGroupId the primary key of the user group
-	 * @return the number of users belonging to the user group
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int getUserGroupUsersCount(long userGroupId) throws SystemException {
-		return userGroupPersistence.getUsersSize(userGroupId);
-	}
-
-	/**
 	 * Returns the number of users with the status belonging to the user group.
 	 *
 	 * @param  userGroupId the primary key of the user group
@@ -2765,6 +2782,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getUserGroupUsersCount(long userGroupId, int status)
 		throws PortalException, SystemException {
 
@@ -2789,10 +2807,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public long getUserIdByEmailAddress(long companyId, String emailAddress)
 		throws PortalException, SystemException {
 
-		emailAddress = emailAddress.trim().toLowerCase();
+		emailAddress = StringUtil.toLowerCase(emailAddress.trim());
 
 		User user = userPersistence.findByC_EA(companyId, emailAddress);
 
@@ -2808,44 +2827,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the screen name could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public long getUserIdByScreenName(long companyId, String screenName)
 		throws PortalException, SystemException {
 
-		screenName = getScreenName(screenName);
+		screenName = getLogin(screenName);
 
 		User user = userPersistence.findByC_SN(companyId, screenName);
 
 		return user.getUserId();
-	}
-
-	/**
-	 * Returns <code>true</code> if the user is a member of the group.
-	 *
-	 * @param  groupId the primary key of the group
-	 * @param  userId the primary key of the user
-	 * @return <code>true</code> if the user is a member of the group;
-	 *         <code>false</code> otherwise
-	 * @throws SystemException if a system exception occurred
-	 */
-	public boolean hasGroupUser(long groupId, long userId)
-		throws SystemException {
-
-		return groupPersistence.containsUser(groupId, userId);
-	}
-
-	/**
-	 * Returns <code>true</code> if the user is a member of the organization.
-	 *
-	 * @param  organizationId the primary key of the organization
-	 * @param  userId the primary key of the user
-	 * @return <code>true</code> if the user is a member of the organization;
-	 *         <code>false</code> otherwise
-	 * @throws SystemException if a system exception occurred
-	 */
-	public boolean hasOrganizationUser(long organizationId, long userId)
-		throws SystemException {
-
-		return organizationPersistence.containsUser(organizationId, userId);
 	}
 
 	/**
@@ -2858,26 +2848,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasPasswordPolicyUser(long passwordPolicyId, long userId)
 		throws SystemException {
 
 		return passwordPolicyRelLocalService.hasPasswordPolicyRel(
 			passwordPolicyId, User.class.getName(), userId);
-	}
-
-	/**
-	 * Returns <code>true</code> if the user is a member of the role.
-	 *
-	 * @param  roleId the primary key of the role
-	 * @param  userId the primary key of the user
-	 * @return <code>true</code> if the user is a member of the role;
-	 *         <code>false</code> otherwise
-	 * @throws SystemException if a system exception occurred
-	 */
-	public boolean hasRoleUser(long roleId, long userId)
-		throws SystemException {
-
-		return rolePersistence.containsUser(roleId, userId);
 	}
 
 	/**
@@ -2895,41 +2871,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a role with the name could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasRoleUser(
 			long companyId, String name, long userId, boolean inherited)
 		throws PortalException, SystemException {
 
 		return roleLocalService.hasUserRole(userId, companyId, name, inherited);
-	}
-
-	/**
-	 * Returns <code>true</code> if the user is a member of the team.
-	 *
-	 * @param  teamId the primary key of the team
-	 * @param  userId the primary key of the user
-	 * @return <code>true</code> if the user is a member of the team;
-	 *         <code>false</code> otherwise
-	 * @throws SystemException if a system exception occurred
-	 */
-	public boolean hasTeamUser(long teamId, long userId)
-		throws SystemException {
-
-		return teamPersistence.containsUser(teamId, userId);
-	}
-
-	/**
-	 * Returns <code>true</code> if the user is a member of the user group.
-	 *
-	 * @param  userGroupId the primary key of the user group
-	 * @param  userId the primary key of the user
-	 * @return <code>true</code> if the user is a member of the user group;
-	 *         <code>false</code> otherwise
-	 * @throws SystemException if a system exception occurred
-	 */
-	public boolean hasUserGroupUser(long userGroupId, long userId)
-		throws SystemException {
-
-		return userGroupPersistence.containsUser(userGroupId, userId);
 	}
 
 	/**
@@ -2942,6 +2889,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean isPasswordExpired(User user)
 		throws PortalException, SystemException {
 
@@ -2982,6 +2930,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean isPasswordExpiringSoon(User user)
 		throws PortalException, SystemException {
 
@@ -3024,6 +2973,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if the user could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User loadGetDefaultUser(long companyId)
 		throws PortalException, SystemException {
 
@@ -3062,6 +3012,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portal.service.persistence.UserFinder
 	 */
+	@Override
 	public List<User> search(
 			long companyId, String keywords, int status,
 			LinkedHashMap<String, Object> params, int start, int end,
@@ -3103,6 +3054,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portlet.usersadmin.util.UserIndexer
 	 */
+	@Override
 	public Hits search(
 			long companyId, String keywords, int status,
 			LinkedHashMap<String, Object> params, int start, int end, Sort sort)
@@ -3188,6 +3140,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portal.service.persistence.UserFinder
 	 */
+	@Override
 	public List<User> search(
 			long companyId, String firstName, String middleName,
 			String lastName, String screenName, String emailAddress, int status,
@@ -3239,6 +3192,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws SystemException if a system exception occurred
 	 * @see    com.liferay.portlet.usersadmin.util.UserIndexer
 	 */
+	@Override
 	public Hits search(
 			long companyId, String firstName, String middleName,
 			String lastName, String screenName, String emailAddress, int status,
@@ -3266,6 +3220,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the number matching users
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int searchCount(
 			long companyId, String keywords, int status,
 			LinkedHashMap<String, Object> params)
@@ -3296,6 +3251,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the number of matching users
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int searchCount(
 			long companyId, String firstName, String middleName,
 			String lastName, String screenName, String emailAddress, int status,
@@ -3312,18 +3268,19 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *
 	 * @param  user the verification email recipient
 	 * @param  emailAddress the recipient's email address
-	 * @param  serviceContext the service context. Must set the portal URL, main
-	 *         path, primary key of the layout, remote address, remote host, and
-	 *         agent for the user.
+	 * @param  serviceContext the service context to be applied. Must set the
+	 *         portal URL, main path, primary key of the layout, remote address,
+	 *         remote host, and agent for the user.
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void sendEmailAddressVerification(
 			User user, String emailAddress, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		if (user.isEmailAddressVerified() &&
-			emailAddress.equalsIgnoreCase(user.getEmailAddress())) {
+			StringUtil.equalsIgnoreCase(emailAddress, user.getEmailAddress())) {
 
 			return;
 		}
@@ -3371,7 +3328,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			user.getUserId(), "[$USER_SCREENNAME$]", user.getScreenName());
 		subscriptionSender.setFrom(fromAddress, fromName);
 		subscriptionSender.setHtmlFormat(true);
-		subscriptionSender.setMailId("user", user.getUserId());
+		subscriptionSender.setMailId(
+			"user", user.getUserId(), System.currentTimeMillis(),
+			PwdGenerator.getPassword());
 		subscriptionSender.setServiceContext(serviceContext);
 		subscriptionSender.setSubject(subject);
 		subscriptionSender.setUserId(user.getUserId());
@@ -3395,11 +3354,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         specified in <code>portal.properties</code> will be used.
 	 * @param  body the email body. If <code>null</code>, the body specified in
 	 *         <code>portal.properties</code> will be used.
-	 * @param  serviceContext the user's service context
+	 * @param  serviceContext the service context to be applied
 	 * @throws PortalException if a user with the email address could not be
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void sendPassword(
 			long companyId, String emailAddress, String fromName,
 			String fromAddress, String subject, String body,
@@ -3412,7 +3372,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			return;
 		}
 
-		emailAddress = emailAddress.trim().toLowerCase();
+		emailAddress = StringUtil.toLowerCase(emailAddress.trim());
 
 		if (Validator.isNull(emailAddress)) {
 			throw new UserEmailAddressException();
@@ -3430,6 +3390,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 			if ((passwordPolicy != null) &&
 				(passwordPolicy.getResetTicketMaxAge() > 0)) {
+
 				expirationDate = new Date(
 					System.currentTimeMillis() +
 						(passwordPolicy.getResetTicketMaxAge() * 1000));
@@ -3447,8 +3408,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 							"&ticketKey=" + ticket.getKey();
 		}
 		else {
-			if (!PwdEncryptor.PASSWORDS_ENCRYPTION_ALGORITHM.equals(
-					PwdEncryptor.TYPE_NONE)) {
+			if (!PasswordEncryptorUtil.PASSWORDS_ENCRYPTION_ALGORITHM.equals(
+					PasswordEncryptorUtil.TYPE_NONE)) {
 
 				if (LDAPSettingsUtil.isPasswordPolicyEnabled(
 						user.getCompanyId())) {
@@ -3481,7 +3442,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 					passwordReset = true;
 				}
 
-				user.setPassword(PwdEncryptor.encrypt(newPassword));
+				user.setPassword(PasswordEncryptorUtil.encrypt(newPassword));
 				user.setPasswordUnencrypted(newPassword);
 				user.setPasswordEncrypted(true);
 				user.setPasswordReset(passwordReset);
@@ -3544,7 +3505,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			user.getScreenName());
 		subscriptionSender.setFrom(fromAddress, fromName);
 		subscriptionSender.setHtmlFormat(true);
-		subscriptionSender.setMailId("user", user.getUserId());
+		subscriptionSender.setMailId(
+			"user", user.getUserId(), System.currentTimeMillis(),
+			PwdGenerator.getPassword());
 		subscriptionSender.setServiceContext(serviceContext);
 		subscriptionSender.setSubject(subject);
 		subscriptionSender.setUserId(user.getUserId());
@@ -3563,6 +3526,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void setRoleUsers(long roleId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -3584,6 +3548,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@SuppressWarnings("deprecation")
 	public void setUserGroupUsers(long userGroupId, long[] userIds)
 		throws PortalException, SystemException {
@@ -3609,6 +3574,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetGroupTeamsUsers(long groupId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -3626,12 +3592,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *
 	 * @param  groupId the primary key of the group
 	 * @param  userIds the primary keys of the users
-	 * @param  serviceContext the service context (optionally <code>null</code>)
+	 * @param  serviceContext the service context to be applied (optionally
+	 *         <code>null</code>)
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetGroupUsers(
-			long groupId, long[] userIds, ServiceContext serviceContext)
+			final long groupId, final long[] userIds,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		userGroupRoleLocalService.deleteUserGroupRoles(
@@ -3646,6 +3615,25 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		indexer.reindex(userIds);
 
 		PermissionCacheUtil.clearCache();
+
+		Callable<Void> callable = new Callable<Void>() {
+
+			@Override
+			public Void call() throws Exception {
+				Message message = new Message();
+
+				message.put("groupId", groupId);
+				message.put("userIds", userIds);
+
+				MessageBusUtil.sendMessage(
+					DestinationNames.SUBSCRIPTION_CLEAN_UP, message);
+
+				return null;
+			}
+
+		};
+
+		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
 	}
 
 	/**
@@ -3656,13 +3644,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
-	public void unsetOrganizationUsers(long organizationId, long[] userIds)
+	@Override
+	public void unsetOrganizationUsers(
+			long organizationId, final long[] userIds)
 		throws PortalException, SystemException {
 
 		Organization organization = organizationPersistence.findByPrimaryKey(
 			organizationId);
 
-		Group group = organization.getGroup();
+		final Group group = organization.getGroup();
 
 		userGroupRoleLocalService.deleteUserGroupRoles(
 			userIds, group.getGroupId(), RoleConstants.TYPE_ORGANIZATION);
@@ -3674,6 +3664,25 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		indexer.reindex(userIds);
 
 		PermissionCacheUtil.clearCache();
+
+		Callable<Void> callable = new Callable<Void>() {
+
+			@Override
+			public Void call() throws Exception {
+				Message message = new Message();
+
+				message.put("groupId", group.getGroupId());
+				message.put("userIds", userIds);
+
+				MessageBusUtil.sendMessage(
+					DestinationNames.SUBSCRIPTION_CLEAN_UP, message);
+
+				return null;
+			}
+
+		};
+
+		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
 	}
 
 	/**
@@ -3683,6 +3692,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  userIds the primary keys of the users
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetPasswordPolicyUsers(long passwordPolicyId, long[] userIds)
 		throws SystemException {
 
@@ -3698,12 +3708,18 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetRoleUsers(long roleId, List<User> users)
 		throws PortalException, SystemException {
 
 		Role role = rolePersistence.findByPrimaryKey(roleId);
 
-		if (role.getName().equals(RoleConstants.USER)) {
+		String roleName = role.getName();
+
+		if ((roleName.equals(RoleConstants.ADMINISTRATOR) &&
+			 (getRoleUsersCount(role.getRoleId()) <= 1)) ||
+			roleName.equals(RoleConstants.USER)) {
+
 			return;
 		}
 
@@ -3724,12 +3740,18 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetRoleUsers(long roleId, long[] userIds)
 		throws PortalException, SystemException {
 
 		Role role = rolePersistence.findByPrimaryKey(roleId);
 
-		if (role.getName().equals(RoleConstants.USER)) {
+		String roleName = role.getName();
+
+		if (roleName.equals(RoleConstants.USER) ||
+			(roleName.equals(RoleConstants.ADMINISTRATOR) &&
+			 getRoleUsersCount(role.getRoleId()) <= 1)) {
+
 			return;
 		}
 
@@ -3750,6 +3772,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetTeamUsers(long teamId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -3770,6 +3793,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetUserGroupUsers(long userGroupId, long[] userIds)
 		throws PortalException, SystemException {
 
@@ -3792,6 +3816,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateAgreedToTermsOfUse(
 			long userId, boolean agreedToTermsOfUse)
 		throws PortalException, SystemException {
@@ -3816,6 +3841,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void updateAsset(
 			long userId, User user, long[] assetCategoryIds,
 			String[] assetTagNames)
@@ -3845,6 +3871,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateCreateDate(long userId, Date createDate)
 		throws PortalException, SystemException {
 
@@ -3868,13 +3895,14 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateEmailAddress(
 			long userId, String password, String emailAddress1,
 			String emailAddress2)
 		throws PortalException, SystemException {
 
-		emailAddress1 = emailAddress1.trim().toLowerCase();
-		emailAddress2 = emailAddress2.trim().toLowerCase();
+		emailAddress1 = StringUtil.toLowerCase(emailAddress1.trim());
+		emailAddress2 = StringUtil.toLowerCase(emailAddress2.trim());
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
@@ -3902,20 +3930,21 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  password the user's password
 	 * @param  emailAddress1 the user's new email address
 	 * @param  emailAddress2 the user's new email address confirmation
-	 * @param  serviceContext the service context. Must set the portal URL, main
-	 *         path, primary key of the layout, remote address, remote host, and
-	 *         agent for the user.
+	 * @param  serviceContext the service context to be applied. Must set the
+	 *         portal URL, main path, primary key of the layout, remote address,
+	 *         remote host, and agent for the user.
 	 * @return the user
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateEmailAddress(
 			long userId, String password, String emailAddress1,
 			String emailAddress2, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
-		emailAddress1 = emailAddress1.trim().toLowerCase();
-		emailAddress2 = emailAddress2.trim().toLowerCase();
+		emailAddress1 = StringUtil.toLowerCase(emailAddress1.trim());
+		emailAddress2 = StringUtil.toLowerCase(emailAddress2.trim());
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
@@ -3953,6 +3982,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateEmailAddressVerified(
 			long userId, boolean emailAddressVerified)
 		throws PortalException, SystemException {
@@ -3975,6 +4005,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateFacebookId(long userId, long facebookId)
 		throws PortalException, SystemException {
 
@@ -3992,10 +4023,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *
 	 * @param  userId the primary key of the user
 	 * @param  newGroupIds the primary keys of the groups
-	 * @param  serviceContext the service context (optionally <code>null</code>)
+	 * @param  serviceContext the service context to be applied (optionally
+	 *         <code>null</code>)
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void updateGroups(
 			long userId, long[] newGroupIds, ServiceContext serviceContext)
 		throws PortalException, SystemException {
@@ -4037,13 +4070,14 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  updateUserInformation whether to update the user's information
 	 * @param  sendEmail whether to send the user an email notification about
 	 *         their new account
-	 * @param  serviceContext the user's service context (optionally
+	 * @param  serviceContext the service context to be applied (optionally
 	 *         <code>null</code>). Can set expando bridge attributes for the
 	 *         user.
 	 * @return the user
 	 * @throws PortalException if the user's information was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateIncompleteUser(
 			long creatorUserId, long companyId, boolean autoPassword,
 			String password1, String password2, boolean autoScreenName,
@@ -4062,6 +4096,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		User defaultUser = getDefaultUser(companyId);
+
+		if (facebookId > 0) {
+			autoPassword = false;
+
+			if ((password1 == null) || (password2 == null)) {
+				password1 = PwdGenerator.getPassword();
+				password2 = password1;
+			}
+
+			sendEmail = false;
+		}
 
 		if (updateUserInformation) {
 			autoScreenName = false;
@@ -4109,7 +4154,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				locale, "welcome-x", " " + fullName, false);
 
 			if (Validator.isNotNull(password1)) {
-				user.setPassword(PwdEncryptor.encrypt(password1));
+				user.setPassword(PasswordEncryptorUtil.encrypt(password1));
 				user.setPasswordUnencrypted(password1);
 			}
 
@@ -4200,6 +4245,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if a contact could not be found matching the user's contact ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateJobTitle(long userId, String jobTitle)
 		throws PortalException, SystemException {
 
@@ -4228,6 +4274,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateLastLogin(long userId, String loginIP)
 		throws PortalException, SystemException {
 
@@ -4260,6 +4307,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateLockout(User user, boolean lockout)
 		throws PortalException, SystemException {
 
@@ -4299,6 +4347,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateLockoutByEmailAddress(
 			long companyId, String emailAddress, boolean lockout)
 		throws PortalException, SystemException {
@@ -4317,6 +4366,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateLockoutById(long userId, boolean lockout)
 		throws PortalException, SystemException {
 
@@ -4335,6 +4385,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the screen name could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateLockoutByScreenName(
 			long companyId, String screenName, boolean lockout)
 		throws PortalException, SystemException {
@@ -4353,6 +4404,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateModifiedDate(long userId, Date modifiedDate)
 		throws PortalException, SystemException {
 
@@ -4374,6 +4426,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateOpenId(long userId, String openId)
 		throws PortalException, SystemException {
 
@@ -4394,11 +4447,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *
 	 * @param  userId the primary key of the user
 	 * @param  newOrganizationIds the primary keys of the organizations
-	 * @param  serviceContext the service context. Must set whether user
-	 *         indexing is enabled.
+	 * @param  serviceContext the service context to be applied. Must set
+	 *         whether user indexing is enabled.
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void updateOrganizations(
 			long userId, long[] newOrganizationIds,
 			ServiceContext serviceContext)
@@ -4420,6 +4474,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updatePassword(
 			long userId, String password1, String password2,
 			boolean passwordReset)
@@ -4444,6 +4499,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updatePassword(
 			long userId, String password1, String password2,
 			boolean passwordReset, boolean silentUpdate)
@@ -4458,10 +4514,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		String oldEncPwd = user.getPassword();
 
 		if (!user.isPasswordEncrypted()) {
-			oldEncPwd = PwdEncryptor.encrypt(user.getPassword());
+			oldEncPwd = PasswordEncryptorUtil.encrypt(user.getPassword());
 		}
 
-		String newEncPwd = PwdEncryptor.encrypt(password1);
+		String newEncPwd = PasswordEncryptorUtil.encrypt(password1);
 
 		if (user.hasCompanyMx()) {
 			mailService.updatePassword(user.getCompanyId(), userId, password1);
@@ -4522,6 +4578,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updatePasswordManually(
 			long userId, String password, boolean passwordEncrypted,
 			boolean passwordReset, Date passwordModifiedDate)
@@ -4553,6 +4610,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updatePasswordReset(long userId, boolean passwordReset)
 		throws PortalException, SystemException {
 
@@ -4575,6 +4633,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if the new portrait was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updatePortrait(long userId, byte[] bytes)
 		throws PortalException, SystemException {
 
@@ -4636,6 +4695,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if the new question or answer were invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateReminderQuery(long userId, String question, String answer)
 		throws PortalException, SystemException {
 
@@ -4661,6 +4721,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if the new screen name was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateScreenName(long userId, String screenName)
 		throws PortalException, SystemException {
 
@@ -4668,11 +4729,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
-		screenName = getScreenName(screenName);
+		screenName = getLogin(screenName);
 
 		validateScreenName(user.getCompanyId(), userId, screenName);
 
-		if (!user.getScreenName().equalsIgnoreCase(screenName)) {
+		if (!StringUtil.equalsIgnoreCase(user.getScreenName(), screenName)) {
 			user.setDigest(StringPool.BLANK);
 		}
 
@@ -4701,10 +4762,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public User updateStatus(long userId, int status)
 		throws PortalException, SystemException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
+
+		if ((status == WorkflowConstants.STATUS_APPROVED) &&
+			(user.getStatus() != WorkflowConstants.STATUS_APPROVED)) {
+
+			validateCompanyMaxUsers(user.getCompanyId());
+		}
 
 		user.setStatus(status);
 
@@ -4762,7 +4830,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @param  roleIds the primary keys of the user's roles
 	 * @param  userGroupRoles the user user's group roles
 	 * @param  userGroupIds the primary keys of the user's user groups
-	 * @param  serviceContext the user's service context (optionally
+	 * @param  serviceContext the service context to be applied (optionally
 	 *         <code>null</code>). Can set the UUID (with the <code>uuid</code>
 	 *         attribute), asset category IDs, asset tag names, and expando
 	 *         bridge attributes for the user.
@@ -4771,6 +4839,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         or if the new information was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@SuppressWarnings("deprecation")
 	public User updateUser(
 			long userId, String oldPassword, String newPassword1,
@@ -4795,19 +4864,19 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		Company company = companyPersistence.findByPrimaryKey(
 			user.getCompanyId());
 		String password = oldPassword;
-		screenName = getScreenName(screenName);
-		emailAddress = emailAddress.trim().toLowerCase();
+		screenName = getLogin(screenName);
+		emailAddress = StringUtil.toLowerCase(emailAddress.trim());
 		openId = openId.trim();
 		String oldFullName = user.getFullName();
-		aimSn = aimSn.trim().toLowerCase();
-		facebookSn = facebookSn.trim().toLowerCase();
-		icqSn = icqSn.trim().toLowerCase();
-		jabberSn = jabberSn.trim().toLowerCase();
-		msnSn = msnSn.trim().toLowerCase();
-		mySpaceSn = mySpaceSn.trim().toLowerCase();
-		skypeSn = skypeSn.trim().toLowerCase();
-		twitterSn = twitterSn.trim().toLowerCase();
-		ymSn = ymSn.trim().toLowerCase();
+		aimSn = StringUtil.toLowerCase(aimSn.trim());
+		facebookSn = StringUtil.toLowerCase(facebookSn.trim());
+		icqSn = StringUtil.toLowerCase(icqSn.trim());
+		jabberSn = StringUtil.toLowerCase(jabberSn.trim());
+		msnSn = StringUtil.toLowerCase(msnSn.trim());
+		mySpaceSn = StringUtil.toLowerCase(mySpaceSn.trim());
+		skypeSn = StringUtil.toLowerCase(skypeSn.trim());
+		twitterSn = StringUtil.toLowerCase(twitterSn.trim());
+		ymSn = StringUtil.toLowerCase(ymSn.trim());
 		Date now = new Date();
 
 		EmailAddressGenerator emailAddressGenerator =
@@ -4854,7 +4923,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			user.setReminderQueryAnswer(reminderQueryAnswer);
 		}
 
-		if (!user.getScreenName().equalsIgnoreCase(screenName)) {
+		if (!StringUtil.equalsIgnoreCase(user.getScreenName(), screenName)) {
 			user.setScreenName(screenName);
 
 			user.setDigest(StringPool.BLANK);
@@ -4954,6 +5023,13 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Groups and organizations
 
+		// See LPS-33205. Cache the user's list of user group roles because
+		// adding or removing groups may add or remove user group roles
+		// depending on the site default user associations.
+
+		List<UserGroupRole> previousUserGroupRoles =
+			userGroupRolePersistence.findByUserId(userId);
+
 		updateGroups(userId, groupIds, serviceContext, false);
 		updateOrganizations(userId, organizationIds, false);
 
@@ -4967,7 +5043,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// User group roles
 
-		updateUserGroupRoles(user, groupIds, organizationIds, userGroupRoles);
+		updateUserGroupRoles(
+			user, groupIds, organizationIds, userGroupRoles,
+			previousUserGroupRoles);
 
 		// User groups
 
@@ -5032,6 +5110,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 *         address ticket, or if the email address is invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void verifyEmailAddress(String ticketKey)
 		throws PortalException, SystemException {
 
@@ -5047,7 +5126,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		String emailAddress = ticket.getExtraInfo();
 
-		emailAddress = emailAddress.toLowerCase().trim();
+		emailAddress = StringUtil.toLowerCase(emailAddress).trim();
 
 		if (!emailAddress.equals(user.getEmailAddress())) {
 			if (userPersistence.fetchByC_EA(
@@ -5207,7 +5286,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			return Authenticator.FAILURE;
 		}
 
-		login = login.trim().toLowerCase();
+		login = StringUtil.toLowerCase(login.trim());
 
 		long userId = GetterUtil.getLong(login);
 
@@ -5258,19 +5337,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		User user = null;
 
-		try {
-			if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
-				user = userPersistence.findByC_EA(companyId, login);
-			}
-			else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
-				user = userPersistence.findByC_SN(companyId, login);
-			}
-			else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
-				user = userPersistence.findByC_U(
-					companyId, GetterUtil.getLong(login));
-			}
+		if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
+			user = fetchUserByEmailAddress(companyId, login);
 		}
-		catch (NoSuchUserException nsue) {
+		else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
+			user = fetchUserByScreenName(companyId, login);
+		}
+		else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
+			user = userPersistence.fetchByPrimaryKey(GetterUtil.getLong(login));
+		}
+
+		if (user == null) {
 			return Authenticator.DNE;
 		}
 
@@ -5292,7 +5369,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		if (!user.isPasswordEncrypted()) {
-			user.setPassword(PwdEncryptor.encrypt(user.getPassword()));
+			user.setPassword(PasswordEncryptorUtil.encrypt(user.getPassword()));
 			user.setPasswordEncrypted(true);
 
 			userPersistence.update(user);
@@ -5307,8 +5384,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Authenticate against the User_ table
 
-		if ((authResult == Authenticator.SUCCESS) &&
-			PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
+		boolean skipLiferayCheck = false;
+
+		if (authResult == Authenticator.SKIP_LIFERAY_CHECK) {
+			authResult = Authenticator.SUCCESS;
+
+			skipLiferayCheck = true;
+		}
+		else if ((authResult == Authenticator.SUCCESS) &&
+				 PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
 
 			boolean authenticated = PwdAuthenticator.authenticate(
 				login, password, user.getPassword());
@@ -5348,15 +5432,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 			// Update digest
 
-			boolean updateDigest = true;
+			if (skipLiferayCheck ||
+				!PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK ||
+				Validator.isNull(user.getDigest())) {
 
-			if (PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
-				if (Validator.isNotNull(user.getDigest())) {
-					updateDigest = false;
-				}
-			}
-
-			if (updateDigest) {
 				String digest = user.getDigest(password);
 
 				user.setDigest(digest);
@@ -5385,10 +5464,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 						parameterMap);
 				}
 
-				try {
-					user = userPersistence.findByPrimaryKey(user.getUserId());
-				}
-				catch (NoSuchUserException nsue) {
+				user = userPersistence.fetchByPrimaryKey(user.getUserId());
+
+				if (user == null) {
 					return Authenticator.DNE;
 				}
 
@@ -5456,8 +5534,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		return birthday;
 	}
 
-	protected String getScreenName(String screenName) {
-		return StringUtil.lowerCase(StringUtil.trim(screenName));
+	protected String getLogin(String login) {
+		return StringUtil.lowerCase(StringUtil.trim(login));
 	}
 
 	protected long[] getUserIds(List<User> users) {
@@ -5476,7 +5554,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		final Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
 			User.class);
 
-		Callable<Void> callable = new PortalCallable<Void>(
+		Callable<Void> callable = new ShardCallable<Void>(
 			user.getCompanyId()) {
 
 			@Override
@@ -5543,7 +5621,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			searchContext.setQueryConfig(queryConfig);
 
 			if (sort != null) {
-				searchContext.setSorts(new Sort[] {sort});
+				searchContext.setSorts(sort);
 			}
 
 			searchContext.setStart(start);
@@ -5601,7 +5679,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			"[$USER_SCREENNAME$]", user.getScreenName());
 		subscriptionSender.setFrom(fromAddress, fromName);
 		subscriptionSender.setHtmlFormat(true);
-		subscriptionSender.setMailId("user", user.getUserId());
+		subscriptionSender.setMailId(
+			"user", user.getUserId(), System.currentTimeMillis(),
+			PwdGenerator.getPassword());
 		subscriptionSender.setServiceContext(serviceContext);
 		subscriptionSender.setSubject(subject);
 		subscriptionSender.setUserId(user.getUserId());
@@ -5616,7 +5696,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			String lastName, String emailAddress)
 		throws PortalException, SystemException {
 
-		if (emailAddress.equalsIgnoreCase(user.getEmailAddress())) {
+		if (StringUtil.equalsIgnoreCase(emailAddress, user.getEmailAddress())) {
 			return;
 		}
 
@@ -5647,6 +5727,38 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		user.setEmailAddress(emailAddress);
 		user.setDigest(StringPool.BLANK);
+	}
+
+	protected void startWorkflowInstance(
+		final long companyId, final long workflowUserId, final long userId,
+		final User user, final ServiceContext workflowServiceContext) {
+
+		final boolean workflowEnabled = WorkflowThreadLocal.isEnabled();
+
+		Callable<Void> callable = new ShardCallable<Void>(companyId) {
+
+			@Override
+			protected Void doCall() throws Exception {
+				boolean currentWorkflowEnabled =
+					WorkflowThreadLocal.isEnabled();
+
+				try {
+					WorkflowThreadLocal.setEnabled(workflowEnabled);
+
+					WorkflowHandlerRegistryUtil.startWorkflowInstance(
+						companyId, workflowUserId, User.class.getName(), userId,
+						user, workflowServiceContext);
+
+					return null;
+				}
+				finally {
+					WorkflowThreadLocal.setEnabled(currentWorkflowEnabled);
+				}
+			}
+
+		};
+
+		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
 	}
 
 	protected void updateGroups(
@@ -5731,15 +5843,13 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 	protected void updateUserGroupRoles(
 			User user, long[] groupIds, long[] organizationIds,
-			List<UserGroupRole> userGroupRoles)
+			List<UserGroupRole> userGroupRoles,
+			List<UserGroupRole> previousUserGroupRoles)
 		throws PortalException, SystemException {
 
 		if (userGroupRoles == null) {
 			return;
 		}
-
-		List<UserGroupRole> previousUserGroupRoles =
-			userGroupRolePersistence.findByUserId(user.getUserId());
 
 		for (UserGroupRole userGroupRole : previousUserGroupRoles) {
 			if (userGroupRoles.contains(userGroupRole)) {
@@ -5771,9 +5881,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			Organization organization =
 				organizationPersistence.findByPrimaryKey(organizationId);
 
-			Group organizationGroup = organization.getGroup();
-
-			organizationGroupIds[i] = organizationGroup.getGroupId();
+			organizationGroupIds[i] = organization.getGroupId();
 		}
 
 		validGroupIds = ArrayUtil.append(validGroupIds, organizationGroupIds);
@@ -5796,20 +5904,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			String middleName, String lastName, long[] organizationIds)
 		throws PortalException, SystemException {
 
-		Company company = companyPersistence.findByPrimaryKey(companyId);
-
-		if (company.isSystem()) {
-			return;
-		}
-
-		if ((company.getMaxUsers() > 0) &&
-			(company.getMaxUsers() <=
-				searchCount(
-					companyId, null, WorkflowConstants.STATUS_APPROVED,
-					null))) {
-
-			throw new CompanyMaxUsersException();
-		}
+		validateCompanyMaxUsers(companyId);
 
 		if (!autoScreenName) {
 			validateScreenName(companyId, userId, screenName);
@@ -5856,7 +5951,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
-		if (!user.getScreenName().equalsIgnoreCase(screenName)) {
+		if (!StringUtil.equalsIgnoreCase(user.getScreenName(), screenName)) {
 			validateScreenName(user.getCompanyId(), userId, screenName);
 		}
 
@@ -5866,7 +5961,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		if (!user.isDefaultUser()) {
 			if (Validator.isNotNull(emailAddress) &&
-				!user.getEmailAddress().equalsIgnoreCase(emailAddress)) {
+				!StringUtil.equalsIgnoreCase(
+					user.getEmailAddress(), emailAddress)) {
 
 				if (userPersistence.fetchByC_EA(
 						user.getCompanyId(), emailAddress) != null) {
@@ -5881,6 +5977,23 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		if (Validator.isNotNull(smsSn) && !Validator.isEmailAddress(smsSn)) {
 			throw new UserSmsException();
+		}
+	}
+
+	protected void validateCompanyMaxUsers(long companyId)
+		throws PortalException, SystemException {
+
+		Company company = companyPersistence.findByPrimaryKey(companyId);
+
+		if (company.isSystem() || (company.getMaxUsers() == 0)) {
+			return;
+		}
+
+		int userCount = searchCount(
+			companyId, null, WorkflowConstants.STATUS_APPROVED, null);
+
+		if (userCount >= company.getMaxUsers()) {
+			throw new CompanyMaxUsersException();
 		}
 	}
 
@@ -5904,7 +6017,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			PropsKeys.MAIL_SESSION_MAIL_POP3_USER,
 			PropsValues.MAIL_SESSION_MAIL_POP3_USER);
 
-		if (emailAddress.equalsIgnoreCase(pop3User)) {
+		if (StringUtil.equalsIgnoreCase(emailAddress, pop3User)) {
 			throw new ReservedUserEmailAddressException();
 		}
 
@@ -5913,7 +6026,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			StringPool.NEW_LINE, PropsValues.ADMIN_RESERVED_EMAIL_ADDRESSES);
 
 		for (String reservedEmailAddress : reservedEmailAddresses) {
-			if (emailAddress.equalsIgnoreCase(reservedEmailAddress)) {
+			if (StringUtil.equalsIgnoreCase(
+					emailAddress, reservedEmailAddress)) {
+
 				throw new ReservedUserEmailAddressException();
 			}
 		}
@@ -5930,7 +6045,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		validateEmailAddress(user.getCompanyId(), emailAddress1);
 		validateEmailAddress(user.getCompanyId(), emailAddress2);
 
-		if (!emailAddress1.equalsIgnoreCase(user.getEmailAddress())) {
+		if (!StringUtil.equalsIgnoreCase(
+				emailAddress1, user.getEmailAddress())) {
+
 			if (userPersistence.fetchByC_EA(
 					user.getCompanyId(), emailAddress1) != null) {
 
@@ -6008,11 +6125,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		if (Validator.isNull(question)) {
-			throw new UserReminderQueryException("Question cannot be null");
+			throw new UserReminderQueryException("Question is null");
 		}
 
 		if (Validator.isNull(answer)) {
-			throw new UserReminderQueryException("Answer cannot be null");
+			throw new UserReminderQueryException("Answer is null");
 		}
 	}
 
@@ -6058,7 +6175,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		String[] anonymousNames = BaseServiceImpl.ANONYMOUS_NAMES;
 
 		for (String anonymousName : anonymousNames) {
-			if (screenName.equalsIgnoreCase(anonymousName)) {
+			if (StringUtil.equalsIgnoreCase(screenName, anonymousName)) {
 				throw new UserScreenNameException();
 			}
 		}
@@ -6090,7 +6207,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			StringPool.NEW_LINE, PropsValues.ADMIN_RESERVED_SCREEN_NAMES);
 
 		for (String reservedScreenName : reservedScreenNames) {
-			if (screenName.equalsIgnoreCase(reservedScreenName)) {
+			if (StringUtil.equalsIgnoreCase(screenName, reservedScreenName)) {
 				throw new ReservedUserScreenNameException();
 			}
 		}

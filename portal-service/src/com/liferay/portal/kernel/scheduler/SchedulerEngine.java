@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -116,10 +116,10 @@ public interface SchedulerEngine {
 			Message message)
 		throws SchedulerException;
 
-	@MessagingProxy(mode = ProxyMode.SYNC)
+	@MessagingProxy(local = true, mode = ProxyMode.SYNC)
 	public void shutdown() throws SchedulerException;
 
-	@MessagingProxy(mode = ProxyMode.SYNC)
+	@MessagingProxy(local = true, mode = ProxyMode.SYNC)
 	public void start() throws SchedulerException;
 
 	public void suppressError(String jobName, String groupName)

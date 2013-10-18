@@ -1,5 +1,8 @@
+alter table Address add uuid_ VARCHAR(75) null;
+
 update BlogsEntry set status = 2 where status = 9;
 
+alter table BookmarksEntry add treePath STRING null;
 alter table BookmarksEntry add status INTEGER;
 alter table BookmarksEntry add statusByUserId LONG;
 alter table BookmarksEntry add statusByUserName VARCHAR(75) null;
@@ -12,6 +15,7 @@ update BookmarksEntry set statusByUserId = userId;
 update BookmarksEntry set statusByUserName = userName;
 update BookmarksEntry set statusDate = modifiedDate;
 
+alter table BookmarksFolder add treePath STRING null;
 alter table BookmarksFolder add status INTEGER;
 alter table BookmarksFolder add statusByUserId LONG;
 alter table BookmarksFolder add statusByUserName VARCHAR(75) null;
@@ -23,6 +27,24 @@ update BookmarksFolder set status = 0;
 update BookmarksFolder set statusByUserId = userId;
 update BookmarksFolder set statusByUserName = userName;
 update BookmarksFolder set statusDate = modifiedDate;
+
+create table BackgroundTask (
+	backgroundTaskId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
+	modifiedDate DATE null,
+	name VARCHAR(75) null,
+	servletContextNames VARCHAR(255) null,
+	taskExecutorClassName VARCHAR(200) null,
+	taskContext TEXT null,
+	completed BOOLEAN,
+	completionDate DATE null,
+	status INTEGER,
+	statusMessage TEXT null
+);
 
 alter table Contact_ add classNameId LONG;
 alter table Contact_ add classPK LONG;
@@ -283,6 +305,8 @@ insert into Country (countryId, name, a2, a3, number_, idd_, zipRequired, active
 
 alter table DDMStructure add parentStructureId LONG;
 
+drop index IX_490E7A1E on DDMStructure;
+
 alter table DDMTemplate add cacheable BOOLEAN;
 alter table DDMTemplate add smallImage BOOLEAN;
 alter table DDMTemplate add smallImageId LONG;
@@ -291,8 +315,12 @@ alter table DDMTemplate add smallImageURL STRING;
 update DDMTemplate set type_ = 'display' where type_ = 'list';
 update DDMTemplate set type_ = 'form' where type_ = 'detail';
 
+alter table DLFileEntry drop column versionUserId;
+alter table DLFileEntry drop column versionUserName;
+
 alter table DLFileEntry add classNameId LONG;
 alter table DLFileEntry add classPK LONG;
+alter table DLFileEntry add treePath STRING null;
 alter table DLFileEntry add manualCheckInRequired BOOLEAN;
 
 alter table DLFileRank add active_ BOOLEAN;
@@ -301,15 +329,18 @@ COMMIT_TRANSACTION;
 
 update DLFileRank set active_ = TRUE;
 
+alter table DLFileShortcut add treePath STRING null;
 alter table DLFileShortcut add active_ BOOLEAN;
 
 COMMIT_TRANSACTION;
 
 update DLFileShortcut set active_ = TRUE;
 
+alter table DLFileVersion add treePath STRING null;
 alter table DLFileVersion add checksum VARCHAR(75) null;
 
-alter table DLFolder add hidden BOOLEAN;
+alter table DLFolder add treePath STRING null;
+alter table DLFolder add hidden_ BOOLEAN;
 alter table DLFolder add status INTEGER;
 alter table DLFolder add statusByUserId LONG;
 alter table DLFolder add statusByUserName VARCHAR(75) null;
@@ -317,11 +348,23 @@ alter table DLFolder add statusDate DATE null;
 
 COMMIT_TRANSACTION;
 
-update DLFolder set hidden = FALSE;
+update DLFolder set hidden_ = FALSE;
 update DLFolder set status = 0;
 update DLFolder set statusByUserId = userId;
 update DLFolder set statusByUserName = userName;
 update DLFolder set statusDate = modifiedDate;
+
+drop table DLSync;
+
+create table DLSyncEvent (
+	syncEventId LONG not null primary key,
+	modifiedTime LONG,
+	event VARCHAR(75) null,
+	type_ VARCHAR(75) null,
+	typePK LONG
+);
+
+alter table EmailAddress add uuid_ VARCHAR(75) null;
 
 alter table ExpandoRow add modifiedDate DATE null;
 
@@ -329,15 +372,29 @@ COMMIT_TRANSACTION;
 
 update ExpandoRow set modifiedDate = CURRENT_TIMESTAMP;
 
+alter table Group_ add uuid_ VARCHAR(75) null;
 alter table Group_ add treePath STRING null;
+alter table Group_ add manualMembership BOOLEAN;
+alter table Group_ add membershipRestriction INTEGER;
+alter table Group_ add remoteStagingGroupCount INTEGER;
 
+COMMIT_TRANSACTION;
+
+update Group_ set manualMembership = TRUE;
+update Group_ set membershipRestriction = 0;
 update Group_ set site = FALSE where name = 'Control Panel';
+update Group_ set site = TRUE where friendlyURL = '/global';
 
 drop table Groups_Permissions;
 
 alter table Image drop column text_;
 
 alter table JournalArticle add folderId LONG;
+alter table JournalArticle add treePath STRING null;
+
+COMMIT_TRANSACTION;
+
+update JournalArticle set folderId = 0;
 
 create table JournalFolder (
 	uuid_ VARCHAR(75) null,
@@ -349,17 +406,58 @@ create table JournalFolder (
 	createDate DATE null,
 	modifiedDate DATE null,
 	parentFolderId LONG,
+	treePath STRING null,
 	name VARCHAR(100) null,
-	description STRING null
+	description STRING null,
+	status INTEGER,
+	statusByUserId LONG,
+	statusByUserName VARCHAR(75) null,
+	statusDate DATE null
 );
+
+alter table Layout add userId LONG;
+alter table Layout add userName VARCHAR(75) null;
+
+create table LayoutFriendlyURL (
+	uuid_ VARCHAR(75) null,
+	layoutFriendlyURLId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
+	modifiedDate DATE null,
+	plid LONG,
+	privateLayout BOOLEAN,
+	friendlyURL VARCHAR(255) null,
+	languageId VARCHAR(75) null
+);
+
+alter table LayoutPrototype add userId LONG;
+alter table LayoutPrototype add userName VARCHAR(75) null;
+alter table LayoutPrototype add createDate DATE null;
+alter table LayoutPrototype add modifiedDate DATE null;
+
+alter table LayoutSetPrototype add userId LONG;
+alter table LayoutSetPrototype add userName VARCHAR(75) null;
 
 drop index IX_228562AD on Lock_;
 drop index IX_DD635956 on Lock_;
+
+alter table MBBan add uuid_ VARCHAR(75) null;
 
 alter table MBCategory add status INTEGER;
 alter table MBCategory add statusByUserId LONG;
 alter table MBCategory add statusByUserName VARCHAR(75) null;
 alter table MBCategory add statusDate DATE null;
+
+alter table MBDiscussion add uuid_ VARCHAR(75) null;
+alter table MBDiscussion add groupId LONG;
+alter table MBDiscussion add companyId LONG;
+alter table MBDiscussion add userId LONG;
+alter table MBDiscussion add userName VARCHAR(75) null;
+alter table MBDiscussion add createDate DATE null;
+alter table MBDiscussion add modifiedDate DATE null;
 
 COMMIT_TRANSACTION;
 
@@ -372,8 +470,27 @@ update MBMessage set status = 2 where status = 9;
 
 alter table MBMessage drop column attachments;
 
+alter table MBThread add uuid_ VARCHAR(75) null;
+alter table MBThread add userId LONG;
+alter table MBThread add userName VARCHAR(75) null;
+alter table MBThread add createDate DATE null;
+alter table MBThread add modifiedDate DATE null;
+
+alter table MBThreadFlag add uuid_ VARCHAR(75) null;
+alter table MBThreadFlag add groupId LONG;
+alter table MBThreadFlag add companyId LONG;
+alter table MBThreadFlag add userName VARCHAR(75) null;
+alter table MBThreadFlag add createDate DATE null;
+
+alter table Organization_ add uuid_ VARCHAR(75) null;
+alter table Organization_ add userId LONG;
+alter table Organization_ add userName VARCHAR(75) null;
+alter table Organization_ add createDate DATE null;
+alter table Organization_ add modifiedDate DATE null;
+
 drop table OrgGroupPermission;
 
+alter table PasswordPolicy add uuid_ VARCHAR(75) null;
 alter table PasswordPolicy add regex VARCHAR(75) null;
 
 drop index IX_C3A17327 on PasswordPolicyRel;
@@ -381,6 +498,27 @@ drop index IX_ED7CF243 on PasswordPolicyRel;
 
 drop table Permission_;
 
+alter table Phone add uuid_ VARCHAR(75) null;
+
+alter table PollsChoice add groupId LONG;
+alter table PollsChoice add companyId LONG;
+alter table PollsChoice add userId LONG;
+alter table PollsChoice add userName VARCHAR(75) null;
+alter table PollsChoice add createDate DATE null;
+alter table PollsChoice add modifiedDate DATE null;
+
+alter table PollsVote add uuid_ VARCHAR(75) null;
+alter table PollsVote add groupId LONG;
+
+update Portlet set active_ = FALSE where portletId = '62';
+update Portlet set active_ = FALSE where portletId = '98';
+update Portlet set active_ = FALSE where portletId = '173';
+
+alter table RepositoryEntry add companyId LONG;
+alter table RepositoryEntry add userId LONG;
+alter table RepositoryEntry add userName VARCHAR(75) null;
+alter table RepositoryEntry add createDate DATE null;
+alter table RepositoryEntry add modifiedDate DATE null;
 alter table RepositoryEntry add manualCheckInRequired BOOLEAN;
 
 drop table Resource_;
@@ -393,13 +531,54 @@ drop index IX_8D83D0CE on ResourcePermission;
 drop index IX_4A1F4402 on ResourcePermission;
 drop index IX_8DB864A9 on ResourcePermission;
 
+alter table Role_ add uuid_ VARCHAR(75) null;
+alter table Role_ add userId LONG;
+alter table Role_ add userName VARCHAR(75) null;
+alter table Role_ add createDate DATE null;
+alter table Role_ add modifiedDate DATE null;
+
 drop table Roles_Permissions;
+
+alter table SocialActivity add activitySetId LONG;
+alter table SocialActivity add parentClassNameId LONG;
+alter table SocialActivity add parentClassPK LONG;
 
 alter table SocialActivityCounter add active_ BOOLEAN;
 
 COMMIT_TRANSACTION;
 
 update SocialActivityCounter set active_ = TRUE;
+
+create table SocialActivitySet (
+	activitySetId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	createDate LONG,
+	modifiedDate LONG,
+	classNameId LONG,
+	classPK LONG,
+	type_ INTEGER,
+	extraData STRING null,
+	activityCount INTEGER
+);
+
+create table SystemEvent (
+	systemEventId LONG not null primary key,
+	groupId LONG,
+	companyId LONG,
+	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
+	classNameId LONG,
+	classPK LONG,
+	classUuid VARCHAR(75) null,
+	referrerClassNameId LONG,
+	parentSystemEventId LONG,
+	systemEventSetKey LONG,
+	type_ INTEGER,
+	extraData TEXT null
+);
 
 create table TrashEntry (
 	entryId LONG not null primary key,
@@ -410,6 +589,7 @@ create table TrashEntry (
 	createDate DATE null,
 	classNameId LONG,
 	classPK LONG,
+	systemEventSetKey LONG,
 	typeSettings TEXT null,
 	status INTEGER
 );
@@ -428,7 +608,28 @@ COMMIT_TRANSACTION;
 
 update User_ set ldapServerId = -1;
 
+alter table UserGroup add uuid_ VARCHAR(75) null;
+alter table UserGroup add userId LONG;
+alter table UserGroup add userName VARCHAR(75) null;
+alter table UserGroup add createDate DATE null;
+alter table UserGroup add modifiedDate DATE null;
+
+create table UserNotificationDelivery (
+	userNotificationDeliveryId LONG not null primary key,
+	companyId LONG,
+	userId LONG,
+	portletId VARCHAR(200) null,
+	classNameId LONG,
+	notificationType INTEGER,
+	deliveryType INTEGER,
+	deliver BOOLEAN
+);
+
+alter table UserNotificationEvent add delivered BOOLEAN;
+
 drop table Users_Permissions;
+
+alter table Website add uuid_ VARCHAR(75) null;
 
 alter table WikiNode add status INTEGER;
 alter table WikiNode add statusByUserId LONG;

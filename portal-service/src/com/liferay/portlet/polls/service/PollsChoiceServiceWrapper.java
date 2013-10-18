@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.polls.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link PollsChoiceService}.
- * </p>
+ * Provides a wrapper for {@link PollsChoiceService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       PollsChoiceService
+ * @author Brian Wing Shun Chan
+ * @see PollsChoiceService
  * @generated
  */
 public class PollsChoiceServiceWrapper implements PollsChoiceService,
@@ -36,6 +34,7 @@ public class PollsChoiceServiceWrapper implements PollsChoiceService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _pollsChoiceService.getBeanIdentifier();
 	}
@@ -45,29 +44,32 @@ public class PollsChoiceServiceWrapper implements PollsChoiceService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_pollsChoiceService.setBeanIdentifier(beanIdentifier);
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public PollsChoiceService getWrappedPollsChoiceService() {
 		return _pollsChoiceService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedPollsChoiceService(
 		PollsChoiceService pollsChoiceService) {
 		_pollsChoiceService = pollsChoiceService;
 	}
 
+	@Override
 	public PollsChoiceService getWrappedService() {
 		return _pollsChoiceService;
 	}
 
+	@Override
 	public void setWrappedService(PollsChoiceService pollsChoiceService) {
 		_pollsChoiceService = pollsChoiceService;
 	}

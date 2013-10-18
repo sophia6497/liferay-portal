@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.dao.orm.hibernate.region;
 
+import com.liferay.portal.cache.ehcache.CacheManagerUtil;
 import com.liferay.portal.cache.ehcache.EhcacheConfigurationUtil;
 import com.liferay.portal.cache.ehcache.ModifiableEhcacheWrapper;
 import com.liferay.portal.kernel.log.Log;
@@ -128,8 +129,9 @@ public class LiferayEhcacheRegionFactory extends EhCacheRegionFactory {
 
 	public void reconfigureCaches(URL cacheConfigFile) {
 		synchronized (manager) {
-			Configuration configuration = EhcacheConfigurationUtil.
-				getConfiguration(cacheConfigFile, true, _usingDefault);
+			Configuration configuration =
+				EhcacheConfigurationUtil.getConfiguration(
+					cacheConfigFile, true, _usingDefault);
 
 			Map<String, CacheConfiguration> cacheConfigurations =
 				configuration.getCacheConfigurations();
@@ -178,7 +180,7 @@ public class LiferayEhcacheRegionFactory extends EhCacheRegionFactory {
 
 			configuration.setDefaultTransactionManager(transactionManager);*/
 
-			manager = new CacheManager(configuration);
+			manager = CacheManagerUtil.createCacheManager(configuration);
 
 			boolean skipUpdateCheck = GetterUtil.getBoolean(
 				SystemProperties.get("net.sf.ehcache.skipUpdateCheck"));

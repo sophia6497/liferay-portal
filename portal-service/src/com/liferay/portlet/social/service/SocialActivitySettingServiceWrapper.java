@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.social.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link SocialActivitySettingService}.
- * </p>
+ * Provides a wrapper for {@link SocialActivitySettingService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       SocialActivitySettingService
+ * @author Brian Wing Shun Chan
+ * @see SocialActivitySettingService
  * @generated
  */
 public class SocialActivitySettingServiceWrapper
@@ -38,6 +36,7 @@ public class SocialActivitySettingServiceWrapper
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _socialActivitySettingService.getBeanIdentifier();
 	}
@@ -47,10 +46,12 @@ public class SocialActivitySettingServiceWrapper
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_socialActivitySettingService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portlet.social.model.SocialActivityDefinition getActivityDefinition(
 		long groupId, java.lang.String className, int activityType)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -59,6 +60,7 @@ public class SocialActivitySettingServiceWrapper
 			className, activityType);
 	}
 
+	@Override
 	public java.util.List<com.liferay.portlet.social.model.SocialActivityDefinition> getActivityDefinitions(
 		long groupId, java.lang.String className)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -67,6 +69,15 @@ public class SocialActivitySettingServiceWrapper
 			className);
 	}
 
+	@Override
+	public java.util.List<com.liferay.portlet.social.model.SocialActivitySetting> getActivitySettings(
+		long groupId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _socialActivitySettingService.getActivitySettings(groupId);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.json.JSONArray getJSONActivityDefinitions(
 		long groupId, java.lang.String className)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -75,6 +86,7 @@ public class SocialActivitySettingServiceWrapper
 			className);
 	}
 
+	@Override
 	public void updateActivitySetting(long groupId, java.lang.String className,
 		boolean enabled)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -83,6 +95,7 @@ public class SocialActivitySettingServiceWrapper
 			enabled);
 	}
 
+	@Override
 	public void updateActivitySetting(long groupId, java.lang.String className,
 		int activityType,
 		com.liferay.portlet.social.model.SocialActivityCounterDefinition activityCounterDefinition)
@@ -92,6 +105,7 @@ public class SocialActivitySettingServiceWrapper
 			activityType, activityCounterDefinition);
 	}
 
+	@Override
 	public void updateActivitySettings(long groupId,
 		java.lang.String className, int activityType,
 		java.util.List<com.liferay.portlet.social.model.SocialActivityCounterDefinition> activityCounterDefinitions)
@@ -102,24 +116,26 @@ public class SocialActivitySettingServiceWrapper
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public SocialActivitySettingService getWrappedSocialActivitySettingService() {
 		return _socialActivitySettingService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedSocialActivitySettingService(
 		SocialActivitySettingService socialActivitySettingService) {
 		_socialActivitySettingService = socialActivitySettingService;
 	}
 
+	@Override
 	public SocialActivitySettingService getWrappedService() {
 		return _socialActivitySettingService;
 	}
 
+	@Override
 	public void setWrappedService(
 		SocialActivitySettingService socialActivitySettingService) {
 		_socialActivitySettingService = socialActivitySettingService;

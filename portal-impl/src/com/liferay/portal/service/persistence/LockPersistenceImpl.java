@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.util.CalendarUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -49,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the lock service.
@@ -109,6 +111,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByUuid(String uuid) throws SystemException {
 		return findByUuid(uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -126,6 +129,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the range of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByUuid(String uuid, int start, int end)
 		throws SystemException {
 		return findByUuid(uuid, start, end, null);
@@ -145,6 +149,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the ordered range of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByUuid(String uuid, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -265,6 +270,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByUuid_First(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -294,6 +300,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the first matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByUuid_First(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Lock> list = findByUuid(uuid, 0, 1, orderByComparator);
@@ -314,6 +321,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByUuid_Last(String uuid, OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
 		Lock lock = fetchByUuid_Last(uuid, orderByComparator);
@@ -342,9 +350,14 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the last matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByUuid_Last(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid(uuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Lock> list = findByUuid(uuid, count - 1, count, orderByComparator);
 
@@ -365,6 +378,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a lock with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock[] findByUuid_PrevAndNext(long lockId, String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -519,6 +533,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @param uuid the uuid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid(String uuid) throws SystemException {
 		for (Lock lock : findByUuid(uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 				null)) {
@@ -533,6 +548,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the number of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid(String uuid) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID;
 
@@ -624,6 +640,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		return findByUuid_C(uuid, companyId, QueryUtil.ALL_POS,
@@ -644,6 +661,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the range of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByUuid_C(String uuid, long companyId, int start,
 		int end) throws SystemException {
 		return findByUuid_C(uuid, companyId, start, end, null);
@@ -664,6 +682,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the ordered range of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByUuid_C(String uuid, long companyId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -794,6 +813,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -827,6 +847,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the first matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Lock> list = findByUuid_C(uuid, companyId, 0, 1, orderByComparator);
@@ -848,6 +869,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -881,9 +903,14 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the last matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid_C(uuid, companyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Lock> list = findByUuid_C(uuid, companyId, count - 1, count,
 				orderByComparator);
@@ -906,6 +933,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a lock with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock[] findByUuid_C_PrevAndNext(long lockId, String uuid,
 		long companyId, OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -1066,6 +1094,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @param companyId the company ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		for (Lock lock : findByUuid_C(uuid, companyId, QueryUtil.ALL_POS,
@@ -1082,6 +1111,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the number of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_C;
@@ -1173,6 +1203,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByLtExpirationDate(Date expirationDate)
 		throws SystemException {
 		return findByLtExpirationDate(expirationDate, QueryUtil.ALL_POS,
@@ -1192,6 +1223,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the range of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByLtExpirationDate(Date expirationDate, int start,
 		int end) throws SystemException {
 		return findByLtExpirationDate(expirationDate, start, end, null);
@@ -1211,6 +1243,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the ordered range of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findByLtExpirationDate(Date expirationDate, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -1320,6 +1353,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByLtExpirationDate_First(Date expirationDate,
 		OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -1350,6 +1384,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the first matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByLtExpirationDate_First(Date expirationDate,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Lock> list = findByLtExpirationDate(expirationDate, 0, 1,
@@ -1371,6 +1406,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByLtExpirationDate_Last(Date expirationDate,
 		OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -1401,9 +1437,14 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the last matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByLtExpirationDate_Last(Date expirationDate,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByLtExpirationDate(expirationDate);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Lock> list = findByLtExpirationDate(expirationDate, count - 1,
 				count, orderByComparator);
@@ -1425,6 +1466,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a lock with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock[] findByLtExpirationDate_PrevAndNext(long lockId,
 		Date expirationDate, OrderByComparator orderByComparator)
 		throws NoSuchLockException, SystemException {
@@ -1577,6 +1619,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @param expirationDate the expiration date
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByLtExpirationDate(Date expirationDate)
 		throws SystemException {
 		for (Lock lock : findByLtExpirationDate(expirationDate,
@@ -1592,6 +1635,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the number of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByLtExpirationDate(Date expirationDate)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_LTEXPIRATIONDATE;
@@ -1673,6 +1717,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByC_K(String className, String key)
 		throws NoSuchLockException, SystemException {
 		Lock lock = fetchByC_K(className, key);
@@ -1708,6 +1753,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByC_K(String className, String key)
 		throws SystemException {
 		return fetchByC_K(className, key, true);
@@ -1722,6 +1768,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the matching lock, or <code>null</code> if a matching lock could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByC_K(String className, String key,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { className, key };
@@ -1843,6 +1890,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the lock that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock removeByC_K(String className, String key)
 		throws NoSuchLockException, SystemException {
 		Lock lock = findByC_K(className, key);
@@ -1858,6 +1906,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the number of matching locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_K(String className, String key)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_C_K;
@@ -1943,11 +1992,16 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	private static final String _FINDER_COLUMN_C_K_KEY_2 = "lock.key = ?";
 	private static final String _FINDER_COLUMN_C_K_KEY_3 = "(lock.key IS NULL OR lock.key = '')";
 
+	public LockPersistenceImpl() {
+		setModelClass(Lock.class);
+	}
+
 	/**
 	 * Caches the lock in the entity cache if it is enabled.
 	 *
 	 * @param lock the lock
 	 */
+	@Override
 	public void cacheResult(Lock lock) {
 		EntityCacheUtil.putResult(LockModelImpl.ENTITY_CACHE_ENABLED,
 			LockImpl.class, lock.getPrimaryKey(), lock);
@@ -1963,6 +2017,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 *
 	 * @param locks the locks
 	 */
+	@Override
 	public void cacheResult(List<Lock> locks) {
 		for (Lock lock : locks) {
 			if (EntityCacheUtil.getResult(LockModelImpl.ENTITY_CACHE_ENABLED,
@@ -2074,6 +2129,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @param lockId the primary key for the new lock
 	 * @return the new lock
 	 */
+	@Override
 	public Lock create(long lockId) {
 		Lock lock = new LockImpl();
 
@@ -2095,6 +2151,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a lock with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock remove(long lockId) throws NoSuchLockException, SystemException {
 		return remove((Serializable)lockId);
 	}
@@ -2316,6 +2373,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @throws com.liferay.portal.NoSuchLockException if a lock with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock findByPrimaryKey(long lockId)
 		throws NoSuchLockException, SystemException {
 		return findByPrimaryKey((Serializable)lockId);
@@ -2375,6 +2433,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the lock, or <code>null</code> if a lock with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Lock fetchByPrimaryKey(long lockId) throws SystemException {
 		return fetchByPrimaryKey((Serializable)lockId);
 	}
@@ -2385,6 +2444,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -2401,6 +2461,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the range of locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findAll(int start, int end) throws SystemException {
 		return findAll(start, end, null);
 	}
@@ -2418,6 +2479,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the ordered range of locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Lock> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -2503,6 +2565,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (Lock lock : findAll()) {
 			remove(lock);
@@ -2515,6 +2578,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	 * @return the number of locks
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
 				FINDER_ARGS_EMPTY, this);
@@ -2546,6 +2610,11 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 		return count.intValue();
 	}
 
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
+	}
+
 	/**
 	 * Initializes the lock persistence.
 	 */
@@ -2560,7 +2629,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<Lock>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -2587,6 +2656,9 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No Lock exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(LockPersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"uuid", "key"
+			});
 	private static Lock _nullLock = new LockImpl() {
 			@Override
 			public Object clone() {
@@ -2600,6 +2672,7 @@ public class LockPersistenceImpl extends BasePersistenceImpl<Lock>
 		};
 
 	private static CacheModel<Lock> _nullLockCacheModel = new CacheModel<Lock>() {
+			@Override
 			public Lock toEntityModel() {
 				return _nullLock;
 			}

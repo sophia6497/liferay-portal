@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.template;
 import com.liferay.portal.deploy.sandbox.SandboxHandler;
 import com.liferay.portal.kernel.cache.MultiVMPoolUtil;
 import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.cache.SingleVMPoolUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.template.StringTemplateResource;
 import com.liferay.portal.kernel.template.Template;
@@ -24,11 +25,16 @@ import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateException;
 import com.liferay.portal.kernel.template.TemplateResource;
 import com.liferay.portal.kernel.template.TemplateResourceLoader;
+import com.liferay.portal.kernel.template.URLTemplateResource;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 
 import java.io.Serializable;
 import java.io.Writer;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -39,7 +45,7 @@ public abstract class AbstractTemplate implements Template {
 
 	public AbstractTemplate(
 		TemplateResource templateResource,
-		TemplateResource errorTemplateResource,
+		TemplateResource errorTemplateResource, Map<String, Object> context,
 		TemplateContextHelper templateContextHelper, String templateManagerName,
 		long interval) {
 
@@ -59,6 +65,14 @@ public abstract class AbstractTemplate implements Template {
 		this.templateResource = templateResource;
 		this.errorTemplateResource = errorTemplateResource;
 
+		this.context = new HashMap<String, Object>();
+
+		if (context != null) {
+			for (Map.Entry<String, Object> entry : context.entrySet()) {
+				put(entry.getKey(), entry.getValue());
+			}
+		}
+
 		_templateContextHelper = templateContextHelper;
 
 		if (interval != 0) {
@@ -66,16 +80,34 @@ public abstract class AbstractTemplate implements Template {
 		}
 	}
 
+	@Override
+	public Object get(String key) {
+		if (key == null) {
+			return null;
+		}
+
+		return context.get(key);
+	}
+
+	@Override
+	public String[] getKeys() {
+		Set<String> keys = context.keySet();
+
+		return keys.toArray(new String[keys.size()]);
+	}
+
+	@Override
 	public void prepare(HttpServletRequest request) {
 		_templateContextHelper.prepare(this, request);
 	}
 
-	public boolean processTemplate(Writer writer) throws TemplateException {
+	@Override
+	public void processTemplate(Writer writer) throws TemplateException {
 		if (errorTemplateResource == null) {
 			try {
 				processTemplate(templateResource, writer);
 
-				return true;
+				return;
 			}
 			catch (Exception e) {
 				throw new TemplateException(
@@ -85,31 +117,36 @@ public abstract class AbstractTemplate implements Template {
 			}
 		}
 
-		Writer oldWriter = (Writer)get(WRITER);
+		Writer oldWriter = (Writer)get(TemplateConstants.WRITER);
 
 		try {
 			UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
-			put(WRITER, unsyncStringWriter);
+			put(TemplateConstants.WRITER, unsyncStringWriter);
 
 			processTemplate(templateResource, unsyncStringWriter);
 
 			StringBundler sb = unsyncStringWriter.getStringBundler();
 
 			sb.writeTo(writer);
-
-			return true;
 		}
 		catch (Exception e) {
-			put(WRITER, writer);
+			put(TemplateConstants.WRITER, writer);
 
 			handleException(e, writer);
-
-			return false;
 		}
 		finally {
-			put(WRITER, oldWriter);
+			put(TemplateConstants.WRITER, oldWriter);
 		}
+	}
+
+	@Override
+	public void put(String key, Object value) {
+		if ((key == null) || (value == null)) {
+			return;
+		}
+
+		context.put(key, value);
 	}
 
 	protected String getTemplateResourceUUID(
@@ -126,6 +163,7 @@ public abstract class AbstractTemplate implements Template {
 			TemplateResource templateResource, Writer writer)
 		throws Exception;
 
+	protected Map<String, Object> context;
 	protected TemplateResource errorTemplateResource;
 	protected TemplateResource templateResource;
 
@@ -149,8 +187,8 @@ public abstract class AbstractTemplate implements Template {
 		cacheName = cacheName.concat(StringPool.PERIOD).concat(
 			templateManagerName);
 
-		PortalCache<String, Serializable> portalCache =
-			MultiVMPoolUtil.getCache(cacheName);
+		PortalCache<String, Serializable> portalCache = _getPortalCache(
+			templateResource, cacheName);
 
 		Object object = portalCache.get(templateResource.getTemplateId());
 
@@ -177,12 +215,34 @@ public abstract class AbstractTemplate implements Template {
 				errorTemplateResource);
 		}
 
+		portalCache = _getPortalCache(errorTemplateResource, cacheName);
+
 		object = portalCache.get(errorTemplateResource.getTemplateId());
 
 		if ((object == null) || !errorTemplateResource.equals(object)) {
 			portalCache.put(
 				errorTemplateResource.getTemplateId(), errorTemplateResource);
 		}
+	}
+
+	private PortalCache<String, Serializable> _getPortalCache(
+		TemplateResource templateResource, String cacheName) {
+
+		if (!(templateResource instanceof CacheTemplateResource)) {
+			return MultiVMPoolUtil.getCache(cacheName);
+		}
+
+		CacheTemplateResource cacheTemplateResource =
+			(CacheTemplateResource)templateResource;
+
+		TemplateResource innerTemplateResource =
+			cacheTemplateResource.getInnerTemplateResource();
+
+		if (innerTemplateResource instanceof URLTemplateResource) {
+			return SingleVMPoolUtil.getCache(cacheName);
+		}
+
+		return MultiVMPoolUtil.getCache(cacheName);
 	}
 
 	private TemplateContextHelper _templateContextHelper;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,8 @@ public interface ActionableDynamicQuery {
 
 	public void performActions() throws PortalException, SystemException;
 
+	public long performCount() throws PortalException, SystemException;
+
 	public void setBaseLocalService(BaseLocalService baseLocalService)
 		throws SystemException;
 
@@ -36,8 +38,12 @@ public interface ActionableDynamicQuery {
 
 	public void setGroupId(long groupId);
 
+	public void setGroupIdPropertyName(String groupIdPropertyName);
+
 	public void setInterval(int interval);
 
 	public void setPrimaryKeyPropertyName(String primaryKeyPropertyName);
+
+	public void setSearchEngineId(String searchEngineId);
 
 }

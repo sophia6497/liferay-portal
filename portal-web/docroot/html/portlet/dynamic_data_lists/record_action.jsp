@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,6 +28,12 @@ DDLRecord record = (DDLRecord)row.getObject();
 long formDDMTemplateId = GetterUtil.getLong((String)row.getParameter("formDDMTemplateId"));
 
 boolean editable = GetterUtil.getBoolean((String)row.getParameter("editable"));
+
+DDLRecordVersion recordVersion = record.getRecordVersion();
+
+if (editable) {
+	recordVersion = record.getLatestRecordVersion();
+}
 %>
 
 <liferay-ui:icon-menu>
@@ -36,8 +42,8 @@ boolean editable = GetterUtil.getBoolean((String)row.getParameter("editable"));
 			<portlet:param name="struts_action" value="/dynamic_data_lists/view_record" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
 			<portlet:param name="recordId" value="<%= String.valueOf(record.getRecordId()) %>" />
+			<portlet:param name="version" value="<%= recordVersion.getVersion() %>" />
 			<portlet:param name="formDDMTemplateId" value="<%= String.valueOf(formDDMTemplateId) %>" />
-			<portlet:param name="editable" value="<%= String.valueOf(editable) %>" />
 		</portlet:renderURL>
 
 		<liferay-ui:icon

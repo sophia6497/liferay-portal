@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -50,7 +50,7 @@ portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
 <c:if test="<%= fileEntry.isCheckedOut() %>">
 	<c:choose>
 		<c:when test="<%= fileEntry.hasLock() %>">
-			<div class="portlet-msg-success">
+			<div class="alert alert-success">
 				<c:choose>
 					<c:when test="<%= lock.isNeverExpires() %>">
 						<liferay-ui:message key="you-now-have-an-indefinite-lock-on-this-document" />
@@ -58,7 +58,7 @@ portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
 					<c:otherwise>
 
 						<%
-						String lockExpirationTime = LanguageUtil.getTimeDescription(pageContext, DLFileEntryConstants.LOCK_EXPIRATION_TIME).toLowerCase();
+						String lockExpirationTime = StringUtil.toLowerCase(LanguageUtil.getTimeDescription(pageContext, DLFileEntryConstants.LOCK_EXPIRATION_TIME));
 						%>
 
 						<%= LanguageUtil.format(pageContext, "you-now-have-a-lock-on-this-document", lockExpirationTime, false) %>
@@ -67,7 +67,7 @@ portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
 			</div>
 		</c:when>
 		<c:otherwise>
-			<div class="portlet-msg-error">
+			<div class="alert alert-error">
 				<%= LanguageUtil.format(pageContext, "you-cannot-modify-this-document-because-it-was-checked-out-by-x-on-x", new Object[] {HtmlUtil.escape(PortalUtil.getUserName(lock.getUserId(), String.valueOf(lock.getUserId()))), dateFormatDateTime.format(lock.getCreateDate())}, false) %>
 			</div>
 		</c:otherwise>
@@ -75,7 +75,7 @@ portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
 </c:if>
 
 <c:if test="<%= cmd.equals(Constants.MOVE_FROM_TRASH) %>">
-	<div class="portlet-msg-alert">
+	<div class="alert alert-block">
 		<liferay-ui:message arguments="<%= fileEntry.getTitle() %>" key="the-original-folder-does-not-exist-anymore" />
 	</div>
 </c:if>
@@ -119,35 +119,18 @@ portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
 		}
 		%>
 
-		<portlet:renderURL var="viewFolderURL">
-			<portlet:param name="struts_action" value="/document_library/view" />
-			<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
-		</portlet:renderURL>
-
 		<c:if test="<%= !cmd.equals(Constants.MOVE_FROM_TRASH) %>">
 			<aui:field-wrapper label="current-folder">
-				<liferay-ui:icon
-					image="folder"
-					label="<%= true %>"
-					message="<%= folderName %>"
-					url="<%= viewFolderURL %>"
-				/>
+				<liferay-ui:input-resource url="<%= folderName %>" />
 			</aui:field-wrapper>
 		</c:if>
 
 		<aui:field-wrapper label="new-folder">
-			<aui:a href="<%= viewFolderURL %>" id="folderName"><%= folderName %></aui:a>
+			<div class="input-append">
+				<liferay-ui:input-resource id="folderName" url="<%= folderName %>" />
 
-			<portlet:renderURL var="selectFolderURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-				<portlet:param name="struts_action" value="/document_library/select_folder" />
-				<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
-			</portlet:renderURL>
-
-			<%
-			String taglibOpenFolderWindow = "var folderWindow = window.open('" + selectFolderURL + "','folder', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680'); void(''); folderWindow.focus();";
-			%>
-
-			<aui:button onClick="<%= taglibOpenFolderWindow %>" value="select" />
+				<aui:button name="selectFolderButton" value="select" />
+			</div>
 		</aui:field-wrapper>
 
 		<aui:button-row>
@@ -158,25 +141,45 @@ portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
 	</aui:fieldset>
 </aui:form>
 
+<portlet:renderURL var="selectFolderURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+	<portlet:param name="struts_action" value="/document_library/select_folder" />
+	<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
+</portlet:renderURL>
+
+<aui:script use="aui-base">
+	A.one('#<portlet:namespace />selectFolderButton').on(
+		'click',
+		function(event) {
+			Liferay.Util.selectEntity(
+				{
+					dialog: {
+						constrain: true,
+						modal: true,
+						width: 680
+					},
+					id: '<portlet:namespace />selectFolder',
+					title: '<liferay-ui:message arguments="folder" key="select-x" />',
+					uri: '<%= selectFolderURL.toString() %>'
+				},
+				function(event) {
+					var folderData = {
+						idString: 'newFolderId',
+						idValue: event.folderid,
+						nameString: 'folderName',
+						nameValue: event.foldername
+					};
+
+					Liferay.Util.selectFolder(folderData, '<portlet:namespace />');
+				}
+			);
+		}
+	);
+</aui:script>
+
 <aui:script>
 	function <portlet:namespace />saveFileEntry() {
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	function <portlet:namespace />selectFolder(folderId, folderName) {
-		var folderData = {
-			idString: 'newFolderId',
-			idValue: folderId,
-			nameString: 'folderName',
-			nameValue: folderName
-		};
-
-		Liferay.Util.selectFolder(folderData, '<portlet:renderURL><portlet:param name="struts_action" value="/document_library/view" /></portlet:renderURL>', '<portlet:namespace />');
-	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />file);
-	</c:if>
 </aui:script>
 
 <%

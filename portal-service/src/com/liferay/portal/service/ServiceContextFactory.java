@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -73,10 +73,17 @@ public class ServiceContextFactory {
 					PortalUtil.getLayoutURL(themeDisplay), themeDisplay,
 					themeDisplay.getLayout(), true));
 			serviceContext.setPathMain(PortalUtil.getPathMain());
+			serviceContext.setPathFriendlyURLPrivateGroup(
+				PortalUtil.getPathFriendlyURLPrivateGroup());
+			serviceContext.setPathFriendlyURLPrivateUser(
+				PortalUtil.getPathFriendlyURLPrivateUser());
+			serviceContext.setPathFriendlyURLPublic(
+				PortalUtil.getPathFriendlyURLPublic());
 			serviceContext.setPlid(themeDisplay.getPlid());
 			serviceContext.setPortalURL(PortalUtil.getPortalURL(request));
 			serviceContext.setScopeGroupId(themeDisplay.getScopeGroupId());
 			serviceContext.setSignedIn(themeDisplay.isSignedIn());
+			serviceContext.setTimeZone(themeDisplay.getTimeZone());
 
 			User user = themeDisplay.getUser();
 
@@ -88,6 +95,12 @@ public class ServiceContextFactory {
 
 			serviceContext.setCompanyId(companyId);
 
+			serviceContext.setPathFriendlyURLPrivateGroup(
+				PortalUtil.getPathFriendlyURLPrivateGroup());
+			serviceContext.setPathFriendlyURLPrivateUser(
+				PortalUtil.getPathFriendlyURLPrivateUser());
+			serviceContext.setPathFriendlyURLPublic(
+				PortalUtil.getPathFriendlyURLPublic());
 			serviceContext.setPathMain(PortalUtil.getPathMain());
 
 			User user = null;
@@ -121,7 +134,7 @@ public class ServiceContextFactory {
 			String name = entry.getKey();
 			String[] values = entry.getValue();
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				if (values.length == 1) {
 					attributes.put(name, values[0]);
 				}
@@ -237,11 +250,15 @@ public class ServiceContextFactory {
 
 		serviceContext.setAssetEntryVisible(assetEntryVisible);
 
-		long[] assetLinkEntryIds = StringUtil.split(
-			ParamUtil.getString(
-				request, "assetLinksSearchContainerPrimaryKeys"), 0L);
+		String assetLinkEntryIdsString = request.getParameter(
+			"assetLinksSearchContainerPrimaryKeys");
 
-		serviceContext.setAssetLinkEntryIds(assetLinkEntryIds);
+		if (assetLinkEntryIdsString != null) {
+			long[] assetLinkEntryIds = StringUtil.split(
+				assetLinkEntryIdsString, 0L);
+
+			serviceContext.setAssetLinkEntryIds(assetLinkEntryIds);
+		}
 
 		String assetTagNamesString = request.getParameter("assetTagNames");
 
@@ -283,11 +300,18 @@ public class ServiceContextFactory {
 			serviceContext.setLayoutFullURL(
 				PortalUtil.getLayoutFullURL(themeDisplay));
 			serviceContext.setLayoutURL(PortalUtil.getLayoutURL(themeDisplay));
+			serviceContext.setPathFriendlyURLPrivateGroup(
+				PortalUtil.getPathFriendlyURLPrivateGroup());
+			serviceContext.setPathFriendlyURLPrivateUser(
+				PortalUtil.getPathFriendlyURLPrivateUser());
+			serviceContext.setPathFriendlyURLPublic(
+				PortalUtil.getPathFriendlyURLPublic());
 			serviceContext.setPathMain(PortalUtil.getPathMain());
 			serviceContext.setPlid(themeDisplay.getPlid());
 			serviceContext.setPortalURL(
 				PortalUtil.getPortalURL(portletRequest));
 			serviceContext.setSignedIn(themeDisplay.isSignedIn());
+			serviceContext.setTimeZone(themeDisplay.getTimeZone());
 
 			User user = themeDisplay.getUser();
 
@@ -309,7 +333,7 @@ public class ServiceContextFactory {
 
 			String[] values = portletRequest.getParameterValues(param);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				if (values.length == 1) {
 					attributes.put(param, values[0]);
 				}
@@ -428,11 +452,15 @@ public class ServiceContextFactory {
 
 		serviceContext.setAssetEntryVisible(assetEntryVisible);
 
-		long[] assetLinkEntryIds = StringUtil.split(
-			ParamUtil.getString(
-				portletRequest, "assetLinksSearchContainerPrimaryKeys"), 0L);
+		String assetLinkEntryIdsString = request.getParameter(
+			"assetLinksSearchContainerPrimaryKeys");
 
-		serviceContext.setAssetLinkEntryIds(assetLinkEntryIds);
+		if (assetLinkEntryIdsString != null) {
+			long[] assetLinkEntryIds = StringUtil.split(
+				assetLinkEntryIdsString, 0L);
+
+			serviceContext.setAssetLinkEntryIds(assetLinkEntryIds);
+		}
 
 		String assetTagNamesString = request.getParameter("assetTagNames");
 

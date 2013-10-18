@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,10 +33,12 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
 		return _SINGLETON;
 	}
 
+	@Override
 	public ILoggerFactory getLoggerFactory() {
 		return _iLoggerFactory;
 	}
 
+	@Override
 	public String getLoggerFactoryClassStr() {
 		return _LOGGER_FACTORY_CLASS_NAME;
 	}

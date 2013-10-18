@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portal.setup;
 
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.dao.jdbc.util.DataSourceSwapper;
 import com.liferay.portal.events.StartupAction;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
@@ -117,6 +116,29 @@ public class SetupWizardUtil {
 		return true;
 	}
 
+	public static void reloadDataSources(Properties jdbcProperties)
+		throws Exception {
+
+		// Data sources
+
+		jdbcProperties = PropertiesUtil.getProperties(
+			jdbcProperties,"jdbc.default.",true);
+
+		DataSourceSwapper.swapCounterDataSource(jdbcProperties);
+		DataSourceSwapper.swapLiferayDataSource(jdbcProperties);
+
+		// Caches
+
+		CacheRegistryUtil.clear();
+		MultiVMPoolUtil.clear();
+		WebCachePoolUtil.clear();
+		CentralizedThreadLocal.clearShortLivedThreadLocals();
+
+		// Persistence beans
+
+		_reconfigurePersistenceBeans();
+	}
+
 	public static void setSetupFinished(boolean setupFinished) {
 		_setupFinished = setupFinished;
 	}
@@ -133,7 +155,13 @@ public class SetupWizardUtil {
 		String password = _getParameter(
 			request, PropsKeys.JDBC_DEFAULT_PASSWORD, null);
 
-		_testConnection(driverClassName, url, userName, password);
+		String jndiName = StringPool.BLANK;
+
+		if (Validator.isNotNull(PropsValues.JDBC_DEFAULT_JNDI_NAME)) {
+			jndiName = PropsValues.JDBC_DEFAULT_JNDI_NAME;
+		}
+
+		_testConnection(driverClassName, url, userName, password, jndiName);
 	}
 
 	public static void updateLanguage(
@@ -291,22 +319,7 @@ public class SetupWizardUtil {
 
 		jdbcProperties.putAll(unicodeProperties);
 
-		jdbcProperties = PropertiesUtil.getProperties(
-			jdbcProperties,"jdbc.default.",true);
-
-		DataSourceSwapper.swapCounterDataSource(jdbcProperties);
-		DataSourceSwapper.swapLiferayDataSource(jdbcProperties);
-
-		// Caches
-
-		CacheRegistryUtil.clear();
-		MultiVMPoolUtil.clear();
-		WebCachePoolUtil.clear();
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
-
-		// Persistence beans
-
-		_reconfigurePersistenceBeans();
+		reloadDataSources(jdbcProperties);
 
 		// Quartz
 
@@ -327,21 +340,25 @@ public class SetupWizardUtil {
 
 	private static void _testConnection(
 			String driverClassName, String url, String userName,
-			String password)
+			String password, String jndiName)
 		throws Exception {
 
-		Class.forName(driverClassName);
+		if (Validator.isNull(jndiName)) {
+			Class.forName(driverClassName);
+		}
 
+		DataSource dataSource = null;
 		Connection connection = null;
 
 		try {
-			DataSource dataSource = DataSourceFactoryUtil.initDataSource(
-				driverClassName, url, userName, password);
+			dataSource = DataSourceFactoryUtil.initDataSource(
+				driverClassName, url, userName, password, jndiName);
 
 			connection = dataSource.getConnection();
 		}
 		finally {
 			DataAccess.cleanUp(connection);
+			DataSourceFactoryUtil.destroyDataSource(dataSource);
 		}
 	}
 
@@ -391,12 +408,10 @@ public class SetupWizardUtil {
 
 		unicodeProperties.put(PropsKeys.ADMIN_EMAIL_FROM_NAME, fullName);
 
-		User user = null;
+		User user = UserLocalServiceUtil.fetchUserByEmailAddress(
+			themeDisplay.getCompanyId(), emailAddress);
 
-		try {
-			user = UserLocalServiceUtil.getUserByEmailAddress(
-				themeDisplay.getCompanyId(), emailAddress);
-
+		if (user != null) {
 			String greeting = LanguageUtil.format(
 				themeDisplay.getLocale(), "welcome-x",
 				StringPool.SPACE + fullName, false);
@@ -427,7 +442,7 @@ public class SetupWizardUtil {
 				contact.getJobTitle(), null, null, null, null, null,
 				new ServiceContext());
 		}
-		catch (NoSuchUserException nsue) {
+		else {
 			UserLocalServiceUtil.addDefaultAdminUser(
 				themeDisplay.getCompanyId(), screenName, emailAddress,
 				themeDisplay.getLocale(), firstName, StringPool.BLANK,

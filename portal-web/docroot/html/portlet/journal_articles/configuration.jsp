@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,7 +30,7 @@ groupId = ParamUtil.getLong(request, "groupId", groupId);
 <aui:form action="<%= configurationActionURL %>" method="post" name="fm1">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
 	<aui:input name="redirect" type="hidden" value='<%= configurationRenderURL + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur=" + cur %>' />
-	<aui:input name="preferences--ddmStructureId--" type="hidden" value="<%= ddmStructureId %>" />
+	<aui:input name="preferences--ddmStructureKey--" type="hidden" value="<%= ddmStructureKey %>" />
 
 	<liferay-ui:panel-container extended="<%= true %>" id="journalArticlesSettingsPanelContainer" persistState="<%= true %>">
 		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="journalArticlesFilterPanel" persistState="<%= true %>" title="filter">
@@ -39,19 +39,19 @@ groupId = ParamUtil.getLong(request, "groupId", groupId);
 					<aui:option label="global" selected="<%= groupId == themeDisplay.getCompanyGroupId() %>" value="<%= themeDisplay.getCompanyGroupId() %>" />
 
 					<%
-					List<Group> mySites = user.getMySites();
+					List<Group> mySiteGroups = user.getMySiteGroups();
 
-					for (int i = 0; i < mySites.size(); i++) {
-						Group group = mySites.get(i);
+					for (int i = 0; i < mySiteGroups.size(); i++) {
+						Group group = mySiteGroups.get(i);
 
-						String groupName = HtmlUtil.escape(group.getDescriptiveName(locale));
+						String groupDescriptiveName = HtmlUtil.escape(group.getDescriptiveName(locale));
 
 						if (group.isUser()) {
-							groupName = LanguageUtil.get(pageContext, "my-site");
+							groupDescriptiveName = LanguageUtil.get(pageContext, "my-site");
 						}
 					%>
 
-						<aui:option label="<%= groupName %>" selected="<%= groupId == group.getGroupId() %>" value="<%= group.getGroupId() %>" />
+						<aui:option label="<%= groupDescriptiveName %>" selected="<%= groupId == group.getGroupId() %>" value="<%= group.getGroupId() %>" />
 
 					<%
 					}
@@ -87,19 +87,19 @@ groupId = ParamUtil.getLong(request, "groupId", groupId);
 					else {
 						ddmStructureName = LanguageUtil.get(pageContext, "any");
 					}
+
+					if (Validator.isNotNull(ddmStructureDescription)) {
+						ddmStructureName = ddmStructureName + " (" + ddmStructureDescription+ ")";
+					}
 					%>
 
-					<div id="<portlet:namespace />structure">
-						<%= ddmStructureName %>
+					<div class="input-append">
+						<liferay-ui:input-resource id="structure" url="<%= ddmStructureName %>" />
 
-						<c:if test="<%= Validator.isNotNull (ddmStructureDescription) %>">
-							<em>(<%= ddmStructureDescription %>)</em>
-						</c:if>
+						<aui:button onClick='<%= renderResponse.getNamespace() + "openStructureSelector();" %>' value="select" />
+
+						<aui:button name="removeStructureButton" onClick='<%= renderResponse.getNamespace() + "removeStructure();" %>' value="remove" />
 					</div>
-
-					<aui:button onClick='<%= renderResponse.getNamespace() + "openStructureSelector();" %>' value="select" />
-
-					<aui:button name="removeStructureButton" onClick='<%= renderResponse.getNamespace() + "removeStructure();" %>' value="remove" />
 				</aui:field-wrapper>
 			</aui:fieldset>
 		</liferay-ui:panel>
@@ -154,19 +154,24 @@ groupId = ParamUtil.getLong(request, "groupId", groupId);
 	function <portlet:namespace />openStructureSelector() {
 		Liferay.Util.openDDMPortlet(
 			{
-			chooseCallback: '<portlet:namespace />selectStructure',
-			classNameId: '<%= PortalUtil.getClassNameId(DDMStructure.class) %>',
-			classPK: <%= ddmStructureId %>,
-			ddmResource: '<%= ddmResource %>',
-			dialog: {
-				width: 820
+				basePortletURL: '<%= PortletURLFactoryUtil.create(request, PortletKeys.DYNAMIC_DATA_MAPPING, themeDisplay.getPlid(), PortletRequest.RENDER_PHASE) %>',
+				classPK: <%= (ddmStructure != null) ? ddmStructure.getPrimaryKey() : 0 %>,
+				dialog: {
+					destroyOnHide: true
+				},
+				eventName: '<portlet:namespace />selectStructure',
+				groupId: <%= groupId %>,
+				refererPortletName: '<%= PortletKeys.JOURNAL %>',
+				showGlobalScope: true,
+				struts_action: '/dynamic_data_mapping/select_structure',
+				title: '<%= UnicodeLanguageUtil.get(pageContext, "structures") %>'
 			},
-			groupId: <%= groupId %>,
-			saveCallback: '<portlet:namespace />selectStructure',
-			storageType: '<%= PropsValues.JOURNAL_ARTICLE_STORAGE_TYPE %>',
-			structureName: 'structure',
-			structureType: 'com.liferay.portlet.journal.model.JournalArticle',
-			title: '<%= UnicodeLanguageUtil.get(pageContext, "structures") %>'
+			function(event) {
+				var A = AUI();
+
+				document.<portlet:namespace />fm1.<portlet:namespace />ddmStructureKey.value = event.ddmstructurekey;
+
+				A.one('#<portlet:namespace />structure').val(event.name + ' (' + event.ddmstructureid + ')');
 			}
 		);
 	}
@@ -177,26 +182,9 @@ groupId = ParamUtil.getLong(request, "groupId", groupId);
 		function() {
 			var A = AUI();
 
-			document.<portlet:namespace />fm1.<portlet:namespace />ddmStructureId.value = "";
+			document.<portlet:namespace />fm1.<portlet:namespace />ddmStructureKey.value = "";
 
-			A.one('#<portlet:namespace />structure').html('<%= UnicodeLanguageUtil.get(pageContext, "any") %>');
-		},
-		['aui-base']
-	);
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />selectStructure',
-		function(ddmStructureId, ddmStructureName, dialog) {
-			var A = AUI();
-
-			document.<portlet:namespace />fm1.<portlet:namespace />ddmStructureId.value = ddmStructureId;
-
-			A.one('#<portlet:namespace />structure').html(ddmStructureId + ' <em>(' + ddmStructureName + ')</em>');
-
-			if (dialog) {
-				dialog.close();
-			}
+			A.one('#<portlet:namespace />structure').val('<%= UnicodeLanguageUtil.get(pageContext, "any") %>');
 		},
 		['aui-base']
 	);

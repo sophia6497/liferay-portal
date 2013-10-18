@@ -5,7 +5,7 @@ AUI.add(
 		var Lang = A.Lang;
 		var History = Liferay.HistoryManager;
 
-		var UA = A.UA;
+		var IE = A.UA.ie;
 
 		var CSS_SYNC_MESSAGE_HIDDEN = 'sync-message-hidden';
 
@@ -29,7 +29,7 @@ AUI.add(
 
 		var STR_KEYWORDS = 'keywords';
 
-		var STR_PAGINATOR_DATA = 'paginatorData';
+		var STR_PAGINATION_DATA = 'paginationData';
 
 		var STR_ROW_IDS_FILE_SHORTCUT_CHECKBOX = 'rowIdsDLFileShortcutCheckbox';
 
@@ -55,13 +55,13 @@ AUI.add(
 
 		var SRC_SEARCH = 3;
 
-		var TPL_MESSAGE_SEARCHING = '<div class="portlet-msg-info">{0}</div><div class="loading-animation" />';
+		var TPL_MESSAGE_SEARCHING = '<div class="alert alert-info">{0}</div><div class="loading-animation" />';
 
 		var WIN = A.config.win;
 
 		var DocumentLibrary = A.Component.create(
 			{
-				AUGMENTS: [Liferay.PortletBase],
+				AUGMENTS: [Liferay.PortletBase, Liferay.DocumentLibraryUpload],
 
 				EXTENDS: A.Base,
 
@@ -94,7 +94,7 @@ AUI.add(
 									contentBox: instance.byId('syncNotificationContent'),
 									id: instance.NS + 'show-sync-message',
 									trigger: instance.one('#showSyncMessageIconContainer'),
-									visible: !config.syncMessageSuppressed
+									visible: true
 								}
 							).render();
 						}
@@ -117,8 +117,8 @@ AUI.add(
 
 						var paginatorConfig = config.paginator;
 
-						paginatorConfig.entryPaginatorContainer = '.document-entries-paginator';
-						paginatorConfig.folderPaginatorContainer = '.folder-paginator';
+						paginatorConfig.entryPaginationContainer = '.document-entries-pagination';
+						paginatorConfig.folderPaginationContainer = '.folder-pagination';
 						paginatorConfig.namespace = namespace;
 
 						var appViewPaginator = new Liferay.AppViewPaginator(paginatorConfig);
@@ -183,7 +183,7 @@ AUI.add(
 
 						instance._repositoriesData = {};
 
-						eventHandles.push(Liferay.on(config.portletId + ':portletRefreshed', A.bind(instance.destructor, instance)));
+						eventHandles.push(Liferay.on(config.portletId + ':portletRefreshed', A.bind('destructor', instance)));
 
 						var searchFormNode = instance.one('#fm1');
 
@@ -192,6 +192,8 @@ AUI.add(
 						}
 
 						instance._toggleSyncNotification();
+
+						instance._toggleTrashAction();
 					},
 
 					destructor: function() {
@@ -310,24 +312,28 @@ AUI.add(
 						var content = A.Node.create(responseData);
 
 						if (content) {
+							instance._setSearchResults(content);
+
 							instance._appViewFolders.processData(content);
 
 							instance._appViewSelect.syncDisplayStyleToolbar();
-
-							instance._setSearchResults(content);
 						}
 
 						Liferay.fire(instance._eventDataProcessed);
 
 						WIN[instance.ns('toggleActionsButton')]();
+
+						if (event.data[instance.ns('viewEntries')]) {
+							instance._toggleTrashAction();
+						}
 					},
 
 					_onPageLoaded: function(event) {
 						var instance = this;
 
-						var paginatorData = event.paginator;
+						var paginationData = event.pagination;
 
-						if (paginatorData) {
+						if (paginationData) {
 							if (event.src == SRC_SEARCH) {
 								var repositoriesData = instance._repositoriesData;
 
@@ -339,10 +345,10 @@ AUI.add(
 									instance._repositoriesData[event.repositoryId] = repositoryData;
 								}
 
-								repositoryData.paginatorData = paginatorData;
+								repositoryData.paginationData = paginationData;
 							}
 
-							instance._appViewPaginator.set(STR_PAGINATOR_DATA, paginatorData);
+							instance._appViewPaginator.set(STR_PAGINATION_DATA, paginationData);
 
 							instance._toggleSyncNotification();
 						}
@@ -373,39 +379,41 @@ AUI.add(
 					_onShowTab: function(event) {
 						var instance = this;
 
-						var tabSection = event.tabSection;
+						if (event.namespace.indexOf(instance.NS) === 0) {
+							var tabSection = event.tabSection;
 
-						var searchResultsWrapper = tabSection.one('[data-repositoryId]');
+							var searchResultsWrapper = tabSection.one('[data-repositoryId]');
 
-						var repositoryId = searchResultsWrapper.attr('data-repositoryId');
+							var repositoryId = searchResultsWrapper.attr('data-repositoryId');
 
-						var repositoryData = instance._repositoriesData[repositoryId];
+							var repositoryData = instance._repositoriesData[repositoryId];
 
-						if (repositoryData) {
-							var paginatorData = repositoryData.paginatorData;
+							if (repositoryData) {
+								var paginationData = repositoryData.paginationData;
 
-							if (paginatorData) {
-								instance._appViewPaginator.set(STR_PAGINATOR_DATA, paginatorData);
+								if (paginationData) {
+									instance._appViewPaginator.set(STR_PAGINATION_DATA, paginationData);
+								}
 							}
-						}
 
-						if (!searchResultsWrapper.hasAttribute(STR_DATA_SEARCH_PROCESSED)) {
-							searchResultsWrapper.setAttribute(STR_DATA_SEARCH_PROCESSED, true);
+							if (!searchResultsWrapper.hasAttribute(STR_DATA_SEARCH_PROCESSED)) {
+								searchResultsWrapper.setAttribute(STR_DATA_SEARCH_PROCESSED, true);
 
-							var selectedFolder = instance._appViewSelect.get(STR_SELECTED_FOLDER);
+								var selectedFolder = instance._appViewSelect.get(STR_SELECTED_FOLDER);
 
-							var searchData = {
-								folderId: selectedFolder.id,
-								keywords: instance._keywordsNode.get('value'),
-								repositoryId: selectedFolder.repositoryId,
-								searchFolderId: DEFAULT_FOLDER_ID,
-								searchRepositoryId: repositoryId
-							};
+								var searchData = {
+									folderId: selectedFolder.id,
+									keywords: instance._keywordsNode.get('value'),
+									repositoryId: selectedFolder.repositoryId,
+									searchFolderId: DEFAULT_FOLDER_ID,
+									searchRepositoryId: repositoryId
+								};
 
-							instance._searchFileEntry(searchData);
-						}
-						else {
-							instance._documentLibraryContainer.all('.document-entries-paginator').show();
+								instance._searchFileEntry(searchData);
+							}
+							else {
+								instance._documentLibraryContainer.all('.document-entries-pagination').show();
+							}
 						}
 					},
 
@@ -429,7 +437,7 @@ AUI.add(
 					_searchFileEntry: function(searchData) {
 						var instance = this;
 
-						instance._documentLibraryContainer.all('.document-entries-paginator').hide();
+						instance._documentLibraryContainer.all('.document-entries-pagination').hide();
 
 						var requestParams = {};
 
@@ -478,8 +486,6 @@ AUI.add(
 						if (searchInfo) {
 							entriesContainer.empty();
 
-							entriesContainer.plug(A.Plugin.ParseContent);
-
 							entriesContainer.setContent(searchInfo);
 						}
 
@@ -493,8 +499,6 @@ AUI.add(
 							if (searchResults) {
 								searchResults.empty();
 
-								searchResults.plug(A.Plugin.ParseContent);
-
 								searchResults.setContent(fragmentSearchResults.html());
 							}
 						}
@@ -507,8 +511,6 @@ AUI.add(
 							if (!searchInfo) {
 								entriesContainer.empty();
 							}
-
-							entriesContainer.plug(A.Plugin.ParseContent);
 
 							entriesContainer.append(searchResultsContainer);
 						}
@@ -525,8 +527,6 @@ AUI.add(
 							if (!searchInfo) {
 								resultsContainer.empty();
 							}
-
-							resultsContainer.plug(A.Plugin.ParseContent);
 
 							resultsContainer.append(repositorySearchResults);
 						}
@@ -557,7 +557,7 @@ AUI.add(
 
 						if (AObject.owns(requestParams, namespacedShowRepositoryTabs) &&
 							!requestParams[namespacedShowRepositoryTabs] &&
-							!entriesContainer.one('ul.aui-tabview-list')) {
+							!entriesContainer.one('ul.nav-tabs')) {
 
 							requestParams[namespacedShowRepositoryTabs] = true;
 
@@ -580,14 +580,30 @@ AUI.add(
 						var instance = this;
 
 						if (instance._syncMessage) {
-							var entryPaginator = instance._appViewPaginator.get('entryPaginator');
-
-							var entriesPaginatorState = entryPaginator.get('state');
+							var entryPagination = instance._appViewPaginator.get('entryPagination');
 
 							var syncMessageBoundingBox = instance._syncMessage.get('boundingBox');
 
-							syncMessageBoundingBox.toggleClass(CSS_SYNC_MESSAGE_HIDDEN, entriesPaginatorState.total <= 0);
+							syncMessageBoundingBox.toggleClass(CSS_SYNC_MESSAGE_HIDDEN, entryPagination.get('total') <= 0);
 						}
+					},
+
+					_toggleTrashAction: function() {
+						var instance = this;
+
+						var trashEnabled = instance._config.trashEnabled;
+
+						if (trashEnabled) {
+							var repositoryId = instance._appViewSelect.get(STR_SELECTED_FOLDER).repositoryId;
+
+							var scopeGroupId = themeDisplay.getScopeGroupId();
+
+							trashEnabled = (scopeGroupId === repositoryId);
+						}
+
+						instance.one('#deleteAction').toggle(!trashEnabled);
+
+						instance.one('#moveToTrashAction').toggle(trashEnabled);
 					}
 				}
 			}
@@ -601,6 +617,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-loading-mask', 'aui-parse-content', 'event-simulate', 'liferay-app-view-folders', 'liferay-app-view-move', 'liferay-app-view-paginator', 'liferay-app-view-select', 'liferay-history-manager', 'liferay-message', 'liferay-portlet-base', 'querystring-parse-simple']
+		requires: ['aui-loading-mask-deprecated', 'aui-parse-content', 'document-library-upload', 'event-simulate', 'liferay-app-view-folders', 'liferay-app-view-move', 'liferay-app-view-paginator', 'liferay-app-view-select', 'liferay-history-manager', 'liferay-message', 'liferay-portlet-base', 'querystring-parse-simple']
 	}
 );

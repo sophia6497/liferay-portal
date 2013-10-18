@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,7 @@
 
 package com.liferay.portal.kernel.messaging;
 
-import com.liferay.portal.kernel.cluster.ClusterLinkUtil;
+import com.liferay.portal.kernel.cluster.ClusterLink;
 import com.liferay.portal.kernel.concurrent.RejectedExecutionHandler;
 import com.liferay.portal.kernel.concurrent.ThreadPoolExecutor;
 import com.liferay.portal.kernel.concurrent.ThreadPoolHandlerAdapter;
@@ -46,14 +46,14 @@ public abstract class BaseAsyncDestination extends BaseDestination {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public BaseAsyncDestination(String name) {
 		this(name, _WORKERS_CORE_SIZE, _WORKERS_MAX_SIZE);
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public BaseAsyncDestination(
 		String name, int workersCoreSize, int workersMaxSize) {
@@ -70,6 +70,7 @@ public abstract class BaseAsyncDestination extends BaseDestination {
 		PortalExecutorManagerUtil.shutdown(getName(), force);
 	}
 
+	@Override
 	public DestinationStatistics getDestinationStatistics() {
 		DestinationStatistics destinationStatistics =
 			new DestinationStatistics();
@@ -106,40 +107,45 @@ public abstract class BaseAsyncDestination extends BaseDestination {
 
 	@Override
 	public void open() {
-		if ((_threadPoolExecutor == null) || _threadPoolExecutor.isShutdown()) {
-			ClassLoader classLoader = PortalClassLoaderUtil.getClassLoader();
+		if ((_threadPoolExecutor != null) &&
+			!_threadPoolExecutor.isShutdown()) {
 
-			if (_rejectedExecutionHandler == null) {
-				_rejectedExecutionHandler = createRejectionExecutionHandler();
-			}
-
-			ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-				_workersCoreSize, _workersMaxSize, 60L, TimeUnit.SECONDS, false,
-				_maximumQueueSize, _rejectedExecutionHandler,
-				new NamedThreadFactory(
-					getName(), Thread.NORM_PRIORITY, classLoader),
-				new ThreadPoolHandlerAdapter());
-
-			ThreadPoolExecutor oldThreadPoolExecutor =
-				PortalExecutorManagerUtil.registerPortalExecutor(
-					getName(), threadPoolExecutor);
-
-			if (oldThreadPoolExecutor != null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Abort creating a new thread pool for destination " +
-							getName() + " and reuse previous one");
-				}
-
-				threadPoolExecutor.shutdownNow();
-
-				threadPoolExecutor = oldThreadPoolExecutor;
-			}
-
-			_threadPoolExecutor = threadPoolExecutor;
+			return;
 		}
+
+		ClassLoader classLoader = PortalClassLoaderUtil.getClassLoader();
+
+		if (_rejectedExecutionHandler == null) {
+			_rejectedExecutionHandler = createRejectionExecutionHandler();
+		}
+
+		ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+			_workersCoreSize, _workersMaxSize, 60L, TimeUnit.SECONDS, false,
+			_maximumQueueSize, _rejectedExecutionHandler,
+			new NamedThreadFactory(
+				getName(), Thread.NORM_PRIORITY, classLoader),
+			new ThreadPoolHandlerAdapter());
+
+		ThreadPoolExecutor oldThreadPoolExecutor =
+			PortalExecutorManagerUtil.registerPortalExecutor(
+				getName(), threadPoolExecutor);
+
+		if (oldThreadPoolExecutor != null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Abort creating a new thread pool for destination " +
+						getName() + " and reuse previous one");
+			}
+
+			threadPoolExecutor.shutdownNow();
+
+			threadPoolExecutor = oldThreadPoolExecutor;
+		}
+
+		_threadPoolExecutor = threadPoolExecutor;
 	}
 
+	@Override
 	public void send(Message message) {
 		if (messageListeners.isEmpty()) {
 			if (_log.isDebugEnabled()) {
@@ -183,6 +189,7 @@ public abstract class BaseAsyncDestination extends BaseDestination {
 	protected RejectedExecutionHandler createRejectionExecutionHandler() {
 		return new RejectedExecutionHandler() {
 
+			@Override
 			public void rejectedExecution(
 				Runnable runnable, ThreadPoolExecutor threadPoolExecutor) {
 
@@ -268,11 +275,11 @@ public abstract class BaseAsyncDestination extends BaseDestination {
 		}
 
 		Boolean clusterForwardMessage = (Boolean)message.get(
-			ClusterLinkUtil.CLUSTER_FORWARD_MESSAGE);
+			ClusterLink.CLUSTER_FORWARD_MESSAGE);
 
 		if (clusterForwardMessage != null) {
 			MessageValuesThreadLocal.setValue(
-				ClusterLinkUtil.CLUSTER_FORWARD_MESSAGE, clusterForwardMessage);
+				ClusterLink.CLUSTER_FORWARD_MESSAGE, clusterForwardMessage);
 		}
 	}
 

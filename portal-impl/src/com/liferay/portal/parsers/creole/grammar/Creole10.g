@@ -57,7 +57,27 @@ import com.liferay.portal.parsers.creole.ast.ItalicTextNode;
 import com.liferay.portal.parsers.creole.ast.ItemNode;
 import com.liferay.portal.parsers.creole.ast.LineNode;
 import com.liferay.portal.parsers.creole.ast.ListNode;
-import com.liferay.portal.parsers.creole.ast.link.InterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.C2InterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.DokuWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.FlickrInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.GoogleInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.InterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.JSPWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.MeatballInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.MediaWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.MoinMoinInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.OddmuseInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.OhanaInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.PmWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.PukiWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.PurpleWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.RadeoxInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.SnipSnapInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.TWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.TiddlyWikiInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.UsemodInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.WikipediaInterwikiLinkNode;
+import com.liferay.portal.parsers.creole.ast.link.interwiki.XWikiInterwikiLinkNode;
 import com.liferay.portal.parsers.creole.ast.link.LinkNode;
 import com.liferay.portal.parsers.creole.ast.NoWikiSectionNode;
 import com.liferay.portal.parsers.creole.ast.OrderedListItemNode;
@@ -101,6 +121,17 @@ import java.util.Stack;
 }
 
 @members{
+	public void displayRecognitionError(String[] tokenNames,RecognitionException e) {
+		String header = getErrorHeader(e);
+		String message = getErrorMessage(e, tokenNames);
+
+		_errors.add(header + " " + message);
+	}
+
+	public List<String> getErrors() {
+		return _errors;
+	}
+
 	public WikiPageNode getWikiPageNode() {
 		if (_wikipage == null)
 			throw new IllegalStateException("No succesful parsing process");
@@ -128,7 +159,8 @@ import java.util.Stack;
 		return listNode;
 	}
 
-	private WikiPageNode _wikipage = null;
+	private List<String> _errors = new ArrayList<String>();
+	private WikiPageNode _wikipage;
 
 }
 
@@ -795,32 +827,32 @@ link returns [LinkNode link = null]
 
 link_address returns [LinkNode link =null]
 	:	li = link_interwiki_uri  ':'  p = link_interwiki_pagename {
-						$li.interwiki.setUri($p.text.toString());
+						$li.interwiki.setTitle($p.text.toString());
 						$link = $li.interwiki;
 					}
 	|	lu = link_uri {$link = new LinkNode($lu.text.toString()); }
 	;
 link_interwiki_uri returns [InterwikiLinkNode interwiki = null]
-	:	'C' '2'
-	|	'D' 'o' 'k' 'u' 'W' 'i' 'k' 'i'
-	|	'F' 'l' 'i' 'c' 'k' 'r'
-	|	'G' 'o' 'o' 'g' 'l' 'e'
-	|	'J' 'S' 'P' 'W' 'i' 'k' 'i'
-	|	'M' 'e' 'a' 't' 'b' 'a' 'l' 'l'
-	|	'M' 'e' 'd' 'i' 'a' 'W' 'i' 'k' 'i'
-	|	'M' 'o' 'i' 'n' 'M' 'o' 'i' 'n'
-	|	'O' 'd' 'd' 'm' 'u' 's' 'e'
-	|	'O' 'h' 'a' 'n' 'a'
-	|	'P' 'm' 'W' 'i' 'k' 'i'
-	|	'P' 'u' 'k' 'i' 'W' 'i' 'k' 'i'
-	|	'P' 'u' 'r' 'p' 'l' 'e' 'W' 'i' 'k' 'i'
-	|	'R' 'a' 'd' 'e' 'o' 'x'
-	|	'S' 'n' 'i' 'p' 'S' 'n' 'a' 'p'
-	|	'T' 'i' 'd' 'd' 'l' 'y' 'W' 'i' 'k' 'i'
-	|	'T' 'W' 'i' 'k' 'i'
-	|	'U' 's' 'e' 'm' 'o' 'd'
-	|	'W' 'i' 'k' 'i' 'p' 'e' 'd' 'i' 'a'
-	|	'X' 'W' 'i' 'k' 'i'
+	:	'C' '2' { $interwiki = new C2InterwikiLinkNode(); }
+	|	'D' 'o' 'k' 'u' 'W' 'i' 'k' 'i' { $interwiki = new DokuWikiInterwikiLinkNode(); }
+	|	'F' 'l' 'i' 'c' 'k' 'r'  { $interwiki = new FlickrInterwikiLinkNode(); }
+	|	'G' 'o' 'o' 'g' 'l' 'e' { $interwiki = new GoogleInterwikiLinkNode(); }
+	|	'J' 'S' 'P' 'W' 'i' 'k' 'i' { $interwiki = new JSPWikiInterwikiLinkNode(); }
+	|	'M' 'e' 'a' 't' 'b' 'a' 'l' 'l' { $interwiki = new MeatballInterwikiLinkNode(); }
+	|	'M' 'e' 'd' 'i' 'a' 'W' 'i' 'k' 'i' { $interwiki = new MediaWikiInterwikiLinkNode(); }
+	|	'M' 'o' 'i' 'n' 'M' 'o' 'i' 'n'  { $interwiki = new MoinMoinInterwikiLinkNode(); }
+	|	'O' 'd' 'd' 'm' 'u' 's' 'e'  { $interwiki = new OddmuseInterwikiLinkNode(); }
+	|	'O' 'h' 'a' 'n' 'a' { $interwiki = new OhanaInterwikiLinkNode(); }
+	|	'P' 'm' 'W' 'i' 'k' 'i'  { $interwiki = new PmWikiInterwikiLinkNode(); }
+	|	'P' 'u' 'k' 'i' 'W' 'i' 'k' 'i'  { $interwiki = new PukiWikiInterwikiLinkNode(); }
+	|	'P' 'u' 'r' 'p' 'l' 'e' 'W' 'i' 'k' 'i' { $interwiki = new PurpleWikiInterwikiLinkNode(); }
+	|	'R' 'a' 'd' 'e' 'o' 'x' { $interwiki = new RadeoxInterwikiLinkNode(); }
+	|	'S' 'n' 'i' 'p' 'S' 'n' 'a' 'p' { $interwiki = new SnipSnapInterwikiLinkNode(); }
+	|	'T' 'i' 'd' 'd' 'l' 'y' 'W' 'i' 'k' 'i' { $interwiki = new TiddlyWikiInterwikiLinkNode(); }
+	|	'T' 'W' 'i' 'k' 'i' { $interwiki = new TWikiInterwikiLinkNode(); }
+	|	'U' 's' 'e' 'm' 'o' 'd' { $interwiki = new UsemodInterwikiLinkNode(); }
+	|	'W' 'i' 'k' 'i' 'p' 'e' 'd' 'i' 'a' { $interwiki = new WikipediaInterwikiLinkNode(); }
+	|	'X' 'W' 'i' 'k' 'i' { $interwiki = new XWikiInterwikiLinkNode(); }
 	;
 link_interwiki_pagename returns [StringBundler text = new StringBundler()]
 	:	( c = ~( PIPE | LINK_CLOSE | NEWLINE | EOF ) { $text.append($c.text); } ) +
@@ -976,9 +1008,11 @@ extension returns [ASTNode node = null]
 	:	extension_markup  extension_handler  blanks  extension_statement
 		extension_markup
 	;
+
 extension_handler
 	:	(~( EXTENSION  |  BLANKS  |  ESCAPE  |  NEWLINE  |  EOF ) | escaped )+
 	;
+
 extension_statement
 	:	(~( EXTENSION  |  ESCAPE  |  EOF ) | escaped )*
 	;
@@ -986,10 +1020,23 @@ extension_statement
 
 /////////////////////////////  TABLE OF CONTENTS EXTENSION  /////////////////////////////
 
-table_of_contents returns [ASTNode tableOfContents = new TableOfContentsNode()]
-	:	/*TABLE_OF_CONTENTS_OPEN_MARKUP*/ TABLE_OF_CONTENTS_TEXT  /*TABLE_OF_CONTENTS_CLOSE_MARKUP*/
+table_of_contents returns [TableOfContentsNode tableOfContents = new TableOfContentsNode()]
+	:
+		(
+			'<<TableOfContents>>'
+			|
+			'<<TableOfContents title='
+			'\"'
+			t = table_of_contents_title_text { tableOfContents.setTitle($t.text.toString()); }
+			'\"'
+			'>>'
+		)
 	;
 
+
+table_of_contents_title_text returns [StringBundler text = new StringBundler()]
+	:	( c = ~(LINK_OPEN | IMAGE_OPEN | NOWIKI_OPEN |EQUAL | ESCAPE | NEWLINE | EOF | '>>' )  {$text.append($c.text);} )+
+	;
 
 onestar
 	:	( { input.LA(2) != STAR }?  ( STAR )?)
@@ -1117,13 +1164,5 @@ DASH					: '-';
 STAR					: '*';
 SLASH					: '/';
 EXTENSION				: '@@';
-TABLE_OF_CONTENTS_OPEN_MARKUP
-	:	'<<'
-	;
-TABLE_OF_CONTENTS_CLOSE_MARKUP
-	:	'>>'
-	;
-TABLE_OF_CONTENTS_TEXT
-	:	'<<TableOfContents>>'
-	;
+
 INSIGNIFICANT_CHAR		: .;

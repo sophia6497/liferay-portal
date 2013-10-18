@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,6 +28,8 @@ import com.liferay.portal.test.TransactionalExecutionTestListener;
 import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
+import com.liferay.portlet.dynamicdatamapping.util.DDMStructureTestUtil;
+import com.liferay.portlet.dynamicdatamapping.util.DDMTemplateTestUtil;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.util.JournalTestUtil;
 import com.liferay.portlet.journal.util.JournalUtil;
@@ -56,16 +58,27 @@ public class JournalTransformerTest {
 
 		Element rootElement = document.addElement("root");
 
-		JournalTestUtil.addDynamicElementElement(rootElement, "text", "name");
-		JournalTestUtil.addDynamicElementElement(rootElement, "text", "link");
+		rootElement.addAttribute("available-locales", "en_US");
+		rootElement.addAttribute("default-locale", "en_US");
+
+		Element nameElement = JournalTestUtil.addDynamicElementElement(
+			rootElement, "text", "name");
+
+		JournalTestUtil.addMetadataElement(nameElement, "en_US", "name");
+
+		Element linkElement = JournalTestUtil.addDynamicElementElement(
+			rootElement, "text", "link");
+
+		JournalTestUtil.addMetadataElement(linkElement, "en_US", "link");
 
 		String xsd = document.asXML();
 
-		DDMStructure ddmStructure = JournalTestUtil.addDDMStructure(xsd);
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			JournalArticle.class.getName(), xsd);
 
 		String xsl = "$name.getData()";
 
-		DDMTemplate ddmTemplate = JournalTestUtil.addDDMTemplate(
+		DDMTemplate ddmTemplate = DDMTemplateTestUtil.addTemplate(
 			ddmStructure.getStructureId(), TemplateConstants.LANG_TYPE_VM, xsl);
 
 		document = JournalTestUtil.createDocument("en_US", "en_US");
@@ -106,7 +119,8 @@ public class JournalTransformerTest {
 	public void testFTLTransformation() throws Exception {
 		Map<String, String> tokens = getTokens();
 
-		String xml = JournalTestUtil.getSampleStructuredContent();
+		String xml = DDMStructureTestUtil.getSampleStructuredContent(
+			"name", "Joe Bloggs");
 
 		String script = "${name.getData()} - ${viewMode}";
 
@@ -160,7 +174,8 @@ public class JournalTransformerTest {
 	public void testRegexTransformerListener() throws Exception {
 		Map<String, String> tokens = getTokens();
 
-		String xml = JournalTestUtil.getSampleStructuredContent();
+		String xml = DDMStructureTestUtil.getSampleStructuredContent(
+			"name", "Joe Bloggs");
 
 		String script = "Hello $name.getData(), Welcome to beta.sample.com.";
 
@@ -176,7 +191,7 @@ public class JournalTransformerTest {
 	public void testTokensTransformerListener() throws Exception {
 		Map<String, String> tokens = getTokens();
 
-		String xml = JournalTestUtil.getSampleStructuredContent();
+		String xml = DDMStructureTestUtil.getSampleStructuredContent();
 
 		String script = "@company_id@";
 
@@ -203,7 +218,7 @@ public class JournalTransformerTest {
 
 		tokens.put("article_resource_pk", "1");
 
-		String xml = JournalTestUtil.getSampleStructuredContent();
+		String xml = DDMStructureTestUtil.getSampleStructuredContent();
 
 		String script = "@view_counter@";
 
@@ -227,7 +242,8 @@ public class JournalTransformerTest {
 	public void testVMTransformation() throws Exception {
 		Map<String, String> tokens = getTokens();
 
-		String xml = JournalTestUtil.getSampleStructuredContent();
+		String xml = DDMStructureTestUtil.getSampleStructuredContent(
+			"name", "Joe Bloggs");
 
 		String script = "$name.getData()";
 
@@ -243,8 +259,9 @@ public class JournalTransformerTest {
 			TestPropsValues.getGroupId(), null, null);
 
 		tokens.put(
+			"article_group_id", String.valueOf(TestPropsValues.getGroupId()));
+		tokens.put(
 			"company_id", String.valueOf(TestPropsValues.getCompanyId()));
-		tokens.put("group_id", String.valueOf(TestPropsValues.getGroupId()));
 
 		return tokens;
 	}

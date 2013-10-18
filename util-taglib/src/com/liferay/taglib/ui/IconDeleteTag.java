@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -42,11 +42,13 @@ public class IconDeleteTag extends IconTag {
 			return _PAGE;
 		}
 
-		if (_trash) {
-			setImage("trash");
-		}
-		else {
-			setImage("delete");
+		if (Validator.isNull(getImage())) {
+			if (_trash) {
+				setImage("trash");
+			}
+			else {
+				setImage("delete");
+			}
 		}
 
 		if (_trash && Validator.isNull(getMessage())) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.documentlibrary.model.DLFileEntryType;
 import com.liferay.portlet.documentlibrary.model.DLFileShortcut;
@@ -39,9 +40,22 @@ import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * @author Eudaldo Alnso
+ * @author Eudaldo Alonso
  */
 public interface DL {
+
+	public static final String MANUAL_CHECK_IN_REQUIRED =
+		"manualCheckInRequired";
+
+	public static final String MANUAL_CHECK_IN_REQUIRED_PATH =
+		StringPool.SLASH + MANUAL_CHECK_IN_REQUIRED;
+
+	public static final String OFFICE_EXTENSION = "officeExtension";
+
+	public static final String OFFICE_EXTENSION_PATH =
+		StringPool.SLASH + OFFICE_EXTENSION;
+
+	public static final String WEBDAV_CHECK_IN_MODE = "webDAVCheckInMode";
 
 	public void addPortletBreadcrumbEntries(
 			DLFileShortcut dlFileShortcut, HttpServletRequest request,
@@ -89,7 +103,11 @@ public interface DL {
 
 	public String getDividedPath(long id);
 
-	public String getDLControlPanelLink(
+	public String getDLFileEntryControlPanelLink(
+			PortletRequest portletRequest, long fileEntryId)
+		throws PortalException, SystemException;
+
+	public String getDLFolderControlPanelLink(
 			PortletRequest portletRequest, long folderId)
 		throws PortalException, SystemException;
 
@@ -131,6 +149,15 @@ public interface DL {
 
 	public String getGenericName(String extension);
 
+	public String getImagePreviewURL(
+			FileEntry fileEntry, FileVersion fileVersion,
+			ThemeDisplay themeDisplay)
+		throws Exception;
+
+	public String getImagePreviewURL(
+			FileEntry fileEntry, ThemeDisplay themeDisplay)
+		throws Exception;
+
 	public String[] getMediaGalleryMimeTypes(
 		PortletPreferences portletPreferences, PortletRequest portletRequest);
 
@@ -139,8 +166,8 @@ public interface DL {
 		String queryString);
 
 	/**
-	 * @deprecated {@link #getPreviewURL(FileEntry, FileVersion, ThemeDisplay,
-	 *             String, boolean, boolean)}
+	 * @deprecated As of 6.2.0, replaced by {@link #getPreviewURL(FileEntry,
+	 *             FileVersion, ThemeDisplay, String, boolean, boolean)}
 	 */
 	public String getPreviewURL(
 		FileEntry fileEntry, FileVersion fileVersion, ThemeDisplay themeDisplay,

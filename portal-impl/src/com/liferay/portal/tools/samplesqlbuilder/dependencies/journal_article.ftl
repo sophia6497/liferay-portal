@@ -1,59 +1,71 @@
-<#setting number_format = "0">
+<#assign journalArticlePageCounts = dataFactory.getSequence(dataFactory.maxJournalArticlePageCount)>
 
-<#assign journalArticleResource = dataFactory.addJournalArticleResource(groupId)>
+<#list journalArticlePageCounts as journalArticlePageCount>
+	<#assign portletIdPrefix = "56_INSTANCE_TEST_" + journalArticlePageCount + "_">
 
-insert into JournalArticleResource values ('${portalUUIDUtil.generate()}', ${journalArticleResource.resourcePrimKey}, ${journalArticleResource.groupId}, '${journalArticleResource.articleId}');
+	<#assign layoutModel = dataFactory.newLayoutModel(groupId, groupId + "_journal_article_" + journalArticlePageCount, "", dataFactory.getJournalArticleLayoutColumn(portletIdPrefix))>
 
-<#assign journalArticle = dataFactory.addJournalArticle(journalArticleResource.resourcePrimKey, groupId, companyId, journalArticleResource.articleId)>
+	${layoutCSVWriter.write(layoutModel.friendlyURL + "\n")}
 
-<#assign journalArticleTitle = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root available-locales=\"en_US\" default-locale=\"en_US\"><Title language-id=\"en_US\">Test Journal Article</Title></root>">
+	<@insertLayout
+		_layoutModel = layoutModel
+	/>
 
-<#assign journalArticleContent = "<?xml version=\"1.0\"?><root available-locales=\"en_US\" default-locale=\"en_US\"><static-content language-id=\"en_US\">&lt;p&gt;" + journalArticle.content + "&lt;/p&gt;</static-content></root>">
+	<#assign portletPreferencesModels = dataFactory.newPortletPreferencesModels(layoutModel.plid)>
 
-insert into JournalArticle values ('${portalUUIDUtil.generate()}', ${journalArticle.id}, ${journalArticle.resourcePrimKey}, ${journalArticle.groupId}, ${journalArticle.companyId}, ${defaultUserId}, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, 0, 0, '${journalArticleResource.articleId}', 1, '${journalArticleTitle}', 'test journal article', '', '${journalArticleContent}', 'general', '', '', '', CURRENT_TIMESTAMP, null, null, 1, 0, 0, '', 0, 0, '', CURRENT_TIMESTAMP);
+	<#list portletPreferencesModels as portletPreferencesModel>
+		<@insertPortletPreferences
+			_portletPreferencesModel = portletPreferencesModel
+		/>
+	</#list>
 
-${sampleSQLBuilder.insertResourcePermission("com.liferay.portlet.journal.model.JournalArticle", stringUtil.valueOf(journalArticleResource.resourcePrimKey))}
+	<#assign journalArticleCounts = dataFactory.getSequence(dataFactory.maxJournalArticleCount)>
 
-<#assign assetEntry = dataFactory.addAssetEntry(groupId, defaultUserId, dataFactory.journalArticleClassNameId, journalArticleResource.resourcePrimKey, true, "text/html", journalArticleTitle)>
+	<#list journalArticleCounts as journalArticleCount>
+		<#assign journalArticleResourceModel = dataFactory.newJournalArticleResourceModel(groupId)>
 
-insert into AssetEntry (entryId, groupId, companyId, userId, createDate, modifiedDate, classNameId, classPK, visible, mimeType, title) values (${counter.get()}, ${assetEntry.groupId}, ${companyId}, ${assetEntry.userId}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ${assetEntry.classNameId}, ${assetEntry.classPK}, <#if assetEntry.visible>TRUE<#else>FALSE</#if>, '${assetEntry.mimeType}', '${assetEntry.title}');
+		insert into JournalArticleResource values ('${journalArticleResourceModel.uuid}', ${journalArticleResourceModel.resourcePrimKey}, ${journalArticleResourceModel.groupId}, '${journalArticleResourceModel.articleId}');
 
-<#assign mbDiscussion = dataFactory.addMBDiscussion(dataFactory.journalArticleClassNameId, journalArticleResource.resourcePrimKey, counter.get())>
+		<#assign versionCounts = dataFactory.getSequence(dataFactory.maxJournalArticleVersionCount)>
 
-insert into MBDiscussion values (${mbDiscussion.discussionId}, ${mbDiscussion.classNameId}, ${mbDiscussion.classPK}, ${mbDiscussion.threadId});
+		<#list versionCounts as versionCount>
+			<#assign journalArticleModel = dataFactory.newJournalArticleModel(journalArticleResourceModel, journalArticleCount, versionCount)>
 
-<#assign mbMessageId = counter.get()>
+			insert into JournalArticle values ('${journalArticleModel.uuid}', ${journalArticleModel.id}, ${journalArticleModel.resourcePrimKey}, ${journalArticleModel.groupId}, ${journalArticleModel.companyId}, ${journalArticleModel.userId}, '${journalArticleModel.userName}', '${dataFactory.getDateString(journalArticleModel.createDate)}', '${dataFactory.getDateString(journalArticleModel.modifiedDate)}', ${journalArticleModel.folderId}, ${journalArticleModel.classNameId}, ${journalArticleModel.classPK}, '', '${journalArticleModel.articleId}', ${journalArticleModel.version}, '${journalArticleModel.title}', '${journalArticleModel.urlTitle}', '${journalArticleModel.description}', '${journalArticleModel.content}', '${journalArticleModel.type}', '${journalArticleModel.structureId}', '${journalArticleModel.templateId}', '${journalArticleModel.layoutUuid}', '${dataFactory.getDateString(journalArticleModel.displayDate)}', '${dataFactory.getDateString(journalArticleModel.expirationDate)}', '${dataFactory.getDateString(journalArticleModel.reviewDate)}', ${journalArticleModel.indexable?string}, ${journalArticleModel.smallImage?string}, ${journalArticleModel.smallImageId}, '${journalArticleModel.smallImageURL}', ${journalArticleModel.status}, ${journalArticleModel.statusByUserId}, '${journalArticleModel.statusByUserName}', '${dataFactory.getDateString(journalArticleModel.statusDate)}');
 
-<#assign mbMessage = dataFactory.addMBMessage(mbMessageId, groupId, defaultUserId, dataFactory.journalArticleClassNameId, journalArticleResource.resourcePrimKey, -1, counter.get(), mbMessageId, 0, stringUtil.valueOf(journalArticleResource.resourcePrimKey), stringUtil.valueOf(journalArticleResource.resourcePrimKey))>
+			<@insertSocialActivity
+				_entry = journalArticleModel
+			/>
 
-${sampleSQLBuilder.insertMBMessage(mbMessage)}
+			<#if (versionCount = dataFactory.maxJournalArticleVersionCount) >
+				<@insertAssetEntry
+					_entry = journalArticleModel
+					_categoryAndTag = true
+				/>
+			</#if>
+		</#list>
 
-<#assign mbThread = dataFactory.addMBThread(mbMessage.threadId, groupId, companyId, -1, mbMessage.messageId, 1, defaultUserId)>
+		<@insertResourcePermissions
+			_entry = journalArticleResourceModel
+		/>
 
-insert into MBThread values (${mbThread.threadId}, ${mbThread.groupId}, ${mbThread.companyId}, ${mbThread.categoryId}, ${mbThread.rootMessageId}, ${mbThread.rootMessageUserId}, ${mbThread.messageCount}, 0, ${mbThread.lastPostByUserId}, CURRENT_TIMESTAMP, 0, FALSE, 0, ${mbThread.lastPostByUserId}, '', CURRENT_TIMESTAMP);
+		<@insertMBDiscussion
+			_classNameId = dataFactory.journalArticleClassNameId
+			_classPK = journalArticleResourceModel.resourcePrimKey
+			_groupId = groupId
+			_maxCommentCount = 0
+			_mbRootMessageId = dataFactory.getCounterNext()
+			_mbThreadId = dataFactory.getCounterNext()
+		/>
 
-<#assign publicLayoutsSize = publicLayouts?size>
+		<#assign portletPreferencesModel = dataFactory.newPortletPreferencesModel(layoutModel.plid, portletIdPrefix + journalArticleCount, journalArticleResourceModel)>
 
-<#list 1..maxJournalArticleCount as journalArticleCount>
-	<#assign friendlyURL = "/" + groupId + "_journal_article_" + journalArticleCount>
+		<@insertPortletPreferences
+			_portletPreferencesModel = portletPreferencesModel
+		/>
 
-	<#assign layout = dataFactory.addLayout(publicLayoutsSize + journalArticleCount, "Web Content " + journalArticleCount, friendlyURL, "", "56,")>
+		<#assign journalContentSearchModel = dataFactory.newJournalContentSearchModel(journalArticleModel, layoutModel.plid)>
 
-	${writerLayoutCSV.write(friendlyURL + "\n")}
-
-	<#assign publicLayouts = publicLayouts + [layout]>
-
-	<#assign preferences = "<portlet-preferences><preference><name>articleId</name><value>" + journalArticleResource.articleId + "</value></preference><preference><name>enableCommentRatings</name><value>false</value></preference><preference><name>enableComments</name><value>false</value></preference><preference><name>enablePrint</name><value>false</value></preference><preference><name>enableRatings</name><value>false</value></preference><preference><name>enableRelatedAssets</name><value>true</value></preference><preference><name>enableViewCountIncrement</name><value>false</value></preference><preference><name>extensions</name><value>NULL_VALUE</value></preference><preference><name>groupId</name><value>" + groupId + "</value></preference><preference><name>showAvailableLocales</name><value>false</value></preference><preference><name>templateId</name><value></value></preference></portlet-preferences>">
-
-	<#assign portletPreferences = dataFactory.addPortletPreferences(defaultUserId, layout.plid, "86", preferences)>
-
-	insert into PortletPreferences values (${portletPreferences.portletPreferencesId}, ${portletPreferences.ownerId}, ${portletPreferences.ownerType}, ${portletPreferences.plid}, '${portletPreferences.portletId}', '${portletPreferences.preferences}');
-
-	<#assign portletPreferences = dataFactory.addPortletPreferences(defaultUserId, layout.plid, "56", preferences)>
-
-	insert into PortletPreferences values (${portletPreferences.portletPreferencesId}, ${portletPreferences.ownerId}, ${portletPreferences.ownerType}, ${portletPreferences.plid}, '${portletPreferences.portletId}', '${portletPreferences.preferences}');
-
-	${sampleSQLBuilder.insertResourcePermission("86", layout.plid + "_LAYOUT_86")}
-
-	insert into JournalContentSearch values (${counter.get()}, ${groupId}, ${companyId}, 0, ${layout.layoutId}, '56', '${journalArticle.articleId}');
+		insert into JournalContentSearch values (${journalContentSearchModel.contentSearchId}, ${journalContentSearchModel.groupId}, ${journalContentSearchModel.companyId}, ${journalContentSearchModel.privateLayout?string}, ${journalContentSearchModel.layoutId}, '${journalContentSearchModel.portletId}', '${journalContentSearchModel.articleId}');
+	</#list>
 </#list>

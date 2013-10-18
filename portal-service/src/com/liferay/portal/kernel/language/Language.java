@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,10 @@
 
 package com.liferay.portal.kernel.language;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+
+import java.util.List;
 import java.util.Locale;
 
 import javax.portlet.PortletConfig;
@@ -27,6 +31,8 @@ import javax.servlet.jsp.PageContext;
  * @author Brian Wing Shun Chan
  */
 public interface Language {
+
+	public String format(Locale locale, String pattern, List<Object> arguments);
 
 	public String format(Locale locale, String pattern, Object argument);
 
@@ -100,6 +106,14 @@ public interface Language {
 
 	public Locale[] getAvailableLocales();
 
+	public Locale[] getAvailableLocales(long groupId);
+
+	public String getBCP47LanguageId(HttpServletRequest request);
+
+	public String getBCP47LanguageId(Locale locale);
+
+	public String getBCP47LanguageId(PortletRequest portletRequest);
+
 	public String getCharset(Locale locale);
 
 	public String getLanguageId(HttpServletRequest request);
@@ -134,9 +148,20 @@ public interface Language {
 
 	public boolean isAvailableLocale(Locale locale);
 
+	public boolean isAvailableLocale(long groupId, Locale locale);
+
+	public boolean isAvailableLocale(long groupId, String languageId);
+
+	public boolean isAvailableLocale(String languageId);
+
 	public boolean isBetaLocale(Locale locale);
 
 	public boolean isDuplicateLanguageCode(String languageCode);
+
+	public boolean isInheritLocales(long groupId)
+		throws PortalException, SystemException;
+
+	public void resetAvailableGroupLocales(long groupId);
 
 	public void resetAvailableLocales(long companyId);
 

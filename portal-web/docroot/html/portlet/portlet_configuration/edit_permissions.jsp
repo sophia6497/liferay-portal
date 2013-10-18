@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,8 +41,8 @@ String selResourceName = modelResourceName;
 if (Validator.isNull(modelResource)) {
 	PortletURL portletURL = new PortletURLImpl(request, portletResource, plid, PortletRequest.ACTION_PHASE);
 
-	portletURL.setWindowState(WindowState.NORMAL);
 	portletURL.setPortletMode(PortletMode.VIEW);
+	portletURL.setWindowState(WindowState.NORMAL);
 
 	redirect = portletURL.toString();
 
@@ -57,8 +57,13 @@ else {
 	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "permissions"), currentURL);
 }
 
-Group group = themeDisplay.getScopeGroup();
-long groupId = group.getGroupId();
+long groupId = themeDisplay.getScopeGroupId();
+
+if (resourceGroupId > 0) {
+	groupId = resourceGroupId;
+}
+
+Group group = GroupLocalServiceUtil.getGroup(groupId);
 
 Layout selLayout = null;
 
@@ -132,12 +137,10 @@ long controlPanelPlid = PortalUtil.getControlPanelPlid(company.getCompanyId());
 
 PortletURLImpl definePermissionsURL = new PortletURLImpl(request, PortletKeys.ROLES_ADMIN, controlPanelPlid, PortletRequest.RENDER_PHASE);
 
-definePermissionsURL.setPortletMode(PortletMode.VIEW);
-
-definePermissionsURL.setRefererPlid(plid);
-
 definePermissionsURL.setParameter("struts_action", "/roles_admin/edit_role_permissions");
 definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
+definePermissionsURL.setPortletMode(PortletMode.VIEW);
+definePermissionsURL.setRefererPlid(plid);
 %>
 
 <div class="edit-permissions">
@@ -169,7 +172,7 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 			Group modelResourceGroup = GroupLocalServiceUtil.getGroup(modelResourceGroupId);
 
 			if (modelResourceGroup.isLayoutPrototype() || modelResourceGroup.isLayoutSetPrototype() || modelResourceGroup.isUserGroup()) {
-				actions = new ArrayList(actions);
+				actions = new ArrayList<String>(actions);
 
 				actions.remove(ActionKeys.ADD_LAYOUT_BRANCH);
 				actions.remove(ActionKeys.ADD_LAYOUT_SET_BRANCH);
@@ -184,8 +187,26 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 				actions.remove(ActionKeys.VIEW_STAGING);
 			}
 		}
+		else if (modelResource.equals(Role.class.getName())) {
+			long modelResourceRoleId = GetterUtil.getLong(resourcePrimKey);
 
-		List<Role> roles = ResourceActionsUtil.getRoles(company.getCompanyId(), group, modelResource, roleTypes);
+			Role modelResourceRole = RoleLocalServiceUtil.getRole(modelResourceRoleId);
+
+			String name = modelResourceRole.getName();
+
+			if (name.equals(RoleConstants.GUEST) || name.equals(RoleConstants.USER)) {
+				actions = new ArrayList<String>(actions);
+
+				actions.remove(ActionKeys.ASSIGN_MEMBERS);
+				actions.remove(ActionKeys.DEFINE_PERMISSIONS);
+				actions.remove(ActionKeys.DELETE);
+				actions.remove(ActionKeys.PERMISSIONS);
+				actions.remove(ActionKeys.UPDATE);
+				actions.remove(ActionKeys.VIEW);
+			}
+		}
+
+		List<Role> roles = ListUtil.copy(ResourceActionsUtil.getRoles(company.getCompanyId(), group, modelResource, roleTypes));
 
 		Role administratorRole = RoleLocalServiceUtil.getRole(company.getCompanyId(), RoleConstants.ADMINISTRATOR);
 
@@ -219,26 +240,7 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 			roles.remove(role);
 		}
 
-		List<Team> teams = null;
-
-		if (group.isOrganization() || group.isRegularSite()) {
-			teams = TeamLocalServiceUtil.getGroupTeams(groupId);
-		}
-		else if (group.isLayout()) {
-			teams = TeamLocalServiceUtil.getGroupTeams(group.getParentGroupId());
-		}
-
-		if (teams != null) {
-			for (Team team : teams) {
-				Role role = RoleLocalServiceUtil.getTeamRole(team.getCompanyId(), team.getTeamId());
-
-				if (role.getRoleId() == modelResourceRoleId) {
-					continue;
-				}
-
-				roles.add(role);
-			}
-		}
+		roles.addAll(RoleLocalServiceUtil.getTeamRoles(groupId, new long[] {modelResourceRoleId}));
 
 		Iterator<Role> itr = roles.iterator();
 
@@ -274,7 +276,7 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 					if (resourceLayout.isPrivateLayout()) {
 						Group resourceLayoutGroup = resourceLayout.getGroup();
 
-						if (!resourceLayoutGroup.isLayoutSetPrototype()) {
+						if (!resourceLayoutGroup.isLayoutPrototype() && !resourceLayoutGroup.isLayoutSetPrototype()) {
 							itr.remove();
 						}
 					}
@@ -329,6 +331,14 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 
 				List<String> guestUnsupportedActions = ResourceActionsUtil.getResourceGuestUnsupportedActions(portletResource, modelResource);
 
+				// LPS-32515
+
+				if ((selLayout != null) && group.isGuest() && SitesUtil.isFirstLayout(selLayout.getGroupId(), selLayout.isPrivateLayout(), selLayout.getLayoutId())) {
+					guestUnsupportedActions = new ArrayList<String>(guestUnsupportedActions);
+
+					guestUnsupportedActions.add(ActionKeys.VIEW);
+				}
+
 				for (String action : actions) {
 					boolean checked = false;
 					boolean disabled = false;
@@ -381,23 +391,24 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 						buffer.append(FriendlyURLNormalizerUtil.normalize(role.getName()));
 
 						if (Validator.isNotNull(preselectedMsg)) {
-							buffer.append("_PRESELECTED_");
+							buffer.append(ActionUtil.PRESELECTED);
 						}
 						else {
-							buffer.append("_ACTION_");
+							buffer.append(ActionUtil.ACTION);
 						}
 
 						buffer.append(action);
 						buffer.append("\" ");
 
 						buffer.append("name=\"");
+						buffer.append(renderResponse.getNamespace());
 						buffer.append(role.getRoleId());
 
 						if (Validator.isNotNull(preselectedMsg)) {
-							buffer.append("_PRESELECTED_");
+							buffer.append(ActionUtil.PRESELECTED);
 						}
 						else {
-							buffer.append("_ACTION_");
+							buffer.append(ActionUtil.ACTION);
 						}
 
 						buffer.append(action);
@@ -422,8 +433,6 @@ definePermissionsURL.setParameter(Constants.CMD, Constants.VIEW);
 
 			<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />
 		</liferay-ui:search-container>
-
-		<br />
 
 		<aui:button-row>
 			<aui:button type="submit" />

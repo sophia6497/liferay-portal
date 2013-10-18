@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,9 @@ package com.liferay.portlet.dynamicdatamapping.util;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -27,7 +30,9 @@ import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
+import com.liferay.portal.kernel.xml.XMLSchema;
 import com.liferay.portal.kernel.xml.XPath;
+import com.liferay.portlet.dynamicdatamapping.StructureXsdException;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.storage.Field;
 import com.liferay.portlet.dynamicdatamapping.storage.FieldConstants;
@@ -46,8 +51,10 @@ import java.util.Locale;
  * @author Bruno Basto
  * @author Brian Wing Shun Chan
  */
+@DoPrivileged
 public class DDMXMLImpl implements DDMXML {
 
+	@Override
 	public String formatXML(Document document) throws SystemException {
 		try {
 			return document.formattedString(_XML_INDENT);
@@ -57,6 +64,7 @@ public class DDMXMLImpl implements DDMXML {
 		}
 	}
 
+	@Override
 	public String formatXML(String xml) throws SystemException {
 
 		// This is only supposed to format your xml, however, it will also
@@ -78,12 +86,14 @@ public class DDMXMLImpl implements DDMXML {
 		}
 	}
 
+	@Override
 	public Fields getFields(DDMStructure structure, String xml)
 		throws PortalException, SystemException {
 
 		return getFields(structure, null, xml, null);
 	}
 
+	@Override
 	public Fields getFields(
 			DDMStructure structure, XPath xPath, String xml,
 			List<String> fieldNames)
@@ -94,7 +104,7 @@ public class DDMXMLImpl implements DDMXML {
 		try {
 			document = SAXReaderUtil.read(xml);
 		}
-		catch (DocumentException e) {
+		catch (DocumentException de) {
 			return null;
 		}
 
@@ -163,6 +173,7 @@ public class DDMXMLImpl implements DDMXML {
 		return fields;
 	}
 
+	@Override
 	public String getXML(Document document, Fields fields)
 		throws SystemException {
 
@@ -199,10 +210,16 @@ public class DDMXMLImpl implements DDMXML {
 		}
 	}
 
+	@Override
 	public String getXML(Fields fields) throws SystemException {
 		return getXML(null, fields);
 	}
 
+	public void setXMLSchema(XMLSchema xmlSchema) {
+		_xmlSchema = xmlSchema;
+	}
+
+	@Override
 	public String updateXMLDefaultLocale(
 			String xml, Locale contentDefaultLocale,
 			Locale contentNewDefaultLocale)
@@ -255,6 +272,22 @@ public class DDMXMLImpl implements DDMXML {
 		}
 		catch (IOException ioe) {
 			throw new SystemException(ioe);
+		}
+	}
+
+	@Override
+	public String validateXML(String xml) throws PortalException {
+		try {
+			Document document = SAXReaderUtil.read(xml, _xmlSchema);
+
+			return document.asXML();
+		}
+		catch (Exception e) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Invalid XML content " + e.getMessage(), e);
+			}
+
+			throw new StructureXsdException();
 		}
 	}
 
@@ -340,11 +373,7 @@ public class DDMXMLImpl implements DDMXML {
 
 		String valueString = String.valueOf(fieldValue);
 
-		if (valueString != null) {
-			valueString = valueString.trim();
-		}
-
-		dynamicContentElement.addCDATA(valueString);
+		dynamicContentElement.addCDATA(valueString.trim());
 	}
 
 	private static final String _AVAILABLE_LOCALES = "available-locales";
@@ -356,5 +385,9 @@ public class DDMXMLImpl implements DDMXML {
 	private static final String _LOCALE = "locale";
 
 	private static final String _XML_INDENT = "  ";
+
+	private static Log _log = LogFactoryUtil.getLog(DDMXMLImpl.class);
+
+	private XMLSchema _xmlSchema;
 
 }

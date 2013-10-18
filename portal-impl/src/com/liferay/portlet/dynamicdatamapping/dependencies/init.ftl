@@ -6,13 +6,17 @@
 
 <#-- CSS class -->
 
-<#assign cssClass = escapeAttribute(fieldStructure.fieldCssClass!"")>
+<#assign cssClass = "">
+
+<#if fieldStructure.width??>
+	<#assign cssClass = "w" + fieldStructure.width>
+</#if>
 
 <#-- Repeatable -->
 
 <#assign repeatable = false>
 
-<#if fieldStructure.repeatable?? && (fieldStructure.repeatable == "true")>
+<#if fieldStructure.repeatable?? && (fieldStructure.repeatable == "true") && (!ignoreRepeatable?? || !ignoreRepeatable)>
 	<#assign repeatable = true>
 </#if>
 
@@ -134,8 +138,6 @@
 <#function getFileEntryURL fileEntry>
 	<#return themeDisplay.getPathContext() + "/documents/" + fileEntry.getRepositoryId()?c + "/" + fileEntry.getFolderId()?c + "/" +  httpUtil.encodeURL(htmlUtil.unescape(fileEntry.getTitle()), true) + "/" + fileEntry.getUuid()>
 </#function>
-
-<#assign jsonFactoryUtil = utilLocator.findUtil("com.liferay.portal.kernel.json.JSONFactory")>
 
 <#function getFileJSONObject fieldValue>
 	<#return jsonFactoryUtil.createJSONObject(fieldValue)>>

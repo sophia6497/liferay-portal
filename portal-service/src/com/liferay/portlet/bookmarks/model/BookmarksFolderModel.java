@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,16 +15,19 @@
 package com.liferay.portlet.bookmarks.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ContainerModel;
-import com.liferay.portal.model.GroupedModel;
-import com.liferay.portal.model.StagedModel;
+import com.liferay.portal.model.StagedGroupedModel;
+import com.liferay.portal.model.TrashedModel;
 import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
+import com.liferay.portlet.trash.model.TrashEntry;
 
 import java.io.Serializable;
 
@@ -44,7 +47,7 @@ import java.util.Date;
  * @generated
  */
 public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
-	ContainerModel, GroupedModel, StagedModel, WorkflowedModel {
+	ContainerModel, StagedGroupedModel, TrashedModel, WorkflowedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -71,6 +74,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 * @return the uuid of this bookmarks folder
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -78,6 +82,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param uuid the uuid of this bookmarks folder
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -99,6 +104,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the group ID of this bookmarks folder
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -106,6 +112,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param groupId the group ID of this bookmarks folder
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -113,6 +120,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the company ID of this bookmarks folder
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -120,6 +128,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param companyId the company ID of this bookmarks folder
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -127,6 +136,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the user ID of this bookmarks folder
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -134,6 +144,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param userId the user ID of this bookmarks folder
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -142,6 +153,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 * @return the user uuid of this bookmarks folder
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -149,6 +161,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param userUuid the user uuid of this bookmarks folder
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -157,6 +170,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 * @return the user name of this bookmarks folder
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -164,6 +178,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param userName the user name of this bookmarks folder
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -171,6 +186,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the create date of this bookmarks folder
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -178,6 +194,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param createDate the create date of this bookmarks folder
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -185,6 +202,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the modified date of this bookmarks folder
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -192,6 +210,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param modifiedDate the modified date of this bookmarks folder
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -221,6 +240,21 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 * @param parentFolderId the parent folder ID of this bookmarks folder
 	 */
 	public void setParentFolderId(long parentFolderId);
+
+	/**
+	 * Returns the tree path of this bookmarks folder.
+	 *
+	 * @return the tree path of this bookmarks folder
+	 */
+	@AutoEscape
+	public String getTreePath();
+
+	/**
+	 * Sets the tree path of this bookmarks folder.
+	 *
+	 * @param treePath the tree path of this bookmarks folder
+	 */
+	public void setTreePath(String treePath);
 
 	/**
 	 * Returns the name of this bookmarks folder.
@@ -257,6 +291,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the status of this bookmarks folder
 	 */
+	@Override
 	public int getStatus();
 
 	/**
@@ -264,6 +299,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param status the status of this bookmarks folder
 	 */
+	@Override
 	public void setStatus(int status);
 
 	/**
@@ -271,6 +307,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the status by user ID of this bookmarks folder
 	 */
+	@Override
 	public long getStatusByUserId();
 
 	/**
@@ -278,6 +315,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param statusByUserId the status by user ID of this bookmarks folder
 	 */
+	@Override
 	public void setStatusByUserId(long statusByUserId);
 
 	/**
@@ -286,6 +324,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 * @return the status by user uuid of this bookmarks folder
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getStatusByUserUuid() throws SystemException;
 
 	/**
@@ -293,6 +332,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param statusByUserUuid the status by user uuid of this bookmarks folder
 	 */
+	@Override
 	public void setStatusByUserUuid(String statusByUserUuid);
 
 	/**
@@ -301,6 +341,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 * @return the status by user name of this bookmarks folder
 	 */
 	@AutoEscape
+	@Override
 	public String getStatusByUserName();
 
 	/**
@@ -308,6 +349,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param statusByUserName the status by user name of this bookmarks folder
 	 */
+	@Override
 	public void setStatusByUserName(String statusByUserName);
 
 	/**
@@ -315,6 +357,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the status date of this bookmarks folder
 	 */
+	@Override
 	public Date getStatusDate();
 
 	/**
@@ -322,11 +365,55 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @param statusDate the status date of this bookmarks folder
 	 */
+	@Override
 	public void setStatusDate(Date statusDate);
 
 	/**
-	 * @deprecated Renamed to {@link #isApproved()}
+	 * Returns the trash entry created when this bookmarks folder was moved to the Recycle Bin. The trash entry may belong to one of the ancestors of this bookmarks folder.
+	 *
+	 * @return the trash entry created when this bookmarks folder was moved to the Recycle Bin
+	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
+	public TrashEntry getTrashEntry() throws PortalException, SystemException;
+
+	/**
+	 * Returns the class primary key of the trash entry for this bookmarks folder.
+	 *
+	 * @return the class primary key of the trash entry for this bookmarks folder
+	 */
+	@Override
+	public long getTrashEntryClassPK();
+
+	/**
+	 * Returns the trash handler for this bookmarks folder.
+	 *
+	 * @return the trash handler for this bookmarks folder
+	 */
+	@Override
+	public TrashHandler getTrashHandler();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks folder is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this bookmarks folder is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash();
+
+	/**
+	 * Returns <code>true</code> if the parent of this bookmarks folder is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if the parent of this bookmarks folder is in the Recycle Bin; <code>false</code> otherwise
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public boolean isInTrashContainer();
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #isApproved()}
+	 */
+	@Override
 	public boolean getApproved();
 
 	/**
@@ -334,6 +421,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is approved; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isApproved();
 
 	/**
@@ -341,6 +429,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is denied; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isDenied();
 
 	/**
@@ -348,6 +437,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is a draft; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isDraft();
 
 	/**
@@ -355,6 +445,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is expired; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isExpired();
 
 	/**
@@ -362,6 +453,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is inactive; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isInactive();
 
 	/**
@@ -369,20 +461,15 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is incomplete; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isIncomplete();
-
-	/**
-	 * Returns <code>true</code> if this bookmarks folder is in the Recycle Bin.
-	 *
-	 * @return <code>true</code> if this bookmarks folder is in the Recycle Bin; <code>false</code> otherwise
-	 */
-	public boolean isInTrash();
 
 	/**
 	 * Returns <code>true</code> if this bookmarks folder is pending.
 	 *
 	 * @return <code>true</code> if this bookmarks folder is pending; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isPending();
 
 	/**
@@ -390,6 +477,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return <code>true</code> if this bookmarks folder is scheduled; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isScheduled();
 
 	/**
@@ -397,13 +485,15 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the container model ID of this bookmarks folder
 	 */
+	@Override
 	public long getContainerModelId();
 
 	/**
 	 * Sets the container model ID of this bookmarks folder.
 	 *
-	 * @param container model ID of this bookmarks folder
+	 * @param containerModelId the container model ID of this bookmarks folder
 	 */
+	@Override
 	public void setContainerModelId(long containerModelId);
 
 	/**
@@ -411,6 +501,7 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the container name of this bookmarks folder
 	 */
+	@Override
 	public String getContainerModelName();
 
 	/**
@@ -418,46 +509,71 @@ public interface BookmarksFolderModel extends BaseModel<BookmarksFolder>,
 	 *
 	 * @return the parent container model ID of this bookmarks folder
 	 */
+	@Override
 	public long getParentContainerModelId();
 
 	/**
 	 * Sets the parent container model ID of this bookmarks folder.
 	 *
-	 * @param parent container model ID of this bookmarks folder
+	 * @param parentContainerModelId the parent container model ID of this bookmarks folder
 	 */
+	@Override
 	public void setParentContainerModelId(long parentContainerModelId);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(BookmarksFolder bookmarksFolder);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<BookmarksFolder> toCacheModel();
 
+	@Override
 	public BookmarksFolder toEscapedModel();
 
+	@Override
 	public BookmarksFolder toUnescapedModel();
 
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -72,7 +72,7 @@ if (hidePortletWhenEmpty) {
 	renderRequest.setAttribute(WebKeys.PORTLET_CONFIGURATOR_VISIBILITY, Boolean.TRUE);
 %>
 
-	<div class="portlet-msg-info">
+	<div class="alert alert-info">
 		<liferay-ui:message key="there-are-no-categories" />
 	</div>
 
@@ -99,7 +99,7 @@ if (categoryId > 0) {
 				}
 			).render();
 
-			var selected = assetCategoryList.one('.aui-tree-node .tag-selected');
+			var selected = assetCategoryList.one('.tree-node .tag-selected');
 
 			if (selected) {
 				var selectedChild = treeView.getNodeByChild(selected);
@@ -127,7 +127,7 @@ private void _buildCategoriesNavigation(List<AssetCategory> categories, long cat
 
 		List<AssetCategory> categoriesChildren = AssetCategoryServiceUtil.getChildCategories(category.getCategoryId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
-		sb.append("<li class=\"aui-tree-node\"><span>");
+		sb.append("<li class=\"tree-node\"><span>");
 
 		if (categoryId == category.getCategoryId()) {
 			portletURL.setParameter("categoryId", StringPool.BLANK);
@@ -141,7 +141,7 @@ private void _buildCategoriesNavigation(List<AssetCategory> categories, long cat
 			sb.append("<a href=\"");
 		}
 
-		sb.append(portletURL.toString());
+		sb.append(HtmlUtil.escape(portletURL.toString()));
 		sb.append("\">");
 		sb.append(title);
 		sb.append("</a>");

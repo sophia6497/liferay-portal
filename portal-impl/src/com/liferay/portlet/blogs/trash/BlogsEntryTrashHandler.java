@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,7 +26,6 @@ import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.PortletURLFactoryUtil;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.service.BlogsEntryLocalServiceUtil;
-import com.liferay.portlet.blogs.service.BlogsEntryServiceUtil;
 import com.liferay.portlet.blogs.service.permission.BlogsEntryPermission;
 
 import javax.portlet.PortletRequest;
@@ -39,27 +38,72 @@ import javax.portlet.PortletURL;
  */
 public class BlogsEntryTrashHandler extends BaseTrashHandler {
 
-	public static final String CLASS_NAME = BlogsEntry.class.getName();
-
-	public void deleteTrashEntries(long[] classPKs, boolean checkPermission)
+	@Override
+	public void deleteTrashEntry(long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			if (checkPermission) {
-				BlogsEntryServiceUtil.deleteEntry(classPK);
-			}
-			else {
-				BlogsEntryLocalServiceUtil.deleteEntry(classPK);
-			}
-		}
-	}
-
-	public String getClassName() {
-		return CLASS_NAME;
+		BlogsEntryLocalServiceUtil.deleteEntry(classPK);
 	}
 
 	@Override
-	public String getRestoreLink(PortletRequest portletRequest, long classPK)
+	public String getClassName() {
+		return BlogsEntry.class.getName();
+	}
+
+	@Override
+	public String getRestoreContainedModelLink(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
+
+		BlogsEntry entry = BlogsEntryLocalServiceUtil.getEntry(classPK);
+
+		PortletURL portletURL = getRestoreURL(portletRequest, classPK, false);
+
+		portletURL.setParameter("entryId", String.valueOf(entry.getEntryId()));
+		portletURL.setParameter("urlTitle", entry.getUrlTitle());
+
+		return portletURL.toString();
+	}
+
+	@Override
+	public String getRestoreContainerModelLink(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
+
+		PortletURL portletURL = getRestoreURL(portletRequest, classPK, true);
+
+		return portletURL.toString();
+	}
+
+	@Override
+	public String getRestoreMessage(
+		PortletRequest portletRequest, long classPK) {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		return themeDisplay.translate("blogs");
+	}
+
+	@Override
+	public boolean isInTrash(long classPK)
+		throws PortalException, SystemException {
+
+		BlogsEntry entry = BlogsEntryLocalServiceUtil.getEntry(classPK);
+
+		return entry.isInTrash();
+	}
+
+	@Override
+	public void restoreTrashEntry(long userId, long classPK)
+		throws PortalException, SystemException {
+
+		BlogsEntryLocalServiceUtil.restoreEntryFromTrash(userId, classPK);
+	}
+
+	protected PortletURL getRestoreURL(
+			PortletRequest portletRequest, long classPK,
+			boolean isContainerModel)
 		throws PortalException, SystemException {
 
 		String portletId = PortletKeys.BLOGS;
@@ -78,33 +122,17 @@ public class BlogsEntryTrashHandler extends BaseTrashHandler {
 		PortletURL portletURL = PortletURLFactoryUtil.create(
 			portletRequest, portletId, plid, PortletRequest.RENDER_PHASE);
 
-		return portletURL.toString();
-	}
-
-	@Override
-	public String getRestoreMessage(
-		PortletRequest portletRequest, long classPK) {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.translate("blogs");
-	}
-
-	public boolean isInTrash(long classPK)
-		throws PortalException, SystemException {
-
-		BlogsEntry entry = BlogsEntryServiceUtil.getEntry(classPK);
-
-		return entry.isInTrash();
-	}
-
-	public void restoreTrashEntries(long[] classPKs)
-		throws PortalException, SystemException {
-
-		for (long classPK : classPKs) {
-			BlogsEntryServiceUtil.restoreEntryFromTrash(classPK);
+		if (!isContainerModel) {
+			if (portletId.equals(PortletKeys.BLOGS)) {
+				portletURL.setParameter("struts_action", "/blogs/view_entry");
+			}
+			else {
+				portletURL.setParameter(
+					"struts_action", "/blogs_admin/view_entry");
+			}
 		}
+
+		return portletURL;
 	}
 
 	@Override

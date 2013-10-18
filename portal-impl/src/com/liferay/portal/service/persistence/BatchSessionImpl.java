@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,36 +18,39 @@ import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.util.InitialThreadLocal;
 import com.liferay.portal.model.BaseModel;
-import com.liferay.portal.model.ClassedModel;
 
 /**
  * @author     Raymond Augé
  * @author     Brian Wing Shun Chan
- * @deprecated See LPS-30598.
+ * @deprecated As of 6.2.0, see LPS-30598.
  */
 public class BatchSessionImpl implements BatchSession {
 
+	@Override
 	public void delete(Session session, BaseModel<?> model)
 		throws ORMException {
 
 		if (!session.contains(model)) {
-			ClassedModel classedModel = model;
-
 			model = (BaseModel<?>)session.get(
-				classedModel.getModelClass(), model.getPrimaryKeyObj());
+				model.getClass(), model.getPrimaryKeyObj());
 		}
 
-		session.delete(model);
+		if (model != null) {
+			session.delete(model);
+		}
 	}
 
+	@Override
 	public boolean isEnabled() {
 		return _enabled.get();
 	}
 
+	@Override
 	public void setEnabled(boolean enabled) {
 		_enabled.set(enabled);
 	}
 
+	@Override
 	public void update(Session session, BaseModel<?> model, boolean merge)
 		throws ORMException {
 

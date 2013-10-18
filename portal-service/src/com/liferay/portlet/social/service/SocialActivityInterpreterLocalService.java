@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,15 +17,15 @@ package com.liferay.portlet.social.service;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.transaction.Isolation;
+import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.service.BaseLocalService;
 
 /**
- * The interface for the social activity interpreter local service.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service interface for SocialActivityInterpreter. Methods of this
+ * service will not have security checks based on the propagated JAAS
+ * credentials because this service can only be accessed from within the same
+ * VM.
  *
  * @author Brian Wing Shun Chan
  * @see SocialActivityInterpreterLocalServiceUtil
@@ -72,6 +72,21 @@ public interface SocialActivityInterpreterLocalService extends BaseLocalService 
 	public void deleteActivityInterpreter(
 		com.liferay.portlet.social.model.SocialActivityInterpreter activityInterpreter);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public java.util.Map<java.lang.String, java.util.List<com.liferay.portlet.social.model.SocialActivityInterpreter>> getActivityInterpreters();
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public java.util.List<com.liferay.portlet.social.model.SocialActivityInterpreter> getActivityInterpreters(
+		java.lang.String selector);
+
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link #interpret(String,
+	SocialActivity, ServiceContext)}
+	*/
+	public com.liferay.portlet.social.model.SocialActivityFeedEntry interpret(
+		com.liferay.portlet.social.model.SocialActivity activity,
+		com.liferay.portal.theme.ThemeDisplay themeDisplay);
+
 	/**
 	* Creates a human readable activity feed entry for the activity using an
 	* available compatible activity interpreter.
@@ -83,13 +98,21 @@ public interface SocialActivityInterpreterLocalService extends BaseLocalService 
 	* </p>
 	*
 	* @param activity the activity to be translated to human readable form
-	* @param themeDisplay the theme display needed by interpreters to create
-	links and get localized text fragments
 	* @return the activity feed that is a human readable form of the activity
 	record or <code>null</code> if a compatible interpreter is not
 	found
 	*/
 	public com.liferay.portlet.social.model.SocialActivityFeedEntry interpret(
+		java.lang.String selector,
 		com.liferay.portlet.social.model.SocialActivity activity,
-		com.liferay.portal.theme.ThemeDisplay themeDisplay);
+		com.liferay.portal.service.ServiceContext serviceContext);
+
+	public com.liferay.portlet.social.model.SocialActivityFeedEntry interpret(
+		java.lang.String selector,
+		com.liferay.portlet.social.model.SocialActivitySet activitySet,
+		com.liferay.portal.service.ServiceContext serviceContext);
+
+	public void updateActivitySet(long activityId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
 }

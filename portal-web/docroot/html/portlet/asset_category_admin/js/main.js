@@ -4,11 +4,13 @@ AUI.add(
 		var AArray = A.Array;
 		var AObject = A.Object;
 		var HistoryManager = Liferay.HistoryManager;
+		var JSON = A.JSON;
 		var Lang = A.Lang;
 		var Node = A.Node;
 		var Util = Liferay.Util;
 
 		var owns = AObject.owns;
+		var toInt = Lang.toInt;
 
 		var ACTION_ADD = 0;
 
@@ -28,19 +30,23 @@ AUI.add(
 
 		var CSS_CATEGORY_ITEM_CHECK = 'category-item-check';
 
-		var CSS_COLUMN_WIDTH_CATEGORY = 'aui-w40';
+		var CSS_COLUMN_WIDTH_CATEGORY = 'span5';
 
-		var CSS_COLUMN_WIDTH_CATEGORY_FULL = 'aui-w75';
+		var CSS_COLUMN_WIDTH_CATEGORY_FULL = 'span9';
 
 		var CSS_MESSAGE_RESPONSE = 'lfr-message-response';
 
-		var CSS_MESSAGE_ERROR = 'portlet-msg-error';
+		var CSS_MESSAGE_ERROR = 'alert alert-error';
 
-		var CSS_MESSAGE_SUCCESS = 'portlet-msg-success';
+		var CSS_MESSAGE_SUCCESS = 'alert alert-success';
 
 		var CSS_VOCABULARY_ITEM_CHECK = 'vocabulary-item-check';
 
 		var DATA_CATEGORY_ID = 'data-categoryId';
+
+		var DATA_CATEGORY_URL = 'data-url';
+
+		var DATA_VOCABULARY = 'data-vocabulary';
 
 		var DATA_VOCABULARY_ID = 'data-vocabularyId';
 
@@ -60,11 +66,15 @@ AUI.add(
 
 		var EXCEPTION_VOCABULARY_NAME = 'VocabularyNameException';
 
+		var ID = 'id';
+
 		var INVALID_VALUE = A.Attribute.INVALID_VALUE;
 
 		var LIFECYCLE_RENDER = 0;
 
-		var LIFECYCLE_PROCESS = 1;
+		var LIFECYCLE_ACTION = 1;
+
+		var MESSAGE_TYPE_ALERT = 'alert';
 
 		var MESSAGE_TYPE_ERROR = 'error';
 
@@ -72,13 +82,17 @@ AUI.add(
 
 		var MODE_RENDER_FLAT = 0;
 
-		var SELECTOR_BUTTON_CANCEL = '.aui-button-input-cancel';
+		var REGEX_TREE_NODE_ID = /(\d+)$/;
+
+		var REGEX_TREE_NODE_TYPE = /^(vocabulary|category)/;
+
+		var SELECTOR_BUTTON_CANCEL = '.close-panel';
 
 		var SELECTOR_CATEGORY_ITEM = '.category-item';
 
-		var SELECTOR_CATEGORY_NAME_INPUT = '.category-name input';
+		var SELECTOR_CATEGORY_MESSAGES_EDIT = '#categoryMessagesEdit';
 
-		var SELECTOR_CSS_COLUMN = '.aui-column';
+		var SELECTOR_CATEGORY_NAME_INPUT = '.category-name';
 
 		var SELECTOR_FLOATING_TRIGGER = '.lfr-floating-trigger';
 
@@ -86,11 +100,13 @@ AUI.add(
 
 		var SELECTOR_UPDATE_VOCABULARY_FORM = 'form.update-vocabulary-form';
 
-		var SELECTOR_VOCABULARY_MESSAGES = '#vocabulary-messages';
+		var SELECTOR_VOCABULARY_MESSAGES = '#vocabularyMessages';
 
-		var SELECTOR_VOCABULARY_CATEGORY_MESSAGES = '#vocabulary-category-messages';
+		var SELECTOR_VOCABULARY_MESSAGES_EDIT = '#vocabularyMessagesEdit';
 
-		var SELECTOR_VOCABULARY_NAME_INPUT = '.vocabulary-name input';
+		var SELECTOR_VOCABULARY_CATEGORY_MESSAGES = '#vocabularyCategoryMessages';
+
+		var SELECTOR_VOCABULARY_NAME_INPUT = '.vocabulary-name';
 
 		var SELECTOR_VOCABULARY_SELECT_LIST = '.vocabulary-select-list';
 
@@ -118,15 +134,13 @@ AUI.add(
 
 		var STR_PAGE = 'page';
 
-		var STR_PANEL_INSTANCE = 'panelInstance';
-
 		var STR_PARENT_NODE = 'parentNode';
 
 		var STR_PARENT_CATEGORY_ID = 'parentCategoryId';
 
 		var STR_QUERY = 'query';
 
-		var STR_SELECTED = 'selected';
+		var STR_SELECTED = 'active';
 
 		var STR_SPACE = ' ';
 
@@ -159,25 +173,26 @@ AUI.add(
 				'<span class="category-path" title="{path}">{path}</span>' +
 			'</label>';
 
-		var TPL_MESSAGES_CATEGORY = '<div class="aui-helper-hidden lfr-message-response" id="vocabulary-category-messages" />';
+		var TPL_MESSAGES_CATEGORY = '<div class="hide lfr-message-response" id="vocabularyCategoryMessages" />';
 
-		var TPL_MESSAGES_PORTLET = '<div class="aui-helper-hidden lfr-message-response" id="porlet-messages" />';
+		var TPL_MESSAGES_PORTLET = '<div class="hide lfr-message-response" id="porletMessages" />';
 
-		var TPL_MESSAGES_VOCABULARY = '<div class="aui-helper-hidden lfr-message-response" id="vocabulary-messages" />';
+		var TPL_MESSAGES_VOCABULARY = '<div class="hide lfr-message-response" id="vocabularyMessages" />';
 
 		var TPL_SEARCH_QUERY = '%{0}%';
 
-		var TPL_VOCABULARY_LIST = '<li class="vocabulary-category results-row {cssClassSelected}" data-vocabulary="{titleCurrentValue}" data-vocabularyId="{vocabularyId}" tabIndex="0">' +
-			'<div class="vocabulary-content-wrapper">' +
-				'<input type="checkbox" class="vocabulary-item-check aui-field-input-choice" name="vocabulary-item-check" data-vocabularyId="{vocabularyId}" data-vocabularyName="{titleCurrentValue}">' +
-				'<span class="vocabulary-item">' +
-					'<a href="javascript:;" data-vocabularyId="{vocabularyId}" tabIndex="-1">{titleCurrentValue}</a>' +
-				'</span>' +
-				'<a href="javascript:;" class="vocabulary-item-actions-trigger" data-vocabularyId="{vocabularyId}"></a>' +
-			'</div>' +
-		'</li>';
+		var TPL_VOCABULARY_LIST_CONTAINER = '<ul class="nav nav-pills nav-stacked">';
 
-		var TPL_VOCABULARY_OPTION = '<option {selected} value="{vocabularyId}">{titleCurrentValue}</option>';
+		var TPL_VOCABULARY_LIST =
+			'<li class="vocabulary-category results-row {cssClassSelected}" data-vocabulary="{titleCurrentValue}" data-vocabularyId="{vocabularyId}" tabIndex="0">' +
+				'<a href="javascript:;" data-vocabularyId="{vocabularyId}" tabIndex="-1">' +
+					'<input type="checkbox" class="vocabulary-item-check" name="vocabulary-item-check" data-vocabularyId="{vocabularyId}" data-vocabularyName="{titleCurrentValue}">' +
+					'<span class="vocabulary-item-name" data-vocabularyId="{vocabularyId}">{titleCurrentValue}</span>' +
+					'<span tabindex="0" class="vocabulary-item-actions-trigger" data-vocabularyId="{vocabularyId}"></span>' +
+				'</a>' +
+			'</li>';
+
+		var TPL_VOCABULARY_OPTION = '<option value="{vocabularyId}">{titleCurrentValue}</option>';
 
 		var TPL_CATEGORIES_TREE_CONTAINER = '<div class="categories-treeview-container" id="categoriesTreeContainer"></div>';
 
@@ -193,6 +208,8 @@ AUI.add(
 					initializer: function(config) {
 						var instance = this;
 
+						instance._ioCategory = {};
+
 						instance._originalConfig = config;
 
 						var categoriesContainer = A.one(instance._categoryContainerSelector);
@@ -202,8 +219,9 @@ AUI.add(
 
 						instance._prefixedPortletId = '_' + config.portletId + '_';
 
-						instance._container = A.one('.categories-admin-container');
-						instance._categoryViewContainer = A.one('.category-view');
+						instance._container = A.one('.categories-admin-content');
+						instance._categoryViewSection = instance._container.one('.vocabulary-edit-category');
+						instance._categoryViewContainer = instance._categoryViewSection.one('.category-view');
 
 						instance._categoryMessageContainer = Node.create(TPL_MESSAGES_CATEGORY);
 						instance._portletMessageContainer = Node.create(TPL_MESSAGES_PORTLET);
@@ -234,9 +252,7 @@ AUI.add(
 
 						instance._categoryViewContainer.on(EVENT_CLICK, instance._onCategoryViewContainerClick, instance);
 
-						var portletMessageContainer = instance._portletMessageContainer;
-
-						instance._hideMessageTask = A.debounce('hide', 7000, portletMessageContainer);
+						instance._hideMessageTask = A.debounce(instance._hideMessage, 7000);
 
 						vocabularyList.on(EVENT_CLICK, instance._onVocabularyListClick, instance);
 
@@ -290,10 +306,10 @@ AUI.add(
 						instance.on('drop:hit', instance._onDragDrop);
 					},
 
-					_addCategory: function(form) {
+					_addCategory: function(form, action) {
 						var instance = this;
 
-						var ioCategory = instance._getIOCategory();
+						var ioCategory = instance._getIOCategory(action);
 
 						ioCategory.set('form', form.getDOM());
 						ioCategory.set(STR_URI, form.attr(STR_ACTION));
@@ -328,37 +344,47 @@ AUI.add(
 						dropNode.removeClass(CSS_ACTIVE_AREA);
 					},
 
-					_alignFloatingPanels: function(contextPanel) {
+					_afterVocabulariesPaginationChangeRequest: function(event) {
 						var instance = this;
 
-						var boundingBox = contextPanel.get(STR_BOUNDING_BOX);
+						var lastState = event.lastState;
+						var state = event.state;
 
-						var autoFieldsTriggers = boundingBox.all(SELECTOR_FLOATING_TRIGGER);
+						var historyState = {};
 
-						autoFieldsTriggers.each(instance._alignToTriggers, instance);
-					},
+						var paginationMap = instance._getVocabulariesPaginationMap();
 
-					_alignToTriggers: function(item, index, collection) {
-						var instance = this;
+						AObject.each(
+							paginationMap,
+							function(item, index, collection) {
+								if (owns(state, index)) {
+									var historyEntry = item.historyEntry;
 
-						var panelInstance = item.getData(STR_PANEL_INSTANCE);
+									var newItemValue = state[index];
 
-						if (!panelInstance._positionHelper.test(':hidden')) {
-							panelInstance.position(item);
-						}
-					},
+									var value = INVALID_VALUE;
 
-					_bindAlignFloatingPanelsEvent: function(contextPanel) {
-						var instance = this;
+									if (newItemValue === item.defaultValue &&
+										Lang.isValue(HistoryManager.get(historyEntry))) {
 
-						var dragInstance = contextPanel.get('dragInstance');
+										value = null;
+									}
+									else if (lastState && (newItemValue !== lastState[index])) {
+										value = newItemValue;
+									}
 
-						dragInstance.on(
-							'end',
-							function(event) {
-								instance._alignFloatingPanels(contextPanel);
+									if (value !== INVALID_VALUE) {
+										historyState[historyEntry] = value;
+									}
+								}
 							}
 						);
+
+						if (!AObject.isEmpty(historyState)) {
+							HistoryManager.add(historyState);
+						}
+
+						instance._loadData();
 					},
 
 					_bindCloseEvent: function(contextPanel) {
@@ -367,67 +393,86 @@ AUI.add(
 						contextPanel.get(STR_BOUNDING_BOX).on('key', contextPanel.hide, 'up:27', contextPanel);
 					},
 
-					_buildCategoryTree: function(categories, parentCategoryId) {
+					_clearCategoriesContainer: function() {
 						var instance = this;
 
-						var children = instance._filterCategory(categories, parentCategoryId);
+						if (instance._categoriesTreeView) {
+							instance._categoriesTreeView.destroy();
 
-						A.each(
-							children,
+							instance._categoriesTreeView = null;
+						}
+
+						instance._categoriesContainer.empty();
+					},
+
+					_createAlertMessage: function(items, selectedNames, keyId) {
+						var instance = this;
+
+						var itemNames = AArray.map(
+							items,
 							function(item, index, collection) {
-								var categoryId = item.categoryId;
-								var hasChild = instance._filterCategory(categories, categoryId).length;
+								var itemId = item[keyId];
 
-								var node = instance._createTreeNode(item);
-
-								var parentId = STR_CATEGORY_NODE + parentCategoryId;
-								var parentNode = instance._categoriesTreeView.getNodeById(parentId) || instance._categoriesTreeView;
-
-								parentNode.appendChild(node);
-
-								if (hasChild) {
-									instance._buildCategoryTree(categories, categoryId);
-								}
+								return selectedNames[itemId];
 							}
 						);
 
-						return children.length;
+						return Liferay.Language.get('the-following-items-could-not-be-deleted') + ' ' + itemNames.join(', ');
 					},
 
 					_createCategoryFlatView: function(categories) {
 						var instance = this;
 
-						var buffer = [];
+						instance._clearCategoriesContainer();
 
-						A.each(
-							categories,
-							function(item, index, collection) {
-								buffer.push(Lang.sub(TPL_CATEGORY_ITEM, item));
-							}
-						);
+						if (categories.length) {
+							var buffer = AArray.map(
+								categories,
+								function(item, index, collection) {
+									if (item.parentCategoryId == 0) {
+										instance._vocabularyRootCategories[item.categoryId] = 1;
+									}
 
-						instance._categoriesContainer.html(buffer.join(STR_EMPTY));
-
-						if (!instance._categoresSearchHandle) {
-							instance._categoresSearchHandle = instance._categoriesContainer.delegate(
-								EVENT_CLICK,
-								instance._onCategorySearchClick,
-								'input[type=checkbox]',
-								instance
+									return Lang.sub(TPL_CATEGORY_ITEM, item);
+								}
 							);
+
+							instance._categoriesContainer.html(buffer.join(STR_EMPTY));
+
+							if (!instance._categoresSearchHandle) {
+								instance._categoresSearchHandle = instance._categoriesContainer.delegate(
+									EVENT_CLICK,
+									instance._onCategorySearchClick,
+									'input[type=checkbox]',
+									instance
+								);
+							}
+						}
+						else {
+							instance._showCateroryMessage();
 						}
 					},
 
-					_createCategoryTree: function(categories, parentCategoryId) {
+					_createCategoryTreeView: function(categories) {
 						var instance = this;
+
+						instance._clearCategoriesContainer();
 
 						var boundingBox = Node.create(TPL_CATEGORIES_TREE_CONTAINER);
 
 						instance._categoriesContainer.append(boundingBox);
 
+						var paginatorConfig = {
+							limit: 10,
+							moreResultsLabel: Liferay.Language.get('load-more-results'),
+							offsetParam: 'start',
+							total: instance._getVocabularyCategoriesCount(instance._vocabularies, instance._selectedVocabularyId)
+						};
+
 						instance._categoriesTreeView = new CategoriesTree(
 							{
 								boundingBox: boundingBox,
+								children: categories,
 								on: {
 									dropAppend: function(event) {
 										var tree = event.tree;
@@ -477,11 +522,37 @@ AUI.add(
 										instance._categoriesTreeView.reinsertChild(tree.dragNode, parentNode);
 									}
 								},
+								io: {
+									cfg: {
+										data: A.bind('_formatRequestData', instance)
+									},
+									formatter: A.bind('_formatJSONResult', instance),
+									url: themeDisplay.getPathMain() + '/asset/get_categories'
+								},
+								paginator: paginatorConfig,
 								type: 'normal'
 							}
 						).render();
+					},
 
-						instance._buildCategoryTree(categories, 0);
+					_createItemNameMap: function(itemIds, itemLookupFn, attrLookup, attr) {
+						var instance = this;
+
+						var itemNameMap = {};
+
+						var length = itemIds.length;
+
+						for (var i = 0; i < length; i++) {
+							var itemId = itemIds[i];
+
+							var item = itemLookupFn(itemId);
+
+							var attrLookupFn = item[attrLookup];
+
+							itemNameMap[itemId] = attrLookupFn.call(item, attr);
+						}
+
+						return itemNameMap;
 					},
 
 					_checkAllCategories: function(event) {
@@ -499,7 +570,7 @@ AUI.add(
 					_closeEditSection: function() {
 						var instance = this;
 
-						instance._hideSection(instance._categoryViewContainer);
+						instance._hideSection(instance._categoryViewSection);
 
 						var selectedCategory = instance._selectedCategory;
 
@@ -516,20 +587,16 @@ AUI.add(
 					_createCategoryPanelAdd: function() {
 						var instance = this;
 
-						instance._categoryPanelAdd = new A.Dialog(
+						instance._categoryPanelAdd = Liferay.Util.Window.getWindow(
 							{
-								align: instance._dialogAlignConfig,
-								cssClass: CSS_ADMIN_DIALOG,
-								title: Liferay.Language.get('add-category'),
-								resizable: false,
-								width: 550,
-								zIndex: 1000
+								dialog: {
+									cssClass: CSS_ADMIN_DIALOG
+								},
+								title: Liferay.Language.get('add-category')
 							}
-						).render();
+						);
 
 						instance._categoryPanelAdd.hide();
-
-						instance._bindAlignFloatingPanelsEvent(instance._categoryPanelAdd);
 
 						instance._bindCloseEvent(instance._categoryPanelAdd);
 
@@ -550,32 +617,6 @@ AUI.add(
 						return instance._categoryPanelAdd;
 					},
 
-					_createCategoryView: function(categories, renderMode) {
-						var instance = this;
-
-						if (instance._categoriesTreeView) {
-							instance._categoriesTreeView.destroy();
-
-							instance._categoriesTreeView = null;
-						}
-
-						var categoriesContainer = instance._categoriesContainer;
-
-						categoriesContainer.empty();
-
-						if (categories.length) {
-							if (renderMode == MODE_RENDER_FLAT) {
-								instance._createCategoryFlatView(categories);
-							}
-							else {
-								instance._createCategoryTree(categories, 0);
-							}
-						}
-						else {
-							instance._showCateroryMessage();
-						}
-					},
-
 					_createLiveSearch: function() {
 						var instance = this;
 
@@ -587,6 +628,10 @@ AUI.add(
 							}
 						);
 
+						if (Liferay.Form.Placeholders) {
+							liveSearch.sendRequest('');
+						}
+
 						liveSearch.after(STR_QUERY, instance._processSearch, instance);
 
 						instance._searchInput.on('keydown', instance._onSearchInputKeyDown, instance);
@@ -594,50 +639,19 @@ AUI.add(
 						instance._liveSearch = liveSearch;
 					},
 
-					_createTreeNode: function(item, renderMode) {
-						var instance = this;
-
-						var node = new A.TreeNodeCheck(
-							{
-								alwaysShowHitArea: false,
-								id: STR_CATEGORY_NODE + item.categoryId,
-								label: Util.escapeHTML(item.titleCurrentValue),
-								leaf: false,
-								on: {
-									checkedChange: function(event) {
-										if (event.newVal) {
-											instance._toggleAllVocabularies(false);
-										}
-									},
-									select: function(event) {
-										var categoryId = instance._getCategoryId(event.target);
-
-										instance._showCategoryViewContainer(categoryId);
-									}
-								}
-							}
-						);
-
-						return node;
-					},
-
 					_createVocabularyPanelAdd: function() {
 						var instance = this;
 
-						instance._vocabularyPanelAdd = new A.Dialog(
+						instance._vocabularyPanelAdd = Liferay.Util.Window.getWindow(
 							{
-								align: instance._dialogAlignConfig,
-								cssClass: CSS_ADMIN_DIALOG,
-								title: Liferay.Language.get('add-vocabulary'),
-								resizable: false,
-								width: 550,
-								zIndex: 1000
+								dialog: {
+									cssClass: CSS_ADMIN_DIALOG
+								},
+								title: Liferay.Language.get('add-vocabulary')
 							}
-						).render();
+						);
 
 						instance._vocabularyPanelAdd.hide();
-
-						instance._bindAlignFloatingPanelsEvent(instance._vocabularyPanelAdd);
 
 						instance._bindCloseEvent(instance._vocabularyPanelAdd);
 
@@ -666,26 +680,17 @@ AUI.add(
 					_createPanelEdit: function(config) {
 						var instance = this;
 
-						var defaultConfig = {
-							align: instance._dialogAlignConfig,
-							cssClass: CSS_ADMIN_DIALOG,
-							resizable: false,
-							width: 550,
-							zIndex: 1000
-						};
-
-						if (Lang.isObject(config)) {
-							config = A.merge(defaultConfig, config);
-						}
-						else {
-							config = defaultConfig;
-						}
-
-						instance._panelEdit = new A.Dialog(config).render();
+						instance._panelEdit = Liferay.Util.Window.getWindow(
+							{
+								dialog: {
+									align: instance._dialogAlignConfig,
+									cssClass: CSS_ADMIN_DIALOG
+								},
+								title: Liferay.Language.get('edit-category')
+							}
+						);
 
 						instance._panelEdit.hide();
-
-						instance._bindAlignFloatingPanelsEvent(instance._panelEdit);
 
 						instance._bindCloseEvent(instance._panelEdit);
 
@@ -711,14 +716,15 @@ AUI.add(
 						var panelPermissionsChange = instance._panelPermissionsChange;
 
 						if (!panelPermissionsChange) {
-							panelPermissionsChange = Util._openWindow(
+							panelPermissionsChange = Util.Window.getWindow(
 								{
 									dialog: {
 										align: instance._dialogAlignConfig,
 										cssClass: 'portlet-asset-categories-admin-dialog permissions-change',
 										width: 600
 									},
-									title: Liferay.Language.get('edit-permissions')
+									title: Liferay.Language.get('edit-permissions'),
+									uri: 'about:blank'
 								}
 							);
 
@@ -735,11 +741,13 @@ AUI.add(
 
 						var url;
 
+						var config = instance._originalConfig;
+
 						if (lifecycle == LIFECYCLE_RENDER) {
-							url = Liferay.PortletURL.createRenderURL();
+							url = Liferay.PortletURL.createURL(config.baseRenderURL);
 						}
-						else if (lifecycle == LIFECYCLE_PROCESS) {
-							url = Liferay.PortletURL.createActionURL();
+						else if (lifecycle == LIFECYCLE_ACTION) {
+							url = Liferay.PortletURL.createURL(config.baseActionURL);
 						}
 						else {
 							throw 'Internal error. Unimplemented lifecycle.';
@@ -817,13 +825,17 @@ AUI.add(
 					_deleteSelected: function(event) {
 						var instance = this;
 
-						var ids = A.all('.vocabulary-item-check:checked').attr(DATA_VOCABULARY_ID);
+						instance._selectedVocabularies = instance._getSelectedVocabularies();
+
+						var ids = AObject.keys(instance._selectedVocabularies);
 
 						if (ids.length) {
 							instance._deleteSelectedVocabularies(ids);
 						}
 						else {
-							ids = instance._getSelectedCategoriesId();
+							instance._selectedCategories = instance._getSelectedCategories();
+
+							ids = AObject.keys(instance._selectedCategories);
 
 							if (ids.length) {
 								instance._deleteSelectedCategories(ids);
@@ -844,9 +856,14 @@ AUI.add(
 							Liferay.Service(
 								'/assetcategory/delete-categories',
 								{
-									categoryIds: categoryIds
+									categoryIds: categoryIds,
+									serviceContext: JSON.stringify(
+										{
+											failOnPortalException: false
+										}
+									)
 								},
-								A.bind(instance._processCategoryDeletion, instance)
+								A.bind('_processCategoryDeletion', instance, instance._selectedVocabularyId, categoryIds)
 							);
 						}
 					},
@@ -860,9 +877,14 @@ AUI.add(
 							Liferay.Service(
 								'/assetvocabulary/delete-vocabularies',
 								{
-									vocabularyIds: vocabularyIds
+									vocabularyIds: vocabularyIds,
+									serviceContext: JSON.stringify(
+										{
+											failOnPortalException: false
+										}
+									)
 								},
-								A.bind(instance._processVocabularyDeletion, instance)
+								A.bind('_processVocabularyDeletion', instance)
 							);
 						}
 					},
@@ -879,16 +901,44 @@ AUI.add(
 						);
 					},
 
-					_destroyFloatingPanels: function(autoFieldsInstance, panelInstance) {
+					_destroyFloatingPanels: function(autoFieldsInstance) {
 						var instance = this;
 
 						if (autoFieldsInstance) {
 							autoFieldsInstance.destroy();
 						}
+					},
 
-						if (panelInstance) {
-							panelInstance.destroy();
+					_displayCategoriesTreeView: function(categories) {
+						var instance = this;
+
+						if (categories.length) {
+							instance._createCategoryTreeView(categories);
 						}
+						else {
+							instance._categoriesContainer.empty();
+
+							instance._showCateroryMessage();
+						}
+
+						var vocabularyList = A.one(instance._vocabularyListSelector);
+
+						var listLinks = vocabularyList.all('li');
+
+						listLinks.unplug(A.Plugin.Drop);
+
+						var bubbleTargets = [instance];
+
+						if (instance._categoriesTreeView) {
+							bubbleTargets.push(instance._categoriesTreeView);
+						}
+
+						listLinks.plug(
+							A.Plugin.Drop,
+							{
+								bubbleTargets: bubbleTargets
+							}
+						);
 					},
 
 					_displayList: function(callback) {
@@ -904,10 +954,10 @@ AUI.add(
 
 								instance._vocabularies = vocabularies;
 
-								if (vocabularies.length) {
+								if (vocabularies && vocabularies.length) {
 									instance._hideVocabularyMessage();
 
-									var buffer = ['<ul>'];
+									var buffer = [TPL_VOCABULARY_LIST_CONTAINER];
 
 									A.each(
 										vocabularies,
@@ -964,41 +1014,32 @@ AUI.add(
 
 						instance._checkAllCategoriesCheckbox.attr(STR_CHECKED, false);
 
-						instance._getVocabularyCategories(
-							vocabularyId,
-							function(result) {
-								instance._displayVocabularyCategoriesImpl(result.categories, callback, renderMode);
-							}
-						);
+						instance._vocabularyRootCategories = {};
+
+						if (renderMode == MODE_RENDER_FLAT) {
+							instance._getVocabularyCategoriesFlat(
+								vocabularyId,
+								function(response) {
+									instance._displayCategoriesFlatView(response.categories, callback);
+								}
+							);
+						}
+						else {
+							instance._getVocabularyCategoriesTree(
+								vocabularyId,
+								function(response) {
+									var categories = instance._formatJSONResult(response);
+
+									instance._displayCategoriesTreeView(categories);
+								}
+							);
+						}
 					},
 
-					_displayVocabularyCategoriesImpl: function(categories, callback, renderMode) {
+					_displayCategoriesFlatView: function(categories, callback) {
 						var instance = this;
 
-						instance._createCategoryView(categories, renderMode);
-
-						if (categories.length <= 0) {
-							instance._showCateroryMessage();
-						}
-
-						var vocabularyList = A.one(instance._vocabularyListSelector);
-
-						var listLinks = vocabularyList.all('li');
-
-						listLinks.unplug(A.Plugin.Drop);
-
-						var bubbleTargets = [instance];
-
-						if (instance._categoriesTreeView) {
-							bubbleTargets.push(instance._categoriesTreeView);
-						}
-
-						listLinks.plug(
-							A.Plugin.Drop,
-							{
-								bubbleTargets: bubbleTargets
-							}
-						);
+						instance._createCategoryFlatView(categories);
 
 						if (callback) {
 							callback();
@@ -1011,7 +1052,7 @@ AUI.add(
 						var filteredCategories = [];
 
 						if (Lang.isArray(categories)) {
-							filteredCategories = A.Array.filter(
+							filteredCategories = AArray.filter(
 								categories,
 								function(item, index, collection) {
 									return (item.parentCategoryId == parentCategoryId);
@@ -1022,20 +1063,84 @@ AUI.add(
 						return filteredCategories;
 					},
 
-					_focusCategoryPanelAdd: function() {
-						var instance = this;
-
-						var inputCategoryAddNameNode = instance._inputCategoryNameNode || instance._categoryFormAdd.one(SELECTOR_CATEGORY_NAME_INPUT);
-
-						Util.focusFormField(inputCategoryAddNameNode);
-					},
-
 					_focusVocabularyPanelAdd: function() {
 						var instance = this;
 
 						var inputVocabularyAddNameNode = instance._inputVocabularyAddNameNode || instance._vocabularyFormAdd.one(SELECTOR_VOCABULARY_NAME_INPUT);
 
 						Util.focusFormField(inputVocabularyAddNameNode);
+					},
+
+					_formatRequestData: function(treeNode) {
+						var instance = this;
+
+						var data = {
+							p_auth: Liferay.authToken
+						};
+
+						var assetId = instance._getTreeNodeId(treeNode, REGEX_TREE_NODE_ID);
+
+						var assetType = instance._getTreeNodeId(treeNode, REGEX_TREE_NODE_TYPE);
+
+						if (Lang.isValue(assetId)) {
+							if (assetType == 'category') {
+								data.categoryId = assetId;
+							}
+							else {
+								data.vocabularyId = instance._selectedVocabularyId;
+							}
+						}
+
+						return data;
+					},
+
+					_formatJSONResult: function(json) {
+						var instance = this;
+
+						return AArray.map(
+							json,
+							function(item, index, collection) {
+								var checked = false;
+
+								if (item.parentCategoryId == 0) {
+									instance._vocabularyRootCategories[item.categoryId] = 1;
+								}
+
+								var paginatorConfig = {
+									limit: 10,
+									moreResultsLabel: Liferay.Language.get('load-more-results'),
+									offsetParam: 'start',
+									total: item.childrenCount
+								};
+
+								return {
+									alwaysShowHitArea: item.hasChildren,
+									id: STR_CATEGORY_NODE + item.categoryId,
+									io: {
+										cfg: {
+											data: A.bind('_formatRequestData', instance)
+										},
+										formatter: A.bind('_formatJSONResult', instance),
+										url: themeDisplay.getPathMain() + '/asset/get_categories'
+									},
+									label: Liferay.Util.escapeHTML(item.titleCurrentValue),
+									paginator: paginatorConfig,
+									type: 'check',
+									on: {
+										checkedChange: function(event) {
+											if (event.newVal) {
+												instance._toggleAllVocabularies(false);
+											}
+										},
+										select: function(event) {
+											var categoryId = instance._getCategoryId(event.target);
+
+											instance._showCategoryViewContainer(categoryId);
+										}
+									}
+								};
+							}
+						);
 					},
 
 					_getCategory: function(categoryId) {
@@ -1058,7 +1163,7 @@ AUI.add(
 						var categoryId = STR_EMPTY;
 
 						if (node) {
-							var nodeId = node.get('id') || STR_EMPTY;
+							var nodeId = node.get(ID) || STR_EMPTY;
 
 							categoryId = nodeId.replace(STR_CATEGORY_NODE, STR_EMPTY);
 
@@ -1070,10 +1175,10 @@ AUI.add(
 						return categoryId;
 					},
 
-					_getIOCategory: function() {
+					_getIOCategory: function(action) {
 						var instance = this;
 
-						var ioCategory = instance._ioCategory;
+						var ioCategory = instance._ioCategory[action];
 
 						if (!ioCategory) {
 							ioCategory = A.io.request(
@@ -1085,7 +1190,7 @@ AUI.add(
 										success: function(event, id, obj) {
 											var response = this.get(STR_RESPONSE_DATA);
 
-											instance._onCategoryAddSuccess(response);
+											instance._onCategoryAddSuccess(response, action);
 										},
 										failure: function(event, id, obj) {
 											instance._onCategoryAddFailure(obj);
@@ -1094,7 +1199,7 @@ AUI.add(
 								}
 							);
 
-							instance._ioCategory = ioCategory;
+							instance._ioCategory[action] = ioCategory;
 						}
 
 						return ioCategory;
@@ -1205,10 +1310,10 @@ AUI.add(
 						return categoryId;
 					},
 
-					_getSelectedCategoriesId: function() {
+					_getSelectedCategories: function() {
 						var instance = this;
 
-						var selectedCategoriesIds = [];
+						var selectedCategories = {};
 
 						var categoriesTreeView = instance._categoriesTreeView;
 
@@ -1218,63 +1323,111 @@ AUI.add(
 									if (child.isChecked()) {
 										var categoryId = instance._getCategoryId(child);
 
-										selectedCategoriesIds.push(categoryId);
+										selectedCategories[categoryId] = child.get(STR_LABEL);
 									}
 								},
 								true
 							);
 						}
 						else {
-							selectedCategoriesIds = instance._categoriesContainer.all('.category-item-check:checked').attr(DATA_CATEGORY_ID);
+							var categoryIds = instance._categoriesContainer.all('.category-item-check:checked').attr(DATA_CATEGORY_ID);
+
+							selectedCategories = instance._createItemNameMap(categoryIds, A.bind('_getCategory', instance), 'get', STR_TITLE);
 						}
 
-						return selectedCategoriesIds;
+						return selectedCategories;
 					},
 
-					_getVocabulariesPaginator: function() {
+					_getSelectedVocabularies: function() {
 						var instance = this;
 
-						var vocabulariesPaginator = instance._vocabulariesPaginator;
+						var vocabularyIds = A.all('.vocabulary-item-check:checked').attr(DATA_VOCABULARY_ID);
 
-						if (!vocabulariesPaginator) {
+						return instance._createItemNameMap(vocabularyIds, instance._getVocabulary, 'attr', DATA_VOCABULARY);
+					},
+
+					_getTreeNodeId: function(treeNode, regex) {
+						var instance = this;
+
+						var treeId = treeNode.get(ID);
+
+						var match = treeId.match(regex);
+
+						return match && match[1];
+					},
+
+					_getVocabularyById: function(vocabularyId) {
+						var instance = this;
+
+						return AArray.find(
+							instance._vocabularies,
+							function(item, index, collection) {
+								return (vocabularyId == item.vocabularyId);
+							}
+						);
+					},
+
+					_getVocabularyCategoriesCount: function(vocabularies, vocabularyId) {
+						var instance = this;
+
+						var categoriesCount;
+
+						vocabularyId = toInt(vocabularyId);
+
+						A.some(
+							vocabularies,
+							function(item, index, collection) {
+								if (item.vocabularyId === vocabularyId) {
+									categoriesCount = item.categoriesCount;
+
+									return true;
+								}
+							}
+						);
+
+						return categoriesCount;
+					},
+
+					_getVocabulariesPagination: function() {
+						var instance = this;
+
+						var vocabulariesPagination = instance._vocabulariesPagination;
+
+						if (!vocabulariesPagination) {
 							var originalConfig = instance._originalConfig;
 
 							var config = {
-								alwaysVisible: false,
-								containers: '.vocabularies-paginator',
-								firstPageLinkLabel: '<<',
-								lastPageLinkLabel: '>>',
-								nextPageLinkLabel: '>',
-								prevPageLinkLabel: '<',
-								rowsPerPageOptions: originalConfig.itemsPerPageOptions
+								boundingBox: '.vocabularies-pagination',
+								circular: false,
+								visible: false
 							};
 
-							var paginatorMap = instance._getVocabulariesPaginatorMap();
+							var paginationMap = instance._getVocabulariesPaginationMap();
 
 							AObject.each(
-								paginatorMap,
+								paginationMap,
 								function(item, index, collection) {
 									config[index] = Number(HistoryManager.get(item.historyEntry)) || item.defaultValue;
 								}
 							);
 
-							vocabulariesPaginator = new A.Paginator(config).render();
+							vocabulariesPagination = new A.Pagination(config).render();
 
-							vocabulariesPaginator.on('changeRequest', instance._onVocabulariesPaginatorChangeRequest, instance);
+							vocabulariesPagination.after('changeRequest', instance._afterVocabulariesPaginationChangeRequest, instance);
 
-							instance._vocabulariesPaginator = vocabulariesPaginator;
+							instance._vocabulariesPagination = vocabulariesPagination;
 						}
 
-						return vocabulariesPaginator;
+						return vocabulariesPagination;
 					},
 
-					_getVocabulariesPaginatorMap: function() {
+					_getVocabulariesPaginationMap: function() {
 						var instance = this;
 
-						var paginatorMap = instance._paginatorMap;
+						var paginationMap = instance._paginationMap;
 
-						if (!paginatorMap) {
-							paginatorMap = {
+						if (!paginationMap) {
+							paginationMap = {
 								page: {
 									historyEntry: instance._prefixedPortletId + STR_PAGE,
 									defaultValue: 1,
@@ -1287,51 +1440,66 @@ AUI.add(
 								}
 							};
 
-							instance._paginatorMap = paginatorMap;
+							instance._paginationMap = paginationMap;
 						}
 
-						return paginatorMap;
+						return paginationMap;
 					},
 
 					_getVocabularies: function(callback) {
 						var instance = this;
 
-						var paginator = instance._getVocabulariesPaginator();
+						var pagination = instance._getVocabulariesPagination();
+
+						var config = instance._originalConfig;
+
+						var itemsPerPage = config.itemsPerPage;
 
 						var currentPage = 0;
 
 						var query = instance._liveSearch.get(STR_QUERY);
 
 						if (!instance._restartSearch) {
-							currentPage = paginator.get(STR_PAGE);
+							currentPage = pagination.get(STR_PAGE);
 
 							if (!currentPage) {
-								var paginatorMap = instance._getVocabulariesPaginatorMap();
+								var paginationMap = instance._getVocabulariesPaginationMap();
 
-								currentPage = paginatorMap[STR_PAGE].defaultValue;
+								currentPage = paginationMap[STR_PAGE].defaultValue;
 							}
 
 							currentPage -= 1;
 						}
 
-						var rowsPerPage = paginator.get(STR_ROWS_PER_PAGE);
+						var start = currentPage * itemsPerPage;
+						var end = start + itemsPerPage;
 
-						var start = currentPage * rowsPerPage;
-						var end = start + rowsPerPage;
+						var parentGroupId = themeDisplay.getParentGroupId();
 
 						Liferay.Service(
-							'/assetvocabulary/get-json-group-vocabularies',
 							{
-								groupId: themeDisplay.getParentGroupId(),
-								name: query,
-								start: start,
-								end: end,
-								obc: null
+								'$display = /assetvocabulary/get-group-vocabularies-display': {
+									groupId: parentGroupId,
+									name: query,
+									start: start,
+									end: end,
+									addDefaultVocabulary: true,
+									obc: null,
+									'vocabularies.$categoriesCount = /assetcategory/get-vocabulary-root-categories-count': {
+										groupId: parentGroupId,
+										'@vocabularyId': '$display.vocabularies.vocabularyId'
+									}
+								}
 							},
 							function(result) {
+								var total = result.total;
+
 								instance._restartSearch = false;
 
-								paginator.setState(result);
+								pagination.set('total', Math.ceil(total / itemsPerPage));
+								pagination.set('visible', (total > itemsPerPage));
+
+								pagination.setState(result);
 
 								if (callback) {
 									callback.apply(instance, arguments);
@@ -1346,7 +1514,7 @@ AUI.add(
 						return A.one('li[data-vocabularyId="' + vocabularyId + '"]');
 					},
 
-					_getVocabularyCategories: function(vocabularyId, callback) {
+					_getVocabularyCategoriesFlat: function(vocabularyId, callback) {
 						var instance = this;
 
 						instance._showLoading(instance._categoryContainerSelector);
@@ -1365,7 +1533,7 @@ AUI.add(
 						if (query && instance._searchType.val() != STR_VOCABULARIES) {
 							params = A.mix(
 								{
-									groupId: themeDisplay.getParentGroupId(),
+									groupId: themeDisplay.getSiteGroupId(),
 									name: Lang.sub(TPL_SEARCH_QUERY, [query])
 								},
 								defaultParams
@@ -1373,6 +1541,28 @@ AUI.add(
 						}
 
 						Liferay.Service('/assetcategory/get-json-vocabulary-categories', params, callback);
+					},
+
+					_getVocabularyCategoriesTree: function(vocabularyId, callback) {
+						var instance = this;
+
+						A.io.request(
+							themeDisplay.getPathMain() + '/asset/get_categories',
+							{
+								data: {
+									end: 10,
+									p_auth: Liferay.authToken,
+									start: 0,
+									vocabularyId: vocabularyId
+								},
+								dataType: 'json',
+								on: {
+									success: function(event) {
+										callback(this.get(STR_RESPONSE_DATA));
+									}
+								}
+							}
+						);
 					},
 
 					_getVocabularyId: function(exp) {
@@ -1384,7 +1574,7 @@ AUI.add(
 					_getVocabularyName: function(exp) {
 						var instance = this;
 
-						return A.one(exp).attr('data-vocabulary');
+						return A.one(exp).attr(DATA_VOCABULARY);
 					},
 
 					_hideAllMessages: function() {
@@ -1399,18 +1589,20 @@ AUI.add(
 						instance._processAutoFieldsTriggers(event, instance._resetInputLocalized);
 					},
 
-					_hideSection: function(exp) {
+					_hideMessage: function(container) {
 						var instance = this;
 
-						var node = A.one(exp);
+						container = container || instance._portletMessageContainer;
+
+						container.hide();
+					},
+
+					_hideSection: function(node) {
+						var instance = this;
 
 						if (node) {
-							var parentNode = node.ancestor(SELECTOR_CSS_COLUMN);
-
-							if (parentNode) {
-								parentNode.previous(SELECTOR_CSS_COLUMN).replaceClass(CSS_COLUMN_WIDTH_CATEGORY, CSS_COLUMN_WIDTH_CATEGORY_FULL);
-								parentNode.hide();
-							}
+							node.previous().replaceClass(CSS_COLUMN_WIDTH_CATEGORY, CSS_COLUMN_WIDTH_CATEGORY_FULL);
+							node.hide();
 						}
 					},
 
@@ -1454,8 +1646,6 @@ AUI.add(
 						instance._categoryFormAdd = categoryFormAdd;
 
 						instance._loadVocabularySelect(instance._vocabularies, instance._selectedVocabularyId);
-
-						instance._focusCategoryPanelAdd();
 					},
 
 					_initializeCategoryPanelEdit: function() {
@@ -1465,7 +1655,7 @@ AUI.add(
 
 						categoryFormEdit.detach(EVENT_SUBMIT);
 
-						categoryFormEdit.on(EVENT_SUBMIT, instance._onCategoryFormSubmit, instance, categoryFormEdit);
+						categoryFormEdit.on(EVENT_SUBMIT, instance._onCategoryFormSubmit, instance, categoryFormEdit, ACTION_EDIT);
 
 						var closeButton = categoryFormEdit.one(SELECTOR_BUTTON_CANCEL);
 
@@ -1598,7 +1788,7 @@ AUI.add(
 						panelPermissionsChange._syncUIPosAlign();
 
 						if (instance._panelEdit) {
-							var zIndex = parseInt(instance._panelEdit.get(STR_ZINDEX), 10) + 2;
+							var zIndex = toInt(instance._panelEdit.get(STR_ZINDEX)) + 2;
 
 							panelPermissionsChange.set(STR_ZINDEX, zIndex);
 						}
@@ -1611,26 +1801,37 @@ AUI.add(
 							var selectNode = instance._categoryFormAdd.one(SELECTOR_VOCABULARY_SELECT_LIST);
 
 							if (selectNode) {
-								selectedVocabularyId = parseInt(selectedVocabularyId, 10);
+								selectedVocabularyId = toInt(selectedVocabularyId);
 
 								selectNode.empty();
 
 								var buffer = [];
 
+								var selectedVocabularyIndex;
+
 								A.each(
 									vocabularies,
 									function(item, index, collection) {
-										item[STR_SELECTED] = STR_EMPTY;
-
-										if (item.vocabularyId == selectedVocabularyId) {
-											item[STR_SELECTED] = STR_SELECTED;
+										if (item.vocabularyId === selectedVocabularyId) {
+											selectedVocabularyIndex = index;
 										}
 
-										buffer.push(Lang.sub(TPL_VOCABULARY_OPTION, item));
+										buffer.push(
+											Lang.sub(
+												TPL_VOCABULARY_OPTION,
+												{
+													selected: item.selected,
+													vocabularyId: item.vocabularyId,
+													titleCurrentValue: A.Escape.html(item.titleCurrentValue)
+												}
+											)
+										);
 									}
 								);
 
 								selectNode.append(buffer.join(STR_EMPTY));
+
+								selectNode.set('selectedIndex', selectedVocabularyIndex);
 							}
 						}
 					},
@@ -1646,15 +1847,21 @@ AUI.add(
 					_onCategoryAddFailure: function(response) {
 						var instance = this;
 
-						instance._sendMessage(MESSAGE_TYPE_ERROR, Liferay.Language.get('your-request-failed-to-complete'));
+						instance._sendMessage(MESSAGE_TYPE_ERROR, Liferay.Language.get('your-request-failed-to-complete'), SELECTOR_CATEGORY_MESSAGES_EDIT);
 					},
 
-					_onCategoryAddSuccess: function(response) {
+					_onCategoryAddSuccess: function(response, action) {
 						var instance = this;
 
 						var exception = response.exception;
 
 						if (!exception && response.categoryId) {
+							var vocabulary = instance._getVocabularyById(instance._selectedVocabularyId);
+
+							if (action === ACTION_ADD && response.parentCategoryId === 0) {
+								vocabulary.categoriesCount++;
+							}
+
 							instance._sendMessage(MESSAGE_TYPE_SUCCESS, Liferay.Language.get('your-request-processed-successfully'));
 
 							instance._selectVocabulary(instance._selectedVocabularyId);
@@ -1665,6 +1872,10 @@ AUI.add(
 									instance._hideSection(instance._categoryViewContainer);
 								}
 							);
+
+							if (action === ACTION_EDIT) {
+								instance._showCategoryViewContainer(response.categoryId);
+							}
 
 							instance._hidePanels();
 						}
@@ -1678,7 +1889,7 @@ AUI.add(
 								errorKey = Liferay.Language.get('please-enter-a-valid-category-name');
 							}
 							else if ((exception.indexOf('CategoryPropertyKeyException') > -1) ||
-									 (exception.indexOf('CategoryPropertyValueException') > -1)) {
+									(exception.indexOf('CategoryPropertyValueException') > -1)) {
 
 								errorKey = Liferay.Language.get('one-of-your-property-fields-contains-invalid-characters');
 							}
@@ -1695,7 +1906,7 @@ AUI.add(
 								errorKey = Liferay.Language.get('your-request-failed-to-complete');
 							}
 
-							instance._sendMessage(MESSAGE_TYPE_ERROR, errorKey);
+							instance._sendMessage(MESSAGE_TYPE_ERROR, errorKey, SELECTOR_CATEGORY_MESSAGES_EDIT);
 						}
 					},
 
@@ -1711,7 +1922,7 @@ AUI.add(
 						if (confirm(Liferay.Language.get('are-you-sure-you-want-to-delete-this-category'))) {
 							instance._deleteCategory(
 								instance._selectedCategoryId,
-								A.bind(instance._processCategoryDeletion, instance)
+								A.bind('_processCategoryDeletion', instance, instance._selectedVocabularyId, [instance._selectedCategoryId])
 							);
 						}
 					},
@@ -1750,7 +1961,7 @@ AUI.add(
 								}
 							);
 
-							instance._addCategory(form);
+							instance._addCategory(form, action);
 						}
 					},
 
@@ -1823,7 +2034,7 @@ AUI.add(
 					_onCategoryViewContainerClick: function(event) {
 						var instance = this;
 
-						var targetId = event.target.get('id');
+						var targetId = event.target.get(ID);
 
 						if (targetId == 'editCategoryButton') {
 							event.halt();
@@ -1864,7 +2075,7 @@ AUI.add(
 					_onChangePermissions: function(event) {
 						var instance = this;
 
-						var url = event.target.attr('data-url');
+						var url = event.target.attr(DATA_CATEGORY_URL) || event.currentTarget.attr(DATA_CATEGORY_URL);
 
 						instance._loadPermissions(url);
 					},
@@ -1926,12 +2137,12 @@ AUI.add(
 						var changed = event.changed;
 						var removed = event.removed;
 
-						var paginatorState = {};
+						var paginationState = {};
 
-						var paginatorMap = instance._getVocabulariesPaginatorMap();
+						var paginationMap = instance._getVocabulariesPaginationMap();
 
 						AObject.each(
-							paginatorMap,
+							paginationMap,
 							function(item, index, collection) {
 								var historyEntry = item.historyEntry;
 
@@ -1945,13 +2156,13 @@ AUI.add(
 								}
 
 								if (value) {
-									paginatorState[index] = value;
+									paginationState[index] = value;
 								}
 							}
 						);
 
-						if (!AObject.isEmpty(paginatorState)) {
-							instance._vocabulariesPaginator.setState(paginatorState);
+						if (!AObject.isEmpty(paginationState)) {
+							instance._vocabulariesPagination.setState(paginationState);
 
 							instance._loadData();
 						}
@@ -1960,7 +2171,7 @@ AUI.add(
 					_onVocabularyAddFailure: function(response) {
 						var instance = this;
 
-						instance._sendMessage(MESSAGE_TYPE_ERROR, Liferay.Language.get('your-request-failed-to-complete'));
+						instance._sendMessage(MESSAGE_TYPE_ERROR, Liferay.Language.get('your-request-failed-to-complete'), SELECTOR_VOCABULARY_MESSAGES_EDIT);
 					},
 
 					_onVocabularyAddSuccess: function(response) {
@@ -2008,7 +2219,7 @@ AUI.add(
 								errorKey = Liferay.Language.get('your-request-failed-to-complete');
 							}
 
-							instance._sendMessage(MESSAGE_TYPE_ERROR, errorKey);
+							instance._sendMessage(MESSAGE_TYPE_ERROR, errorKey, SELECTOR_VOCABULARY_MESSAGES_EDIT);
 						}
 					},
 
@@ -2060,49 +2271,6 @@ AUI.add(
 						instance._selectVocabulary(vocabularyId);
 					},
 
-					_onVocabulariesPaginatorChangeRequest: function(event) {
-						var instance = this;
-
-						var stateBefore = event.state.before;
-						var state = event.state;
-
-						var historyState = {};
-
-						var paginatorMap = instance._getVocabulariesPaginatorMap();
-
-						AObject.each(
-							paginatorMap,
-							function(item, index, collection) {
-								if (owns(state, index)) {
-									var historyEntry = item.historyEntry;
-
-									var newItemValue = state[index];
-
-									var value = INVALID_VALUE;
-
-									if (newItemValue === item.defaultValue &&
-										Lang.isValue(HistoryManager.get(historyEntry))) {
-
-										value = null;
-									}
-									else if (newItemValue !== stateBefore[index]) {
-										value = newItemValue;
-									}
-
-									if (value !== INVALID_VALUE) {
-										historyState[historyEntry] = value;
-									}
-								}
-							}
-						);
-
-						if (!AObject.isEmpty(historyState)) {
-							HistoryManager.add(historyState);
-						}
-
-						instance._loadData();
-					},
-
 					_processAutoFieldsTriggers: function(event, callback) {
 						var instance = this;
 
@@ -2115,24 +2283,77 @@ AUI.add(
 						autoFieldsTriggers.each(
 							function(item, index, collection) {
 								var autoFieldsInstance = item.getData(STR_AUTO_FIELDS_INSTANCE);
-								var panelInstance = item.getData(STR_PANEL_INSTANCE);
 
-								callback.call(instance, autoFieldsInstance, panelInstance);
+								callback.call(instance, autoFieldsInstance);
 							}
 						);
 					},
 
-					_processCategoryDeletion: function(result) {
+					_processCategoryDeletion: function() {
 						var instance = this;
 
-						var exception = result.exception;
+						var categoryIds = arguments[1];
+						var vocabularyId = arguments[0];
+
+						var exception;
+						var result;
+
+						var argsLength = arguments.length;
+
+						if (argsLength > 2) {
+							result = arguments[2];
+
+							if (argsLength > 3) {
+								exception = arguments[2];
+								result = arguments[3];
+							}
+						}
+
+						var vocabulary = instance._getVocabularyById(vocabularyId);
 
 						if (!exception) {
+							var errorVocabularies = {};
+
+							AObject.each(
+								result,
+								function(item, index, collection) {
+									errorVocabularies[toInt(item.categoryId)] = true;
+								}
+							);
+
+							var deletedRootCategories = AArray.filter(
+								categoryIds,
+								function(item, index, collection) {
+									var categoryId = item;
+
+									var rootVocabulary = (instance._vocabularyRootCategories[categoryId] === 1);
+
+									var deletedVocabulary = !errorVocabularies[categoryId];
+
+									var deletedRootCategory = (rootVocabulary && deletedVocabulary);
+
+									if (deletedRootCategory) {
+										instance._vocabularyRootCategories[categoryId] = null;
+									}
+
+									return deletedRootCategory;
+								}
+							);
+
+							vocabulary.categoriesCount -= deletedRootCategories.length;
+
 							instance._closeEditSection();
 							instance._hidePanels();
 							instance._displayVocabularyCategories(instance._selectedVocabularyId);
 
-							instance._sendMessage(MESSAGE_TYPE_SUCCESS, Liferay.Language.get('your-request-processed-successfully'));
+							if (Lang.isArray(result) && result.length > 0) {
+								var alertMessage = instance._createAlertMessage(result, instance._selectedCategories, STR_CATEGORY_ID);
+
+								instance._sendMessage(MESSAGE_TYPE_ALERT, alertMessage);
+							}
+							else {
+								instance._sendMessage(MESSAGE_TYPE_SUCCESS, Liferay.Language.get('your-request-processed-successfully'));
+							}
 						}
 						else {
 							var errorMessage = Liferay.Language.get('your-request-failed-to-complete');
@@ -2162,15 +2383,31 @@ AUI.add(
 						}
 					},
 
-					_processVocabularyDeletion: function(result) {
+					_processVocabularyDeletion: function() {
 						var instance = this;
 
-						var exception = result.exception;
+						var exception;
+
+						var result = arguments[0];
+
+						if (arguments.length > 1) {
+							exception = arguments[0];
+							result = arguments[1];
+						}
 
 						if (!exception) {
 							instance._closeEditSection();
 							instance._hidePanels();
 							instance._loadData();
+
+							if (Lang.isArray(result) && result.length > 0) {
+								var alertMessage = instance._createAlertMessage(result, instance._selectedVocabularies, STR_VOCABULARY_ID);
+
+								instance._sendMessage(MESSAGE_TYPE_ALERT, alertMessage);
+							}
+							else {
+								instance._sendMessage(MESSAGE_TYPE_SUCCESS, Liferay.Language.get('your-request-processed-successfully'));
+							}
 						}
 						else {
 							var errorKey;
@@ -2201,15 +2438,11 @@ AUI.add(
 						autoFieldsInstance.reset();
 					},
 
-					_resetInputLocalized: function(autoFieldsInstance, panelInstance) {
+					_resetInputLocalized: function(autoFieldsInstance) {
 						var instance = this;
 
 						if (autoFieldsInstance) {
 							autoFieldsInstance.reset();
-						}
-
-						if (panelInstance) {
-							panelInstance.hide();
 						}
 					},
 
@@ -2265,11 +2498,11 @@ AUI.add(
 						return vocabulary;
 					},
 
-					_sendMessage: function(type, message) {
+					_sendMessage: function(type, message, container) {
 						var instance = this;
 
-						var output = instance._portletMessageContainer;
-						var typeClass = 'portlet-msg-' + type;
+						var output = A.one(container || instance._portletMessageContainer);
+						var typeClass = 'alert alert-' + type;
 
 						output.removeClass(CSS_MESSAGE_ERROR).removeClass(CSS_MESSAGE_SUCCESS);
 						output.addClass(typeClass);
@@ -2277,13 +2510,13 @@ AUI.add(
 
 						output.show();
 
-						instance._hideMessageTask();
+						instance._hideMessageTask(output);
 					},
 
 					_showCateroryMessage: function(message, className) {
 						var categoryMessages = A.one(SELECTOR_VOCABULARY_CATEGORY_MESSAGES);
 
-						className = className || 'portlet-msg-info';
+						className = className || 'alert alert-info';
 
 						message = message || Liferay.Language.get('there-are-no-categories');
 
@@ -2338,7 +2571,7 @@ AUI.add(
 
 						instance._currentCategoryPanelAddIOHandle = categoryPanelAdd.io.after(
 							STR_SUCCESS,
-							A.bind(instance._initializeCategoryPanelAdd, instance, action)
+							A.bind('_initializeCategoryPanelAdd', instance, action)
 						);
 
 						categoryPanelAdd.io.start();
@@ -2359,7 +2592,7 @@ AUI.add(
 							instance._currentPanelEditIOHandle.detach();
 						}
 
-						categoryPanelEdit.set(STR_TITLE, Liferay.Language.get('edit-category'));
+						categoryPanelEdit.titleNode.html(Liferay.Language.get('edit-category'));
 
 						var categoryEditURL = instance._createURL(CATEGORY, ACTION_EDIT, LIFECYCLE_RENDER);
 
@@ -2392,7 +2625,7 @@ AUI.add(
 						instance._selectCategory(categoryId);
 
 						instance._showLoading(viewContainer);
-						instance._showSection(viewContainer);
+						instance._showSection(instance._categoryViewSection);
 
 						var categoryURL = instance._createURL(CATEGORY, ACTION_VIEW, LIFECYCLE_RENDER);
 
@@ -2407,32 +2640,24 @@ AUI.add(
 						A.all(container).html('<div class="loading-animation" />');
 					},
 
-					_showSection: function(exp) {
+					_showSection: function(node) {
 						var instance = this;
 
-						var element = A.one(exp);
+						node.previous().replaceClass(CSS_COLUMN_WIDTH_CATEGORY_FULL, CSS_COLUMN_WIDTH_CATEGORY);
 
-						if (element) {
-							var parentNode = element.ancestor(SELECTOR_CSS_COLUMN);
+						node.show();
 
-							if (parentNode) {
-								parentNode.previous(SELECTOR_CSS_COLUMN).replaceClass(CSS_COLUMN_WIDTH_CATEGORY_FULL, CSS_COLUMN_WIDTH_CATEGORY);
+						var firstInput = node.one('input');
 
-								parentNode.show();
-
-								var firstInput = element.one('input');
-
-								if (firstInput) {
-									firstInput.focus();
-								}
-							}
+						if (firstInput) {
+							firstInput.focus();
 						}
 					},
 
 					_showVocabularyMessage: function(message, className) {
 						var vocabularyMessages = A.one(SELECTOR_VOCABULARY_MESSAGES);
 
-						className = className || 'portlet-msg-info';
+						className = className || 'alert alert-info';
 
 						message = message || Liferay.Language.get('there-are-no-vocabularies');
 
@@ -2471,13 +2696,7 @@ AUI.add(
 
 							vocabularyPanelAdd._syncUIPosAlign();
 
-							var afterSuccess = A.bind(
-								instance._initializeVocabularyPanelAdd,
-								instance,
-								function() {
-									instance._focusVocabularyPanelAdd();
-								}
-							);
+							var afterSuccess = A.bind('_initializeVocabularyPanelAdd', instance, instance._focusVocabularyPanelAdd);
 
 							vocabularyPanelAdd.plug(
 								A.Plugin.IO,
@@ -2513,7 +2732,7 @@ AUI.add(
 							instance._currentPanelEditIOHandle.detach();
 						}
 
-						vocabularyPanelEdit.set(STR_TITLE, Liferay.Language.get('edit-vocabulary'));
+						vocabularyPanelEdit.titleNode.html(Liferay.Language.get('edit-vocabulary'));
 
 						var vocabularyEditURL = instance._createURL(TYPE_VOCABULARY, ACTION_EDIT, LIFECYCLE_RENDER);
 
@@ -2587,7 +2806,7 @@ AUI.add(
 					_updateCategory: function(categoryId, parentCategoryId, vocabularyId) {
 						var instance = this;
 
-						var moveURL = instance._createURL(CATEGORY, ACTION_MOVE, LIFECYCLE_PROCESS);
+						var moveURL = instance._createURL(CATEGORY, ACTION_MOVE, LIFECYCLE_ACTION);
 
 						var prefix = instance._prefixedPortletId;
 
@@ -2607,6 +2826,8 @@ AUI.add(
 
 					_categoryItemSelectorFlat: '.category-item',
 					_categoryContainerSelector: '.vocabulary-categories',
+					_selectedCategories: null,
+					_selectedVocabularies: null,
 					_selectedVocabulary: null,
 					_selectedVocabularyId: null,
 					_selectedVocabularyName: null,
@@ -2771,6 +2992,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-live-search', 'aui-dialog', 'aui-dialog-iframe', 'aui-paginator', 'autocomplete-base', 'aui-tree-view', 'dd', 'json', 'liferay-history-manager', 'liferay-portlet-url', 'liferay-util-window']
+		requires: ['aui-dialog-iframe-deprecated', 'aui-io-plugin-deprecated', 'aui-live-search-deprecated', 'aui-modal', 'aui-pagination', 'autocomplete-base', 'aui-tree-view', 'dd', 'escape', 'json', 'liferay-form', 'liferay-history-manager', 'liferay-portlet-url', 'liferay-util-window']
 	}
 );

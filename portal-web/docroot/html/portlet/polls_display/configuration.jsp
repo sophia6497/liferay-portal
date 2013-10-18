@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -59,7 +59,7 @@ if (scopeGroupId != themeDisplay.getCompanyGroupId()) {
 			</aui:fieldset>
 		</c:when>
 		<c:otherwise>
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="there-are-no-available-questions-for-selection" />
 			</div>
 		</c:otherwise>

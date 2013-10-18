@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,11 +32,8 @@ public class SiteSettingsControlPanelEntry extends BaseControlPanelEntry {
 			PermissionChecker permissionChecker, Group group, Portlet portlet)
 		throws Exception {
 
-		if (group.isCompany() || group.isUser()) {
-			return true;
-		}
-
-		if (!GroupPermissionUtil.contains(
+		if (group.isUser() || group.isLayoutSetPrototype() ||
+			!GroupPermissionUtil.contains(
 				permissionChecker, group.getGroupId(), ActionKeys.UPDATE)) {
 
 			return true;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,7 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
+		StringBundler sb = new StringBundler(33);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -58,15 +58,26 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 		sb.append(modifiedDate);
 		sb.append(", parentFolderId=");
 		sb.append(parentFolderId);
+		sb.append(", treePath=");
+		sb.append(treePath);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", description=");
 		sb.append(description);
+		sb.append(", status=");
+		sb.append(status);
+		sb.append(", statusByUserId=");
+		sb.append(statusByUserId);
+		sb.append(", statusByUserName=");
+		sb.append(statusByUserName);
+		sb.append(", statusDate=");
+		sb.append(statusDate);
 		sb.append("}");
 
 		return sb.toString();
 	}
 
+	@Override
 	public JournalFolder toEntityModel() {
 		JournalFolderImpl journalFolderImpl = new JournalFolderImpl();
 
@@ -105,6 +116,13 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 
 		journalFolderImpl.setParentFolderId(parentFolderId);
 
+		if (treePath == null) {
+			journalFolderImpl.setTreePath(StringPool.BLANK);
+		}
+		else {
+			journalFolderImpl.setTreePath(treePath);
+		}
+
 		if (name == null) {
 			journalFolderImpl.setName(StringPool.BLANK);
 		}
@@ -119,11 +137,29 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 			journalFolderImpl.setDescription(description);
 		}
 
+		journalFolderImpl.setStatus(status);
+		journalFolderImpl.setStatusByUserId(statusByUserId);
+
+		if (statusByUserName == null) {
+			journalFolderImpl.setStatusByUserName(StringPool.BLANK);
+		}
+		else {
+			journalFolderImpl.setStatusByUserName(statusByUserName);
+		}
+
+		if (statusDate == Long.MIN_VALUE) {
+			journalFolderImpl.setStatusDate(null);
+		}
+		else {
+			journalFolderImpl.setStatusDate(new Date(statusDate));
+		}
+
 		journalFolderImpl.resetOriginalValues();
 
 		return journalFolderImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		uuid = objectInput.readUTF();
 		folderId = objectInput.readLong();
@@ -134,10 +170,16 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 		parentFolderId = objectInput.readLong();
+		treePath = objectInput.readUTF();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
+		status = objectInput.readInt();
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		if (uuid == null) {
@@ -163,6 +205,13 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 		objectOutput.writeLong(modifiedDate);
 		objectOutput.writeLong(parentFolderId);
 
+		if (treePath == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(treePath);
+		}
+
 		if (name == null) {
 			objectOutput.writeUTF(StringPool.BLANK);
 		}
@@ -176,6 +225,18 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 		else {
 			objectOutput.writeUTF(description);
 		}
+
+		objectOutput.writeInt(status);
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
 	}
 
 	public String uuid;
@@ -187,6 +248,11 @@ public class JournalFolderCacheModel implements CacheModel<JournalFolder>,
 	public long createDate;
 	public long modifiedDate;
 	public long parentFolderId;
+	public String treePath;
 	public String name;
 	public String description;
+	public int status;
+	public long statusByUserId;
+	public String statusByUserName;
+	public long statusDate;
 }

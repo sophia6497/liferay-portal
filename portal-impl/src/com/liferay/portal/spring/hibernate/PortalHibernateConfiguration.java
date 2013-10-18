@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,12 +19,13 @@ import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.resiliency.spi.SPIUtil;
 import com.liferay.portal.kernel.util.Converter;
 import com.liferay.portal.kernel.util.PreloadClassLoader;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
@@ -82,7 +83,7 @@ public class PortalHibernateConfiguration extends LocalSessionFactoryBean {
 
 			for (String className : _PRELOAD_CLASS_NAMES) {
 				ClassLoader portalClassLoader =
-					PACLClassLoaderUtil.getPortalClassLoader();
+					ClassLoaderUtil.getPortalClassLoader();
 
 				Class<?> clazz = portalClassLoader.loadClass(className);
 
@@ -128,7 +129,18 @@ public class PortalHibernateConfiguration extends LocalSessionFactoryBean {
 				}
 			}
 
-			configuration.setProperties(PropsUtil.getProperties());
+			Properties properties = PropsUtil.getProperties();
+
+			if (SPIUtil.isSPI()) {
+				properties.put(
+					"hibernate.cache.use_query_cache",
+					Boolean.FALSE.toString());
+				properties.put(
+					"hibernate.cache.use_second_level_cache",
+					Boolean.FALSE.toString());
+			}
+
+			configuration.setProperties(properties);
 
 			if (Validator.isNull(PropsValues.HIBERNATE_DIALECT)) {
 				Dialect dialect = determineDialect();
@@ -254,6 +266,7 @@ public class PortalHibernateConfiguration extends LocalSessionFactoryBean {
 		ProxyFactory.classLoaderProvider =
 			new ProxyFactory.ClassLoaderProvider() {
 
+				@Override
 				public ClassLoader get(ProxyFactory proxyFactory) {
 					synchronized (_proxyFactoryClassLoaders) {
 						ClassLoader classLoader = _proxyFactoryClassLoaders.get(
@@ -263,11 +276,10 @@ public class PortalHibernateConfiguration extends LocalSessionFactoryBean {
 							return classLoader;
 						}
 
-						classLoader =
-							PACLClassLoaderUtil.getPortalClassLoader();
+						classLoader = ClassLoaderUtil.getPortalClassLoader();
 
 						ClassLoader contextClassLoader =
-							PACLClassLoaderUtil.getContextClassLoader();
+							ClassLoaderUtil.getContextClassLoader();
 
 						if (classLoader != contextClassLoader) {
 							classLoader = new PreloadClassLoader(

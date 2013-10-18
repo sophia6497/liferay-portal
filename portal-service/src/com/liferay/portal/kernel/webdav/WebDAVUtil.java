@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,6 @@
 
 package com.liferay.portal.kernel.webdav;
 
-import com.liferay.portal.NoSuchGroupException;
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -38,7 +36,7 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.util.comparator.GroupFriendlyURLComparator;
-import com.liferay.portlet.documentlibrary.util.DLUtil;
+import com.liferay.portlet.documentlibrary.util.DL;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -140,24 +138,20 @@ public class WebDAVUtil {
 
 			String name = pathArray[0];
 
-			try {
-				Group group = GroupLocalServiceUtil.getFriendlyURLGroup(
-					companyId, StringPool.SLASH + name);
+			Group group = GroupLocalServiceUtil.fetchFriendlyURLGroup(
+				companyId, StringPool.SLASH + name);
 
+			if (group != null) {
 				return group.getGroupId();
 			}
-			catch (NoSuchGroupException nsge) {
-			}
 
-			try {
-				User user = UserLocalServiceUtil.getUserByScreenName(
-					companyId, name);
+			User user = UserLocalServiceUtil.fetchUserByScreenName(
+				companyId, name);
 
-				Group group = user.getGroup();
+			if (user != null) {
+				group = user.getGroup();
 
 				return group.getGroupId();
-			}
-			catch (NoSuchUserException nsue) {
 			}
 		}
 		catch (Exception e) {
@@ -318,11 +312,11 @@ public class WebDAVUtil {
 	}
 
 	public static String stripManualCheckInRequiredPath(String url) {
-		return stripToken(url, DLUtil.MANUAL_CHECK_IN_REQUIRED_PATH);
+		return stripToken(url, DL.MANUAL_CHECK_IN_REQUIRED_PATH);
 	}
 
 	public static String stripOfficeExtension(String url) {
-		String strippedUrl = stripToken(url, DLUtil.OFFICE_EXTENSION_PATH);
+		String strippedUrl = stripToken(url, DL.OFFICE_EXTENSION_PATH);
 
 		if (strippedUrl.length() != url.length()) {
 			strippedUrl = FileUtil.stripExtension(strippedUrl);
@@ -371,7 +365,9 @@ public class WebDAVUtil {
 	private boolean _isOverwrite(HttpServletRequest request) {
 		String value = GetterUtil.getString(request.getHeader("Overwrite"));
 
-		if (value.equalsIgnoreCase("F") || !GetterUtil.getBoolean(value)) {
+		if (StringUtil.equalsIgnoreCase(value, "F") ||
+			!GetterUtil.getBoolean(value)) {
+
 			return false;
 		}
 		else {

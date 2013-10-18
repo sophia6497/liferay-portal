@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -105,6 +105,13 @@ else {
 </liferay-ui:error>
 
 <aui:fieldset>
+
+	<!-- LPS-38289 -->
+
+	<input class="hide" />
+
+	<!-- /LPS-38289 -->
+
 	<c:if test="<%= portletName.equals(PortletKeys.MY_ACCOUNT) %>">
 		<aui:input autocomplete="off" label="current-password" name="password0" size="30" type="password" />
 	</c:if>
@@ -153,7 +160,7 @@ else {
 			reminderQueryQuestion.on(
 				'change',
 				function(event) {
-					if (event.target.val() == '<%= UsersAdminUtil.CUSTOM_QUESTION %>') {
+					if (event.target.val() == '<%= UsersAdmin.CUSTOM_QUESTION %>') {
 						var reminderQueryCustomQuestion = A.one('#<portlet:namespace />reminderQueryCustomQuestion');
 
 						if (customQuestionDiv) {

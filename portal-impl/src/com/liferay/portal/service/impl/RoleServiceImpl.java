@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,12 +18,20 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Role;
+import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.membershippolicy.OrganizationMembershipPolicyUtil;
+import com.liferay.portal.security.membershippolicy.RoleMembershipPolicyUtil;
+import com.liferay.portal.security.membershippolicy.SiteMembershipPolicyUtil;
 import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.RoleServiceBaseImpl;
 import com.liferay.portal.service.permission.PortalPermissionUtil;
 import com.liferay.portal.service.permission.RolePermissionUtil;
 import com.liferay.portal.service.permission.UserPermissionUtil;
+import com.liferay.portlet.expando.model.ExpandoBridge;
+
+import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +39,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The implementation of the role remote service.
+ * Provides the remote service for accessing, adding, unassigning, checking,
+ * deleting, and updating roles. Its methods include permission checks.
  *
  * @author Brian Wing Shun Chan
  */
@@ -49,7 +58,10 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @param  descriptionMap the role's localized descriptions (optionally
 	 *         <code>null</code>)
 	 * @param  type the role's type (optionally <code>0</code>)
-	 * @param  subType the role's subtype (optionally <code>null</code>)
+	 * @param  subtype the role's subtype (optionally <code>null</code>)
+	 * @param  serviceContext the service context to be applied (optionally
+	 *         <code>null</code>). Can set the expando bridge attributes for the
+	 *         role.
 	 * @return the role
 	 * @throws PortalException if a user with the primary key could not be
 	 *         found, if the user did not have permission to add roles, if the
@@ -57,19 +69,32 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         duplicate
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Role addRole(
 			String className, long classPK, String name,
 			Map<Locale, String> titleMap, Map<Locale, String> descriptionMap,
-			int type, String subType)
+			int type, String subtype, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		PortalPermissionUtil.check(getPermissionChecker(), ActionKeys.ADD_ROLE);
 
 		User user = getUser();
 
-		return roleLocalService.addRole(
+		Role role = roleLocalService.addRole(
 			user.getUserId(), className, classPK, name, titleMap,
-			descriptionMap, type, subType);
+			descriptionMap, type, subtype, serviceContext);
+
+		if (type == RoleConstants.TYPE_ORGANIZATION) {
+			OrganizationMembershipPolicyUtil.verifyPolicy(role);
+		}
+		else if (type == RoleConstants.TYPE_SITE) {
+			SiteMembershipPolicyUtil.verifyPolicy(role);
+		}
+		else {
+			RoleMembershipPolicyUtil.verifyPolicy(role);
+		}
+
+		return role;
 	}
 
 	/**
@@ -87,14 +112,17 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *             the class name or the role name were invalid, or if the role
 	 *             is a duplicate
 	 * @throws     SystemException if a system exception occurred
-	 * @deprecated {@link #addRole(String, long, String, Map, Map, int, String)}
+	 * @deprecated As of 6.2.0, replaced by {@link #addRole(String, long,
+	 *             String, Map, Map, int, String, ServiceContext)}
 	 */
+	@Override
 	public Role addRole(
 			String name, Map<Locale, String> titleMap,
 			Map<Locale, String> descriptionMap, int type)
 		throws PortalException, SystemException {
 
-		return addRole(null, 0, name, titleMap, descriptionMap, type, null);
+		return addRole(
+			null, 0, name, titleMap, descriptionMap, type, null, null);
 	}
 
 	/**
@@ -108,12 +136,22 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         of the roles
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addUserRoles(long userId, long[] roleIds)
 		throws PortalException, SystemException {
 
+		if (roleIds.length == 0) {
+			return;
+		}
+
 		checkUserRolesPermission(userId, roleIds);
 
+		RoleMembershipPolicyUtil.checkRoles(new long[] {userId}, roleIds, null);
+
 		roleLocalService.addUserRoles(userId, roleIds);
+
+		RoleMembershipPolicyUtil.propagateRoles(
+			new long[] {userId}, roleIds, null);
 	}
 
 	/**
@@ -126,6 +164,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void deleteRole(long roleId)
 		throws PortalException, SystemException {
 
@@ -143,6 +182,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Role> getGroupRoles(long groupId)
 		throws PortalException, SystemException {
 
@@ -160,6 +200,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         or if the user did not have permission to view the role
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Role getRole(long roleId) throws PortalException, SystemException {
 		RolePermissionUtil.check(
 			getPermissionChecker(), roleId, ActionKeys.VIEW);
@@ -182,6 +223,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         company or if the user did not have permission to view the role
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Role getRole(long companyId, String name)
 		throws PortalException, SystemException {
 
@@ -202,6 +244,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Role> getUserGroupGroupRoles(long userId, long groupId)
 		throws PortalException, SystemException {
 
@@ -223,6 +266,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Role> getUserGroupRoles(long userId, long groupId)
 		throws PortalException, SystemException {
 
@@ -243,6 +287,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Role> getUserRelatedRoles(long userId, List<Group> groups)
 		throws PortalException, SystemException {
 
@@ -262,6 +307,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @throws PortalException if a portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Role> getUserRoles(long userId)
 		throws PortalException, SystemException {
 
@@ -288,6 +334,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         company or if a default user for the company could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasUserRole(
 			long userId, long companyId, String name, boolean inherited)
 		throws PortalException, SystemException {
@@ -314,6 +361,7 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasUserRoles(
 			long userId, long companyId, String[] names, boolean inherited)
 		throws PortalException, SystemException {
@@ -337,12 +385,22 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 *         be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetUserRoles(long userId, long[] roleIds)
 		throws PortalException, SystemException {
 
+		if (roleIds.length == 0) {
+			return;
+		}
+
 		checkUserRolesPermission(userId, roleIds);
 
+		RoleMembershipPolicyUtil.checkRoles(new long[] {userId}, null, roleIds);
+
 		roleLocalService.unsetUserRoles(userId, roleIds);
+
+		RoleMembershipPolicyUtil.propagateRoles(
+			new long[] {userId}, null, roleIds);
 	}
 
 	/**
@@ -355,22 +413,49 @@ public class RoleServiceImpl extends RoleServiceBaseImpl {
 	 * @param  descriptionMap the new localized descriptions (optionally
 	 *         <code>null</code>) to replace those existing for the role
 	 * @param  subtype the role's new subtype (optionally <code>null</code>)
+	 * @param  serviceContext the service context to be applied (optionally
+	 *         <code>null</code>). Can set the expando bridge attributes for the
+	 *         role.
 	 * @return the role with the primary key
 	 * @throws PortalException if the user did not have permission to update the
 	 *         role, if a role with the primary could not be found, or if the
 	 *         role's name was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Role updateRole(
 			long roleId, String name, Map<Locale, String> titleMap,
-			Map<Locale, String> descriptionMap, String subtype)
+			Map<Locale, String> descriptionMap, String subtype,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		RolePermissionUtil.check(
 			getPermissionChecker(), roleId, ActionKeys.UPDATE);
 
-		return roleLocalService.updateRole(
-			roleId, name, titleMap, descriptionMap, subtype);
+		Role oldRole = rolePersistence.findByPrimaryKey(roleId);
+
+		ExpandoBridge oldExpandoBridge = oldRole.getExpandoBridge();
+
+		Map<String, Serializable> oldExpandoAttributes =
+			oldExpandoBridge.getAttributes();
+
+		Role role = roleLocalService.updateRole(
+			roleId, name, titleMap, descriptionMap, subtype, serviceContext);
+
+		if (role.getType() == RoleConstants.TYPE_ORGANIZATION) {
+			OrganizationMembershipPolicyUtil.verifyPolicy(
+				role, oldRole, oldExpandoAttributes);
+		}
+		else if (role.getType() == RoleConstants.TYPE_SITE) {
+			SiteMembershipPolicyUtil.verifyPolicy(
+				role, oldRole, oldExpandoAttributes);
+		}
+		else {
+			RoleMembershipPolicyUtil.verifyPolicy(
+				role, oldRole, oldExpandoAttributes);
+		}
+
+		return role;
 	}
 
 	protected void checkUserRolesPermission(long userId, long[] roleIds)

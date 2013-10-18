@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -56,7 +56,7 @@ iteratorURL.setParameter("viewTrashAttachments", Boolean.TRUE.toString());
 <liferay-ui:trash-empty
 	confirmMessage="are-you-sure-you-want-to-remove-the-attachments-for-this-wiki-node"
 	emptyMessage="remove-the-attachments-for-this-wiki-node"
-	infoMessage="attachments-that-have-been-removed-for-more-than-x-days-will-be-automatically-deleted"
+	infoMessage="attachments-that-have-been-removed-for-more-than-x-will-be-automatically-deleted"
 	portletURL="<%= emptyTrashURL.toString() %>"
 	totalEntries="<%= attachmentsFileEntries.size() %>"
 />
@@ -64,10 +64,10 @@ iteratorURL.setParameter("viewTrashAttachments", Boolean.TRUE.toString());
 <liferay-ui:search-container
 	emptyResultsMessage="this-wiki-node-does-not-have-file-attachments-in-the-recycle-bin"
 	iteratorURL="<%= iteratorURL %>"
+	total="<%= attachmentsFileEntries.size() %>"
 >
 	<liferay-ui:search-container-results
 		results="<%= ListUtil.subList(attachmentsFileEntries, searchContainer.getStart(), searchContainer.getEnd()) %>"
-		total="<%= attachmentsFileEntries.size() %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -77,26 +77,19 @@ iteratorURL.setParameter("viewTrashAttachments", Boolean.TRUE.toString());
 
 		<%
 		WikiPage wikiPage = WikiPageAttachmentsUtil.getPage(fileEntry.getFileEntryId());
+
+		String rowHREF = PortletFileRepositoryUtil.getPortletFileEntryURL(themeDisplay, fileEntry, "status=" + WorkflowConstants.STATUS_IN_TRASH);
 		%>
 
-		<liferay-portlet:actionURL varImpl="rowURL" windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
-			<portlet:param name="struts_action" value="/wiki/get_page_attachment" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" />
-			<portlet:param name="title" value="<%= wikiPage.getTitle() %>" />
-			<portlet:param name="fileName" value="<%= fileEntry.getTitle() %>" />
-			<portlet:param name="status" value="<%= String.valueOf(WorkflowConstants.STATUS_IN_TRASH) %>" />
-		</liferay-portlet:actionURL>
-
 		<liferay-ui:search-container-column-text
-			href="<%= rowURL %>"
+			href="<%= rowHREF %>"
 			name="file-name"
 		>
 			<img align="left" alt="" border="0" src="<%= themeDisplay.getPathThemeImages() %>/file_system/small/<%= DLUtil.getFileIcon(fileEntry.getExtension()) %>.png"> <%= TrashUtil.getOriginalTitle(fileEntry.getTitle()) %>
 		</liferay-ui:search-container-column-text>
 
 		<liferay-ui:search-container-column-text
-			href="<%= rowURL %>"
+			href="<%= rowHREF %>"
 			name="size"
 			value="<%= TextFormatter.formatStorageSize(fileEntry.getSize(), locale) %>"
 		/>

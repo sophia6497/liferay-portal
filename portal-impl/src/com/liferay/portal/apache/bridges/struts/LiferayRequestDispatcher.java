@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.apache.bridges.struts;
 
+import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.JavaConstants;
@@ -55,6 +56,7 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 		_path = path;
 	}
 
+	@Override
 	public void forward(
 			ServletRequest servletRequest, ServletResponse servletResponse)
 		throws IOException, ServletException {
@@ -72,7 +74,8 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 	}
 
 	/**
-	 * @deprecated {@link #forward(ServletRequest, ServletResponse)}
+	 * @deprecated As of 6.2.0, replaced by {@link #forward(ServletRequest,
+	 *             ServletResponse)}
 	 */
 	public void forward(
 			ServletRequest servletRequest, ServletResponse servletResponse,
@@ -82,6 +85,7 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 		forward(servletRequest, servletResponse);
 	}
 
+	@Override
 	public void include(
 			ServletRequest servletRequest, ServletResponse servletResponse)
 		throws IOException, ServletException {
@@ -99,7 +103,8 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 	}
 
 	/**
-	 * @deprecated {@link #include(ServletRequest, ServletResponse)}
+	 * @deprecated As of 6.2.0, replaced by {@link #include(ServletRequest,
+	 *             ServletResponse)}
 	 */
 	public void include(
 			ServletRequest servletRequest, ServletResponse servletResponse,
@@ -135,6 +140,9 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 			if (pos != -1) {
 				pathNoQueryString = _path.substring(0, pos);
 				queryString = _path.substring(pos + 1);
+
+				servletRequest = DynamicServletRequest.addQueryString(
+					(HttpServletRequest)servletRequest, queryString);
 			}
 
 			Set<String> servletURLPatterns = getServletURLPatterns(
@@ -182,7 +190,8 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 	}
 
 	/**
-	 * @deprecated {@link #invoke(ServletRequest, ServletResponse, boolean)}
+	 * @deprecated As of 6.2.0, replaced by {@link #invoke(ServletRequest,
+	 *             ServletResponse, boolean)}
 	 */
 	public void invoke(
 			ServletRequest servletRequest, ServletResponse servletResponse,
@@ -201,7 +210,7 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 		boolean named = false;
 
 		PortletRequestImpl portletRequestImpl =
-			(PortletRequestImpl)portletRequest;
+			PortletRequestImpl.getPortletRequestImpl(portletRequest);
 
 		return new PortletServletRequest(
 			request, portletRequestImpl, pathInfo, queryString, requestURI,
@@ -236,7 +245,7 @@ public class LiferayRequestDispatcher implements RequestDispatcher {
 		PortletResponse portletResponse) {
 
 		PortletRequestImpl portletRequestImpl =
-			(PortletRequestImpl)portletRequest;
+			PortletRequestImpl.getPortletRequestImpl(portletRequest);
 
 		Portlet portlet = portletRequestImpl.getPortlet();
 

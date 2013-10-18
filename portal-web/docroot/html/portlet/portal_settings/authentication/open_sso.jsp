@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -64,8 +64,6 @@ String openSsoLastNameAttr = PrefsPropsUtil.getString(company.getCompanyId(), Pr
 		function() {
 			var A = AUI();
 
-			var title = 'OpenSSO';
-
 			var data = {};
 
 			data.<portlet:namespace />openSsoLoginURL = document.<portlet:namespace />fm['<portlet:namespace />settings--<%= PropsKeys.OPEN_SSO_LOGIN_URL %>--'].value;
@@ -78,15 +76,14 @@ String openSsoLastNameAttr = PrefsPropsUtil.getString(company.getCompanyId(), Pr
 
 			var url = "<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/portal_settings/test_opensso_configuration" /></portlet:renderURL>";
 
-			var dialog = new A.Dialog(
+			var dialog = Liferay.Util.Window.getWindow(
 				{
-					align: Liferay.Util.Window.ALIGN_CENTER,
-					destroyOnClose: true,
-					modal: true,
-					title: Liferay.Language.get(title),
-					width: 600
+					dialog: {
+						destroyOnHide: true
+					},
+					title: '<%= UnicodeLanguageUtil.get(pageContext, "open-sso") %>'
 				}
-			).render();
+			);
 
 			dialog.plug(
 				A.Plugin.IO,
@@ -96,6 +93,6 @@ String openSsoLastNameAttr = PrefsPropsUtil.getString(company.getCompanyId(), Pr
 				}
 			);
 		},
-		['aui-dialog', 'aui-io']
+		['aui-io-plugin-deprecated', 'aui-io-request', 'liferay-util-window']
 	);
 </aui:script>

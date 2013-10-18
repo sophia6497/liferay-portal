@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,7 +46,7 @@ boolean disabled = GetterUtil.getBoolean(String.valueOf(request.getAttribute("au
 boolean focused = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:button-item:focused")), false);
 java.lang.Object handler = (java.lang.Object)request.getAttribute("aui:button-item:handler");
 java.lang.Object height = (java.lang.Object)request.getAttribute("aui:button-item:height");
-java.lang.String hideClass = GetterUtil.getString((java.lang.String)request.getAttribute("aui:button-item:hideClass"), "aui-helper-hidden");
+java.lang.String hideClass = GetterUtil.getString((java.lang.String)request.getAttribute("aui:button-item:hideClass"), "aui-hide");
 boolean hoverState = GetterUtil.getBoolean(String.valueOf(request.getAttribute("aui:button-item:hoverState")), true);
 java.lang.String icon = GetterUtil.getString((java.lang.String)request.getAttribute("aui:button-item:icon"));
 java.lang.String iconNode = GetterUtil.getString((java.lang.String)request.getAttribute("aui:button-item:iconNode"));

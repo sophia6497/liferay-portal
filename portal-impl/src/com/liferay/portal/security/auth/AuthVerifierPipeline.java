@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 
@@ -139,7 +139,7 @@ public class AuthVerifierPipeline {
 
 				AuthVerifier authVerifier =
 					(AuthVerifier)InstanceFactory.newInstance(
-						PACLClassLoaderUtil.getPortalClassLoader(),
+						ClassLoaderUtil.getPortalClassLoader(),
 						authVerifierClassName);
 
 				authVerifierConfiguration.setAuthVerifier(authVerifier);
@@ -168,9 +168,19 @@ public class AuthVerifierPipeline {
 
 		Properties properties = authVerifierConfiguration.getProperties();
 
-		String[] urls = StringUtil.split(properties.getProperty("urls"));
+		String[] urlsExcludes = StringUtil.split(
+			properties.getProperty("urls.excludes"));
 
-		if (urls.length == 0) {
+		if ((urlsExcludes.length > 0) &&
+			(Wildcard.matchOne(requestURI, urlsExcludes) > -1)) {
+
+			return false;
+		}
+
+		String[] urlsIncludes = StringUtil.split(
+			properties.getProperty("urls.includes"));
+
+		if (urlsIncludes.length == 0) {
 			Class<?> authVerifierClass = authVerifier.getClass();
 
 			_log.error(
@@ -180,7 +190,7 @@ public class AuthVerifierPipeline {
 			return false;
 		}
 
-		return Wildcard.matchOne(requestURI, urls) > -1;
+		return Wildcard.matchOne(requestURI, urlsIncludes) > -1;
 	}
 
 	private AuthVerifierConfiguration _mergeAuthVerifierConfiguration(
@@ -232,7 +242,6 @@ public class AuthVerifierPipeline {
 					mergedProperties.setProperty(
 						propertiesKey, (String)settingsValue);
 				}
-
 			}
 		}
 

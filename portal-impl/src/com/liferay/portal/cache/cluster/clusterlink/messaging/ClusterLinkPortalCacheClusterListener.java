@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -66,7 +66,7 @@ public class ClusterLinkPortalCacheClusterListener extends BaseMessageListener {
 
 		Ehcache ehcache = _portalCacheManager.getEhcache(cacheName);
 
-		if (ehcache == null) {
+		if ((ehcache == null) && (_hibernateCacheManager != null)) {
 			ehcache = _hibernateCacheManager.getEhcache(cacheName);
 		}
 
@@ -81,7 +81,7 @@ public class ClusterLinkPortalCacheClusterListener extends BaseMessageListener {
 			}
 			else if (portalCacheClusterEventType.equals(
 						PortalCacheClusterEventType.PUT) ||
-					portalCacheClusterEventType.equals(
+					 portalCacheClusterEventType.equals(
 						PortalCacheClusterEventType.UPDATE)) {
 
 				Serializable elementKey =
@@ -90,19 +90,10 @@ public class ClusterLinkPortalCacheClusterListener extends BaseMessageListener {
 					portalCacheClusterEvent.getElementValue();
 
 				if (elementValue == null) {
-					ehcache.remove(
-						portalCacheClusterEvent.getElementKey(), true);
+					ehcache.remove(elementKey, true);
 				}
 				else {
-					Element oldElement = ehcache.get(elementKey);
-					Element newElement = new Element(elementKey, elementValue);
-
-					if (oldElement != null) {
-						ehcache.replace(newElement);
-					}
-					else {
-						ehcache.put(newElement);
-					}
+					ehcache.put(new Element(elementKey, elementValue), true);
 				}
 			}
 			else {

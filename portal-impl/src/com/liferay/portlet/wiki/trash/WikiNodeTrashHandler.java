@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.trash.BaseTrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.trash.TrashRenderer;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.LayoutConstants;
 import com.liferay.portal.security.permission.PermissionChecker;
@@ -33,7 +34,6 @@ import com.liferay.portlet.wiki.asset.WikiNodeTrashRenderer;
 import com.liferay.portlet.wiki.model.WikiNode;
 import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.service.WikiNodeLocalServiceUtil;
-import com.liferay.portlet.wiki.service.WikiNodeServiceUtil;
 import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
 import com.liferay.portlet.wiki.service.permission.WikiNodePermission;
 
@@ -50,8 +50,6 @@ import javax.portlet.PortletURL;
  */
 public class WikiNodeTrashHandler extends BaseTrashHandler {
 
-	public static final String CLASS_NAME = WikiNode.class.getName();
-
 	@Override
 	public void checkDuplicateTrashEntry(
 			TrashEntry trashEntry, long containerModelId, String newName)
@@ -62,7 +60,11 @@ public class WikiNodeTrashHandler extends BaseTrashHandler {
 
 		String originalTitle = trashEntry.getTypeSettingsProperty("title");
 
-		WikiNode duplicateNode = WikiNodeLocalServiceUtil.fetchWikiNode(
+		if (Validator.isNotNull(newName)) {
+			originalTitle = newName;
+		}
+
+		WikiNode duplicateNode = WikiNodeLocalServiceUtil.fetchNode(
 			node.getGroupId(), originalTitle);
 
 		if (duplicateNode != null) {
@@ -76,42 +78,38 @@ public class WikiNodeTrashHandler extends BaseTrashHandler {
 		}
 	}
 
-	public void deleteTrashEntries(long[] classPKs, boolean checkPermission)
+	@Override
+	public void deleteTrashEntry(long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			if (checkPermission) {
-				WikiNodeServiceUtil.deleteNode(classPK);
-			}
-			else {
-				WikiNodeLocalServiceUtil.deleteNode(classPK);
-			}
-		}
-	}
-
-	public String getClassName() {
-		return CLASS_NAME;
+		WikiNodeLocalServiceUtil.deleteNode(classPK);
 	}
 
 	@Override
-	public String getRestoreLink(PortletRequest portletRequest, long classPK)
-		throws PortalException, SystemException {
+	public String getClassName() {
+		return WikiNode.class.getName();
+	}
 
-		String portletId = PortletKeys.WIKI;
+	@Override
+	public String getRestoreContainedModelLink(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
 
 		WikiNode node = WikiNodeLocalServiceUtil.getNode(classPK);
 
-		long plid = PortalUtil.getPlidFromPortletId(
-			node.getGroupId(), PortletKeys.WIKI);
+		PortletURL portletURL = getRestoreURL(portletRequest, classPK, false);
 
-		if (plid == LayoutConstants.DEFAULT_PLID) {
-			portletId = PortletKeys.WIKI_ADMIN;
+		portletURL.setParameter("nodeId", String.valueOf(node.getNodeId()));
 
-			plid = PortalUtil.getControlPanelPlid(portletRequest);
-		}
+		return portletURL.toString();
+	}
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			portletRequest, portletId, plid, PortletRequest.RENDER_PHASE);
+	@Override
+	public String getRestoreContainerModelLink(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
+
+		PortletURL portletURL = getRestoreURL(portletRequest, classPK, true);
 
 		return portletURL.toString();
 	}
@@ -163,6 +161,15 @@ public class WikiNodeTrashHandler extends BaseTrashHandler {
 	}
 
 	@Override
+	public TrashEntry getTrashEntry(long classPK)
+		throws PortalException, SystemException {
+
+		WikiNode node = WikiNodeLocalServiceUtil.getNode(classPK);
+
+		return node.getTrashEntry();
+	}
+
+	@Override
 	public TrashRenderer getTrashRenderer(long classPK)
 		throws PortalException, SystemException {
 
@@ -176,6 +183,7 @@ public class WikiNodeTrashHandler extends BaseTrashHandler {
 		return true;
 	}
 
+	@Override
 	public boolean isInTrash(long classPK)
 		throws PortalException, SystemException {
 
@@ -184,12 +192,13 @@ public class WikiNodeTrashHandler extends BaseTrashHandler {
 		return node.isInTrash();
 	}
 
-	public void restoreTrashEntries(long[] classPKs)
+	@Override
+	public void restoreTrashEntry(long userId, long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			WikiNodeServiceUtil.restoreNodeFromTrash(classPK);
-		}
+		WikiNode node = WikiNodeLocalServiceUtil.getNode(classPK);
+
+		WikiNodeLocalServiceUtil.restoreNodeFromTrash(userId, node);
 	}
 
 	@Override
@@ -201,6 +210,41 @@ public class WikiNodeTrashHandler extends BaseTrashHandler {
 		node.setName(name);
 
 		WikiNodeLocalServiceUtil.updateWikiNode(node);
+	}
+
+	protected PortletURL getRestoreURL(
+			PortletRequest portletRequest, long classPK,
+			boolean isContainerModel)
+		throws PortalException, SystemException {
+
+		String portletId = PortletKeys.WIKI;
+
+		WikiNode node = WikiNodeLocalServiceUtil.getNode(classPK);
+
+		long plid = PortalUtil.getPlidFromPortletId(
+			node.getGroupId(), PortletKeys.WIKI);
+
+		if (plid == LayoutConstants.DEFAULT_PLID) {
+			portletId = PortletKeys.WIKI_ADMIN;
+
+			plid = PortalUtil.getControlPanelPlid(portletRequest);
+		}
+
+		PortletURL portletURL = PortletURLFactoryUtil.create(
+			portletRequest, portletId, plid, PortletRequest.RENDER_PHASE);
+
+		if (!isContainerModel) {
+			if (portletId.equals(PortletKeys.WIKI)) {
+				portletURL.setParameter(
+					"struts_action", "/wiki/view_all_pages");
+			}
+			else {
+				portletURL.setParameter(
+					"struts_action", "/wiki_admin/view_all_pages");
+			}
+		}
+
+		return portletURL;
 	}
 
 	@Override

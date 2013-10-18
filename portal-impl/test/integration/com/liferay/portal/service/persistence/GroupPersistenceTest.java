@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,13 +16,18 @@ package com.liferay.portal.service.persistence;
 
 import com.liferay.portal.NoSuchGroupException;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.portal.kernel.util.IntegerWrapper;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.impl.GroupModelImpl;
@@ -108,6 +113,8 @@ public class GroupPersistenceTest {
 
 		Group newGroup = _persistence.create(pk);
 
+		newGroup.setUuid(ServiceTestUtil.randomString());
+
 		newGroup.setCompanyId(ServiceTestUtil.nextLong());
 
 		newGroup.setCreatorUserId(ServiceTestUtil.nextLong());
@@ -130,9 +137,15 @@ public class GroupPersistenceTest {
 
 		newGroup.setTypeSettings(ServiceTestUtil.randomString());
 
+		newGroup.setManualMembership(ServiceTestUtil.randomBoolean());
+
+		newGroup.setMembershipRestriction(ServiceTestUtil.nextInt());
+
 		newGroup.setFriendlyURL(ServiceTestUtil.randomString());
 
 		newGroup.setSite(ServiceTestUtil.randomBoolean());
+
+		newGroup.setRemoteStagingGroupCount(ServiceTestUtil.nextInt());
 
 		newGroup.setActive(ServiceTestUtil.randomBoolean());
 
@@ -140,6 +153,7 @@ public class GroupPersistenceTest {
 
 		Group existingGroup = _persistence.findByPrimaryKey(newGroup.getPrimaryKey());
 
+		Assert.assertEquals(existingGroup.getUuid(), newGroup.getUuid());
 		Assert.assertEquals(existingGroup.getGroupId(), newGroup.getGroupId());
 		Assert.assertEquals(existingGroup.getCompanyId(),
 			newGroup.getCompanyId());
@@ -159,9 +173,15 @@ public class GroupPersistenceTest {
 		Assert.assertEquals(existingGroup.getType(), newGroup.getType());
 		Assert.assertEquals(existingGroup.getTypeSettings(),
 			newGroup.getTypeSettings());
+		Assert.assertEquals(existingGroup.getManualMembership(),
+			newGroup.getManualMembership());
+		Assert.assertEquals(existingGroup.getMembershipRestriction(),
+			newGroup.getMembershipRestriction());
 		Assert.assertEquals(existingGroup.getFriendlyURL(),
 			newGroup.getFriendlyURL());
 		Assert.assertEquals(existingGroup.getSite(), newGroup.getSite());
+		Assert.assertEquals(existingGroup.getRemoteStagingGroupCount(),
+			newGroup.getRemoteStagingGroupCount());
 		Assert.assertEquals(existingGroup.getActive(), newGroup.getActive());
 	}
 
@@ -188,6 +208,27 @@ public class GroupPersistenceTest {
 	}
 
 	@Test
+	public void testFindAll() throws Exception {
+		try {
+			_persistence.findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				getOrderByComparator());
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	protected OrderByComparator getOrderByComparator() {
+		return OrderByComparatorFactoryUtil.create("Group_", "uuid", true,
+			"groupId", true, "companyId", true, "creatorUserId", true,
+			"classNameId", true, "classPK", true, "parentGroupId", true,
+			"liveGroupId", true, "treePath", true, "name", true, "description",
+			true, "type", true, "typeSettings", true, "manualMembership", true,
+			"membershipRestriction", true, "friendlyURL", true, "site", true,
+			"remoteStagingGroupCount", true, "active", true);
+	}
+
+	@Test
 	public void testFetchByPrimaryKeyExisting() throws Exception {
 		Group newGroup = addGroup();
 
@@ -203,6 +244,26 @@ public class GroupPersistenceTest {
 		Group missingGroup = _persistence.fetchByPrimaryKey(pk);
 
 		Assert.assertNull(missingGroup);
+	}
+
+	@Test
+	public void testActionableDynamicQuery() throws Exception {
+		final IntegerWrapper count = new IntegerWrapper();
+
+		ActionableDynamicQuery actionableDynamicQuery = new GroupActionableDynamicQuery() {
+				@Override
+				protected void performAction(Object object) {
+					Group group = (Group)object;
+
+					Assert.assertNotNull(group);
+
+					count.increment();
+				}
+			};
+
+		actionableDynamicQuery.performActions();
+
+		Assert.assertEquals(count.getValue(), _persistence.countAll());
 	}
 
 	@Test
@@ -289,6 +350,11 @@ public class GroupPersistenceTest {
 
 		GroupModelImpl existingGroupModelImpl = (GroupModelImpl)_persistence.findByPrimaryKey(newGroup.getPrimaryKey());
 
+		Assert.assertTrue(Validator.equals(existingGroupModelImpl.getUuid(),
+				existingGroupModelImpl.getOriginalUuid()));
+		Assert.assertEquals(existingGroupModelImpl.getGroupId(),
+			existingGroupModelImpl.getOriginalGroupId());
+
 		Assert.assertEquals(existingGroupModelImpl.getLiveGroupId(),
 			existingGroupModelImpl.getOriginalLiveGroupId());
 
@@ -332,6 +398,8 @@ public class GroupPersistenceTest {
 
 		Group group = _persistence.create(pk);
 
+		group.setUuid(ServiceTestUtil.randomString());
+
 		group.setCompanyId(ServiceTestUtil.nextLong());
 
 		group.setCreatorUserId(ServiceTestUtil.nextLong());
@@ -354,9 +422,15 @@ public class GroupPersistenceTest {
 
 		group.setTypeSettings(ServiceTestUtil.randomString());
 
+		group.setManualMembership(ServiceTestUtil.randomBoolean());
+
+		group.setMembershipRestriction(ServiceTestUtil.nextInt());
+
 		group.setFriendlyURL(ServiceTestUtil.randomString());
 
 		group.setSite(ServiceTestUtil.randomBoolean());
+
+		group.setRemoteStagingGroupCount(ServiceTestUtil.nextInt());
 
 		group.setActive(ServiceTestUtil.randomBoolean());
 

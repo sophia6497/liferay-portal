@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,12 +27,14 @@ import java.sql.SQLException;
  */
 public abstract class BaseUpgradeTableListener implements UpgradeTableListener {
 
+	@Override
 	public void onAfterUpdateTable(
 			ServiceComponent previousServiceComponent,
 			UpgradeTable upgradeTable)
 		throws Exception {
 	}
 
+	@Override
 	public void onBeforeUpdateTable(
 			ServiceComponent previousServiceComponent,
 			UpgradeTable upgradeTable)

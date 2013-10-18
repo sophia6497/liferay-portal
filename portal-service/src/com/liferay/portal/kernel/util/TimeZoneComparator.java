@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,6 +27,7 @@ public class TimeZoneComparator implements Comparator<TimeZone> {
 		_locale = locale;
 	}
 
+	@Override
 	public int compare(TimeZone timeZone1, TimeZone timeZone2) {
 		Integer rawOffset1 = timeZone1.getRawOffset();
 		Integer rawOffset2 = timeZone2.getRawOffset();

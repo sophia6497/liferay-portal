@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,11 +18,12 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the expando row local service. This utility wraps {@link com.liferay.portlet.expando.service.impl.ExpandoRowLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for ExpandoRow. This utility wraps
+ * {@link com.liferay.portlet.expando.service.impl.ExpandoRowLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see ExpandoRowLocalService
@@ -164,6 +165,21 @@ public class ExpandoRowLocalServiceUtil {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
+	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
 	public static com.liferay.portlet.expando.model.ExpandoRow fetchExpandoRow(
 		long rowId) throws com.liferay.portal.kernel.exception.SystemException {
 		return getService().fetchExpandoRow(rowId);
@@ -290,6 +306,11 @@ public class ExpandoRowLocalServiceUtil {
 		getService().deleteRow(companyId, className, tableName, classPK);
 	}
 
+	public static void deleteRows(long classPK)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService().deleteRows(classPK);
+	}
+
 	public static java.util.List<com.liferay.portlet.expando.model.ExpandoRow> getDefaultTableRows(
 		long companyId, long classNameId, int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -364,7 +385,8 @@ public class ExpandoRowLocalServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #getRows(long, String, String, int, int)}
+	* @deprecated As of 6.1.0, replaced by {@link #getRows(long, String,
+	String, int, int)}
 	*/
 	public static java.util.List<com.liferay.portlet.expando.model.ExpandoRow> getRows(
 		java.lang.String className, java.lang.String tableName, int start,
@@ -390,7 +412,8 @@ public class ExpandoRowLocalServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #getRowsCount(long, String, String)}
+	* @deprecated As of 6.1.0, replaced by {@link #getRowsCount(long, String,
+	String)}
 	*/
 	public static int getRowsCount(java.lang.String className,
 		java.lang.String tableName)
@@ -410,7 +433,7 @@ public class ExpandoRowLocalServiceUtil {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public void setService(ExpandoRowLocalService service) {
 	}

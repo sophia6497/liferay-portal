@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.lar.ExportImportThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -42,8 +43,10 @@ import org.apache.commons.lang.time.StopWatch;
  * @author Raymond Augé
  * @author Michael Young
  */
+@DoPrivileged
 public class JournalContentImpl implements JournalContent {
 
+	@Override
 	public void clearCache() {
 		if (ExportImportThreadLocal.isImportInProcess()) {
 			return;
@@ -52,12 +55,14 @@ public class JournalContentImpl implements JournalContent {
 		portalCache.removeAll();
 	}
 
+	@Override
 	public void clearCache(
 		long groupId, String articleId, String ddmTemplateKey) {
 
 		clearCache();
 	}
 
+	@Override
 	public String getContent(
 		long groupId, String articleId, String viewMode, String languageId,
 		String xmlRequest) {
@@ -66,6 +71,7 @@ public class JournalContentImpl implements JournalContent {
 			groupId, articleId, null, viewMode, languageId, null, xmlRequest);
 	}
 
+	@Override
 	public String getContent(
 		long groupId, String articleId, String ddmTemplateKey, String viewMode,
 		String languageId, String xmlRequest) {
@@ -75,6 +81,7 @@ public class JournalContentImpl implements JournalContent {
 			xmlRequest);
 	}
 
+	@Override
 	public String getContent(
 		long groupId, String articleId, String ddmTemplateKey, String viewMode,
 		String languageId, ThemeDisplay themeDisplay) {
@@ -84,6 +91,7 @@ public class JournalContentImpl implements JournalContent {
 			themeDisplay, null);
 	}
 
+	@Override
 	public String getContent(
 		long groupId, String articleId, String ddmTemplateKey, String viewMode,
 		String languageId, ThemeDisplay themeDisplay, String xmlRequest) {
@@ -100,6 +108,7 @@ public class JournalContentImpl implements JournalContent {
 		}
 	}
 
+	@Override
 	public String getContent(
 		long groupId, String articleId, String viewMode, String languageId,
 		ThemeDisplay themeDisplay) {
@@ -108,6 +117,7 @@ public class JournalContentImpl implements JournalContent {
 			groupId, articleId, null, viewMode, languageId, themeDisplay);
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, double version, String ddmTemplateKey,
 		String viewMode, String languageId, ThemeDisplay themeDisplay, int page,
@@ -121,8 +131,9 @@ public class JournalContentImpl implements JournalContent {
 			stopWatch.start();
 		}
 
-		articleId = GetterUtil.getString(articleId).toUpperCase();
-		ddmTemplateKey = GetterUtil.getString(ddmTemplateKey).toUpperCase();
+		articleId = StringUtil.toUpperCase(GetterUtil.getString(articleId));
+		ddmTemplateKey = StringUtil.toUpperCase(
+			GetterUtil.getString(ddmTemplateKey));
 
 		long layoutSetId = 0;
 		boolean secure = false;
@@ -164,9 +175,9 @@ public class JournalContentImpl implements JournalContent {
 		try {
 			if (PropsValues.JOURNAL_ARTICLE_VIEW_PERMISSION_CHECK_ENABLED &&
 				(articleDisplay != null) && (themeDisplay != null) &&
-				(!JournalArticlePermission.contains(
+				!JournalArticlePermission.contains(
 					themeDisplay.getPermissionChecker(), groupId, articleId,
-					ActionKeys.VIEW))) {
+					ActionKeys.VIEW)) {
 
 				articleDisplay = null;
 			}
@@ -184,6 +195,7 @@ public class JournalContentImpl implements JournalContent {
 		return articleDisplay;
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, String viewMode, String languageId,
 		String xmlRequest) {
@@ -193,6 +205,7 @@ public class JournalContentImpl implements JournalContent {
 			xmlRequest);
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, String ddmTemplateKey, String viewMode,
 		String languageId, String xmlRequest) {
@@ -202,6 +215,7 @@ public class JournalContentImpl implements JournalContent {
 			xmlRequest);
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, String ddmTemplateKey, String viewMode,
 		String languageId, ThemeDisplay themeDisplay) {
@@ -211,6 +225,7 @@ public class JournalContentImpl implements JournalContent {
 			themeDisplay, 1, null);
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, String ddmTemplateKey, String viewMode,
 		String languageId, ThemeDisplay themeDisplay, int page,
@@ -221,6 +236,7 @@ public class JournalContentImpl implements JournalContent {
 			themeDisplay, 1, xmlRequest);
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, String viewMode, String languageId,
 		ThemeDisplay themeDisplay) {
@@ -229,6 +245,7 @@ public class JournalContentImpl implements JournalContent {
 			groupId, articleId, viewMode, languageId, themeDisplay, 1);
 	}
 
+	@Override
 	public JournalArticleDisplay getDisplay(
 		long groupId, String articleId, String viewMode, String languageId,
 		ThemeDisplay themeDisplay, int page) {

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,10 +23,6 @@ AssetRenderer assetRenderer = (AssetRenderer)request.getAttribute(WebKeys.ASSET_
 FileEntry fileEntry = (FileEntry)request.getAttribute(WebKeys.DOCUMENT_LIBRARY_FILE_ENTRY);
 
 FileVersion fileVersion = (FileVersion)request.getAttribute(WebKeys.DOCUMENT_LIBRARY_FILE_VERSION);
-
-if (fileVersion == null) {
-	fileVersion = fileEntry.getFileVersion();
-}
 
 boolean showThumbnail = false;
 
@@ -60,7 +56,7 @@ if (fileEntry.getVersion().equals(fileVersion.getVersion())) {
 			<c:otherwise>
 
 				<%
-				String taglibFileEntryTitle = "<span class='aui-helper-hidden-accessible'>" + fileEntry.getTitle() + "</span>";
+				String taglibFileEntryTitle = "<span class='hide-accessible'>" + fileEntry.getTitle() + "</span>";
 				%>
 
 				<liferay-ui:icon

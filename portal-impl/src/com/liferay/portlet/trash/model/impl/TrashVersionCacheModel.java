@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -52,6 +52,7 @@ public class TrashVersionCacheModel implements CacheModel<TrashVersion>,
 		return sb.toString();
 	}
 
+	@Override
 	public TrashVersion toEntityModel() {
 		TrashVersionImpl trashVersionImpl = new TrashVersionImpl();
 
@@ -66,6 +67,7 @@ public class TrashVersionCacheModel implements CacheModel<TrashVersion>,
 		return trashVersionImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		versionId = objectInput.readLong();
 		entryId = objectInput.readLong();
@@ -74,6 +76,7 @@ public class TrashVersionCacheModel implements CacheModel<TrashVersion>,
 		status = objectInput.readInt();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(versionId);

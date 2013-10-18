@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -63,6 +63,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	 */
 	public static final String TABLE_NAME = "Group_";
 	public static final Object[][] TABLE_COLUMNS = {
+			{ "uuid_", Types.VARCHAR },
 			{ "groupId", Types.BIGINT },
 			{ "companyId", Types.BIGINT },
 			{ "creatorUserId", Types.BIGINT },
@@ -74,12 +75,15 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 			{ "name", Types.VARCHAR },
 			{ "description", Types.VARCHAR },
 			{ "type_", Types.INTEGER },
-			{ "typeSettings", Types.VARCHAR },
+			{ "typeSettings", Types.CLOB },
+			{ "manualMembership", Types.BOOLEAN },
+			{ "membershipRestriction", Types.INTEGER },
 			{ "friendlyURL", Types.VARCHAR },
 			{ "site", Types.BOOLEAN },
+			{ "remoteStagingGroupCount", Types.INTEGER },
 			{ "active_", Types.BOOLEAN }
 		};
-	public static final String TABLE_SQL_CREATE = "create table Group_ (groupId LONG not null primary key,companyId LONG,creatorUserId LONG,classNameId LONG,classPK LONG,parentGroupId LONG,liveGroupId LONG,treePath VARCHAR(75) null,name VARCHAR(150) null,description STRING null,type_ INTEGER,typeSettings STRING null,friendlyURL VARCHAR(100) null,site BOOLEAN,active_ BOOLEAN)";
+	public static final String TABLE_SQL_CREATE = "create table Group_ (uuid_ VARCHAR(75) null,groupId LONG not null primary key,companyId LONG,creatorUserId LONG,classNameId LONG,classPK LONG,parentGroupId LONG,liveGroupId LONG,treePath STRING null,name VARCHAR(150) null,description STRING null,type_ INTEGER,typeSettings TEXT null,manualMembership BOOLEAN,membershipRestriction INTEGER,friendlyURL VARCHAR(255) null,site BOOLEAN,remoteStagingGroupCount INTEGER,active_ BOOLEAN)";
 	public static final String TABLE_SQL_DROP = "drop table Group_";
 	public static final String ORDER_BY_JPQL = " ORDER BY group_.name ASC";
 	public static final String ORDER_BY_SQL = " ORDER BY Group_.name ASC";
@@ -100,11 +104,13 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	public static long CLASSPK_COLUMN_BITMASK = 4L;
 	public static long COMPANYID_COLUMN_BITMASK = 8L;
 	public static long FRIENDLYURL_COLUMN_BITMASK = 16L;
-	public static long LIVEGROUPID_COLUMN_BITMASK = 32L;
-	public static long NAME_COLUMN_BITMASK = 64L;
-	public static long PARENTGROUPID_COLUMN_BITMASK = 128L;
-	public static long SITE_COLUMN_BITMASK = 256L;
-	public static long TYPE_COLUMN_BITMASK = 512L;
+	public static long GROUPID_COLUMN_BITMASK = 32L;
+	public static long LIVEGROUPID_COLUMN_BITMASK = 64L;
+	public static long NAME_COLUMN_BITMASK = 128L;
+	public static long PARENTGROUPID_COLUMN_BITMASK = 256L;
+	public static long SITE_COLUMN_BITMASK = 512L;
+	public static long TYPE_COLUMN_BITMASK = 1024L;
+	public static long UUID_COLUMN_BITMASK = 2048L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -119,6 +125,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 
 		Group model = new GroupImpl();
 
+		model.setUuid(soapModel.getUuid());
 		model.setGroupId(soapModel.getGroupId());
 		model.setCompanyId(soapModel.getCompanyId());
 		model.setCreatorUserId(soapModel.getCreatorUserId());
@@ -131,8 +138,11 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		model.setDescription(soapModel.getDescription());
 		model.setType(soapModel.getType());
 		model.setTypeSettings(soapModel.getTypeSettings());
+		model.setManualMembership(soapModel.getManualMembership());
+		model.setMembershipRestriction(soapModel.getMembershipRestriction());
 		model.setFriendlyURL(soapModel.getFriendlyURL());
 		model.setSite(soapModel.getSite());
+		model.setRemoteStagingGroupCount(soapModel.getRemoteStagingGroupCount());
 		model.setActive(soapModel.getActive());
 
 		return model;
@@ -187,7 +197,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 			{ "userId", Types.BIGINT },
 			{ "groupId", Types.BIGINT }
 		};
-	public static final String MAPPING_TABLE_USERS_GROUPS_SQL_CREATE = "create table Users_Groups (userId LONG not null,groupId LONG not null,primary key (userId, groupId))";
+	public static final String MAPPING_TABLE_USERS_GROUPS_SQL_CREATE = "create table Users_Groups (groupId LONG not null,userId LONG not null,primary key (groupId, userId))";
 	public static final boolean FINDER_CACHE_ENABLED_USERS_GROUPS = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.Users_Groups"), true);
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
@@ -196,26 +206,32 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	public GroupModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _groupId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setGroupId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
 		return _groupId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return Group.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return Group.class.getName();
 	}
@@ -224,6 +240,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	public Map<String, Object> getModelAttributes() {
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
+		attributes.put("uuid", getUuid());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("creatorUserId", getCreatorUserId());
@@ -236,8 +253,11 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		attributes.put("description", getDescription());
 		attributes.put("type", getType());
 		attributes.put("typeSettings", getTypeSettings());
+		attributes.put("manualMembership", getManualMembership());
+		attributes.put("membershipRestriction", getMembershipRestriction());
 		attributes.put("friendlyURL", getFriendlyURL());
 		attributes.put("site", getSite());
+		attributes.put("remoteStagingGroupCount", getRemoteStagingGroupCount());
 		attributes.put("active", getActive());
 
 		return attributes;
@@ -245,6 +265,12 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 
 	@Override
 	public void setModelAttributes(Map<String, Object> attributes) {
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
 		Long groupId = (Long)attributes.get("groupId");
 
 		if (groupId != null) {
@@ -317,6 +343,19 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 			setTypeSettings(typeSettings);
 		}
 
+		Boolean manualMembership = (Boolean)attributes.get("manualMembership");
+
+		if (manualMembership != null) {
+			setManualMembership(manualMembership);
+		}
+
+		Integer membershipRestriction = (Integer)attributes.get(
+				"membershipRestriction");
+
+		if (membershipRestriction != null) {
+			setMembershipRestriction(membershipRestriction);
+		}
+
 		String friendlyURL = (String)attributes.get("friendlyURL");
 
 		if (friendlyURL != null) {
@@ -329,6 +368,13 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 			setSite(site);
 		}
 
+		Integer remoteStagingGroupCount = (Integer)attributes.get(
+				"remoteStagingGroupCount");
+
+		if (remoteStagingGroupCount != null) {
+			setRemoteStagingGroupCount(remoteStagingGroupCount);
+		}
+
 		Boolean active = (Boolean)attributes.get("active");
 
 		if (active != null) {
@@ -337,19 +383,59 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
+	public String getUuid() {
+		if (_uuid == null) {
+			return StringPool.BLANK;
+		}
+		else {
+			return _uuid;
+		}
+	}
+
+	@Override
+	public void setUuid(String uuid) {
+		if (_originalUuid == null) {
+			_originalUuid = _uuid;
+		}
+
+		_uuid = uuid;
+	}
+
+	public String getOriginalUuid() {
+		return GetterUtil.getString(_originalUuid);
+	}
+
+	@JSON
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
+		if (!_setOriginalGroupId) {
+			_setOriginalGroupId = true;
+
+			_originalGroupId = _groupId;
+		}
+
 		_groupId = groupId;
 	}
 
+	public long getOriginalGroupId() {
+		return _originalGroupId;
+	}
+
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
 
@@ -367,23 +453,28 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public long getCreatorUserId() {
 		return _creatorUserId;
 	}
 
+	@Override
 	public void setCreatorUserId(long creatorUserId) {
 		_creatorUserId = creatorUserId;
 	}
 
+	@Override
 	public String getCreatorUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getCreatorUserId(), "uuid",
 			_creatorUserUuid);
 	}
 
+	@Override
 	public void setCreatorUserUuid(String creatorUserUuid) {
 		_creatorUserUuid = creatorUserUuid;
 	}
 
+	@Override
 	public String getClassName() {
 		if (getClassNameId() <= 0) {
 			return StringPool.BLANK;
@@ -392,6 +483,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		return PortalUtil.getClassName(getClassNameId());
 	}
 
+	@Override
 	public void setClassName(String className) {
 		long classNameId = 0;
 
@@ -403,10 +495,12 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public long getClassNameId() {
 		return _classNameId;
 	}
 
+	@Override
 	public void setClassNameId(long classNameId) {
 		_columnBitmask |= CLASSNAMEID_COLUMN_BITMASK;
 
@@ -424,10 +518,12 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public long getClassPK() {
 		return _classPK;
 	}
 
+	@Override
 	public void setClassPK(long classPK) {
 		_columnBitmask |= CLASSPK_COLUMN_BITMASK;
 
@@ -445,10 +541,12 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public long getParentGroupId() {
 		return _parentGroupId;
 	}
 
+	@Override
 	public void setParentGroupId(long parentGroupId) {
 		_columnBitmask |= PARENTGROUPID_COLUMN_BITMASK;
 
@@ -466,10 +564,12 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public long getLiveGroupId() {
 		return _liveGroupId;
 	}
 
+	@Override
 	public void setLiveGroupId(long liveGroupId) {
 		_columnBitmask |= LIVEGROUPID_COLUMN_BITMASK;
 
@@ -487,6 +587,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public String getTreePath() {
 		if (_treePath == null) {
 			return StringPool.BLANK;
@@ -496,11 +597,13 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		}
 	}
 
+	@Override
 	public void setTreePath(String treePath) {
 		_treePath = treePath;
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -510,6 +613,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		}
 	}
 
+	@Override
 	public void setName(String name) {
 		_columnBitmask = -1L;
 
@@ -525,6 +629,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public String getDescription() {
 		if (_description == null) {
 			return StringPool.BLANK;
@@ -534,15 +639,18 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		}
 	}
 
+	@Override
 	public void setDescription(String description) {
 		_description = description;
 	}
 
 	@JSON
+	@Override
 	public int getType() {
 		return _type;
 	}
 
+	@Override
 	public void setType(int type) {
 		_columnBitmask |= TYPE_COLUMN_BITMASK;
 
@@ -560,6 +668,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public String getTypeSettings() {
 		if (_typeSettings == null) {
 			return StringPool.BLANK;
@@ -569,11 +678,40 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		}
 	}
 
+	@Override
 	public void setTypeSettings(String typeSettings) {
 		_typeSettings = typeSettings;
 	}
 
 	@JSON
+	@Override
+	public boolean getManualMembership() {
+		return _manualMembership;
+	}
+
+	@Override
+	public boolean isManualMembership() {
+		return _manualMembership;
+	}
+
+	@Override
+	public void setManualMembership(boolean manualMembership) {
+		_manualMembership = manualMembership;
+	}
+
+	@JSON
+	@Override
+	public int getMembershipRestriction() {
+		return _membershipRestriction;
+	}
+
+	@Override
+	public void setMembershipRestriction(int membershipRestriction) {
+		_membershipRestriction = membershipRestriction;
+	}
+
+	@JSON
+	@Override
 	public String getFriendlyURL() {
 		if (_friendlyURL == null) {
 			return StringPool.BLANK;
@@ -583,6 +721,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		}
 	}
 
+	@Override
 	public void setFriendlyURL(String friendlyURL) {
 		_columnBitmask |= FRIENDLYURL_COLUMN_BITMASK;
 
@@ -598,14 +737,17 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
 	public boolean getSite() {
 		return _site;
 	}
 
+	@Override
 	public boolean isSite() {
 		return _site;
 	}
 
+	@Override
 	public void setSite(boolean site) {
 		_columnBitmask |= SITE_COLUMN_BITMASK;
 
@@ -623,14 +765,28 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	}
 
 	@JSON
+	@Override
+	public int getRemoteStagingGroupCount() {
+		return _remoteStagingGroupCount;
+	}
+
+	@Override
+	public void setRemoteStagingGroupCount(int remoteStagingGroupCount) {
+		_remoteStagingGroupCount = remoteStagingGroupCount;
+	}
+
+	@JSON
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
 		_columnBitmask |= ACTIVE_COLUMN_BITMASK;
 
@@ -678,6 +834,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	public Object clone() {
 		GroupImpl groupImpl = new GroupImpl();
 
+		groupImpl.setUuid(getUuid());
 		groupImpl.setGroupId(getGroupId());
 		groupImpl.setCompanyId(getCompanyId());
 		groupImpl.setCreatorUserId(getCreatorUserId());
@@ -690,8 +847,11 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		groupImpl.setDescription(getDescription());
 		groupImpl.setType(getType());
 		groupImpl.setTypeSettings(getTypeSettings());
+		groupImpl.setManualMembership(getManualMembership());
+		groupImpl.setMembershipRestriction(getMembershipRestriction());
 		groupImpl.setFriendlyURL(getFriendlyURL());
 		groupImpl.setSite(getSite());
+		groupImpl.setRemoteStagingGroupCount(getRemoteStagingGroupCount());
 		groupImpl.setActive(getActive());
 
 		groupImpl.resetOriginalValues();
@@ -699,6 +859,7 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		return groupImpl;
 	}
 
+	@Override
 	public int compareTo(Group group) {
 		int value = 0;
 
@@ -713,18 +874,15 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Group)) {
 			return false;
 		}
 
-		Group group = null;
-
-		try {
-			group = (Group)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Group group = (Group)obj;
 
 		long primaryKey = group.getPrimaryKey();
 
@@ -744,6 +902,12 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	@Override
 	public void resetOriginalValues() {
 		GroupModelImpl groupModelImpl = this;
+
+		groupModelImpl._originalUuid = groupModelImpl._uuid;
+
+		groupModelImpl._originalGroupId = groupModelImpl._groupId;
+
+		groupModelImpl._setOriginalGroupId = false;
 
 		groupModelImpl._originalCompanyId = groupModelImpl._companyId;
 
@@ -787,6 +951,14 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	@Override
 	public CacheModel<Group> toCacheModel() {
 		GroupCacheModel groupCacheModel = new GroupCacheModel();
+
+		groupCacheModel.uuid = getUuid();
+
+		String uuid = groupCacheModel.uuid;
+
+		if ((uuid != null) && (uuid.length() == 0)) {
+			groupCacheModel.uuid = null;
+		}
 
 		groupCacheModel.groupId = getGroupId();
 
@@ -836,6 +1008,10 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 			groupCacheModel.typeSettings = null;
 		}
 
+		groupCacheModel.manualMembership = getManualMembership();
+
+		groupCacheModel.membershipRestriction = getMembershipRestriction();
+
 		groupCacheModel.friendlyURL = getFriendlyURL();
 
 		String friendlyURL = groupCacheModel.friendlyURL;
@@ -846,6 +1022,8 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 
 		groupCacheModel.site = getSite();
 
+		groupCacheModel.remoteStagingGroupCount = getRemoteStagingGroupCount();
+
 		groupCacheModel.active = getActive();
 
 		return groupCacheModel;
@@ -853,9 +1031,11 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(39);
 
-		sb.append("{groupId=");
+		sb.append("{uuid=");
+		sb.append(getUuid());
+		sb.append(", groupId=");
 		sb.append(getGroupId());
 		sb.append(", companyId=");
 		sb.append(getCompanyId());
@@ -879,10 +1059,16 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		sb.append(getType());
 		sb.append(", typeSettings=");
 		sb.append(getTypeSettings());
+		sb.append(", manualMembership=");
+		sb.append(getManualMembership());
+		sb.append(", membershipRestriction=");
+		sb.append(getMembershipRestriction());
 		sb.append(", friendlyURL=");
 		sb.append(getFriendlyURL());
 		sb.append(", site=");
 		sb.append(getSite());
+		sb.append(", remoteStagingGroupCount=");
+		sb.append(getRemoteStagingGroupCount());
 		sb.append(", active=");
 		sb.append(getActive());
 		sb.append("}");
@@ -890,13 +1076,18 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
-		StringBundler sb = new StringBundler(49);
+		StringBundler sb = new StringBundler(61);
 
 		sb.append("<model><model-name>");
 		sb.append("com.liferay.portal.model.Group");
 		sb.append("</model-name>");
 
+		sb.append(
+			"<column><column-name>uuid</column-name><column-value><![CDATA[");
+		sb.append(getUuid());
+		sb.append("]]></column-value></column>");
 		sb.append(
 			"<column><column-name>groupId</column-name><column-value><![CDATA[");
 		sb.append(getGroupId());
@@ -946,12 +1137,24 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 		sb.append(getTypeSettings());
 		sb.append("]]></column-value></column>");
 		sb.append(
+			"<column><column-name>manualMembership</column-name><column-value><![CDATA[");
+		sb.append(getManualMembership());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>membershipRestriction</column-name><column-value><![CDATA[");
+		sb.append(getMembershipRestriction());
+		sb.append("]]></column-value></column>");
+		sb.append(
 			"<column><column-name>friendlyURL</column-name><column-value><![CDATA[");
 		sb.append(getFriendlyURL());
 		sb.append("]]></column-value></column>");
 		sb.append(
 			"<column><column-name>site</column-name><column-value><![CDATA[");
 		sb.append(getSite());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>remoteStagingGroupCount</column-name><column-value><![CDATA[");
+		sb.append(getRemoteStagingGroupCount());
 		sb.append("]]></column-value></column>");
 		sb.append(
 			"<column><column-name>active</column-name><column-value><![CDATA[");
@@ -965,7 +1168,11 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 
 	private static ClassLoader _classLoader = Group.class.getClassLoader();
 	private static Class<?>[] _escapedModelInterfaces = new Class[] { Group.class };
+	private String _uuid;
+	private String _originalUuid;
 	private long _groupId;
+	private long _originalGroupId;
+	private boolean _setOriginalGroupId;
 	private long _companyId;
 	private long _originalCompanyId;
 	private boolean _setOriginalCompanyId;
@@ -991,11 +1198,14 @@ public class GroupModelImpl extends BaseModelImpl<Group> implements GroupModel {
 	private int _originalType;
 	private boolean _setOriginalType;
 	private String _typeSettings;
+	private boolean _manualMembership;
+	private int _membershipRestriction;
 	private String _friendlyURL;
 	private String _originalFriendlyURL;
 	private boolean _site;
 	private boolean _originalSite;
 	private boolean _setOriginalSite;
+	private int _remoteStagingGroupCount;
 	private boolean _active;
 	private boolean _originalActive;
 	private boolean _setOriginalActive;

@@ -1,7 +1,7 @@
 <%--
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,11 +36,11 @@ List<MDRRuleGroupInstance> ruleGroupInstances = MDRRuleGroupInstanceServiceUtil.
 
 <liferay-ui:header
 	backURL="<%= redirect %>"
-	title="manage-rule-group-priorities"
+	title="manage-rule-priorities"
 />
 
-<div class="portlet-msg-info">
-	<liferay-ui:message key="to-manage-priorities,-drag-the-rule-group-to-the-desired-position" />
+<div class="alert alert-info">
+	<liferay-ui:message key="to-manage-priorities,-drag-the-rule-to-the-desired-position" />
 </div>
 
 <div class="separator"><!-- --></div>
@@ -64,7 +64,7 @@ List<MDRRuleGroupInstance> ruleGroupInstances = MDRRuleGroupInstanceServiceUtil.
 		%>
 
 			<div class="rule-group-instance <%= (i == 0) ? "rule-group-instance-first" : StringPool.BLANK %>" data-rule-group-instance-id="<%= ruleGroupInstance.getRuleGroupInstanceId() %>">
-				<span class="rule-group-instance-handle aui-icon aui-icon-grip-dotted-vertical"></span>
+				<span class="rule-group-instance-handle icon icon-grip-dotted-vertical"></span>
 
 				<span class="rule-group-instance-label"><%= ruleGroup.getName(locale) %></span>
 

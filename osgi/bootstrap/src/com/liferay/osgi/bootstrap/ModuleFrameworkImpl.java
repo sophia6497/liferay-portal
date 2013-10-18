@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,18 +14,20 @@
 
 package com.liferay.osgi.bootstrap;
 
-import aQute.lib.osgi.Analyzer;
-import aQute.lib.osgi.Builder;
-import aQute.lib.osgi.Jar;
-import aQute.lib.osgi.Verifier;
-
-import aQute.libg.header.OSGiHeader;
-import aQute.libg.version.Version;
+import aQute.bnd.header.Attrs;
+import aQute.bnd.header.OSGiHeader;
+import aQute.bnd.header.Parameters;
+import aQute.bnd.osgi.Analyzer;
+import aQute.bnd.osgi.Builder;
+import aQute.bnd.osgi.Jar;
+import aQute.bnd.osgi.Verifier;
+import aQute.bnd.version.Version;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -36,15 +38,14 @@ import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.UniqueList;
+import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.module.framework.ModuleFramework;
 import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PropsValues;
-
-import edu.emory.mathcs.backport.java.util.Collections;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -55,7 +56,11 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -96,13 +101,14 @@ import org.springframework.context.ApplicationContext;
  * @author Raymond Augé
  * @author Miguel Pastor
  */
-public class ModuleFrameworkImpl
-	implements ModuleFramework, ModuleFrameworkConstants {
+public class ModuleFrameworkImpl implements ModuleFramework {
 
+	@Override
 	public Object addBundle(String location) throws PortalException {
 		return addBundle(location, null);
 	}
 
+	@Override
 	public Object addBundle(String location, InputStream inputStream)
 		throws PortalException {
 
@@ -141,6 +147,11 @@ public class ModuleFrameworkImpl
 		}
 	}
 
+	/**
+	 * @see {@link
+	 *      com.liferay.modulesadmin.portlet.ModulesAdminPortlet#getBundle(
+	 *      BundleContext, InputStream)}
+	 */
 	public Bundle getBundle(
 			BundleContext bundleContext, InputStream inputStream)
 		throws PortalException {
@@ -167,10 +178,10 @@ public class ModuleFrameworkImpl
 			String bundleSymbolicNameAttributeValue = attributes.getValue(
 				Constants.BUNDLE_SYMBOLICNAME);
 
-			Map<String, Map<String, String>> bundleSymbolicNameMap =
-				OSGiHeader.parseHeader(bundleSymbolicNameAttributeValue);
+			Parameters parameters = OSGiHeader.parseHeader(
+				bundleSymbolicNameAttributeValue);
 
-			Set<String> bundleSymbolicNameSet = bundleSymbolicNameMap.keySet();
+			Set<String> bundleSymbolicNameSet = parameters.keySet();
 
 			Iterator<String> bundleSymbolicNameIterator =
 				bundleSymbolicNameSet.iterator();
@@ -211,10 +222,12 @@ public class ModuleFrameworkImpl
 		return bundleContext.getBundle(bundleId);
 	}
 
+	@Override
 	public Map<String, List<URL>> getExtraPackageMap() {
 		return _extraPackageMap;
 	}
 
+	@Override
 	public List<URL> getExtraPackageURLs() {
 		if (_extraPackageURLs != null) {
 			return _extraPackageURLs;
@@ -238,10 +251,12 @@ public class ModuleFrameworkImpl
 		return _extraPackageURLs;
 	}
 
+	@Override
 	public Framework getFramework() {
 		return _framework;
 	}
 
+	@Override
 	public String getState(long bundleId) throws PortalException {
 		_checkPermission();
 
@@ -276,6 +291,7 @@ public class ModuleFrameworkImpl
 		}
 	}
 
+	@Override
 	public void registerContext(Object context) {
 		if (context == null) {
 			return;
@@ -295,6 +311,7 @@ public class ModuleFrameworkImpl
 		}
 	}
 
+	@Override
 	public void setBundleStartLevel(long bundleId, int startLevel)
 		throws PortalException {
 
@@ -330,10 +347,12 @@ public class ModuleFrameworkImpl
 		}
 	}
 
+	@Override
 	public void startBundle(long bundleId) throws PortalException {
 		startBundle(bundleId, 0);
 	}
 
+	@Override
 	public void startBundle(long bundleId, int options) throws PortalException {
 		Bundle bundle = getBundle(bundleId);
 
@@ -344,6 +363,7 @@ public class ModuleFrameworkImpl
 		startBundle(bundle, 0, true);
 	}
 
+	@Override
 	public void startFramework() throws Exception {
 		ServiceLoaderCondition serviceLoaderCondition =
 			new ModuleFrameworkServiceLoaderCondition();
@@ -357,7 +377,8 @@ public class ModuleFrameworkImpl
 
 		FrameworkFactory frameworkFactory = frameworkFactories.get(0);
 
-		Map<String, String> properties = _buildProperties();
+		Map<String, String> properties = _buildFrameworkProperties(
+			frameworkFactory.getClass());
 
 		_framework = frameworkFactory.newFramework(properties);
 
@@ -368,6 +389,7 @@ public class ModuleFrameworkImpl
 		_setupInitialBundles();
 	}
 
+	@Override
 	public void startRuntime() throws Exception {
 		if (_framework == null) {
 			return;
@@ -380,10 +402,12 @@ public class ModuleFrameworkImpl
 			PropsValues.MODULE_FRAMEWORK_RUNTIME_START_LEVEL);
 	}
 
+	@Override
 	public void stopBundle(long bundleId) throws PortalException {
 		stopBundle(bundleId, 0);
 	}
 
+	@Override
 	public void stopBundle(long bundleId, int options) throws PortalException {
 		_checkPermission();
 
@@ -403,6 +427,7 @@ public class ModuleFrameworkImpl
 		}
 	}
 
+	@Override
 	public void stopFramework() throws Exception {
 		if (_framework == null) {
 			return;
@@ -411,6 +436,7 @@ public class ModuleFrameworkImpl
 		_framework.stop();
 	}
 
+	@Override
 	public void stopRuntime() throws Exception {
 		if (_framework == null) {
 			return;
@@ -423,6 +449,7 @@ public class ModuleFrameworkImpl
 			PropsValues.MODULE_FRAMEWORK_BEGINNING_START_LEVEL);
 	}
 
+	@Override
 	public void uninstallBundle(long bundleId) throws PortalException {
 		_checkPermission();
 
@@ -442,10 +469,12 @@ public class ModuleFrameworkImpl
 		}
 	}
 
+	@Override
 	public void updateBundle(long bundleId) throws PortalException {
 		updateBundle(bundleId, null);
 	}
 
+	@Override
 	public void updateBundle(long bundleId, InputStream inputStream)
 		throws PortalException {
 
@@ -467,7 +496,7 @@ public class ModuleFrameworkImpl
 		}
 	}
 
-	private Map<String, String> _buildProperties() {
+	private Map<String, String> _buildFrameworkProperties(Class<?> clazz) {
 		Map<String, String> properties = new HashMap<String, String>();
 
 		properties.put(
@@ -475,14 +504,18 @@ public class ModuleFrameworkImpl
 		properties.put(Constants.BUNDLE_NAME, ReleaseInfo.getName());
 		properties.put(Constants.BUNDLE_VENDOR, ReleaseInfo.getVendor());
 		properties.put(Constants.BUNDLE_VERSION, ReleaseInfo.getVersion());
-		properties.put(FELIX_FILEINSTALL_DIR, _getFelixFileInstallDir());
 		properties.put(
-			FELIX_FILEINSTALL_LOG_LEVEL, _getFelixFileInstallLogLevel());
+			FrameworkPropsKeys.FELIX_FILEINSTALL_DIR,
+			_getFelixFileInstallDir());
 		properties.put(
-			FELIX_FILEINSTALL_POLL,
+			FrameworkPropsKeys.FELIX_FILEINSTALL_LOG_LEVEL,
+			_getFelixFileInstallLogLevel());
+		properties.put(
+			FrameworkPropsKeys.FELIX_FILEINSTALL_POLL,
 			String.valueOf(PropsValues.MODULE_FRAMEWORK_AUTO_DEPLOY_INTERVAL));
 		properties.put(
-			FELIX_FILEINSTALL_TMPDIR, System.getProperty("java.io.tmpdir"));
+			FrameworkPropsKeys.FELIX_FILEINSTALL_TMPDIR,
+			SystemProperties.get(SystemProperties.TMP_DIR));
 		properties.put(
 			Constants.FRAMEWORK_BEGINNING_STARTLEVEL,
 			String.valueOf(PropsValues.MODULE_FRAMEWORK_BEGINNING_START_LEVEL));
@@ -492,6 +525,24 @@ public class ModuleFrameworkImpl
 		properties.put(
 			Constants.FRAMEWORK_STORAGE,
 			PropsValues.MODULE_FRAMEWORK_STATE_DIR);
+
+		properties.put("eclipse.security", null);
+		properties.put("java.security.manager", null);
+		properties.put("org.osgi.framework.security", null);
+
+		ProtectionDomain protectionDomain = clazz.getProtectionDomain();
+
+		CodeSource codeSource = protectionDomain.getCodeSource();
+
+		URL codeSourceURL = codeSource.getLocation();
+
+		properties.put(
+			FrameworkPropsKeys.OSGI_FRAMEWORK, codeSourceURL.toExternalForm());
+
+		File frameworkFile = new File(codeSourceURL.getFile());
+
+		properties.put(
+			FrameworkPropsKeys.OSGI_INSTALL_AREA, frameworkFile.getParent());
 
 		Properties extraProperties = PropsUtil.getProperties(
 			PropsKeys.MODULE_FRAMEWORK_PROPERTIES, true);
@@ -605,7 +656,7 @@ public class ModuleFrameworkImpl
 	}
 
 	private String _getFelixFileInstallDir() {
-		return PropsValues.MODULE_FRAMEWORK_LIB_DIR + StringPool.COMMA +
+		return PropsValues.MODULE_FRAMEWORK_PORTAL_DIR + StringPool.COMMA +
 			StringUtil.merge(PropsValues.MODULE_FRAMEWORK_AUTO_DEPLOY_DIRS);
 	}
 
@@ -649,6 +700,20 @@ public class ModuleFrameworkImpl
 	}
 
 	private String _getSystemPackagesExtra() {
+		File coreDir = new File(
+			PropsValues.LIFERAY_WEB_PORTAL_CONTEXT_TEMPDIR, "osgi");
+
+		File cacheFile = new File(coreDir, "system-packages.txt");
+
+		if (cacheFile.exists()) {
+			try {
+				return FileUtil.read(cacheFile);
+			}
+			catch (IOException ioe) {
+				_log.error(ioe, ioe);
+			}
+		}
+
 		_extraPackageMap = new TreeMap<String, List<URL>>();
 
 		StringBundler sb = new StringBundler();
@@ -660,29 +725,23 @@ public class ModuleFrameworkImpl
 			sb.append(StringPool.COMMA);
 		}
 
-		List<URL> urls = new UniqueList<URL>();
-
-		ClassLoader classLoader = PACLClassLoaderUtil.getPortalClassLoader();
-
-		Enumeration<URL> enu = Collections.enumeration(Collections.emptyList());
+		ClassLoader classLoader = ClassLoaderUtil.getPortalClassLoader();
 
 		try {
-			enu = classLoader.getResources(MANIFEST_PATH);
+			Enumeration<URL> enu = classLoader.getResources(
+				"META-INF/MANIFEST.MF");
+
+			while (enu.hasMoreElements()) {
+				URL url = enu.nextElement();
+
+				_processURL(
+					sb, url,
+					PropsValues.
+						MODULE_FRAMEWORK_SYSTEM_BUNDLE_IGNORED_FRAGMENTS);
+			}
 		}
 		catch (IOException ioe) {
 			_log.error(ioe, ioe);
-		}
-
-		while (enu.hasMoreElements()) {
-			URL url = enu.nextElement();
-
-			urls.add(url);
-		}
-
-		for (URL url : urls) {
-			_processURL(
-				sb, url,
-				PropsValues.MODULE_FRAMEWORK_SYSTEM_BUNDLE_IGNORED_FRAGMENTS);
 		}
 
 		_extraPackageMap = Collections.unmodifiableMap(_extraPackageMap);
@@ -697,6 +756,13 @@ public class ModuleFrameworkImpl
 			_log.trace(
 				"The portal's system bundle is exporting the following " +
 					"packages:\n" +s);
+		}
+
+		try {
+			FileUtil.write(cacheFile, sb.toString());
+		}
+		catch (IOException ioe) {
+			_log.error(ioe, ioe);
 		}
 
 		return sb.toString();
@@ -718,10 +784,10 @@ public class ModuleFrameworkImpl
 			return false;
 		}
 
-		Map<String, Map<String, String>> activationPolicyMap =
-			OSGiHeader.parseHeader(activationPolicy);
+		Parameters parameters = OSGiHeader.parseHeader(
+			activationPolicy);
 
-		if (activationPolicyMap.containsKey(Constants.ACTIVATION_LAZY)) {
+		if (parameters.containsKey(Constants.ACTIVATION_LAZY)) {
 			return true;
 		}
 
@@ -875,12 +941,9 @@ public class ModuleFrameworkImpl
 		String exportPackage = GetterUtil.getString(
 			attributes.getValue(Constants.EXPORT_PACKAGE));
 
-		Map<String, Map<String, String>> exportPackageMap =
-			OSGiHeader.parseHeader(exportPackage);
+		Parameters parameters = OSGiHeader.parseHeader(exportPackage);
 
-		for (Map.Entry<String, Map<String, String>> entry :
-				exportPackageMap.entrySet()) {
-
+		for (Map.Entry<String,Attrs> entry : parameters.entrySet()) {
 			String key = entry.getKey();
 
 			List<URL> urls = _extraPackageMap.get(key);
@@ -895,7 +958,7 @@ public class ModuleFrameworkImpl
 
 			sb.append(key);
 
-			Map<String, String> value = entry.getValue();
+			Attrs value = entry.getValue();
 
 			if (value.containsKey("version")) {
 				sb.append(";version=\"");
@@ -958,10 +1021,9 @@ public class ModuleFrameworkImpl
 
 		Hashtable<String, Object> properties = new Hashtable<String, Object>();
 
-		properties.put(SERVICE_PROPERTY_KEY_BEAN_ID, beanName);
-		properties.put(SERVICE_PROPERTY_KEY_ORIGINAL_BEAN, Boolean.TRUE);
-		properties.put(
-			SERVICE_PROPERTY_KEY_SERVICE_VENDOR, ReleaseInfo.getVendor());
+		properties.put(ServicePropsKeys.BEAN_ID, beanName);
+		properties.put(ServicePropsKeys.ORIGINAL_BEAN, Boolean.TRUE);
+		properties.put(ServicePropsKeys.VENDOR, ReleaseInfo.getVendor());
 
 		bundleContext.registerService(
 			names.toArray(new String[names.size()]), bean, properties);
@@ -973,10 +1035,9 @@ public class ModuleFrameworkImpl
 		Hashtable<String, Object> properties = new Hashtable<String, Object>();
 
 		properties.put(
-			SERVICE_PROPERTY_KEY_BEAN_ID, ServletContext.class.getName());
-		properties.put(SERVICE_PROPERTY_KEY_ORIGINAL_BEAN, Boolean.TRUE);
-		properties.put(
-			SERVICE_PROPERTY_KEY_SERVICE_VENDOR, ReleaseInfo.getVendor());
+			ServicePropsKeys.BEAN_ID, ServletContext.class.getName());
+		properties.put(ServicePropsKeys.ORIGINAL_BEAN, Boolean.TRUE);
+		properties.put(ServicePropsKeys.VENDOR, ReleaseInfo.getVendor());
 
 		bundleContext.registerService(
 			new String[] {ServletContext.class.getName()}, servletContext,
@@ -984,7 +1045,7 @@ public class ModuleFrameworkImpl
 	}
 
 	private void _setupInitialBundles() throws Exception {
-		FrameworkWiring frameworkWiring = getFramework().adapt(
+		FrameworkWiring frameworkWiring = _framework.adapt(
 			FrameworkWiring.class);
 
 		List<Bundle> lazyActivationBundles = new ArrayList<Bundle>();
@@ -1017,10 +1078,12 @@ public class ModuleFrameworkImpl
 	private class ModuleFrameworkServiceLoaderCondition
 		implements ServiceLoaderCondition {
 
+		@Override
 		public boolean isLoad(URL url) {
 			String path = url.getPath();
 
-			return path.contains(PropsValues.MODULE_FRAMEWORK_CORE_DIR);
+			return path.contains(
+				PropsValues.LIFERAY_WEB_PORTAL_CONTEXT_TEMPDIR);
 		}
 
 	}
@@ -1034,6 +1097,7 @@ public class ModuleFrameworkImpl
 			_lazyActivationBundles = lazyActivationBundles;
 		}
 
+		@Override
 		public void frameworkEvent(FrameworkEvent frameworkEvent) {
 			if (frameworkEvent.getType() != FrameworkEvent.PACKAGES_REFRESHED) {
 				return;

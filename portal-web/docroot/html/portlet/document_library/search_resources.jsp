@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -68,14 +68,14 @@ int entryEnd = ParamUtil.getInteger(request, "entryEnd", entriesPerPage);
 
 int total = 0;
 
-boolean ajaxRequest = ParamUtil.getBoolean(request, "ajax");
+boolean ajax = ParamUtil.getBoolean(request, "ajax");
 
 boolean showRepositoryTabs = ParamUtil.getBoolean(request, "showRepositoryTabs");
 
 boolean showSearchInfo = ParamUtil.getBoolean(request, "showSearchInfo");
 
 if (searchType == DLSearchConstants.FRAGMENT) {
-	if (ajaxRequest) {
+	if (ajax) {
 		showRepositoryTabs = false;
 
 		showSearchInfo = false;
@@ -90,7 +90,7 @@ if (searchType == DLSearchConstants.FRAGMENT) {
 		}
 	}
 }
-else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
+else if ((searchType == DLSearchConstants.SINGLE) && !ajax) {
 	showSearchInfo = true;
 
 	if (folderId == DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
@@ -120,12 +120,12 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 				</span>
 			</c:if>
 
-			<liferay-ui:icon cssClass="close-search" id="closeSearch" image="../aui/closethick" url="javascript:;" />
+			<liferay-ui:icon cssClass="close-search" id="closeSearch" image="../aui/remove" url="javascript:;" />
 		</div>
 
 		<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
 			<aui:script>
-				Liferay.Util.focusFormField(document.<portlet:namespace />fm1.<portlet:namespace />keywords);
+				Liferay.Util.focusFormField(document.getElementById('<portlet:namespace />keywords'));
 			</aui:script>
 		</c:if>
 
@@ -202,10 +202,10 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 
 				PortletURL hitURL = liferayPortletResponse.createRenderURL();
 
-				List<SearchResult> searchResults = SearchResultUtil.getSearchResults(hits, locale, hitURL);
+				List<SearchResult> searchResultsList = SearchResultUtil.getSearchResults(hits, locale, hitURL);
 
-				for (int i = 0; i < searchResults.size(); i++) {
-					SearchResult searchResult = searchResults.get(i);
+				for (int i = 0; i < searchResultsList.size(); i++) {
+					SearchResult searchResult = searchResultsList.get(i);
 
 					Summary summary = searchResult.getSummary();
 
@@ -214,7 +214,7 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 
 					String className = searchResult.getClassName();
 
-					if (className.equals(DLFileEntry.class.getName())) {
+					if (className.equals(DLFileEntry.class.getName()) || FileEntry.class.isAssignableFrom(Class.forName(className))) {
 						fileEntry = DLAppLocalServiceUtil.getFileEntry(searchResult.getClassPK());
 					}
 					else if (className.equals(DLFolder.class.getName())) {
@@ -268,7 +268,7 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 								status = WorkflowConstants.STATUS_ANY;
 							}
 
-							String folderImage = "folder_empty";
+							String folderImage = "folder_empty_document";
 
 							if (DLAppServiceUtil.getFoldersAndFileEntriesAndFileShortcutsCount(curFolder.getRepositoryId(), curFolder.getFolderId(), status, true) > 0) {
 								folderImage = "folder_full_document";
@@ -311,8 +311,8 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 				}
 				%>
 
-				<c:if test="<%= searchResults.isEmpty() %>">
-					<div class="portlet-msg-info">
+				<c:if test="<%= searchResultsList.isEmpty() %>">
+					<div class="alert alert-info">
 						<%= LanguageUtil.format(pageContext, "no-documents-were-found-that-matched-the-keywords-x", "<strong>" + HtmlUtil.escape(keywords) + "</strong>") %>
 					</div>
 				</c:if>
@@ -331,8 +331,8 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 		Liferay.fire(
 			'<portlet:namespace />pageLoaded',
 			{
-				paginator: {
-					name: 'entryPaginator',
+				pagination: {
+					name: 'entryPagination',
 					state: {
 						page: <%= (total == 0) ? 0 : entryEnd / (entryEnd - entryStart) %>,
 						rowsPerPage: <%= (entryEnd - entryStart) %>,
@@ -374,7 +374,7 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 										<%= searchResults %>
 									</c:when>
 									<c:otherwise>
-										<div class="portlet-msg-info">
+										<div class="alert alert-info">
 											<%= LanguageUtil.get(pageContext, "searching,-please-wait") %>
 										</div>
 										<div class="loading-animation"></div>
@@ -394,7 +394,7 @@ else if ((searchType == DLSearchConstants.SINGLE) && !ajaxRequest) {
 											<%= searchResults %>
 										</c:when>
 										<c:otherwise>
-											<div class="portlet-msg-info">
+											<div class="alert alert-info">
 												<%= LanguageUtil.get(pageContext, "searching,-please-wait") %>
 											</div>
 											<div class="loading-animation"></div>

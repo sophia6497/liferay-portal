@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,6 +32,7 @@ import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.service.permission.MBDiscussionPermission;
 import com.liferay.portlet.messageboards.service.permission.MBMessagePermission;
 
+import java.util.Date;
 import java.util.Locale;
 
 import javax.portlet.PortletRequest;
@@ -52,22 +53,27 @@ public class MBMessageAssetRenderer
 		_message = message;
 	}
 
-	public String getAssetRendererFactoryClassName() {
-		return MBCategoryAssetRendererFactory.CLASS_NAME;
-	}
-
+	@Override
 	public String getClassName() {
 		return MBMessage.class.getName();
 	}
 
+	@Override
 	public long getClassPK() {
 		return _message.getMessageId();
 	}
 
+	@Override
+	public Date getDisplayDate() {
+		return _message.getModifiedDate();
+	}
+
+	@Override
 	public long getGroupId() {
 		return _message.getGroupId();
 	}
 
+	@Override
 	public String getPortletId() {
 		AssetRendererFactory assetRendererFactory = getAssetRendererFactory();
 
@@ -84,14 +90,28 @@ public class MBMessageAssetRenderer
 		return getSummary(locale);
 	}
 
+	@Override
 	public String getSummary(Locale locale) {
 		return HtmlUtil.extractText(_message.getBody());
 	}
 
+	@Override
+	public String getThumbnailPath(PortletRequest portletRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		return themeDisplay.getPathThemeImages() +
+			"/file_system/large/message.png";
+	}
+
+	@Override
 	public String getTitle(Locale locale) {
 		return _message.getSubject();
 	}
 
+	@Override
 	public String getType() {
 		return MBMessageAssetRendererFactory.TYPE;
 	}
@@ -120,15 +140,16 @@ public class MBMessageAssetRenderer
 			WindowState windowState)
 		throws Exception {
 
-		PortletURL portletURL = liferayPortletResponse.createLiferayPortletURL(
-			PortletKeys.MESSAGE_BOARDS, PortletRequest.RENDER_PHASE);
+		AssetRendererFactory assetRendererFactory = getAssetRendererFactory();
 
-		portletURL.setWindowState(windowState);
+		PortletURL portletURL = assetRendererFactory.getURLView(
+			liferayPortletResponse, windowState);
 
 		portletURL.setParameter(
 			"struts_action", "/message_boards/view_message");
 		portletURL.setParameter(
 			"messageId", String.valueOf(_message.getMessageId()));
+		portletURL.setWindowState(windowState);
 
 		return portletURL;
 	}
@@ -145,14 +166,17 @@ public class MBMessageAssetRenderer
 			_message.getMessageId());
 	}
 
+	@Override
 	public long getUserId() {
 		return _message.getUserId();
 	}
 
+	@Override
 	public String getUserName() {
 		return _message.getUserName();
 	}
 
+	@Override
 	public String getUuid() {
 		return _message.getUuid();
 	}
@@ -196,6 +220,7 @@ public class MBMessageAssetRenderer
 		return true;
 	}
 
+	@Override
 	public String render(
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			String template)

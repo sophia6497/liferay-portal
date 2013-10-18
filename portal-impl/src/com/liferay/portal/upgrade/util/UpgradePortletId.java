@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,19 @@
 package com.liferay.portal.upgrade.util;
 
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.model.LayoutTypePortletConstants;
+import com.liferay.portal.model.PortletConstants;
+import com.liferay.portal.model.ResourceConstants;
+import com.liferay.portal.model.impl.LayoutTypePortletImpl;
+import com.liferay.portal.service.permission.PortletPermissionUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,20 +41,95 @@ public class UpgradePortletId extends UpgradeProcess {
 	@Override
 	protected void doUpgrade() throws Exception {
 
-		// This is only tested to work on instanceable portlets
+		// Rename instanceable portlet IDs. We expect the root form of the
+		// portlet ID because we will rename all instances of the portlet ID.
 
-		String[][] portletIdsArray = getPortletIdsArray();
+		String[][] renamePortletIdsArray = getRenamePortletIdsArray();
 
-		for (String[] portletIds : portletIdsArray) {
-			String oldRootPortletId = portletIds[0];
-			String newRootPortletId = portletIds[1];
+		for (String[] renamePortletIds : renamePortletIdsArray) {
+			String oldRootPortletId = renamePortletIds[0];
+			String newRootPortletId = renamePortletIds[1];
 
 			updatePortlet(oldRootPortletId, newRootPortletId);
-			updateLayouts(oldRootPortletId, newRootPortletId);
+			updateLayouts(oldRootPortletId, newRootPortletId, false);
+		}
+
+		// Rename uninstanceable portlet IDs to instanceable portlet IDs
+
+		String[] uninstanceablePortletIds = getUninstanceablePortletIds();
+
+		for (String portletId : uninstanceablePortletIds) {
+			if (portletId.contains(PortletConstants.INSTANCE_SEPARATOR)) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Portlet " + portletId + " is already instanceable");
+				}
+
+				continue;
+			}
+
+			String instanceId = LayoutTypePortletImpl.generateInstanceId();
+
+			String newPortletId = PortletConstants.assemblePortletId(
+				portletId, instanceId);
+
+			updateResourcePermission(portletId, newPortletId, false);
+			updateInstanceablePortletPreferences(portletId, newPortletId);
+			updateLayouts(portletId, newPortletId, true);
 		}
 	}
 
-	protected String[][] getPortletIdsArray() {
+	protected String getNewTypeSettings(
+		String typeSettings, String oldRootPortletId, String newRootPortletId,
+		boolean exactMatch) {
+
+		UnicodeProperties typeSettingsProperties = new UnicodeProperties(true);
+
+		typeSettingsProperties.fastLoad(typeSettings);
+
+		for (int i = 1; i <= 10; i++) {
+			String column = LayoutTypePortletConstants.COLUMN_PREFIX + i;
+
+			if (!typeSettingsProperties.containsKey(column)) {
+				continue;
+			}
+
+			String[] portletIds = StringUtil.split(
+				typeSettingsProperties.getProperty(column));
+
+			for (int j = 0; j < portletIds.length; j++) {
+				String portletId = portletIds[j];
+
+				if (exactMatch) {
+					if (portletId.equals(oldRootPortletId)) {
+						portletIds[j] = newRootPortletId;
+					}
+
+					continue;
+				}
+
+				String rootPortletId = PortletConstants.getRootPortletId(
+					portletId);
+
+				if (!rootPortletId.equals(oldRootPortletId)) {
+					continue;
+				}
+
+				long userId = PortletConstants.getUserId(portletId);
+				String instanceId = PortletConstants.getInstanceId(portletId);
+
+				portletIds[j] = PortletConstants.assemblePortletId(
+					newRootPortletId, userId, instanceId);
+			}
+
+			typeSettingsProperties.setProperty(
+				column, StringUtil.merge(portletIds).concat(StringPool.COMMA));
+		}
+
+		return typeSettingsProperties.toString();
+	}
+
+	protected String[][] getRenamePortletIdsArray() {
 		return new String[][] {
 			new String[] {
 				"109", "1_WAR_webformportlet"
@@ -63,6 +149,10 @@ public class UpgradePortletId extends UpgradeProcess {
 		};
 	}
 
+	protected String[] getUninstanceablePortletIds() {
+		return new String[0];
+	}
+
 	protected void updateInstanceablePortletPreferences(
 			String oldRootPortletId, String newRootPortletId)
 		throws Exception {
@@ -74,10 +164,18 @@ public class UpgradePortletId extends UpgradeProcess {
 		try {
 			con = DataAccess.getUpgradeOptimizedConnection();
 
-			ps = con.prepareStatement(
-				"select portletPreferencesId, portletId from " +
-					"PortletPreferences where portletId like '" +
-						oldRootPortletId + "%'");
+			StringBundler sb = new StringBundler(8);
+
+			sb.append("select portletPreferencesId, portletId from ");
+			sb.append("PortletPreferences where portletId = '");
+			sb.append(oldRootPortletId);
+			sb.append("' OR portletId like '");
+			sb.append(oldRootPortletId);
+			sb.append("_INSTANCE_%' OR portletId like '");
+			sb.append(oldRootPortletId);
+			sb.append("_USER_%_INSTANCE_%'");
+
+			ps = con.prepareStatement(sb.toString());
 
 			rs = ps.executeQuery();
 
@@ -148,7 +246,8 @@ public class UpgradePortletId extends UpgradeProcess {
 	}
 
 	protected void updateLayouts(
-			String oldRootPortletId, String newRootPortletId)
+			String oldRootPortletId, String newRootPortletId,
+			boolean exactMatch)
 		throws Exception {
 
 		Connection con = null;
@@ -158,9 +257,28 @@ public class UpgradePortletId extends UpgradeProcess {
 		try {
 			con = DataAccess.getUpgradeOptimizedConnection();
 
-			ps = con.prepareStatement(
-				"select plid, typeSettings from Layout where typeSettings " +
-					"like '%" + oldRootPortletId + "%'");
+			StringBundler sb = new StringBundler(14);
+
+			sb.append("select plid, typeSettings from Layout where ");
+			sb.append("typeSettings like '%=");
+			sb.append(oldRootPortletId);
+			sb.append(",%' OR typeSettings like '%=");
+			sb.append(oldRootPortletId);
+			sb.append("\n%' OR typeSettings like '%,");
+			sb.append(oldRootPortletId);
+			sb.append(",%' OR typeSettings like '%,");
+			sb.append(oldRootPortletId);
+			sb.append("\n%' OR typeSettings like '%=");
+			sb.append(oldRootPortletId);
+			sb.append("_INSTANCE_%' OR typeSettings like '%,");
+			sb.append(oldRootPortletId);
+			sb.append("_INSTANCE_%' OR typeSettings like '%=");
+			sb.append(oldRootPortletId);
+			sb.append("_USER_%' OR typeSettings like '%,");
+			sb.append(oldRootPortletId);
+			sb.append("_USER_%'");
+
+			ps = con.prepareStatement(sb.toString());
 
 			rs = ps.executeQuery();
 
@@ -168,8 +286,9 @@ public class UpgradePortletId extends UpgradeProcess {
 				long plid = rs.getLong("plid");
 				String typeSettings = rs.getString("typeSettings");
 
-				String newTypeSettings = StringUtil.replace(
-					typeSettings, oldRootPortletId, newRootPortletId);
+				String newTypeSettings = getNewTypeSettings(
+					typeSettings, oldRootPortletId, newRootPortletId,
+					exactMatch);
 
 				updateLayout(plid, newTypeSettings);
 			}
@@ -191,7 +310,7 @@ public class UpgradePortletId extends UpgradeProcess {
 			"update ResourceAction set name = '" + newRootPortletId +
 				"' where name = '" + oldRootPortletId + "'");
 
-		updateResourcePermission(oldRootPortletId, newRootPortletId);
+		updateResourcePermission(oldRootPortletId, newRootPortletId, true);
 
 		updateInstanceablePortletPreferences(
 			oldRootPortletId, newRootPortletId);
@@ -245,7 +364,8 @@ public class UpgradePortletId extends UpgradeProcess {
 	}
 
 	protected void updateResourcePermission(
-			String oldRootPortletId, String newRootPortletId)
+			String oldRootPortletId, String newRootPortletId,
+			boolean updateName)
 		throws Exception {
 
 		Connection con = null;
@@ -256,7 +376,7 @@ public class UpgradePortletId extends UpgradeProcess {
 			con = DataAccess.getUpgradeOptimizedConnection();
 
 			ps = con.prepareStatement(
-				"select resourcePermissionId, name, primKey from " +
+				"select resourcePermissionId, name, scope, primKey from " +
 					"ResourcePermission where name = '" + oldRootPortletId +
 						"'");
 
@@ -265,20 +385,44 @@ public class UpgradePortletId extends UpgradeProcess {
 			while (rs.next()) {
 				long resourcePermissionId = rs.getLong("resourcePermissionId");
 				String name = rs.getString("name");
+				int scope = rs.getInt("scope");
 				String primKey = rs.getString("primKey");
 
-				String newName = StringUtil.replace(
-					name, oldRootPortletId, newRootPortletId);
-				String newPrimKey = StringUtil.replace(
-					primKey, oldRootPortletId, newRootPortletId);
+				String newName = name;
+
+				if (updateName) {
+					newName = newRootPortletId;
+				}
+
+				if (scope == ResourceConstants.SCOPE_INDIVIDUAL) {
+					int pos = primKey.indexOf(
+						PortletConstants.LAYOUT_SEPARATOR);
+
+					long plid = GetterUtil.getLong(primKey.substring(0, pos));
+
+					String portletId = primKey.substring(
+						pos + PortletConstants.LAYOUT_SEPARATOR.length());
+
+					String instanceId = PortletConstants.getInstanceId(
+						portletId);
+					long userId = PortletConstants.getUserId(portletId);
+
+					String newPortletId = PortletConstants.assemblePortletId(
+						newRootPortletId, userId, instanceId);
+
+					primKey = PortletPermissionUtil.getPrimaryKey(
+						plid, newPortletId);
+				}
 
 				updateResourcePermission(
-					resourcePermissionId, newName, newPrimKey);
+					resourcePermissionId, newName, primKey);
 			}
 		}
 		finally {
 			DataAccess.cleanUp(con, ps, rs);
 		}
 	}
+
+	private static Log _log = LogFactoryUtil.getLog(UpgradePortletId.class);
 
 }

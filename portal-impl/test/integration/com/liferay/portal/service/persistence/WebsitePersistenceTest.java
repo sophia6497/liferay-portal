@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,13 +16,18 @@ package com.liferay.portal.service.persistence;
 
 import com.liferay.portal.NoSuchWebsiteException;
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.portal.kernel.util.IntegerWrapper;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.model.Website;
 import com.liferay.portal.service.ServiceTestUtil;
@@ -106,6 +111,8 @@ public class WebsitePersistenceTest {
 
 		Website newWebsite = _persistence.create(pk);
 
+		newWebsite.setUuid(ServiceTestUtil.randomString());
+
 		newWebsite.setCompanyId(ServiceTestUtil.nextLong());
 
 		newWebsite.setUserId(ServiceTestUtil.nextLong());
@@ -130,6 +137,7 @@ public class WebsitePersistenceTest {
 
 		Website existingWebsite = _persistence.findByPrimaryKey(newWebsite.getPrimaryKey());
 
+		Assert.assertEquals(existingWebsite.getUuid(), newWebsite.getUuid());
 		Assert.assertEquals(existingWebsite.getWebsiteId(),
 			newWebsite.getWebsiteId());
 		Assert.assertEquals(existingWebsite.getCompanyId(),
@@ -176,6 +184,24 @@ public class WebsitePersistenceTest {
 	}
 
 	@Test
+	public void testFindAll() throws Exception {
+		try {
+			_persistence.findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				getOrderByComparator());
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	protected OrderByComparator getOrderByComparator() {
+		return OrderByComparatorFactoryUtil.create("Website", "uuid", true,
+			"websiteId", true, "companyId", true, "userId", true, "userName",
+			true, "createDate", true, "modifiedDate", true, "classNameId",
+			true, "classPK", true, "url", true, "typeId", true, "primary", true);
+	}
+
+	@Test
 	public void testFetchByPrimaryKeyExisting() throws Exception {
 		Website newWebsite = addWebsite();
 
@@ -191,6 +217,26 @@ public class WebsitePersistenceTest {
 		Website missingWebsite = _persistence.fetchByPrimaryKey(pk);
 
 		Assert.assertNull(missingWebsite);
+	}
+
+	@Test
+	public void testActionableDynamicQuery() throws Exception {
+		final IntegerWrapper count = new IntegerWrapper();
+
+		ActionableDynamicQuery actionableDynamicQuery = new WebsiteActionableDynamicQuery() {
+				@Override
+				protected void performAction(Object object) {
+					Website website = (Website)object;
+
+					Assert.assertNotNull(website);
+
+					count.increment();
+				}
+			};
+
+		actionableDynamicQuery.performActions();
+
+		Assert.assertEquals(count.getValue(), _persistence.countAll());
 	}
 
 	@Test
@@ -269,6 +315,8 @@ public class WebsitePersistenceTest {
 		long pk = ServiceTestUtil.nextLong();
 
 		Website website = _persistence.create(pk);
+
+		website.setUuid(ServiceTestUtil.randomString());
 
 		website.setCompanyId(ServiceTestUtil.nextLong());
 

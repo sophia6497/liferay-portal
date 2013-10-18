@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -126,15 +126,7 @@ public class PortalSessionDestroyer extends BasePortalLifecycle {
 		}
 
 		try {
-			PortletSessionTracker portletSessionTracker =
-				(PortletSessionTracker)session.getAttribute(
-					WebKeys.PORTLET_SESSION_TRACKER);
-
-			if (portletSessionTracker != null) {
-				PortletSessionTracker.invalidate(session);
-
-				session.removeAttribute(WebKeys.PORTLET_SESSION_TRACKER);
-			}
+			PortletSessionTracker.invalidate(session.getId());
 		}
 		catch (IllegalStateException ise) {
 			if (_log.isWarnEnabled()) {

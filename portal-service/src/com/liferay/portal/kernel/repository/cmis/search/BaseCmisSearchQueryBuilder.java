@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.TermQuery;
 import com.liferay.portal.kernel.search.TermRangeQuery;
 import com.liferay.portal.kernel.search.WildcardQuery;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
@@ -47,6 +48,7 @@ import java.util.Set;
  */
 public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 
+	@Override
 	public String buildQuery(SearchContext searchContext, Query query)
 		throws SearchException {
 
@@ -73,13 +75,11 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 
 		Sort[] sorts = searchContext.getSorts();
 
-		if (queryConfig.isScoreEnabled() ||
-			((sorts != null) && (sorts.length > 0))) {
-
+		if (queryConfig.isScoreEnabled() || ArrayUtil.isNotEmpty(sorts)) {
 			sb.append(" ORDER BY ");
 		}
 
-		if ((sorts != null) && (sorts.length > 0)) {
+		if (ArrayUtil.isNotEmpty(sorts)) {
 			int i = 0;
 
 			for (Sort sort : sorts) {
@@ -114,7 +114,8 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 
 	protected CMISCriterion buildFieldExpression(
 			String field, String value,
-			CMISSimpleExpressionOperator cmisSimpleExpressionOperator)
+			CMISSimpleExpressionOperator cmisSimpleExpressionOperator,
+			QueryConfig queryConfig)
 		throws SearchException {
 
 		CMISCriterion cmisCriterion = null;
@@ -123,7 +124,8 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 			CMISSimpleExpressionOperator.LIKE == cmisSimpleExpressionOperator;
 
 		if (field.equals(Field.CONTENT)) {
-			value = CMISParameterValueUtil.formatParameterValue(field, value);
+			value = CMISParameterValueUtil.formatParameterValue(
+				field, value, false, queryConfig);
 
 			cmisCriterion = new CMISContainsExpression(value);
 		}
@@ -139,7 +141,7 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 					String objectId = repositoryEntry.getMappedId();
 
 					objectId = CMISParameterValueUtil.formatParameterValue(
-						field, objectId, wildcard);
+						field, objectId, wildcard, queryConfig);
 
 					cmisCriterion = new CMISInFolderExpression(objectId);
 				}
@@ -157,7 +159,7 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 				User user = UserLocalServiceUtil.getUserById(userId);
 
 				String screenName = CMISParameterValueUtil.formatParameterValue(
-					field, user.getScreenName(), wildcard);
+					field, user.getScreenName(), wildcard, queryConfig);
 
 				cmisCriterion = new CMISSimpleExpression(
 					getCmisField(field), screenName,
@@ -175,7 +177,7 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 		}
 		else {
 			value = CMISParameterValueUtil.formatParameterValue(
-				field, value, wildcard);
+				field, value, wildcard, queryConfig);
 
 			cmisCriterion = new CMISSimpleExpression(
 				getCmisField(field), value, cmisSimpleExpressionOperator);
@@ -280,7 +282,7 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 
 			CMISCriterion cmisExpression = buildFieldExpression(
 				queryTerm.getField(), queryTerm.getValue(),
-				CMISSimpleExpressionOperator.EQ);
+				CMISSimpleExpressionOperator.EQ, queryConfig);
 
 			if (cmisExpression != null) {
 				boolean add = true;
@@ -314,9 +316,9 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 
 			String cmisField = getCmisField(fieldName);
 			String cmisLowerTerm = CMISParameterValueUtil.formatParameterValue(
-				fieldName, termRangeQuery.getLowerTerm());
+				fieldName, termRangeQuery.getLowerTerm(), false, queryConfig);
 			String cmisUpperTerm = CMISParameterValueUtil.formatParameterValue(
-				fieldName, termRangeQuery.getUpperTerm());
+				fieldName, termRangeQuery.getUpperTerm(), false, queryConfig);
 
 			CMISCriterion cmisCriterion = new CMISBetweenExpression(
 				cmisField, cmisLowerTerm, cmisUpperTerm,
@@ -335,7 +337,7 @@ public class BaseCmisSearchQueryBuilder implements CMISSearchQueryBuilder {
 
 			CMISCriterion cmisCriterion = buildFieldExpression(
 				queryTerm.getField(), queryTerm.getValue(),
-				CMISSimpleExpressionOperator.LIKE);
+				CMISSimpleExpressionOperator.LIKE, queryConfig);
 
 			if (cmisCriterion != null) {
 				boolean add = true;

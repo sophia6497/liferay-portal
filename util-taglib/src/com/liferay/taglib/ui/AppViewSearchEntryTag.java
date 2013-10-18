@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,8 @@
 
 package com.liferay.taglib.ui;
 
-import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.taglib.util.IncludeTag;
 
@@ -57,8 +57,8 @@ public class AppViewSearchEntryTag extends IncludeTag {
 		_description = HtmlUtil.unescape(description);
 	}
 
-	public void setFileEntries(List<FileEntry> fileEntries) {
-		_fileEntries = fileEntries;
+	public void setFileEntryTuples(List<Tuple> fileEntryTuples) {
+		_fileEntryTuples = fileEntryTuples;
 	}
 
 	public void setLocked(boolean locked) {
@@ -101,6 +101,10 @@ public class AppViewSearchEntryTag extends IncludeTag {
 		_url = url;
 	}
 
+	public void setVersions(List<String> versions) {
+		_versions = versions;
+	}
+
 	@Override
 	protected void cleanUp() {
 		_actionJsp = null;
@@ -109,7 +113,7 @@ public class AppViewSearchEntryTag extends IncludeTag {
 		_containerType = null;
 		_cssClass = null;
 		_description = null;
-		_fileEntries = null;
+		_fileEntryTuples = null;
 		_locked = false;
 		_mbMessages = null;
 		_queryTerms = null;
@@ -120,6 +124,7 @@ public class AppViewSearchEntryTag extends IncludeTag {
 		_thumbnailSrc = null;
 		_title = null;
 		_url = null;
+		_versions = null;
 	}
 
 	@Override
@@ -147,7 +152,8 @@ public class AppViewSearchEntryTag extends IncludeTag {
 		request.setAttribute(
 			"liferay-ui:app-view-search-entry:description", _description);
 		request.setAttribute(
-			"liferay-ui:app-view-search-entry:fileEntries", _fileEntries);
+			"liferay-ui:app-view-search-entry:fileEntryTuples",
+			_fileEntryTuples);
 		request.setAttribute(
 			"liferay-ui:app-view-search-entry:locked", _locked);
 		request.setAttribute(
@@ -166,6 +172,8 @@ public class AppViewSearchEntryTag extends IncludeTag {
 			"liferay-ui:app-view-search-entry:thumbnailSrc", _thumbnailSrc);
 		request.setAttribute("liferay-ui:app-view-search-entry:title", _title);
 		request.setAttribute("liferay-ui:app-view-search-entry:url", _url);
+		request.setAttribute(
+			"liferay-ui:app-view-search-entry:versions", _versions);
 	}
 
 	private static final boolean _CLEAN_UP_SET_ATTRIBUTES = true;
@@ -179,7 +187,7 @@ public class AppViewSearchEntryTag extends IncludeTag {
 	private String _containerType;
 	private String _cssClass;
 	private String _description;
-	private List<FileEntry> _fileEntries;
+	private List<Tuple> _fileEntryTuples;
 	private boolean _locked;
 	private List<MBMessage> _mbMessages;
 	private String[] _queryTerms;
@@ -190,5 +198,6 @@ public class AppViewSearchEntryTag extends IncludeTag {
 	private String _thumbnailSrc;
 	private String _title;
 	private String _url;
+	private List<String> _versions;
 
 }

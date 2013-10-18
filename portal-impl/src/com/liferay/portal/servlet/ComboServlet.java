@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,15 +21,20 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.ServletContextUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
+import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.ServerDetector;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.servlet.filters.dynamiccss.DynamicCSSUtil;
+import com.liferay.portal.util.AggregateUtil;
 import com.liferay.portal.util.MinifierUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PrefsPropsUtil;
@@ -42,7 +47,10 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
@@ -80,24 +88,37 @@ public class ComboServlet extends HttpServlet {
 			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
-		String contextPath = PortalUtil.getPathContext();
+		Set<String> modulePathsSet = new LinkedHashSet<String>();
 
-		String[] modulePaths = request.getParameterValues("m");
+		Enumeration<String> enu = request.getParameterNames();
 
-		if ((modulePaths == null) || (modulePaths.length == 0)) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+		if (ServerDetector.isWebSphere()) {
+			Map<String, String[]> parameterMap = HttpUtil.getParameterMap(
+				request.getQueryString());
+
+			enu = Collections.enumeration(parameterMap.keySet());
+		}
+
+		while (enu.hasMoreElements()) {
+			String name = enu.nextElement();
+
+			if (_protectedParameters.contains(name)) {
+				continue;
+			}
+
+			modulePathsSet.add(name);
+		}
+
+		if (modulePathsSet.size() == 0) {
+			response.sendError(
+				HttpServletResponse.SC_BAD_REQUEST,
+				"Modules paths set is empty");
 
 			return;
 		}
 
-		Set<String> modulePathsSet =
-			new LinkedHashSet<String>(modulePaths.length);
-
-		for (String path : modulePaths) {
-			modulePathsSet.add(path);
-		}
-
-		modulePaths = modulePathsSet.toArray(new String[modulePathsSet.size()]);
+		String[] modulePaths = modulePathsSet.toArray(
+			new String[modulePathsSet.size()]);
 
 		String modulePathsString = null;
 
@@ -118,14 +139,12 @@ public class ComboServlet extends HttpServlet {
 
 			String rootPath = ServletContextUtil.getRootPath(servletContext);
 
-			String p = ParamUtil.getString(request, "p");
-
 			String minifierType = ParamUtil.getString(request, "minifierType");
 
 			if (Validator.isNull(minifierType)) {
 				minifierType = "js";
 
-				if (extension.equalsIgnoreCase(_CSS_EXTENSION)) {
+				if (StringUtil.equalsIgnoreCase(extension, _CSS_EXTENSION)) {
 					minifierType = "css";
 				}
 			}
@@ -134,11 +153,11 @@ public class ComboServlet extends HttpServlet {
 				minifierType = "js";
 			}
 
-			int length = modulePaths.length;
+			bytesArray = new byte[modulePaths.length][];
 
-			bytesArray = new byte[length][];
+			for (int i = 0; i < modulePaths.length; i++) {
+				String modulePath = modulePaths[i];
 
-			for (String modulePath : modulePaths) {
 				if (!validateModuleExtension(modulePath)) {
 					response.setHeader(
 						HttpHeaders.CACHE_CONTROL,
@@ -152,12 +171,13 @@ public class ComboServlet extends HttpServlet {
 
 				if (Validator.isNotNull(modulePath)) {
 					modulePath = StringUtil.replaceFirst(
-						p.concat(modulePath), contextPath, StringPool.BLANK);
+						modulePath, PortalUtil.getPathContext(),
+						StringPool.BLANK);
 
-					URL resourceURL = getResourceURL(
+					URL url = getResourceURL(
 						servletContext, rootPath, modulePath);
 
-					if (resourceURL == null) {
+					if (url == null) {
 						response.setHeader(
 							HttpHeaders.CACHE_CONTROL,
 							HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE);
@@ -167,11 +187,10 @@ public class ComboServlet extends HttpServlet {
 					}
 
 					bytes = getResourceContent(
-						request, response, resourceURL, modulePath,
-						minifierType);
+						request, response, url, modulePath, minifierType);
 				}
 
-				bytesArray[--length] = bytes;
+				bytesArray[i] = bytes;
 			}
 
 			if ((modulePathsString != null) &&
@@ -183,7 +202,7 @@ public class ComboServlet extends HttpServlet {
 
 		String contentType = ContentTypes.TEXT_JAVASCRIPT;
 
-		if (extension.equalsIgnoreCase(_CSS_EXTENSION)) {
+		if (StringUtil.equalsIgnoreCase(extension, _CSS_EXTENSION)) {
 			contentType = ContentTypes.TEXT_CSS;
 		}
 
@@ -259,6 +278,17 @@ public class ComboServlet extends HttpServlet {
 							HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE);
 					}
 
+					String baseURL = StringPool.BLANK;
+
+					int index = resourcePath.lastIndexOf(CharPool.SLASH);
+
+					if (index != -1) {
+						baseURL = resourcePath.substring(0, index + 1);
+					}
+
+					stringFileContent = AggregateUtil.updateRelativeURLs(
+						stringFileContent, baseURL);
+
 					stringFileContent = MinifierUtil.minifyCss(
 						stringFileContent);
 				}
@@ -286,21 +316,21 @@ public class ComboServlet extends HttpServlet {
 
 	protected URL getResourceURL(
 			ServletContext servletContext, String rootPath, String path)
-		throws IOException {
+		throws Exception {
 
-		URL resourceURL = servletContext.getResource(path);
+		URL url = servletContext.getResource(path);
 
-		if (resourceURL == null) {
+		if (url == null) {
 			return null;
 		}
 
-		String filePath = resourceURL.toString();
+		String filePath = ServletContextUtil.getResourcePath(url);
 
 		int pos = filePath.indexOf(
 			rootPath.concat(StringPool.SLASH).concat(_JAVASCRIPT_DIR));
 
 		if (pos == 0) {
-			return resourceURL;
+			return url;
 		}
 
 		return null;
@@ -344,6 +374,8 @@ public class ComboServlet extends HttpServlet {
 		SingleVMPoolUtil.getCache(ComboServlet.class.getName());
 	private PortalCache<String, FileContentBag> _fileContentBagPortalCache =
 		SingleVMPoolUtil.getCache(FileContentBag.class.getName());
+	private Set<String> _protectedParameters = SetUtil.fromArray(
+		new String[] {"b", "browserId", "minifierType", "languageId", "t"});
 
 	private static class FileContentBag implements Serializable {
 

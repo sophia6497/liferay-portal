@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,9 +14,9 @@
  */
 --%>
 
-<input type="button" value="<liferay-ui:message key="add" />" onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/admin/edit_instance" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" />
+<liferay-ui:error exception="<%= RequiredCompanyException.class %>" message="the-default-company-is-required" />
 
-<br /><br />
+<input onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/admin/edit_instance" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" type="button" value="<liferay-ui:message key="add" />" />
 
 <%
 List<String> headerNames = new ArrayList<String>();
@@ -33,6 +33,7 @@ if (showShardSelector) {
 headerNames.add("num-of-users");
 headerNames.add("max-num-of-users");
 headerNames.add("active");
+headerNames.add(StringPool.BLANK);
 
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, portletURL, headerNames, null);
 
@@ -83,7 +84,7 @@ for (int i = 0; i < results.size(); i++) {
 
 	// # of Users
 
-	int usersCount = UserLocalServiceUtil.searchCount(curCompany.getCompanyId(), null, WorkflowConstants.STATUS_ANY, null);
+	int usersCount = UserLocalServiceUtil.searchCount(curCompany.getCompanyId(), null, WorkflowConstants.STATUS_APPROVED, null);
 
 	row.addText(String.valueOf(usersCount), rowURL);
 
@@ -101,6 +102,10 @@ for (int i = 0; i < results.size(); i++) {
 	// Active
 
 	row.addText(LanguageUtil.get(pageContext, curCompany.isActive() ? "yes" : "no"), rowURL);
+
+	// Actions
+
+	row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/admin/instance_actions.jsp");
 
 	// Add result row
 

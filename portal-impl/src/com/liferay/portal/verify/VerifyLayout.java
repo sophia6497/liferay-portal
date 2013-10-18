@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,8 @@ package com.liferay.portal.verify;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.Layout;
+import com.liferay.portal.model.LayoutFriendlyURL;
+import com.liferay.portal.service.LayoutFriendlyURLLocalServiceUtil;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
 
 import java.util.List;
@@ -38,10 +40,17 @@ public class VerifyLayout extends VerifyProcess {
 			LayoutLocalServiceUtil.getNullFriendlyURLLayouts();
 
 		for (Layout layout : layouts) {
-			String friendlyURL = StringPool.SLASH + layout.getLayoutId();
+			List<LayoutFriendlyURL> layoutFriendlyURLs =
+				LayoutFriendlyURLLocalServiceUtil.getLayoutFriendlyURLs(
+					layout.getPlid());
 
-			LayoutLocalServiceUtil.updateFriendlyURL(
-				layout.getPlid(), friendlyURL);
+			for (LayoutFriendlyURL layoutFriendlyURL : layoutFriendlyURLs) {
+				String friendlyURL = StringPool.SLASH + layout.getLayoutId();
+
+				LayoutLocalServiceUtil.updateFriendlyURL(
+					layout.getPlid(), friendlyURL,
+					layoutFriendlyURL.getLanguageId());
+			}
 		}
 	}
 
@@ -49,10 +58,9 @@ public class VerifyLayout extends VerifyProcess {
 		verifyUuid("AssetEntry");
 		verifyUuid("JournalArticle");
 
-		StringBundler sb = new StringBundler(4);
+		StringBundler sb = new StringBundler(3);
 
 		sb.append("update Layout set uuid_ = sourcePrototypeLayoutUuid where ");
-		sb.append("sourcePrototypeLayoutUuid is not null and ");
 		sb.append("sourcePrototypeLayoutUuid != '' and ");
 		sb.append("uuid_ != sourcePrototypeLayoutUuid");
 
@@ -60,17 +68,19 @@ public class VerifyLayout extends VerifyProcess {
 	}
 
 	protected void verifyUuid(String tableName) throws Exception {
-		StringBundler sb = new StringBundler(9);
+		StringBundler sb = new StringBundler(11);
 
 		sb.append("update ");
 		sb.append(tableName);
 		sb.append(" set layoutUuid = (select sourcePrototypeLayoutUuid from ");
-		sb.append("Layout where ");
+		sb.append("Layout where Layout.uuid_ = ");
 		sb.append(tableName);
-		sb.append(".layoutUuid = Layout.uuid_ and ");
-		sb.append("Layout.sourcePrototypeLayoutUuid is not null and ");
-		sb.append("Layout.sourcePrototypeLayoutUuid != '' and ");
-		sb.append("Layout.uuid_ != Layout.sourcePrototypeLayoutUuid)");
+		sb.append(".layoutUuid) where exists (select 1 from Layout where ");
+		sb.append("Layout.uuid_ = ");
+		sb.append(tableName);
+		sb.append(".layoutUuid and Layout.uuid_ != ");
+		sb.append("Layout.sourcePrototypeLayoutUuid and ");
+		sb.append("Layout.sourcePrototypeLayoutUuid != '')");
 
 		runSQL(sb.toString());
 	}

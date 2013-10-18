@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,12 +26,15 @@ import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 public class AssetPublisherPortletLayoutListener
 	implements PortletLayoutListener {
 
+	@Override
 	public void onAddToLayout(String portletId, long plid) {
 	}
 
+	@Override
 	public void onMoveInLayout(String portletId, long plid) {
 	}
 
+	@Override
 	public void onRemoveFromLayout(String portletId, long plid)
 		throws PortletLayoutListenerException {
 

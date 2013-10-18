@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,6 +37,10 @@ public class AsyncAdvice extends AnnotationChainableMethodAdvice<Async> {
 	public Object before(final MethodInvocation methodInvocation)
 		throws Throwable {
 
+		if (AsyncInvokeThreadLocal.isEnabled()) {
+			return null;
+		}
+
 		Async async = findAnnotation(methodInvocation);
 
 		if (async == _nullAsync) {
@@ -68,24 +72,7 @@ public class AsyncAdvice extends AnnotationChainableMethodAdvice<Async> {
 		}
 
 		MessageBusUtil.sendMessage(
-			destinationName,
-			new Runnable() {
-
-				public void run() {
-					try {
-						methodInvocation.proceed();
-					}
-					catch (Throwable t) {
-						throw new RuntimeException(t);
-					}
-				}
-
-				@Override
-				public String toString() {
-					return methodInvocation.toString();
-				}
-
-			});
+			destinationName, new AsyncProcessCallable(methodInvocation));
 
 		return nullResult;
 	}
@@ -112,6 +99,7 @@ public class AsyncAdvice extends AnnotationChainableMethodAdvice<Async> {
 	private static Async _nullAsync =
 		new Async() {
 
+			@Override
 			public Class<? extends Annotation> annotationType() {
 				return Async.class;
 			}

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,7 +30,7 @@ if (assetVocabularyId > 0) {
 	assetVocabularies.add(assetVocabulary);
 }
 else {
-	assetVocabularies = AssetVocabularyServiceUtil.getGroupsVocabularies(new long[] {themeDisplay.getScopeGroupId(), themeDisplay.getParentGroupId()});
+	assetVocabularies = AssetVocabularyServiceUtil.getGroupsVocabularies(new long[] {themeDisplay.getScopeGroupId(), themeDisplay.getSiteGroupId()});
 }
 
 if (assetVocabularies.isEmpty()) {
@@ -38,8 +38,8 @@ if (assetVocabularies.isEmpty()) {
 }
 %>
 
-<div class="asset-vocabulary <%= cssClass %>" data-facetFieldName="<%= facet.getFieldName() %>" id="<%= randomNamespace %>facet">
-	<aui:input name="<%= facet.getFieldName() %>" type="hidden" value="<%= StringUtil.merge(assetCategoryIdsOrNames) %>" />
+<div class="asset-vocabulary <%= cssClass %>" data-facetFieldName="<%= facet.getFieldId() %>" id="<%= randomNamespace %>facet">
+	<aui:input name="<%= facet.getFieldId() %>" type="hidden" value="<%= StringUtil.merge(assetCategoryIdsOrNames) %>" />
 
 	<%
 	for (AssetVocabulary assetVocabulary : assetVocabularies) {
@@ -51,12 +51,12 @@ if (assetVocabularies.isEmpty()) {
 	%>
 
 		<div class="search-asset-vocabulary-list-container">
-			<ul class="lfr-component search-asset-vocabulary-list">
+			<ul class="search-asset-vocabulary-list unstyled">
 
 				<%
 				StringBundler sb = new StringBundler();
 
-				String clearFields = renderResponse.getNamespace() + facet.getFieldName();
+				String clearFields = renderResponse.getNamespace() + facet.getFieldId();
 
 				_buildCategoriesNavigation(assetCategoryIdsOrNames, matchByName, facetCollector, assetCategories, clearFields, pageContext, sb);
 				%>
@@ -96,7 +96,7 @@ private void _buildCategoriesNavigation(String[] assetCategoryIdsOrNames, boolea
 		if (ArrayUtil.contains(assetCategoryIdsOrNames, term)) {
 			sb.append(" current-term");
 
-			ScriptTag.doTag(null, "liferay-token-list", "Liferay.Search.tokenList.add({clearFields: '" + UnicodeFormatter.toString(clearFields) + "', text: '" + UnicodeFormatter.toString(assetCategoryName) + "'});", null, pageContext);
+			ScriptTag.doTag(null, "liferay-token-list", "Liferay.Search.tokenList.add({clearFields: '" + clearFields + "', text: '" + HtmlUtil.escapeJS(assetCategoryName) + "'});", null, pageContext);
 		}
 
 		sb.append("\"><a href=\"#\" data-value=\"");

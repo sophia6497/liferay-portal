@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -65,10 +65,16 @@ public class CacheTemplateResource implements TemplateResource {
 		return false;
 	}
 
+	public TemplateResource getInnerTemplateResource() {
+		return _templateResource;
+	}
+
+	@Override
 	public long getLastModified() {
 		return _lastModified;
 	}
 
+	@Override
 	public Reader getReader() throws IOException {
 		String templateContent = _templateContent.get();
 
@@ -105,6 +111,7 @@ public class CacheTemplateResource implements TemplateResource {
 		return new UnsyncStringReader(templateContent);
 	}
 
+	@Override
 	public String getTemplateId() {
 		return _templateResource.getTemplateId();
 	}
@@ -114,6 +121,7 @@ public class CacheTemplateResource implements TemplateResource {
 		return _templateResource.hashCode();
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput)
 		throws ClassNotFoundException, IOException {
 
@@ -121,6 +129,7 @@ public class CacheTemplateResource implements TemplateResource {
 		_templateResource = (TemplateResource)objectInput.readObject();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		objectOutput.writeLong(_lastModified);
 		objectOutput.writeObject(_templateResource);

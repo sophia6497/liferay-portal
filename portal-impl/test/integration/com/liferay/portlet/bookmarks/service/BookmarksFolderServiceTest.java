@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,17 +21,19 @@ import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.Query;
 import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.model.Group;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.AssertUtils;
 import com.liferay.portal.test.EnvironmentExecutionTestListener;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
 import com.liferay.portal.test.Sync;
 import com.liferay.portal.test.SynchronousDestinationExecutionTestListener;
 import com.liferay.portal.test.TransactionalExecutionTestListener;
+import com.liferay.portal.util.GroupTestUtil;
 import com.liferay.portlet.bookmarks.model.BookmarksEntry;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.util.BookmarksTestUtil;
@@ -59,26 +61,29 @@ public class BookmarksFolderServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_group = ServiceTestUtil.addGroup();
+		_group = GroupTestUtil.addGroup();
 	}
 
 	@Test
 	public void testAddFolder() throws Exception {
-		BookmarksTestUtil.addFolder(_group.getGroupId());
+		BookmarksTestUtil.addFolder(
+			_group.getGroupId(), ServiceTestUtil.randomString());
 	}
 
 	@Test
 	public void testAddSubfolder() throws Exception {
 		BookmarksFolder folder = BookmarksTestUtil.addFolder(
-			_group.getGroupId());
+			_group.getGroupId(), ServiceTestUtil.randomString());
 
-		BookmarksTestUtil.addFolder(_group.getGroupId(), folder.getFolderId());
+		BookmarksTestUtil.addFolder(
+			_group.getGroupId(), folder.getFolderId(),
+			ServiceTestUtil.randomString());
 	}
 
 	@Test
 	public void testDeleteFolder() throws Exception {
 		BookmarksFolder folder = BookmarksTestUtil.addFolder(
-			_group.getGroupId());
+			_group.getGroupId(), ServiceTestUtil.randomString());
 
 		BookmarksFolderServiceUtil.deleteFolder(folder.getFolderId());
 	}
@@ -86,18 +91,21 @@ public class BookmarksFolderServiceTest {
 	@Test
 	public void testGetFolder() throws Exception {
 		BookmarksFolder folder = BookmarksTestUtil.addFolder(
-			_group.getGroupId());
+			_group.getGroupId(), ServiceTestUtil.randomString());
 
 		BookmarksFolderServiceUtil.getFolder(folder.getFolderId());
 	}
 
 	@Test
 	public void testSearch() throws Exception {
-		BookmarksFolder folder = BookmarksTestUtil.addFolder(
+		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
 			_group.getGroupId());
 
+		BookmarksFolder folder = BookmarksTestUtil.addFolder(
+			_group.getGroupId(), ServiceTestUtil.randomString());
+
 		BookmarksEntry entry = BookmarksTestUtil.addEntry(
-			_group.getGroupId(), folder.getFolderId(), true);
+			folder.getFolderId(), true, serviceContext);
 
 		SearchContext searchContext = BookmarksTestUtil.getSearchContext(
 			entry.getCompanyId(), entry.getGroupId(), entry.getFolderId(),
@@ -112,11 +120,14 @@ public class BookmarksFolderServiceTest {
 
 	@Test
 	public void testSearchAndDeleteFolderAndSearch() throws Exception {
-		BookmarksFolder folder = BookmarksTestUtil.addFolder(
+		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
 			_group.getGroupId());
 
+		BookmarksFolder folder = BookmarksTestUtil.addFolder(
+			_group.getGroupId(), ServiceTestUtil.randomString());
+
 		BookmarksEntry entry = BookmarksTestUtil.addEntry(
-			_group.getGroupId(), folder.getFolderId(), true);
+			folder.getFolderId(), true, serviceContext);
 
 		long companyId = entry.getCompanyId();
 		long groupId = entry.getFolder().getGroupId();
@@ -143,11 +154,14 @@ public class BookmarksFolderServiceTest {
 
 	@Test
 	public void testSearchAndVerifyDocs() throws Exception {
-		BookmarksFolder folder = BookmarksTestUtil.addFolder(
+		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
 			_group.getGroupId());
 
+		BookmarksFolder folder = BookmarksTestUtil.addFolder(
+			_group.getGroupId(), ServiceTestUtil.randomString());
+
 		BookmarksEntry entry = BookmarksTestUtil.addEntry(
-			_group.getGroupId(), folder.getFolderId(), true);
+			folder.getFolderId(), true, serviceContext);
 
 		SearchContext searchContext = BookmarksTestUtil.getSearchContext(
 			entry.getCompanyId(), entry.getGroupId(), entry.getFolderId(),

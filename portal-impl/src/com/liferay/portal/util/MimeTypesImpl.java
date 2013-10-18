@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -79,10 +79,12 @@ public class MimeTypesImpl implements MimeTypes, MimeTypesReaderMetKeys {
 		}
 	}
 
+	@Override
 	public String getContentType(File file) {
 		return getContentType(file, file.getName());
 	}
 
+	@Override
 	public String getContentType(File file, String fileName) {
 		if ((file == null) || !file.exists()) {
 			return getContentType(fileName);
@@ -103,6 +105,7 @@ public class MimeTypesImpl implements MimeTypes, MimeTypesReaderMetKeys {
 		}
 	}
 
+	@Override
 	public String getContentType(InputStream inputStream, String fileName) {
 		if (inputStream == null) {
 			return getContentType(fileName);
@@ -148,6 +151,7 @@ public class MimeTypesImpl implements MimeTypes, MimeTypesReaderMetKeys {
 		return contentType;
 	}
 
+	@Override
 	public String getContentType(String fileName) {
 		if (Validator.isNull(fileName)) {
 			return ContentTypes.APPLICATION_OCTET_STREAM;
@@ -176,6 +180,16 @@ public class MimeTypesImpl implements MimeTypes, MimeTypesReaderMetKeys {
 		return ContentTypes.APPLICATION_OCTET_STREAM;
 	}
 
+	@Override
+	public String getExtensionContentType(String extension) {
+		if (Validator.isNull(extension)) {
+			return ContentTypes.APPLICATION_OCTET_STREAM;
+		}
+
+		return getContentType("A.".concat(extension));
+	}
+
+	@Override
 	public Set<String> getExtensions(String contentType) {
 		Set<String> extensions = _extensionsMap.get(contentType);
 
@@ -186,6 +200,7 @@ public class MimeTypesImpl implements MimeTypes, MimeTypesReaderMetKeys {
 		return extensions;
 	}
 
+	@Override
 	public boolean isWebImage(String mimeType) {
 		return _webImageMimeTypes.contains(mimeType);
 	}

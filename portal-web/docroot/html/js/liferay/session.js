@@ -393,7 +393,7 @@ AUI.add(
 							instance._extendText = Liferay.Language.get('extend');
 
 							instance._warningText = Liferay.Language.get('warning-your-session-will-expire');
-							instance._warningText = Lang.sub(instance._warningText, ['<span class="countdown-timer">{0}</span>', host.get('warningLength') / 60000]);
+							instance._warningText = Lang.sub(instance._warningText, ['<span class="countdown-timer">{0}</span>', host.get('sessionLength') / 60000]);
 
 							host.on('sessionStateChange', instance._onHostSessionStateChange, instance);
 
@@ -469,7 +469,7 @@ AUI.add(
 								{
 									closeText: instance._extendText,
 									content: instance._warningText,
-									noticeClass: 'aui-helper-hidden',
+									noticeClass: 'hide',
 									onClose: function() {
 										instance._host.extend();
 									},
@@ -575,6 +575,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-io-request', 'aui-task-manager', 'cookie', 'liferay-notice']
+		requires: ['aui-io-request', 'aui-timer', 'cookie', 'liferay-notice']
 	}
 );

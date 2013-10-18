@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portal.security.auth;
 
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
@@ -82,18 +81,13 @@ public class SiteMinderAutoLogin extends BaseAutoLogin {
 		}
 
 		if (user == null) {
-			try {
-				if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
-					user = UserLocalServiceUtil.getUserByEmailAddress(
-						companyId, siteMinderUserHeader);
-				}
-				else {
-					user = UserLocalServiceUtil.getUserByScreenName(
-						companyId, siteMinderUserHeader);
-				}
+			if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
+				user = UserLocalServiceUtil.fetchUserByEmailAddress(
+					companyId, siteMinderUserHeader);
 			}
-			catch (NoSuchUserException nsue) {
-				return null;
+			else {
+				user = UserLocalServiceUtil.fetchUserByScreenName(
+					companyId, siteMinderUserHeader);
 			}
 		}
 

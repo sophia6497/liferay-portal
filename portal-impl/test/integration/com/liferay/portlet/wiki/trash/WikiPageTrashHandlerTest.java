@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,28 +35,85 @@ import com.liferay.portlet.wiki.service.WikiNodeLocalServiceUtil;
 import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
 import com.liferay.portlet.wiki.util.WikiTestUtil;
 
-import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
  * @author Eudaldo Alonso
  */
 @ExecutionTestListeners(listeners = {
-		MainServletExecutionTestListener.class,
-		SynchronousDestinationExecutionTestListener.class
-	})
+	MainServletExecutionTestListener.class,
+	SynchronousDestinationExecutionTestListener.class
+})
 @RunWith(LiferayIntegrationJUnitTestRunner.class)
 @Sync
 public class WikiPageTrashHandlerTest extends BaseTrashHandlerTestCase {
 
+	@Ignore()
 	@Override
+	@Test
 	public void testTrashAndDeleteDraft() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
 	}
 
+	@Ignore()
 	@Override
+	@Test
 	public void testTrashAndRestoreDraft() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashIsRestorableBaseModel() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashIsRestorableBaseModelWithParent1() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashIsRestorableBaseModelWithParent2() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashIsRestorableBaseModelWithParent3() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashIsRestorableBaseModelWithParent4() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashMoveBaseModel() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashMyBaseModel() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashRecentBaseModel() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashVersionParentBaseModel() throws Exception {
 	}
 
 	@Override
@@ -154,15 +211,6 @@ public class WikiPageTrashHandlerTest extends BaseTrashHandlerTestCase {
 	@Override
 	protected boolean isBaseModelMoveableFromTrash() {
 		return false;
-	}
-
-	@Override
-	protected boolean isInTrashContainer(ClassedModel classedModel)
-		throws Exception {
-
-		WikiPage page = (WikiPage)classedModel;
-
-		return page.isInTrashContainer();
 	}
 
 	@Override

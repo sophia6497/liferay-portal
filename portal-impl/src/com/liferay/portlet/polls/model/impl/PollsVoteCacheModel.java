@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,10 +38,14 @@ public class PollsVoteCacheModel implements CacheModel<PollsVote>,
 	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(19);
+		StringBundler sb = new StringBundler(23);
 
-		sb.append("{voteId=");
+		sb.append("{uuid=");
+		sb.append(uuid);
+		sb.append(", voteId=");
 		sb.append(voteId);
+		sb.append(", groupId=");
+		sb.append(groupId);
 		sb.append(", companyId=");
 		sb.append(companyId);
 		sb.append(", userId=");
@@ -63,10 +67,19 @@ public class PollsVoteCacheModel implements CacheModel<PollsVote>,
 		return sb.toString();
 	}
 
+	@Override
 	public PollsVote toEntityModel() {
 		PollsVoteImpl pollsVoteImpl = new PollsVoteImpl();
 
+		if (uuid == null) {
+			pollsVoteImpl.setUuid(StringPool.BLANK);
+		}
+		else {
+			pollsVoteImpl.setUuid(uuid);
+		}
+
 		pollsVoteImpl.setVoteId(voteId);
+		pollsVoteImpl.setGroupId(groupId);
 		pollsVoteImpl.setCompanyId(companyId);
 		pollsVoteImpl.setUserId(userId);
 
@@ -106,8 +119,11 @@ public class PollsVoteCacheModel implements CacheModel<PollsVote>,
 		return pollsVoteImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
 		voteId = objectInput.readLong();
+		groupId = objectInput.readLong();
 		companyId = objectInput.readLong();
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
@@ -118,9 +134,18 @@ public class PollsVoteCacheModel implements CacheModel<PollsVote>,
 		voteDate = objectInput.readLong();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
 		objectOutput.writeLong(voteId);
+		objectOutput.writeLong(groupId);
 		objectOutput.writeLong(companyId);
 		objectOutput.writeLong(userId);
 
@@ -138,7 +163,9 @@ public class PollsVoteCacheModel implements CacheModel<PollsVote>,
 		objectOutput.writeLong(voteDate);
 	}
 
+	public String uuid;
 	public long voteId;
+	public long groupId;
 	public long companyId;
 	public long userId;
 	public String userName;

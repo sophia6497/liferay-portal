@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -58,6 +58,7 @@ public class DLFileRankCacheModel implements CacheModel<DLFileRank>,
 		return sb.toString();
 	}
 
+	@Override
 	public DLFileRank toEntityModel() {
 		DLFileRankImpl dlFileRankImpl = new DLFileRankImpl();
 
@@ -81,6 +82,7 @@ public class DLFileRankCacheModel implements CacheModel<DLFileRank>,
 		return dlFileRankImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		fileRankId = objectInput.readLong();
 		groupId = objectInput.readLong();
@@ -91,6 +93,7 @@ public class DLFileRankCacheModel implements CacheModel<DLFileRank>,
 		active = objectInput.readBoolean();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(fileRankId);

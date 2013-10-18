@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -43,12 +43,12 @@ public class MainServletExecutionTestListener
 		MockServletConfig mockServletConfig = new MockServletConfig(
 			mockServletContext);
 
-		_mainServlet = new MainServlet();
+		mainServlet = new MainServlet();
 
 		try {
-			_mainServlet.init(mockServletConfig);
+			mainServlet.init(mockServletConfig);
 		}
-		catch (ServletException e) {
+		catch (ServletException se) {
 			throw new RuntimeException(
 				"The main servlet could not be initialized");
 		}
@@ -60,9 +60,9 @@ public class MainServletExecutionTestListener
 		return "file:" + file.getAbsolutePath();
 	}
 
-	private MainServlet _mainServlet;
+	protected MainServlet mainServlet;
 
-	private class AutoDeployMockServletContext extends MockServletContext {
+	protected class AutoDeployMockServletContext extends MockServletContext {
 
 		public AutoDeployMockServletContext(
 			String resourceBasePath, ResourceLoader resourceLoader) {
@@ -73,7 +73,6 @@ public class MainServletExecutionTestListener
 		/**
 		 * @see com.liferay.portal.server.capabilities.TomcatServerCapabilities
 		 */
-		@SuppressWarnings("unused")
 		protected Boolean autoDeploy = Boolean.TRUE;
 
 	}

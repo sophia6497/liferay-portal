@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -99,6 +99,7 @@ public class MinifierUtil {
 
 	private class JavaScriptErrorReporter implements ErrorReporter {
 
+		@Override
 		public void error(
 			String message, String sourceName, int line, String lineSource,
 			int lineOffset) {
@@ -111,6 +112,7 @@ public class MinifierUtil {
 			}
 		}
 
+		@Override
 		public EvaluatorException runtimeError(
 			String message, String sourceName, int line, String lineSource,
 			int lineOffset) {
@@ -120,6 +122,7 @@ public class MinifierUtil {
 			return new EvaluatorException(message);
 		}
 
+		@Override
 		public void warning(
 			String message, String sourceName, int line, String lineSource,
 			int lineOffset) {

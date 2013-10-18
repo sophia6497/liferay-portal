@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.portal.spring.context;
 
 import com.liferay.portal.kernel.spring.util.SpringFactoryUtil;
+import com.liferay.portal.spring.aop.ChainableMethodAdviceInjectorCollector;
 
 import org.springframework.beans.factory.BeanIsAbstractException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
@@ -27,8 +28,12 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 public class PortletBeanFactoryPostProcessor
 	implements BeanFactoryPostProcessor {
 
+	@Override
 	public void postProcessBeanFactory(
 		ConfigurableListableBeanFactory configurableListableBeanFactory) {
+
+		ChainableMethodAdviceInjectorCollector.collect(
+			configurableListableBeanFactory);
 
 		configurableListableBeanFactory.setBeanClassLoader(
 			PortletApplicationContext.getBeanClassLoader());

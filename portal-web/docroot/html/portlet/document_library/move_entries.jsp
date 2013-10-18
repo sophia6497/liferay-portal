@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -113,7 +113,7 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		</div>
 
 		<div class="move-list">
-			<ul class="lfr-component">
+			<ul class="unstyled">
 
 				<%
 				for (Folder folder : validMoveFolders) {
@@ -139,7 +139,7 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		</div>
 
 		<div class="move-list">
-			<ul class="lfr-component">
+			<ul class="unstyled">
 
 				<%
 				for (Folder folder : invalidMoveFolders) {
@@ -178,7 +178,7 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		</div>
 
 		<div class="move-list">
-			<ul class="lfr-component">
+			<ul class="unstyled">
 
 				<%
 				for (FileEntry validMoveFileEntry : validMoveFileEntries) {
@@ -204,7 +204,7 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		</div>
 
 		<div class="move-list">
-			<ul class="lfr-component">
+			<ul class="unstyled">
 
 				<%
 				for (FileEntry invalidMoveFileEntry : invalidMoveFileEntries) {
@@ -244,7 +244,7 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		</div>
 
 		<div class="move-list">
-			<ul class="lfr-component">
+			<ul class="unstyled">
 
 				<%
 				for (DLFileShortcut fileShortcut : validShortcutEntries) {
@@ -270,7 +270,7 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		</div>
 
 		<div class="move-list">
-			<ul class="lfr-component">
+			<ul class="unstyled">
 
 				<%
 				for (DLFileShortcut fileShortcut : invalidShortcutEntries) {
@@ -313,24 +313,12 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 		}
 		%>
 
-		<portlet:renderURL var="viewFolderURL">
-			<portlet:param name="struts_action" value="/document_library/view" />
-			<portlet:param name="folderId" value="<%= String.valueOf(newFolderId) %>" />
-		</portlet:renderURL>
-
 		<aui:field-wrapper label="new-folder">
-			<aui:a href="<%= viewFolderURL %>" id="folderName"><%= folderName %></aui:a>
+			<div class="input-append">
+				<liferay-ui:input-resource id="folderName" url="<%= folderName %>" />
 
-			<portlet:renderURL var="selectFolderURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
-				<portlet:param name="struts_action" value="/document_library/select_folder" />
-				<portlet:param name="folderId" value="<%= String.valueOf(newFolderId) %>" />
-			</portlet:renderURL>
-
-			<%
-			String taglibOpenFolderWindow = "var folderWindow = window.open('" + selectFolderURL + "','folder', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680'); void(''); folderWindow.focus();";
-			%>
-
-			<aui:button onClick="<%= taglibOpenFolderWindow %>" value="select" />
+				<aui:button name="selectFolderButton" value="select" />
+			</div>
 		</aui:field-wrapper>
 
 		<aui:button-row>
@@ -341,25 +329,45 @@ for (DLFileShortcut curFileShortcut : fileShortcuts) {
 	</aui:fieldset>
 </aui:form>
 
+<portlet:renderURL var="selectFolderURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+	<portlet:param name="struts_action" value="/document_library/select_folder" />
+	<portlet:param name="folderId" value="<%= String.valueOf(newFolderId) %>" />
+</portlet:renderURL>
+
+<aui:script use="aui-base">
+	A.one('#<portlet:namespace />selectFolderButton').on(
+		'click',
+		function(event) {
+			Liferay.Util.selectEntity(
+				{
+					dialog: {
+						constrain: true,
+						modal: true,
+						width: 680
+					},
+					id: '<portlet:namespace />selectFolder',
+					title: '<liferay-ui:message arguments="folder" key="select-x" />',
+					uri: '<%= selectFolderURL.toString() %>'
+				},
+				function(event) {
+					var folderData = {
+						idString: 'newFolderId',
+						idValue: event.folderid,
+						nameString: 'folderName',
+						nameValue: event.foldername
+					};
+
+					Liferay.Util.selectFolder(folderData, '<portlet:namespace />');
+				}
+			);
+		}
+	);
+</aui:script>
+
 <aui:script>
 	function <portlet:namespace />saveFileEntry() {
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	function <portlet:namespace />selectFolder(folderId, folderName) {
-		var folderData = {
-			idString: 'newFolderId',
-			idValue: folderId,
-			nameString: 'folderName',
-			nameValue: folderName
-		};
-
-		Liferay.Util.selectFolder(folderData, '<portlet:renderURL><portlet:param name="struts_action" value="/document_library/view" /></portlet:renderURL>', '<portlet:namespace />');
-	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />file);
-	</c:if>
 </aui:script>
 
 <%

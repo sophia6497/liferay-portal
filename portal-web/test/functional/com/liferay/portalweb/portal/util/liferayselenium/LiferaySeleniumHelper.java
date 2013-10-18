@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portalweb.portal.util.liferayselenium;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portalweb.portal.BaseTestCase;
+import com.liferay.portalweb.portal.util.EmailCommands;
 import com.liferay.portalweb.portal.util.RuntimeVariables;
 import com.liferay.portalweb.portal.util.TestPropsValues;
 
@@ -26,45 +27,70 @@ import com.liferay.portalweb.portal.util.TestPropsValues;
 public class LiferaySeleniumHelper {
 
 	public static void assertAlert(
-		LiferaySelenium liferaySelenium, String pattern) {
+			LiferaySelenium liferaySelenium, String pattern)
+		throws Exception {
 
 		BaseTestCase.assertEquals(pattern, liferaySelenium.getAlert());
 	}
 
 	public static void assertChecked(
-		LiferaySelenium liferaySelenium, String locator) {
+			LiferaySelenium liferaySelenium, String locator)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isNotChecked(locator)) {
-			BaseTestCase.fail("Element is not checked at " + locator);
+			throw new Exception(
+				"Element is not checked at \"" + locator + "\"");
 		}
 	}
 
 	public static void assertConfirmation(
-		LiferaySelenium liferaySelenium, String pattern) {
+			LiferaySelenium liferaySelenium, String pattern)
+		throws Exception {
 
 		String confirmation = liferaySelenium.getConfirmation();
 
-		BaseTestCase.assertTrue(
-			confirmation.matches(
-				"^" + StringUtil.replace(pattern, "?", "[\\\\s\\\\S]") + "$"));
+		if (!pattern.equals(confirmation)) {
+			throw new Exception(
+				"Pattern \"" + pattern + "\" does not match \"" + confirmation +
+					"\"");
+		}
 	}
 
 	public static void assertElementNotPresent(
-		LiferaySelenium liferaySelenium, String locator) {
+			LiferaySelenium liferaySelenium, String locator)
+		throws Exception {
 
 		if (liferaySelenium.isElementPresent(locator)) {
-			BaseTestCase.fail("Element is present at " + locator);
+			throw new Exception("Element is present at \"" + locator + "\"");
 		}
 	}
 
 	public static void assertElementPresent(
-		LiferaySelenium liferaySelenium, String locator) {
+			LiferaySelenium liferaySelenium, String locator)
+		throws Exception {
 
 		if (liferaySelenium.isElementNotPresent(locator)) {
-			BaseTestCase.fail("Element is not present at " + locator);
+			throw new Exception(
+				"Element is not present at \"" + locator + "\"");
 		}
+	}
+
+	public static void assertEmailContent(
+			LiferaySelenium liferaySelenium, String index, String content)
+		throws Exception {
+
+		BaseTestCase.assertEquals(
+			content, liferaySelenium.getEmailContent(index));
+	}
+
+	public static void assertEmailSubject(
+			LiferaySelenium liferaySelenium, String index, String subject)
+		throws Exception {
+
+		BaseTestCase.assertEquals(
+			subject, liferaySelenium.getEmailSubject(index));
 	}
 
 	public static void assertLocation(
@@ -80,12 +106,13 @@ public class LiferaySeleniumHelper {
 	}
 
 	public static void assertNotChecked(
-		LiferaySelenium liferaySelenium, String locator) {
+			LiferaySelenium liferaySelenium, String locator)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isChecked(locator)) {
-			BaseTestCase.fail("Element is checked at " + locator);
+			throw new Exception("Element is checked at \"" + locator + "\"");
 		}
 	}
 
@@ -96,159 +123,193 @@ public class LiferaySeleniumHelper {
 	}
 
 	public static void assertNotPartialText(
-		LiferaySelenium liferaySelenium, String locator, String pattern) {
+			LiferaySelenium liferaySelenium, String locator, String pattern)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isPartialText(locator, pattern)) {
 			String text = liferaySelenium.getText(locator);
 
-			BaseTestCase.fail(text + " contains " + pattern + " at " + locator);
+			throw new Exception(
+				"\"" + text + "\" contains \"" + pattern + "\" at \"" +
+					locator + "\"");
 		}
 	}
 
 	public static void assertNotSelectedLabel(
-		LiferaySelenium liferaySelenium, String selectLocator, String pattern) {
+			LiferaySelenium liferaySelenium, String selectLocator,
+			String pattern)
+		throws Exception {
 
-		BaseTestCase.assertNotEquals(
-			pattern, liferaySelenium.getSelectedLabel(selectLocator));
+		liferaySelenium.assertElementPresent(selectLocator);
+
+		if (liferaySelenium.isSelectedLabel(selectLocator, pattern)) {
+			String text = liferaySelenium.getSelectedLabel(selectLocator);
+
+			throw new Exception(
+				"Pattern \"" + pattern + "\" matches \"" + text + "\" at \"" +
+					selectLocator + "\"");
+		}
 	}
 
 	public static void assertNotText(
-		LiferaySelenium liferaySelenium, String locator, String pattern) {
+			LiferaySelenium liferaySelenium, String locator, String pattern)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isText(locator, pattern)) {
 			String text = liferaySelenium.getText(locator);
 
-			BaseTestCase.fail(
-				"Pattern " + pattern + " matches " + text + " at " + locator);
+			throw new Exception(
+				"Pattern \"" + pattern + "\" matches \"" + text + "\" at \"" +
+					locator + "\"");
 		}
 	}
 
 	public static void assertNotValue(
-		LiferaySelenium liferaySelenium, String locator, String pattern) {
+			LiferaySelenium liferaySelenium, String locator, String pattern)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isValue(locator, pattern)) {
 			String value = liferaySelenium.getValue(locator);
 
-			BaseTestCase.fail(
-				"Pattern " + pattern + " matches " + value + " at " + locator);
+			throw new Exception(
+				"Pattern \"" + pattern + "\" matches \"" + value + "\" at \"" +
+					locator + "\"");
 		}
 	}
 
 	public static void assertNotVisible(
-		LiferaySelenium liferaySelenium, String locator) {
+			LiferaySelenium liferaySelenium, String locator)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isVisible(locator)) {
-			BaseTestCase.fail("Element is visible at " + locator);
+			throw new Exception("Element is visible at \"" + locator + "\"");
 		}
 	}
 
 	public static void assertPartialText(
-		LiferaySelenium liferaySelenium, String locator, String pattern) {
+			LiferaySelenium liferaySelenium, String locator, String pattern)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isNotPartialText(locator, pattern)) {
 			String text = liferaySelenium.getText(locator);
 
-			BaseTestCase.fail(
-				text + " does not contain " + pattern + " at " + locator);
+			throw new Exception(
+				"\"" + text + "\" does not contain \"" + pattern + "\" at \"" +
+					locator + "\"");
 		}
 	}
 
 	public static void assertSelectedLabel(
-		LiferaySelenium liferaySelenium, String selectLocator, String pattern) {
+			LiferaySelenium liferaySelenium, String selectLocator,
+			String pattern)
+		throws Exception {
 
-		BaseTestCase.assertEquals(
-			pattern, liferaySelenium.getSelectedLabel(selectLocator));
+		liferaySelenium.assertElementPresent(selectLocator);
+
+		if (liferaySelenium.isNotSelectedLabel(selectLocator, pattern)) {
+			String text = liferaySelenium.getSelectedLabel(selectLocator);
+
+			throw new Exception(
+				"Pattern \"" + pattern + "\" does not match \"" + text +
+					"\" at \"" + selectLocator + "\"");
+		}
 	}
 
 	public static void assertText(
-		LiferaySelenium liferaySelenium, String locator, String pattern) {
+			LiferaySelenium liferaySelenium, String locator, String pattern)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isNotText(locator, pattern)) {
 			String text = liferaySelenium.getText(locator);
 
-			BaseTestCase.fail(
-				"Pattern " + pattern + " does not match " + text + " at " +
-					locator);
+			throw new Exception(
+				"Pattern \"" + pattern + "\" does not match \"" + text +
+					"\" at \"" + locator + "\"");
 		}
 	}
 
 	public static void assertTextNotPresent(
-		LiferaySelenium liferaySelenium, String pattern) {
+			LiferaySelenium liferaySelenium, String pattern)
+		throws Exception {
 
-		BaseTestCase.assertFalse(liferaySelenium.isTextPresent(pattern));
+		if (liferaySelenium.isTextPresent(pattern)) {
+			throw new Exception("\"" + pattern + "\" is present");
+		}
 	}
 
 	public static void assertTextPresent(
-		LiferaySelenium liferaySelenium, String pattern) {
+			LiferaySelenium liferaySelenium, String pattern)
+		throws Exception {
 
-		BaseTestCase.assertTrue(liferaySelenium.isTextPresent(pattern));
+		if (liferaySelenium.isTextNotPresent(pattern)) {
+			throw new Exception("\"" + pattern + "\" is not present");
+		}
 	}
 
 	public static void assertValue(
-		LiferaySelenium liferaySelenium, String locator, String pattern) {
+			LiferaySelenium liferaySelenium, String locator, String pattern)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isNotValue(locator, pattern)) {
 			String value = liferaySelenium.getValue(locator);
 
-			BaseTestCase.fail(
-				"Pattern " + pattern + " does not match " + value + " at " +
-					locator);
+			throw new Exception(
+				"Pattern \"" + pattern + "\" does not match \"" + value +
+					"\" at \"" + locator + "\"");
 		}
 	}
 
 	public static void assertVisible(
-		LiferaySelenium liferaySelenium, String locator) {
+			LiferaySelenium liferaySelenium, String locator)
+		throws Exception {
 
 		liferaySelenium.assertElementPresent(locator);
 
 		if (liferaySelenium.isNotVisible(locator)) {
-			BaseTestCase.fail("Element is not visible at " + locator);
+			throw new Exception(
+				"Element is not visible at \"" + locator + "\"");
 		}
 	}
 
-	public static void downloadTempFile(String value) {
-		if (!_BROWSER_TYPE.equals("*chrome") &&
-			!_BROWSER_TYPE.equals("*firefox") &&
-			!_BROWSER_TYPE.equals("*iehta") &&
-			!_BROWSER_TYPE.equals("*iexplore")) {
+	public static void connectToEmailAccount(
+			String emailAddress, String emailPassword)
+		throws Exception {
 
-			return;
-		}
+		EmailCommands.connectToEmailAccount(emailAddress, emailPassword);
+	}
 
-		try {
-			Thread.sleep(5000);
-
-			Runtime runtime = Runtime.getRuntime();
-
-			String command = RuntimeVariables.replace(
-				TestPropsValues.SELENIUM_BROWSER_COMMANDS_DIR +
-					TestPropsValues.SELENIUM_DOWNLOAD_FILE);
-
-			runtime.exec(command);
-
-			Thread.sleep(30000);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+	public static void deleteAllEmails() throws Exception {
+		EmailCommands.deleteAllEmails();
 	}
 
 	public static void echo(String message) {
 		System.out.println(message);
+	}
+
+	public static void fail(String message) {
+		BaseTestCase.fail(message);
+	}
+
+	public static String getEmailContent(String index) throws Exception {
+		return EmailCommands.getEmailContent(GetterUtil.getInteger(index));
+	}
+
+	public static String getEmailSubject(String index) throws Exception {
+		return EmailCommands.getEmailSubject(GetterUtil.getInteger(index));
 	}
 
 	public static String getNumberDecrement(String value) {
@@ -257,6 +318,14 @@ public class LiferaySeleniumHelper {
 
 	public static String getNumberIncrement(String value) {
 		return StringUtil.valueOf(GetterUtil.getInteger(value) + 1);
+	}
+
+	public static boolean isConfirmation(
+		LiferaySelenium liferaySelenium, String pattern) {
+
+		String confirmation = liferaySelenium.getConfirmation();
+
+		return pattern.equals(confirmation);
 	}
 
 	public static boolean isElementNotPresent(
@@ -295,34 +364,33 @@ public class LiferaySeleniumHelper {
 		return !liferaySelenium.isVisible(locator);
 	}
 
+	public static boolean isTextNotPresent(
+		LiferaySelenium liferaySelenium, String pattern) {
+
+		return !liferaySelenium.isTextPresent(pattern);
+	}
+
 	public static void pause(String waitTime) throws Exception {
 		Thread.sleep(GetterUtil.getInteger(waitTime));
 	}
 
-	public static void setBrowserOption() {
-		if (!_BROWSER_TYPE.equals("*chrome") &&
-			!_BROWSER_TYPE.equals("*firefox")) {
+	public static void replyToEmail(
+			LiferaySelenium liferaySelenium, String to, String content)
+		throws Exception {
 
-			return;
-		}
+		EmailCommands.replyToEmail(to, content);
 
-		try {
-			Runtime runtime = Runtime.getRuntime();
+		liferaySelenium.pause("3000");
+	}
 
-			String[] commands = {
-				RuntimeVariables.replace(
-					TestPropsValues.SELENIUM_BROWSER_COMMANDS_DIR +
-						TestPropsValues.SELENIUM_SET_BROWSER_OPTION),
-					TestPropsValues.OUTPUT_DIR
-			};
+	public static void sendEmail(
+			LiferaySelenium liferaySelenium, String to, String subject,
+			String content)
+		throws Exception {
 
-			runtime.exec(commands);
+		EmailCommands.sendEmail(to, subject, content);
 
-			Thread.sleep(10000);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+		liferaySelenium.pause("3000");
 	}
 
 	public static void typeFrame(
@@ -330,7 +398,10 @@ public class LiferaySeleniumHelper {
 
 		liferaySelenium.selectFrame(locator);
 
-		liferaySelenium.runScript("document.body.innerHTML = '" + value + "'");
+		value = value.replace("\\", "\\\\");
+
+		liferaySelenium.runScript(
+			"document.body.innerHTML = \"" + value + "\"");
 
 		liferaySelenium.selectFrame("relative=top");
 	}
@@ -407,12 +478,12 @@ public class LiferaySeleniumHelper {
 
 		for (int second = 0;; second++) {
 			if (second >= TestPropsValues.TIMEOUT_EXPLICIT_WAIT) {
-				BaseTestCase.fail("Timeout");
+				liferaySelenium.assertNotSelectedLabel(selectLocator, pattern);
 			}
 
 			try {
-				if (!pattern.equals(
-						liferaySelenium.getSelectedLabel(selectLocator))) {
+				if (liferaySelenium.isNotSelectedLabel(
+						selectLocator, pattern)) {
 
 					break;
 				}
@@ -521,13 +592,11 @@ public class LiferaySeleniumHelper {
 
 		for (int second = 0;; second++) {
 			if (second >= TestPropsValues.TIMEOUT_EXPLICIT_WAIT) {
-				BaseTestCase.fail("Timeout");
+				liferaySelenium.assertSelectedLabel(selectLocator, pattern);
 			}
 
 			try {
-				if (pattern.equals(
-						liferaySelenium.getSelectedLabel(selectLocator))) {
-
+				if (liferaySelenium.isSelectedLabel(selectLocator, pattern)) {
 					break;
 				}
 			}
@@ -569,12 +638,11 @@ public class LiferaySeleniumHelper {
 
 		for (int second = 0;; second++) {
 			if (second >= TestPropsValues.TIMEOUT_EXPLICIT_WAIT) {
-				BaseTestCase.fail(
-					"Timeout: unable to find the text \"" + value + "\"");
+				liferaySelenium.assertTextNotPresent(value);
 			}
 
 			try {
-				if (!liferaySelenium.isTextPresent(value)) {
+				if (liferaySelenium.isTextNotPresent(value)) {
 					break;
 				}
 			}
@@ -593,8 +661,7 @@ public class LiferaySeleniumHelper {
 
 		for (int second = 0;; second++) {
 			if (second >= TestPropsValues.TIMEOUT_EXPLICIT_WAIT) {
-				BaseTestCase.fail(
-					"Timeout: unable to find the text \"" + value + "\"");
+				liferaySelenium.assertTextPresent(value);
 			}
 
 			try {
@@ -652,7 +719,5 @@ public class LiferaySeleniumHelper {
 			Thread.sleep(1000);
 		}
 	}
-
-	private static final String _BROWSER_TYPE = TestPropsValues.BROWSER_TYPE;
 
 }

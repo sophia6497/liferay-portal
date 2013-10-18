@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -50,7 +50,7 @@ String privateRobots = ParamUtil.getString(request, "robots", defaultPrivateRobo
 			<aui:input cols="60" name="publicRobots" rows="15" type="textarea" value="<%= publicRobots %>" />
 		</c:when>
 		<c:otherwise>
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="please-set-the-virtual-host-before-you-set-the-robots-txt" />
 			</div>
 		</c:otherwise>
@@ -63,7 +63,7 @@ String privateRobots = ParamUtil.getString(request, "robots", defaultPrivateRobo
 			<aui:input cols="60" name="privateRobots" rows="15" type="textarea" value="<%= privateRobots %>" />
 		</c:when>
 		<c:otherwise>
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="please-set-the-virtual-host-before-you-set-the-robots-txt" />
 			</div>
 		</c:otherwise>

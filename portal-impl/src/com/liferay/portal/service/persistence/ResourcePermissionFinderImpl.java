@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -66,6 +66,7 @@ public class ResourcePermissionFinderImpl
 				Long.class.getName(), Long.class.getName()
 			});
 
+	@Override
 	public int countByR_S(long roleId, int[] scopes) throws SystemException {
 		Session session = null;
 
@@ -105,6 +106,7 @@ public class ResourcePermissionFinderImpl
 		}
 	}
 
+	@Override
 	public int countByC_N_S_P_R_A(
 			long companyId, String name, int scope, String primKey,
 			long[] roleIds, long actionId)
@@ -176,6 +178,7 @@ public class ResourcePermissionFinderImpl
 		return count.intValue();
 	}
 
+	@Override
 	public List<ResourcePermission> findByResource(
 			long companyId, long groupId, String name, String primKey)
 		throws SystemException {
@@ -209,6 +212,7 @@ public class ResourcePermissionFinderImpl
 		}
 	}
 
+	@Override
 	public List<ResourcePermission> findByR_S(
 			long roleId, int[] scopes, int start, int end)
 		throws SystemException {
@@ -242,9 +246,6 @@ public class ResourcePermissionFinderImpl
 		}
 	}
 
-	/**
-	 * @see PermissionFinderImpl#getScopes(int[])
-	 */
 	protected String getScopes(int[] scopes) {
 		if (scopes.length == 0) {
 			return StringPool.BLANK;
@@ -252,7 +253,7 @@ public class ResourcePermissionFinderImpl
 
 		StringBundler sb = new StringBundler(scopes.length * 2 + 1);
 
-		sb.append("(");
+		sb.append(StringPool.OPEN_PARENTHESIS);
 
 		for (int i = 0; i < scopes.length; i++) {
 			sb.append("ResourcePermission.scope = ? ");
@@ -262,7 +263,7 @@ public class ResourcePermissionFinderImpl
 			}
 		}
 
-		sb.append(")");
+		sb.append(StringPool.CLOSE_PARENTHESIS);
 
 		return sb.toString();
 	}

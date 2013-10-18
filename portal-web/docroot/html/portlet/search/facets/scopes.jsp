@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,11 @@
 
 <%
 if (termCollectors.isEmpty()) {
+%>
+
+	<aui:input name="<%= facet.getFieldName() %>" type="hidden" value="0" />
+
+<%
 	return;
 }
 
@@ -26,10 +31,10 @@ int maxTerms = dataJSONObject.getInt("maxTerms");
 boolean showAssetCount = dataJSONObject.getBoolean("showAssetCount", true);
 %>
 
-<div class="<%= cssClass %>" data-facetFieldName="<%= facet.getFieldName() %>" id="<%= randomNamespace %>facet">
-	<aui:input name="<%= facet.getFieldName() %>" type="hidden" value="<%= fieldParam %>" />
+<div class="<%= cssClass %>" data-facetFieldName="<%= facet.getFieldId() %>" id="<%= randomNamespace %>facet">
+	<aui:input name="<%= facet.getFieldId() %>" type="hidden" value="<%= fieldParam %>" />
 
-	<ul class="lfr-component scopes">
+	<ul class="scopes unstyled">
 		<li class="facet-value default <%= fieldParam.equals("0") ? "current-term" : StringPool.BLANK %>">
 			<a data-value="0" href="javascript:;"><img alt="" src='<%= themeDisplay.getPathThemeImages() + "/common/site_icon.png" %>' /><liferay-ui:message key="any" /> <liferay-ui:message key="<%= facetConfiguration.getLabel() %>" /></a>
 		</li>
@@ -42,15 +47,19 @@ boolean showAssetCount = dataJSONObject.getBoolean("showAssetCount", true);
 
 			long curGroupId = GetterUtil.getInteger(termCollector.getTerm());
 
-			Group group = GroupLocalServiceUtil.getGroup(curGroupId);
+			Group group = GroupLocalServiceUtil.fetchGroup(curGroupId);
+
+			if (group == null) {
+				continue;
+			}
 		%>
 
 			<c:if test="<%= groupId == curGroupId %>">
 				<aui:script use="liferay-token-list">
 					Liferay.Search.tokenList.add(
 						{
-							fieldValues: '<%= UnicodeFormatter.toString(renderResponse.getNamespace() + facet.getFieldName() + "|0") %>',
-							text: '<%= UnicodeFormatter.toString(group.getDescriptiveName(locale)) %>'
+							fieldValues: '<%= renderResponse.getNamespace() + facet.getFieldId() + "|0" %>',
+							text: '<%= HtmlUtil.escapeJS(group.getDescriptiveName(locale)) %>'
 						}
 					);
 				</aui:script>
@@ -63,7 +72,7 @@ boolean showAssetCount = dataJSONObject.getBoolean("showAssetCount", true);
 			%>
 
 			<li class="facet-value <%= groupId == curGroupId ? "current-term" : StringPool.BLANK %>">
-				<a data-value="<%= curGroupId %>" href="javascript:;"><%= group.getDescriptiveName(locale) %></a>
+				<a data-value="<%= curGroupId %>" href="javascript:;"><%= HtmlUtil.escape(group.getDescriptiveName(locale)) %></a>
 
 				<c:if test="<%= showAssetCount %>">
 					<span class="frequency">(<%= termCollector.getFrequency() %>)</span>

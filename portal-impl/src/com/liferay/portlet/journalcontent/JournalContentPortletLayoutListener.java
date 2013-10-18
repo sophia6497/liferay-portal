@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,21 +24,22 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
+import com.liferay.portal.layoutconfiguration.util.xml.PortletLogic;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.PortletConstants;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.PortletLocalServiceUtil;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
 import com.liferay.portlet.dynamicdatamapping.service.DDMTemplateLocalServiceUtil;
 import com.liferay.portlet.journal.NoSuchArticleException;
-import com.liferay.portlet.journal.NoSuchTemplateException;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalContentSearchLocalServiceUtil;
-import com.liferay.portlet.layoutconfiguration.util.xml.PortletLogic;
 
 import java.util.List;
 
@@ -51,6 +52,7 @@ import javax.portlet.PortletPreferences;
 public class JournalContentPortletLayoutListener
 	implements PortletLayoutListener {
 
+	@Override
 	public void onAddToLayout(String portletId, long plid)
 		throws PortletLayoutListenerException {
 
@@ -80,6 +82,7 @@ public class JournalContentPortletLayoutListener
 		}
 	}
 
+	@Override
 	public void onMoveInLayout(String portletId, long plid)
 		throws PortletLayoutListenerException {
 
@@ -88,6 +91,7 @@ public class JournalContentPortletLayoutListener
 		}
 	}
 
+	@Override
 	public void onRemoveFromLayout(String portletId, long plid)
 		throws PortletLayoutListenerException {
 
@@ -168,16 +172,9 @@ public class JournalContentPortletLayoutListener
 		List<String> portletIds = getRuntimePortletIds(article.getContent());
 
 		if (Validator.isNotNull(article.getTemplateId())) {
-			DDMTemplate ddmTemplate = null;
-
-			try {
-				ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
-					scopeGroupId, article.getTemplateId());
-			}
-			catch (NoSuchTemplateException nste) {
-				ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
-					group.getGroupId(), article.getTemplateId());
-			}
+			DDMTemplate ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
+				scopeGroupId, PortalUtil.getClassNameId(DDMStructure.class),
+				article.getTemplateId(), true);
 
 			portletIds.addAll(getRuntimePortletIds(ddmTemplate.getScript()));
 		}

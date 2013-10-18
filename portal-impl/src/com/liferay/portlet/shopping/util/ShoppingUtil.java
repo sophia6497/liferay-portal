@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MathUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -59,7 +60,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -323,31 +323,34 @@ public class ShoppingUtil {
 			subtotal += calculateActualPrice(itemPrice) * count.intValue();
 		}
 
-		if ((preferences != null) && (subtotal > 0)) {
-			double insuranceRate = 0.0;
+		if ((preferences == null) || (subtotal == 0)) {
+			return insurance;
+		}
 
-			double[] range = ShoppingPreferences.INSURANCE_RANGE;
+		double insuranceRate = 0.0;
 
-			for (int i = 0; i < range.length - 1; i++) {
-				if ((subtotal > range[i]) && (subtotal <= range[i + 1])) {
-					int rangeId = i / 2;
-					if (MathUtil.isOdd(i)) {
-						rangeId = (i + 1) / 2;
-					}
+		double[] range = ShoppingPreferences.INSURANCE_RANGE;
 
-					insuranceRate = GetterUtil.getDouble(
-						preferences.getInsurance()[rangeId]);
+		for (int i = 0; i < range.length - 1; i++) {
+			if ((subtotal > range[i]) && (subtotal <= range[i + 1])) {
+				int rangeId = i / 2;
+
+				if (MathUtil.isOdd(i)) {
+					rangeId = (i + 1) / 2;
 				}
-			}
 
-			String formula = preferences.getInsuranceFormula();
+				insuranceRate = GetterUtil.getDouble(
+					preferences.getInsurance()[rangeId]);
+			}
+		}
 
-			if (formula.equals("flat")) {
-				insurance += insuranceRate;
-			}
-			else if (formula.equals("percentage")) {
-				insurance += subtotal * insuranceRate;
-			}
+		String formula = preferences.getInsuranceFormula();
+
+		if (formula.equals("flat")) {
+			insurance += insuranceRate;
+		}
+		else if (formula.equals("percentage")) {
+			insurance += subtotal * insuranceRate;
 		}
 
 		return insurance;
@@ -396,31 +399,34 @@ public class ShoppingUtil {
 			}
 		}
 
-		if ((preferences != null) && (subtotal > 0)) {
-			double shippingRate = 0.0;
+		if ((preferences == null) || (subtotal == 0)) {
+			return shipping;
+		}
 
-			double[] range = ShoppingPreferences.SHIPPING_RANGE;
+		double shippingRate = 0.0;
 
-			for (int i = 0; i < range.length - 1; i++) {
-				if ((subtotal > range[i]) && (subtotal <= range[i + 1])) {
-					int rangeId = i / 2;
-					if (MathUtil.isOdd(i)) {
-						rangeId = (i + 1) / 2;
-					}
+		double[] range = ShoppingPreferences.SHIPPING_RANGE;
 
-					shippingRate = GetterUtil.getDouble(
-						preferences.getShipping()[rangeId]);
+		for (int i = 0; i < range.length - 1; i++) {
+			if ((subtotal > range[i]) && (subtotal <= range[i + 1])) {
+				int rangeId = i / 2;
+
+				if (MathUtil.isOdd(i)) {
+					rangeId = (i + 1) / 2;
 				}
-			}
 
-			String formula = preferences.getShippingFormula();
+				shippingRate = GetterUtil.getDouble(
+					preferences.getShipping()[rangeId]);
+			}
+		}
 
-			if (formula.equals("flat")) {
-				shipping += shippingRate;
-			}
-			else if (formula.equals("percentage")) {
-				shipping += subtotal * shippingRate;
-			}
+		String formula = preferences.getShippingFormula();
+
+		if (formula.equals("flat")) {
+			shipping += shippingRate;
+		}
+		else if (formula.equals("percentage")) {
+			shipping += subtotal * shippingRate;
 		}
 
 		return shipping;
@@ -500,6 +506,7 @@ public class ShoppingUtil {
 		double shipping = calculateAlternativeShipping(items, altShipping);
 
 		double insurance = 0.0;
+
 		if (insure) {
 			insurance = calculateInsurance(items);
 		}
@@ -561,16 +568,14 @@ public class ShoppingUtil {
 		WindowState windowState = renderRequest.getWindowState();
 
 		if (windowState.equals(LiferayWindowState.POP_UP)) {
-			categoriesURL.setWindowState(LiferayWindowState.POP_UP);
-
 			categoriesURL.setParameter(
 				"struts_action", "/shopping/select_category");
+			categoriesURL.setWindowState(LiferayWindowState.POP_UP);
 		}
 		else {
-			//categoriesURL.setWindowState(WindowState.MAXIMIZED);
-
 			categoriesURL.setParameter("struts_action", "/shopping/view");
 			categoriesURL.setParameter("tabs1", "categories");
+			//categoriesURL.setWindowState(WindowState.MAXIMIZED);
 		}
 
 		String categoriesLink =
@@ -590,20 +595,18 @@ public class ShoppingUtil {
 				PortletURL portletURL = renderResponse.createRenderURL();
 
 				if (windowState.equals(LiferayWindowState.POP_UP)) {
-					portletURL.setWindowState(LiferayWindowState.POP_UP);
-
 					portletURL.setParameter(
 						"struts_action", "/shopping/select_category");
 					portletURL.setParameter(
 						"categoryId", String.valueOf(category.getCategoryId()));
+					portletURL.setWindowState(LiferayWindowState.POP_UP);
 				}
 				else {
-					//portletURL.setWindowState(WindowState.MAXIMIZED);
-
 					portletURL.setParameter("struts_action", "/shopping/view");
 					portletURL.setParameter("tabs1", "categories");
 					portletURL.setParameter(
 						"categoryId", String.valueOf(category.getCategoryId()));
+					//portletURL.setWindowState(WindowState.MAXIMIZED);
 				}
 
 				String categoryLink =
@@ -678,18 +681,17 @@ public class ShoppingUtil {
 
 			return cart;
 		}
-		else {
-			ShoppingCart cart = (ShoppingCart)portletSession.getAttribute(
-				sessionCartId);
 
-			if (cart == null) {
-				cart = getCart(themeDisplay);
+		ShoppingCart cart = (ShoppingCart)portletSession.getAttribute(
+			sessionCartId);
 
-				portletSession.setAttribute(sessionCartId, cart);
-			}
+		if (cart == null) {
+			cart = getCart(themeDisplay);
 
-			return cart;
+			portletSession.setAttribute(sessionCartId, cart);
 		}
+
+		return cart;
 	}
 
 	public static ShoppingCart getCart(ThemeDisplay themeDisplay) {
@@ -715,10 +717,9 @@ public class ShoppingUtil {
 		for (String fields : fieldsArray) {
 			int pos = fields.indexOf("=");
 
-			String fieldValue = fields.substring(
-				pos + 1, fields.length()).trim();
+			String fieldValue = fields.substring(pos + 1, fields.length());
 
-			fieldsValues.add(fieldValue);
+			fieldsValues.add(fieldValue.trim());
 		}
 
 		List<String> names = new ArrayList<String>();
@@ -752,6 +753,7 @@ public class ShoppingUtil {
 				String[] vArray = values.get(j);
 
 				int arrayPos;
+
 				for (arrayPos = i / numOfRepeats;
 					arrayPos >= vArray.length;
 					arrayPos = arrayPos - vArray.length) {
@@ -854,7 +856,7 @@ public class ShoppingUtil {
 			preferences.getPayPalEmailAddress());
 
 		NumberFormat doubleFormat = NumberFormat.getNumberInstance(
-			Locale.ENGLISH);
+			LocaleUtil.ENGLISH);
 
 		doubleFormat.setMaximumFractionDigits(2);
 		doubleFormat.setMinimumFractionDigits(2);
@@ -915,7 +917,7 @@ public class ShoppingUtil {
 			ppPaymentStatus = "checkout";
 		}
 		else {
-			ppPaymentStatus = ppPaymentStatus.toLowerCase();
+			ppPaymentStatus = StringUtil.toLowerCase(ppPaymentStatus);
 		}
 
 		return LanguageUtil.get(pageContext, ppPaymentStatus);

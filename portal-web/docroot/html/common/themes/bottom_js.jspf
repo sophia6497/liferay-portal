@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,6 @@
 --%>
 
 <%@ include file="/html/portal/layout/view/portlet_js.jspf" %>
-
-<%@ page import="com.liferay.portlet.sites.util.SitesUtil" %>
 
 <aui:script position="inline">
 	Liferay.Util.addInputFocus();
@@ -62,6 +60,10 @@
 			Liferay.Util.addInputType(node);
 		}
 	);
+
+	if (A.UA.mobile) {
+		Liferay.Util.addInputCancel();
+	}
 </aui:script>
 
 <%
@@ -96,7 +98,7 @@ if (layout != null) {
 				</c:choose>
 
 				disabledDropContainerClass: 'portlet-dropzone-disabled',
-				dragNodes: '.portlet-boundary:not(.portlet-static)',
+				dragNodes: '.portlet-boundary',
 				dropContainer: '.portlet-dropzone',
 				emptyColumnClass: 'empty',
 				invalid: '.portlet-static',
@@ -122,15 +124,13 @@ if (layout != null) {
 							<%
 							for (int i = 0; (layouts != null) && (i < layouts.size()); i++) {
 								Layout curLayout = (Layout)layouts.get(i);
-
-								boolean updateable = SitesUtil.isLayoutUpdateable(curLayout);
-								boolean deleteable = updateable && LayoutPermissionUtil.contains(themeDisplay.getPermissionChecker(), curLayout, ActionKeys.DELETE);
 							%>
 
 								{
-									deletable: <%= deleteable %>,
+									deletable: !A.UA.touch && <%= LayoutPermissionUtil.contains(permissionChecker, curLayout, ActionKeys.DELETE) %>,
 									id: <%= curLayout.getLayoutId() %>,
-									updateable: <%= updateable %>
+									sortable: <%= GroupPermissionUtil.contains(permissionChecker, scopeGroupId, ActionKeys.MANAGE_LAYOUTS) && SitesUtil.isLayoutSortable(curLayout) %>,
+									updateable: <%= LayoutPermissionUtil.contains(permissionChecker, curLayout, ActionKeys.UPDATE) %>
 								},
 
 							<%
@@ -149,14 +149,12 @@ if (layout != null) {
 			}
 		);
 
-		var navBlock = A.one('#navigation');
+		var navBlock = A.one(Liferay.Data.NAV_SELECTOR);
 
 		if (navBlock) {
-			var handle = navBlock.on(
-				['mousemove', 'touchstart'],
+			navBlock.once(
+				'mousemove',
 				function() {
-					handle.detach();
-
 					Liferay.fire('initNavigation');
 				}
 			);

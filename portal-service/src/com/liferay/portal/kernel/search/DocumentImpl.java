@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.File;
@@ -57,10 +58,11 @@ public class DocumentImpl implements Document {
 
 		String languageId = LocaleUtil.toLanguageId(locale);
 
-		String localizedName = name.concat(StringPool.UNDERLINE).concat(
-			languageId);
+		return getLocalizedName(languageId, name);
+	}
 
-		return localizedName;
+	public static String getLocalizedName(String languageId, String name) {
+		return name.concat(StringPool.UNDERLINE).concat(languageId);
 	}
 
 	public static String getSortableFieldName(String name) {
@@ -69,13 +71,15 @@ public class DocumentImpl implements Document {
 	}
 
 	public static boolean isSortableTextField(String name) {
-		return _sortableTextFields.contains(name);
+		return _defaultSortableTextFields.contains(name);
 	}
 
+	@Override
 	public void add(Field field) {
 		_fields.put(field.getName(), field);
 	}
 
+	@Override
 	public void addDate(String name, Date value) {
 		if (value == null) {
 			return;
@@ -84,12 +88,29 @@ public class DocumentImpl implements Document {
 		addKeyword(name, _dateFormat.format(value));
 	}
 
+	@Override
+	public void addDate(String name, Date[] values) {
+		if (values == null) {
+			return;
+		}
+
+		String[] dates = new String[values.length];
+
+		for (int i = 0; i < values.length; i++) {
+			dates[i] = _dateFormat.format(values[i]);
+		}
+
+		addKeyword(name, dates);
+	}
+
+	@Override
 	public void addFile(String name, byte[] bytes, String fileExt) {
 		InputStream is = new UnsyncByteArrayInputStream(bytes);
 
 		addFile(name, is, fileExt);
 	}
 
+	@Override
 	public void addFile(String name, File file, String fileExt)
 		throws IOException {
 
@@ -98,18 +119,22 @@ public class DocumentImpl implements Document {
 		addFile(name, is, fileExt);
 	}
 
+	@Override
 	public void addFile(String name, InputStream is, String fileExt) {
 		addText(name, FileUtil.extractText(is, fileExt));
 	}
 
+	@Override
 	public void addKeyword(String name, boolean value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, Boolean value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, boolean[] values) {
 		if (values == null) {
 			return;
@@ -118,6 +143,7 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, Boolean[] values) {
 		if (values == null) {
 			return;
@@ -126,14 +152,17 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, double value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, Double value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, double[] values) {
 		if (values == null) {
 			return;
@@ -142,6 +171,7 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, Double[] values) {
 		if (values == null) {
 			return;
@@ -150,14 +180,17 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, float value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, Float value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, float[] values) {
 		if (values == null) {
 			return;
@@ -166,6 +199,7 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, Float[] values) {
 		if (values == null) {
 			return;
@@ -174,10 +208,12 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, int value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, int[] values) {
 		if (values == null) {
 			return;
@@ -186,10 +222,12 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, Integer value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, Integer[] values) {
 		if (values == null) {
 			return;
@@ -198,14 +236,17 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, long value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, Long value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, long[] values) {
 		if (values == null) {
 			return;
@@ -214,6 +255,7 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, Long[] values) {
 		if (values == null) {
 			return;
@@ -222,14 +264,17 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, short value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, Short value) {
 		addKeyword(name, String.valueOf(value));
 	}
 
+	@Override
 	public void addKeyword(String name, short[] values) {
 		if (values == null) {
 			return;
@@ -238,6 +283,7 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, Short[] values) {
 		if (values == null) {
 			return;
@@ -246,19 +292,21 @@ public class DocumentImpl implements Document {
 		addKeyword(name, ArrayUtil.toStringArray(values));
 	}
 
+	@Override
 	public void addKeyword(String name, String value) {
 		addKeyword(name, value, false);
 	}
 
+	@Override
 	public void addKeyword(String name, String value, boolean lowerCase) {
 		if (lowerCase && Validator.isNotNull(value)) {
-			value = value.toLowerCase();
+			value = StringUtil.toLowerCase(value);
 		}
 
 		Field field = new Field(name, value);
 
 		for (String fieldName : Field.UNSCORED_FIELD_NAMES) {
-			if (name.equalsIgnoreCase(fieldName)) {
+			if (StringUtil.equalsIgnoreCase(name, fieldName)) {
 				field.setBoost(0);
 			}
 		}
@@ -266,6 +314,7 @@ public class DocumentImpl implements Document {
 		_fields.put(name, field);
 	}
 
+	@Override
 	public void addKeyword(String name, String[] values) {
 		if (values == null) {
 			return;
@@ -276,9 +325,31 @@ public class DocumentImpl implements Document {
 		_fields.put(name, field);
 	}
 
+	@Override
 	public void addLocalizedKeyword(String name, Map<Locale, String> values) {
+		addLocalizedKeyword(name, values, false);
+	}
+
+	@Override
+	public void addLocalizedKeyword(
+		String name, Map<Locale, String> values, boolean lowerCase) {
+
 		if ((values == null) || values.isEmpty()) {
 			return;
+		}
+
+		if (lowerCase) {
+			Map<Locale, String> lowerCaseValues = new HashMap<Locale, String>(
+				values.size());
+
+			for (Map.Entry<Locale, String> entry : values.entrySet()) {
+				String value = GetterUtil.getString(entry.getValue());
+
+				lowerCaseValues.put(
+					entry.getKey(), StringUtil.toLowerCase(value));
+			}
+
+			values = lowerCaseValues;
 		}
 
 		Field field = new Field(name, values);
@@ -286,6 +357,7 @@ public class DocumentImpl implements Document {
 		_fields.put(name, field);
 	}
 
+	@Override
 	public void addLocalizedText(String name, Map<Locale, String> values) {
 		if ((values == null) || values.isEmpty()) {
 			return;
@@ -299,94 +371,127 @@ public class DocumentImpl implements Document {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
+	@Override
 	public void addModifiedDate() {
 		addModifiedDate(new Date());
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
+	@Override
 	public void addModifiedDate(Date modifiedDate) {
 		addDate(Field.MODIFIED, modifiedDate);
 	}
 
+	@Override
 	public void addNumber(String name, double value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Double.class);
 	}
 
+	@Override
 	public void addNumber(String name, Double value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Double.class);
 	}
 
+	@Override
 	public void addNumber(String name, double[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Double.class);
 	}
 
+	@Override
 	public void addNumber(String name, Double[] values) {
-		addNumber(name, String.valueOf(ArrayUtil.toStringArray(values)));
+		addNumber(name, ArrayUtil.toStringArray(values), Double.class);
 	}
 
+	@Override
 	public void addNumber(String name, float value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Float.class);
 	}
 
+	@Override
 	public void addNumber(String name, Float value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Float.class);
 	}
 
+	@Override
 	public void addNumber(String name, float[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Float.class);
 	}
 
+	@Override
 	public void addNumber(String name, Float[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Float.class);
 	}
 
+	@Override
 	public void addNumber(String name, int value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Integer.class);
 	}
 
+	@Override
 	public void addNumber(String name, int[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Integer.class);
 	}
 
+	@Override
 	public void addNumber(String name, Integer value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Integer.class);
 	}
 
+	@Override
 	public void addNumber(String name, Integer[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Integer.class);
 	}
 
+	@Override
 	public void addNumber(String name, long value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Long.class);
 	}
 
+	@Override
 	public void addNumber(String name, Long value) {
-		addNumber(name, String.valueOf(value));
+		addNumber(name, String.valueOf(value), Long.class);
 	}
 
+	@Override
 	public void addNumber(String name, long[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Long.class);
 	}
 
+	@Override
 	public void addNumber(String name, Long[] values) {
-		addNumber(name, ArrayUtil.toStringArray(values));
+		addNumber(name, ArrayUtil.toStringArray(values), Long.class);
 	}
 
+	@Override
 	public void addNumber(String name, String value) {
+		addNumber(name, value, Long.class);
+	}
+
+	public void addNumber(
+		String name, String value, Class<? extends Number> clazz) {
+
 		if (Validator.isNotNull(value)) {
 			Field field = new Field(name, value);
 
 			field.setNumeric(true);
+			field.setNumericClass(clazz);
 
 			_fields.put(name, field);
 		}
 	}
 
+	@Override
 	public void addNumber(String name, String[] values) {
+		addNumber(name, values, Long.class);
+	}
+
+	public void addNumber(
+		String name, String[] values, Class<? extends Number> clazz) {
+
 		if (values == null) {
 			return;
 		}
@@ -394,10 +499,12 @@ public class DocumentImpl implements Document {
 		Field field = new Field(name, values);
 
 		field.setNumeric(true);
+		field.setNumericClass(clazz);
 
 		_fields.put(name, field);
 	}
 
+	@Override
 	public void addText(String name, String value) {
 		if (Validator.isNull(value)) {
 			return;
@@ -417,10 +524,11 @@ public class DocumentImpl implements Document {
 					0, _SORTABLE_TEXT_FIELDS_TRUNCATED_LENGTH);
 			}
 
-			addKeyword(getSortableFieldName(name), truncatedValue);
+			addKeyword(getSortableFieldName(name), truncatedValue, true);
 		}
 	}
 
+	@Override
 	public void addText(String name, String[] values) {
 		if (values == null) {
 			return;
@@ -433,36 +541,44 @@ public class DocumentImpl implements Document {
 		_fields.put(name, field);
 	}
 
+	@Override
 	public void addUID(String portletId, long field1) {
 		addUID(portletId, String.valueOf(field1));
 	}
 
+	@Override
 	public void addUID(String portletId, long field1, String field2) {
 		addUID(portletId, String.valueOf(field1), field2);
 	}
 
+	@Override
 	public void addUID(String portletId, Long field1) {
 		addUID(portletId, field1.longValue());
 	}
 
+	@Override
 	public void addUID(String portletId, Long field1, String field2) {
 		addUID(portletId, field1.longValue(), field2);
 	}
 
+	@Override
 	public void addUID(String portletId, String field1) {
 		addUID(portletId, field1, null);
 	}
 
+	@Override
 	public void addUID(String portletId, String field1, String field2) {
 		addUID(portletId, field1, field2, null);
 	}
 
+	@Override
 	public void addUID(
 		String portletId, String field1, String field2, String field3) {
 
 		addUID(portletId, field1, field2, field3, null);
 	}
 
+	@Override
 	public void addUID(
 		String portletId, String field1, String field2, String field3,
 		String field4) {
@@ -484,6 +600,16 @@ public class DocumentImpl implements Document {
 		addKeyword(Field.UID, uid);
 	}
 
+	@Override
+	public Object clone() {
+		DocumentImpl documentImpl = new DocumentImpl();
+
+		documentImpl.setSortableTextFields(_sortableTextFields);
+
+		return documentImpl;
+	}
+
+	@Override
 	public String get(Locale locale, String name) {
 		if (locale == null) {
 			return get(name);
@@ -504,6 +630,7 @@ public class DocumentImpl implements Document {
 		return field.getValue();
 	}
 
+	@Override
 	public String get(Locale locale, String name, String defaultName) {
 		if (locale == null) {
 			return get(name, defaultName);
@@ -526,6 +653,7 @@ public class DocumentImpl implements Document {
 		return field.getValue();
 	}
 
+	@Override
 	public String get(String name) {
 		Field field = _fields.get(name);
 
@@ -536,6 +664,7 @@ public class DocumentImpl implements Document {
 		return field.getValue();
 	}
 
+	@Override
 	public String get(String name, String defaultName) {
 		Field field = _fields.get(name);
 
@@ -546,6 +675,7 @@ public class DocumentImpl implements Document {
 		return field.getValue();
 	}
 
+	@Override
 	public Date getDate(String name) throws ParseException {
 		DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
 			_INDEX_DATE_FORMAT_PATTERN);
@@ -553,14 +683,17 @@ public class DocumentImpl implements Document {
 		return dateFormat.parse(get(name));
 	}
 
+	@Override
 	public Field getField(String name) {
 		return _fields.get(name);
 	}
 
+	@Override
 	public Map<String, Field> getFields() {
 		return _fields;
 	}
 
+	@Override
 	public String getPortletId() {
 		String uid = getUID();
 
@@ -569,6 +702,7 @@ public class DocumentImpl implements Document {
 		return uid.substring(0, pos);
 	}
 
+	@Override
 	public String getUID() {
 		Field field = _fields.get(Field.UID);
 
@@ -579,6 +713,7 @@ public class DocumentImpl implements Document {
 		return field.getValue();
 	}
 
+	@Override
 	public String[] getValues(String name) {
 		Field field = _fields.get(name);
 
@@ -589,12 +724,32 @@ public class DocumentImpl implements Document {
 		return field.getValues();
 	}
 
+	@Override
+	public boolean hasField(String name) {
+		if (_fields.containsKey(name)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isDocumentSortableTextField(String name) {
+		return _sortableTextFields.contains(name);
+	}
+
+	@Override
 	public void remove(String name) {
 		_fields.remove(name);
 	}
 
 	public void setFields(Map<String, Field> fields) {
 		_fields = fields;
+	}
+
+	@Override
+	public void setSortableTextFields(String[] sortableTextFields) {
+		_sortableTextFields = SetUtil.fromArray(sortableTextFields);
 	}
 
 	@Override
@@ -624,6 +779,10 @@ public class DocumentImpl implements Document {
 		return sb.toString();
 	}
 
+	protected void setSortableTextFields(Set<String> sortableTextFields) {
+		_sortableTextFields = sortableTextFields;
+	}
+
 	private static final String _INDEX_DATE_FORMAT_PATTERN = PropsUtil.get(
 		PropsKeys.INDEX_DATE_FORMAT_PATTERN);
 
@@ -641,9 +800,10 @@ public class DocumentImpl implements Document {
 	private static Format _dateFormat =
 		FastDateFormatFactoryUtil.getSimpleDateFormat(
 			_INDEX_DATE_FORMAT_PATTERN);
-	private static Set<String> _sortableTextFields = SetUtil.fromArray(
+	private static Set<String> _defaultSortableTextFields = SetUtil.fromArray(
 		PropsUtil.getArray(PropsKeys.INDEX_SORTABLE_TEXT_FIELDS));
 
 	private Map<String, Field> _fields = new HashMap<String, Field>();
+	private Set<String> _sortableTextFields = _defaultSortableTextFields;
 
 }

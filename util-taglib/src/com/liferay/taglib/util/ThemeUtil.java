@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,11 +22,9 @@ import com.liferay.portal.kernel.servlet.PluginContextListener;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.template.Template;
 import com.liferay.portal.kernel.template.TemplateConstants;
-import com.liferay.portal.kernel.template.TemplateContextType;
 import com.liferay.portal.kernel.template.TemplateManagerUtil;
 import com.liferay.portal.kernel.template.TemplateResource;
 import com.liferay.portal.kernel.template.TemplateResourceLoaderUtil;
-import com.liferay.portal.kernel.templateparser.TemplateContext;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.ThemeHelper;
@@ -169,16 +167,16 @@ public class ThemeUtil {
 		try {
 			if (extension.equals(ThemeHelper.TEMPLATE_EXTENSION_FTL)) {
 				return doIncludeFTL(
-					servletContext, request, pageContext, path, theme,
-					TemplateContextType.STANDARD, write);
+					servletContext, request, pageContext, path, theme, false,
+					write);
 			}
 			else if (extension.equals(ThemeHelper.TEMPLATE_EXTENSION_JSP)) {
 				doIncludeJSP(servletContext, request, response, path, theme);
 			}
 			else if (extension.equals(ThemeHelper.TEMPLATE_EXTENSION_VM)) {
 				return doIncludeVM(
-					servletContext, request, pageContext, path, theme,
-					TemplateContextType.STANDARD, write);
+					servletContext, request, pageContext, path, theme, false,
+					write);
 			}
 
 			return null;
@@ -195,7 +193,7 @@ public class ThemeUtil {
 	protected static String doIncludeFTL(
 			ServletContext servletContext, HttpServletRequest request,
 			PageContext pageContext, String path, Theme theme,
-			TemplateContextType templateContextType, boolean write)
+			boolean restricted, boolean write)
 		throws Exception {
 
 		// The servlet context name will be null when the theme is deployed to
@@ -251,8 +249,7 @@ public class ThemeUtil {
 				TemplateConstants.LANG_TYPE_FTL, resourcePath);
 
 		Template template = TemplateManagerUtil.getTemplate(
-			TemplateConstants.LANG_TYPE_FTL, templateResource,
-			templateContextType);
+			TemplateConstants.LANG_TYPE_FTL, templateResource, restricted);
 
 		// FreeMarker variables
 
@@ -286,7 +283,7 @@ public class ThemeUtil {
 			servletContext, request,
 			new PipingServletResponse(response, writer), pageContext, template);
 
-		template.put(TemplateContext.WRITER, writer);
+		template.put(TemplateConstants.WRITER, writer);
 		template.put("taglibLiferay", velocityTaglib);
 		template.put("theme", velocityTaglib);
 
@@ -401,7 +398,7 @@ public class ThemeUtil {
 	protected static String doIncludeVM(
 			ServletContext servletContext, HttpServletRequest request,
 			PageContext pageContext, String page, Theme theme,
-			TemplateContextType templateContextType, boolean write)
+			boolean restricted, boolean write)
 		throws Exception {
 
 		// The servlet context name will be null when the theme is deployed to
@@ -470,8 +467,7 @@ public class ThemeUtil {
 		}
 
 		Template template = TemplateManagerUtil.getTemplate(
-			TemplateConstants.LANG_TYPE_VM, templateResource,
-			templateContextType);
+			TemplateConstants.LANG_TYPE_VM, templateResource, restricted);
 
 		// Velocity variables
 
@@ -506,7 +502,7 @@ public class ThemeUtil {
 			servletContext, request,
 			new PipingServletResponse(response, writer), pageContext, template);
 
-		template.put(TemplateContext.WRITER, writer);
+		template.put(TemplateConstants.WRITER, writer);
 		template.put("taglibLiferay", velocityTaglib);
 		template.put("theme", velocityTaglib);
 

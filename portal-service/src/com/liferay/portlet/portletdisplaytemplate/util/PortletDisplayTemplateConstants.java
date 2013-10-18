@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,8 @@
 
 package com.liferay.portlet.portletdisplaytemplate.util;
 
+import com.liferay.portal.kernel.template.TemplateConstants;
+
 /**
  * @author Juan Fernández
  * @author Eduardo García
@@ -23,8 +25,6 @@ public class PortletDisplayTemplateConstants {
 	public static final String ASSET_PUBLISHER_HELPER = "assetPublisherHelper";
 
 	public static final String CURRENT_URL = "currentURL";
-
-	public static final String DDM_TEMPLATE_ID = "ddmTemplateId";
 
 	public static final String ENTRIES = "entries";
 
@@ -38,17 +38,21 @@ public class PortletDisplayTemplateConstants {
 
 	public static final String LOCALE = "locale";
 
+	public static final String PORTLET_PREFERENCES = "portletPreferences";
+
 	public static final String RENDER_REQUEST ="renderRequest";
 
 	public static final String RENDER_RESPONSE ="renderResponse";
 
 	public static final String REQUEST = "request";
 
-	public static final String REQUEST_HASH= "requestHash";
+	public static final String REQUEST_HASH = "requestHash";
 
 	public static final String TAGLIB_LIFERAY = "taglibLiferay";
 
 	public static final String TAGLIB_LIFERAY_HASH = "taglibLiferayHash";
+
+	public static final String TEMPLATE_ID = TemplateConstants.TEMPLATE_ID;
 
 	public static final String THEME = "theme";
 

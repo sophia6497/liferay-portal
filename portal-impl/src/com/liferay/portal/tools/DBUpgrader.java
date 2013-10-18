@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -229,8 +229,15 @@ public class DBUpgrader {
 			_disableTransactions();
 		}
 
+		boolean newBuildNumber = false;
+
+		if (ReleaseInfo.getBuildNumber() > release.getBuildNumber()) {
+			newBuildNumber = true;
+		}
+
 		try {
-			StartupHelperUtil.verifyProcess(release.isVerified());
+			StartupHelperUtil.verifyProcess(
+				newBuildNumber, release.isVerified());
 		}
 		catch (Exception e) {
 			_updateReleaseState(ReleaseConstants.STATE_VERIFY_FAILURE);
@@ -335,6 +342,7 @@ public class DBUpgrader {
 				private Annotation[] _annotations = new Annotation[] {
 					new Skip() {
 
+						@Override
 						public Class<? extends Annotation> annotationType() {
 							return Skip.class;
 						}

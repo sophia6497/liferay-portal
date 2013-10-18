@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -56,14 +56,15 @@ public class BookmarksEntryPermission {
 			String actionId)
 		throws PortalException, SystemException {
 
-		if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-			if (entry.getFolderId() !=
-					BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
+			long folderId = entry.getFolderId();
+
+			if (folderId != BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 				try {
 					BookmarksFolder folder =
-						BookmarksFolderLocalServiceUtil.getFolder(
-							entry.getFolderId());
+						BookmarksFolderLocalServiceUtil.getFolder(folderId);
 
 					if (!BookmarksFolderPermission.contains(
 							permissionChecker, folder, ActionKeys.ACCESS) &&

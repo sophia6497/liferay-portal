@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -66,6 +66,29 @@ public class MethodKey implements Externalizable {
 			method.getParameterTypes());
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #MethodKey(Class, String,
+	 *             Class...)}
+	 */
+	public MethodKey(
+		String declaringClassName, String methodName,
+		Class<?>... parameterTypes) {
+
+		Thread currentThread = Thread.currentThread();
+
+		ClassLoader classLoader = currentThread.getContextClassLoader();
+
+		try {
+			_declaringClass = classLoader.loadClass(declaringClassName);
+		}
+		catch (ClassNotFoundException cnfe) {
+			throw new RuntimeException(cnfe);
+		}
+
+		_methodName = methodName;
+		_parameterTypes = parameterTypes;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -112,6 +135,7 @@ public class MethodKey implements Externalizable {
 		return _declaringClass.getName().hashCode() ^ _methodName.hashCode();
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput)
 		throws ClassNotFoundException, IOException {
 
@@ -178,6 +202,7 @@ public class MethodKey implements Externalizable {
 		return new MethodKey(declaringClass, _methodName, parameterTypes);
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput) throws IOException {
 		Serializer serializer = new Serializer();
 
@@ -196,8 +221,9 @@ public class MethodKey implements Externalizable {
 			byteBuffer.array(), byteBuffer.position(), byteBuffer.remaining());
 	}
 
-	private Class<?> _declaringClass;
+	private static final long serialVersionUID = 1L;
 
+	private Class<?> _declaringClass;
 	private String _methodName;
 	private Class<?>[] _parameterTypes;
 

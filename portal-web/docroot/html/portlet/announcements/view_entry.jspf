@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -62,7 +62,7 @@ if (entry.getPriority() > 0) {
 	boolean showScopeName = false;
 	%>
 
-	<div class="<%= hiddenEntry ? "aui-helper-hidden" : "" %> entry-content entry-type-<%= entry.getType() %>">
+	<div class="<%= hiddenEntry ? "hide" : "" %> entry-content entry-type-<%= entry.getType() %>">
 		<%@ include file="/html/portlet/announcements/entry_scope.jspf" %>
 
 		<%= entry.getContent() %>

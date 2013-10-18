@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -50,6 +50,7 @@ public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences
 		return sb.toString();
 	}
 
+	@Override
 	public PortalPreferences toEntityModel() {
 		PortalPreferencesImpl portalPreferencesImpl = new PortalPreferencesImpl();
 
@@ -69,6 +70,7 @@ public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences
 		return portalPreferencesImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		portalPreferencesId = objectInput.readLong();
 		ownerId = objectInput.readLong();
@@ -76,6 +78,7 @@ public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences
 		preferences = objectInput.readUTF();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(portalPreferencesId);

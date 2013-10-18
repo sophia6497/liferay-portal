@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,7 @@ import com.liferay.portal.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portlet.bookmarks.model.BookmarksEntry;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
+import com.liferay.portlet.bookmarks.model.impl.BookmarksFolderImpl;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.List;
 
 /**
  * @author Eudaldo Alonso
+ * @author Alexander Chow
  */
 public class BookmarksFolderFinderImpl
 		extends BasePersistenceImpl<BookmarksFolder>
@@ -46,7 +48,7 @@ public class BookmarksFolderFinderImpl
 		BookmarksFolderFinder.class.getName() + ".countF_ByG_P";
 
 	public static final String COUNT_F_BY_G_P_S =
-	BookmarksFolderFinder.class.getName() + ".countF_ByG_P_S";
+		BookmarksFolderFinder.class.getName() + ".countF_ByG_P_S";
 
 	public static final String COUNT_E_BY_G_F =
 		BookmarksFolderFinder.class.getName() + ".countE_ByG_F";
@@ -54,11 +56,14 @@ public class BookmarksFolderFinderImpl
 	public static final String COUNT_E_BY_G_F_S =
 		BookmarksFolderFinder.class.getName() + ".countE_ByG_F_S";
 
+	public static final String FIND_BY_NO_ASSETS =
+		BookmarksFolderFinder.class.getName() + ".findByNoAssets";
+
 	public static final String FIND_F_BY_G_P =
-	BookmarksFolderFinder.class.getName() + ".findF_ByG_P";
+		BookmarksFolderFinder.class.getName() + ".findF_ByG_P";
 
 	public static final String FIND_F_BY_G_P_S =
-	BookmarksFolderFinder.class.getName() + ".findF_ByG_P_S";
+		BookmarksFolderFinder.class.getName() + ".findF_ByG_P_S";
 
 	public static final String FIND_E_BY_G_F =
 		BookmarksFolderFinder.class.getName() + ".findE_ByG_F";
@@ -66,6 +71,7 @@ public class BookmarksFolderFinderImpl
 	public static final String FIND_E_BY_G_F_S =
 		BookmarksFolderFinder.class.getName() + ".findE_ByG_F_S";
 
+	@Override
 	public int countF_E_ByG_F(
 			long groupId, long folderId, QueryDefinition queryDefinition)
 		throws SystemException {
@@ -73,6 +79,7 @@ public class BookmarksFolderFinderImpl
 		return doCountF_E_ByG_F(groupId, folderId, queryDefinition, false);
 	}
 
+	@Override
 	public int filterCountF_E_ByG_F(
 			long groupId, long folderId, QueryDefinition queryDefinition)
 		throws SystemException {
@@ -80,6 +87,7 @@ public class BookmarksFolderFinderImpl
 		return doCountF_E_ByG_F(groupId, folderId, queryDefinition, true);
 	}
 
+	@Override
 	public List<Object> filterFindBF_E_ByG_F(
 			long groupId, long folderId, QueryDefinition queryDefinition)
 		throws SystemException {
@@ -87,6 +95,30 @@ public class BookmarksFolderFinderImpl
 		return doFindF_E_ByG_F(groupId, folderId, queryDefinition, true);
 	}
 
+	@Override
+	public List<BookmarksFolder> findByNoAssets() throws SystemException {
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			String sql = CustomSQLUtil.get(FIND_BY_NO_ASSETS);
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addEntity("BookmarksFolder", BookmarksFolderImpl.class);
+
+			return q.list(true);
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	@Override
 	public List<Object> findF_E_ByG_F(
 			long groupId, long folderId, QueryDefinition queryDefinition)
 		throws SystemException {

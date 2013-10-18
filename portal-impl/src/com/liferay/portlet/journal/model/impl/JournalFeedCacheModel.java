@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -91,6 +91,7 @@ public class JournalFeedCacheModel implements CacheModel<JournalFeed>,
 		return sb.toString();
 	}
 
+	@Override
 	public JournalFeed toEntityModel() {
 		JournalFeedImpl journalFeedImpl = new JournalFeedImpl();
 
@@ -227,6 +228,7 @@ public class JournalFeedCacheModel implements CacheModel<JournalFeed>,
 		return journalFeedImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		uuid = objectInput.readUTF();
 		id = objectInput.readLong();
@@ -253,6 +255,7 @@ public class JournalFeedCacheModel implements CacheModel<JournalFeed>,
 		feedVersion = objectInput.readDouble();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		if (uuid == null) {

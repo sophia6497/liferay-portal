@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,12 +16,14 @@ package com.liferay.portal.model;
 
 import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
 
 import java.io.Serializable;
 
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
@@ -38,7 +40,8 @@ import java.util.Map;
  * @see com.liferay.portal.model.impl.LayoutPrototypeModelImpl
  * @generated
  */
-public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype> {
+public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype>,
+	StagedAuditedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -65,6 +68,7 @@ public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype> {
 	 * @return the uuid of this layout prototype
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -72,6 +76,7 @@ public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype> {
 	 *
 	 * @param uuid the uuid of this layout prototype
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -93,6 +98,7 @@ public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype> {
 	 *
 	 * @return the company ID of this layout prototype
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -100,7 +106,90 @@ public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype> {
 	 *
 	 * @param companyId the company ID of this layout prototype
 	 */
+	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the user ID of this layout prototype.
+	 *
+	 * @return the user ID of this layout prototype
+	 */
+	@Override
+	public long getUserId();
+
+	/**
+	 * Sets the user ID of this layout prototype.
+	 *
+	 * @param userId the user ID of this layout prototype
+	 */
+	@Override
+	public void setUserId(long userId);
+
+	/**
+	 * Returns the user uuid of this layout prototype.
+	 *
+	 * @return the user uuid of this layout prototype
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public String getUserUuid() throws SystemException;
+
+	/**
+	 * Sets the user uuid of this layout prototype.
+	 *
+	 * @param userUuid the user uuid of this layout prototype
+	 */
+	@Override
+	public void setUserUuid(String userUuid);
+
+	/**
+	 * Returns the user name of this layout prototype.
+	 *
+	 * @return the user name of this layout prototype
+	 */
+	@AutoEscape
+	@Override
+	public String getUserName();
+
+	/**
+	 * Sets the user name of this layout prototype.
+	 *
+	 * @param userName the user name of this layout prototype
+	 */
+	@Override
+	public void setUserName(String userName);
+
+	/**
+	 * Returns the create date of this layout prototype.
+	 *
+	 * @return the create date of this layout prototype
+	 */
+	@Override
+	public Date getCreateDate();
+
+	/**
+	 * Sets the create date of this layout prototype.
+	 *
+	 * @param createDate the create date of this layout prototype
+	 */
+	@Override
+	public void setCreateDate(Date createDate);
+
+	/**
+	 * Returns the modified date of this layout prototype.
+	 *
+	 * @return the modified date of this layout prototype
+	 */
+	@Override
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this layout prototype.
+	 *
+	 * @param modifiedDate the modified date of this layout prototype
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate);
 
 	/**
 	 * Returns the name of this layout prototype.
@@ -252,40 +341,69 @@ public interface LayoutPrototypeModel extends BaseModel<LayoutPrototype> {
 	 */
 	public void setActive(boolean active);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
+
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
 
 	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
 		throws LocaleException;
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(LayoutPrototype layoutPrototype);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<LayoutPrototype> toCacheModel();
 
+	@Override
 	public LayoutPrototype toEscapedModel();
 
+	@Override
 	public LayoutPrototype toUnescapedModel();
 
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,16 +17,17 @@ package com.liferay.portlet;
 import com.liferay.portal.kernel.atom.AtomCollectionAdapter;
 import com.liferay.portal.kernel.lar.PortletDataHandler;
 import com.liferay.portal.kernel.lar.StagedModelDataHandler;
+import com.liferay.portal.kernel.notifications.UserNotificationHandler;
 import com.liferay.portal.kernel.poller.PollerProcessor;
 import com.liferay.portal.kernel.pop.MessageListener;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
 import com.liferay.portal.kernel.portlet.PortletBag;
 import com.liferay.portal.kernel.portlet.PortletLayoutListener;
-import com.liferay.portal.kernel.portletdisplaytemplate.PortletDisplayTemplateHandler;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.OpenSearch;
 import com.liferay.portal.kernel.servlet.URLEncoder;
+import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.webdav.WebDAVStorage;
@@ -63,12 +64,13 @@ public class PortletBagImpl implements PortletBag {
 		URLEncoder urlEncoderInstance,
 		PortletDataHandler portletDataHandlerInstance,
 		List<StagedModelDataHandler<?>> stagedModelDataHandlerInstances,
-		PortletDisplayTemplateHandler portletDisplayTemplateHandlerInstance,
+		TemplateHandler templateHandlerInstance,
 		PortletLayoutListener portletLayoutListenerInstance,
 		PollerProcessor pollerProcessorInstance,
 		MessageListener popMessageListenerInstance,
-		SocialActivityInterpreter socialActivityInterpreterInstance,
+		List<SocialActivityInterpreter> socialActivityInterpreterInstances,
 		SocialRequestInterpreter socialRequestInterpreterInstance,
+		List<UserNotificationHandler> userNotificationHandlerInstances,
 		WebDAVStorage webDAVStorageInstance, Method xmlRpcMethodInstance,
 		ControlPanelEntry controlPanelEntryInstance,
 		List<AssetRendererFactory> assetRendererFactoryInstances,
@@ -90,13 +92,14 @@ public class PortletBagImpl implements PortletBag {
 		_urlEncoderInstance = urlEncoderInstance;
 		_portletDataHandlerInstance = portletDataHandlerInstance;
 		_stagedModelDataHandlerInstances = stagedModelDataHandlerInstances;
-		_portletDisplayTemplateHandlerInstance =
-			portletDisplayTemplateHandlerInstance;
+		_templateHandlerInstance = templateHandlerInstance;
 		_portletLayoutListenerInstance = portletLayoutListenerInstance;
 		_pollerProcessorInstance = pollerProcessorInstance;
 		_popMessageListenerInstance = popMessageListenerInstance;
-		_socialActivityInterpreterInstance = socialActivityInterpreterInstance;
+		_socialActivityInterpreterInstances =
+			socialActivityInterpreterInstances;
 		_socialRequestInterpreterInstance = socialRequestInterpreterInstance;
+		_userNotificationHandlerInstances = userNotificationHandlerInstances;
 		_webDAVStorageInstance = webDAVStorageInstance;
 		_xmlRpcMethodInstance = xmlRpcMethodInstance;
 		_controlPanelEntryInstance = controlPanelEntryInstance;
@@ -117,12 +120,12 @@ public class PortletBagImpl implements PortletBag {
 			getConfigurationActionInstance(), getIndexerInstances(),
 			getOpenSearchInstance(), getFriendlyURLMapperInstance(),
 			getURLEncoderInstance(), getPortletDataHandlerInstance(),
-			getStagedModelDataHandlerInstances(),
-			getPortletDisplayTemplateHandlerInstance(),
+			getStagedModelDataHandlerInstances(), getTemplateHandlerInstance(),
 			getPortletLayoutListenerInstance(), getPollerProcessorInstance(),
 			getPopMessageListenerInstance(),
-			getSocialActivityInterpreterInstance(),
-			getSocialRequestInterpreterInstance(), getWebDAVStorageInstance(),
+			getSocialActivityInterpreterInstances(),
+			getSocialRequestInterpreterInstance(),
+			getUserNotificationHandlerInstances(), getWebDAVStorageInstance(),
 			getXmlRpcMethodInstance(), getControlPanelEntryInstance(),
 			getAssetRendererFactoryInstances(),
 			getAtomCollectionAdapterInstances(),
@@ -132,76 +135,87 @@ public class PortletBagImpl implements PortletBag {
 			getResourceBundles());
 	}
 
+	@Override
 	public List<AssetRendererFactory> getAssetRendererFactoryInstances() {
 		return _assetRendererFactoryInstances;
 	}
 
+	@Override
 	public List<AtomCollectionAdapter<?>> getAtomCollectionAdapterInstances() {
 		return _atomCollectionAdapterInstances;
 	}
 
+	@Override
 	public ConfigurationAction getConfigurationActionInstance() {
 		return _configurationActionInstance;
 	}
 
+	@Override
 	public ControlPanelEntry getControlPanelEntryInstance() {
 		return _controlPanelEntryInstance;
 	}
 
+	@Override
 	public List<CustomAttributesDisplay> getCustomAttributesDisplayInstances() {
 		return _customAttributesDisplayInstances;
 	}
 
+	@Override
 	public FriendlyURLMapper getFriendlyURLMapperInstance() {
 		return _friendlyURLMapperInstance;
 	}
 
+	@Override
 	public List<Indexer> getIndexerInstances() {
 		return _indexerInstances;
 	}
 
+	@Override
 	public OpenSearch getOpenSearchInstance() {
 		return _openSearchInstance;
 	}
 
+	@Override
 	public PermissionPropagator getPermissionPropagatorInstance() {
 		return _permissionPropagatorInstance;
 	}
 
+	@Override
 	public PollerProcessor getPollerProcessorInstance() {
 		return _pollerProcessorInstance;
 	}
 
+	@Override
 	public MessageListener getPopMessageListenerInstance() {
 		return _popMessageListenerInstance;
 	}
 
+	@Override
 	public PortletDataHandler getPortletDataHandlerInstance() {
 		return _portletDataHandlerInstance;
 	}
 
-	public PortletDisplayTemplateHandler
-		getPortletDisplayTemplateHandlerInstance() {
-
-		return _portletDisplayTemplateHandlerInstance;
-	}
-
+	@Override
 	public Portlet getPortletInstance() {
 		return _portletInstance;
 	}
 
+	@Override
 	public PortletLayoutListener getPortletLayoutListenerInstance() {
 		return _portletLayoutListenerInstance;
 	}
 
+	@Override
 	public String getPortletName() {
 		return _portletName;
 	}
 
+	@Override
 	public PreferencesValidator getPreferencesValidatorInstance() {
 		return _preferencesValidatorInstance;
 	}
 
+	@Override
 	public ResourceBundle getResourceBundle(Locale locale) {
 		ResourceBundle resourceBundle = _resourceBundles.get(
 			LocaleUtil.toLanguageId(locale));
@@ -218,52 +232,78 @@ public class PortletBagImpl implements PortletBag {
 		return resourceBundle;
 	}
 
+	@Override
 	public Map<String, ResourceBundle> getResourceBundles() {
 		return _resourceBundles;
 	}
 
+	@Override
 	public ServletContext getServletContext() {
 		return _servletContext;
 	}
 
-	public SocialActivityInterpreter getSocialActivityInterpreterInstance() {
-		return _socialActivityInterpreterInstance;
+	@Override
+	public List<SocialActivityInterpreter>
+		getSocialActivityInterpreterInstances() {
+
+		return _socialActivityInterpreterInstances;
 	}
 
+	@Override
 	public SocialRequestInterpreter getSocialRequestInterpreterInstance() {
 		return _socialRequestInterpreterInstance;
 	}
 
+	@Override
 	public List<StagedModelDataHandler<?>>
 		getStagedModelDataHandlerInstances() {
 
 		return _stagedModelDataHandlerInstances;
 	}
 
+	@Override
+	public TemplateHandler getTemplateHandlerInstance() {
+		return _templateHandlerInstance;
+	}
+
+	@Override
 	public List<TrashHandler> getTrashHandlerInstances() {
 		return _trashHandlerInstances;
 	}
 
+	@Override
 	public URLEncoder getURLEncoderInstance() {
 		return _urlEncoderInstance;
 	}
 
+	@Override
+	public List<UserNotificationHandler>
+		getUserNotificationHandlerInstances() {
+
+		return _userNotificationHandlerInstances;
+	}
+
+	@Override
 	public WebDAVStorage getWebDAVStorageInstance() {
 		return _webDAVStorageInstance;
 	}
 
+	@Override
 	public List<WorkflowHandler> getWorkflowHandlerInstances() {
 		return _workflowHandlerInstances;
 	}
 
+	@Override
 	public Method getXmlRpcMethodInstance() {
 		return _xmlRpcMethodInstance;
 	}
 
+	@Override
 	public void setPortletInstance(Portlet portletInstance) {
 		_portletInstance = portletInstance;
 	}
 
+	@Override
 	public void setPortletName(String portletName) {
 		_portletName = portletName;
 	}
@@ -280,19 +320,20 @@ public class PortletBagImpl implements PortletBag {
 	private PollerProcessor _pollerProcessorInstance;
 	private MessageListener _popMessageListenerInstance;
 	private PortletDataHandler _portletDataHandlerInstance;
-	private PortletDisplayTemplateHandler
-		_portletDisplayTemplateHandlerInstance;
 	private Portlet _portletInstance;
 	private PortletLayoutListener _portletLayoutListenerInstance;
 	private String _portletName;
 	private PreferencesValidator _preferencesValidatorInstance;
 	private Map<String, ResourceBundle> _resourceBundles;
 	private ServletContext _servletContext;
-	private SocialActivityInterpreter _socialActivityInterpreterInstance;
+	private List<SocialActivityInterpreter> _socialActivityInterpreterInstances;
 	private SocialRequestInterpreter _socialRequestInterpreterInstance;
 	private List<StagedModelDataHandler<?>> _stagedModelDataHandlerInstances;
+	private TemplateHandler _templateHandlerInstance;
 	private List<TrashHandler> _trashHandlerInstances;
 	private URLEncoder _urlEncoderInstance;
+	private List<UserNotificationHandler>
+		_userNotificationHandlerInstances;
 	private WebDAVStorage _webDAVStorageInstance;
 	private List<WorkflowHandler> _workflowHandlerInstances;
 	private Method _xmlRpcMethodInstance;

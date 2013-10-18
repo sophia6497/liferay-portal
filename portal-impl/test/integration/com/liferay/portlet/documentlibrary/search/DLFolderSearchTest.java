@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,7 +29,8 @@ import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.util.DLAppTestUtil;
 
-import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -44,14 +45,64 @@ import org.junit.runner.RunWith;
 @Sync
 public class DLFolderSearchTest extends BaseSearchTestCase {
 
+	@Ignore()
 	@Override
+	@Test
 	public void testSearchAttachments() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
 	}
 
+	@Ignore()
 	@Override
+	@Test
+	public void testSearchByDDMStructureField() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
 	public void testSearchComments() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchExpireAllVersions() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchExpireLatestVersion() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchMyEntries() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchRecentEntries() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchStatus() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchVersions() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchWithinDDMStructure() throws Exception {
 	}
 
 	@Override
@@ -62,9 +113,14 @@ public class DLFolderSearchTest extends BaseSearchTestCase {
 
 		DLFolder parentDLFolder = (DLFolder)parentBaseModel;
 
+		long folderId = DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+
+		if (parentDLFolder != null) {
+			folderId = parentDLFolder.getFolderId();
+		}
+
 		Folder folder = DLAppTestUtil.addFolder(
-			parentDLFolder.getGroupId(), parentDLFolder.getFolderId(),
-			keywords);
+			folderId, keywords, serviceContext);
 
 		return (DLFolder)folder.getModel();
 	}
@@ -76,12 +132,26 @@ public class DLFolderSearchTest extends BaseSearchTestCase {
 
 	@Override
 	protected BaseModel<?> getParentBaseModel(
+			BaseModel<?> parentBaseModel, ServiceContext serviceContext)
+		throws Exception {
+
+		Folder folder = DLAppTestUtil.addFolder(
+			(Long)parentBaseModel.getPrimaryKeyObj(),
+			ServiceTestUtil.randomString(_FOLDER_NAME_MAX_LENGTH),
+			serviceContext);
+
+		return (DLFolder)folder.getModel();
+	}
+
+	@Override
+	protected BaseModel<?> getParentBaseModel(
 			Group group, ServiceContext serviceContext)
 		throws Exception {
 
 		Folder folder = DLAppTestUtil.addFolder(
-			group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			ServiceTestUtil.randomString(_FOLDER_NAME_MAX_LENGTH));
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			ServiceTestUtil.randomString(_FOLDER_NAME_MAX_LENGTH),
+			serviceContext);
 
 		return (DLFolder)folder.getModel();
 	}

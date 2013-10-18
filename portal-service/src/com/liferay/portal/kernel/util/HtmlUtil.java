@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -80,6 +80,10 @@ public class HtmlUtil {
 
 	public static String replaceMsWordCharacters(String html) {
 		return getHtml().replaceMsWordCharacters(html);
+	}
+
+	public static String replaceNewLine(String html) {
+		return getHtml().replaceNewLine(html);
 	}
 
 	public static String stripBetween(String html, String tag) {

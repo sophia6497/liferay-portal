@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,13 +25,11 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * <p>
- * This class provides a SOAP utility for the
+ * Provides the SOAP utility for the
  * {@link com.liferay.portal.service.RoleServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it is difficult for SOAP to
  * support certain types.
- * </p>
  *
  * <p>
  * ServiceBuilder follows certain rules in translating the methods. For example,
@@ -60,10 +58,10 @@ import java.util.Map;
  * The SOAP utility is only generated for remote services.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       RoleServiceHttp
- * @see       com.liferay.portal.model.RoleSoap
- * @see       com.liferay.portal.service.RoleServiceUtil
+ * @author Brian Wing Shun Chan
+ * @see RoleServiceHttp
+ * @see com.liferay.portal.model.RoleSoap
+ * @see com.liferay.portal.service.RoleServiceUtil
  * @generated
  */
 public class RoleServiceSoap {
@@ -79,7 +77,10 @@ public class RoleServiceSoap {
 	* @param descriptionMap the role's localized descriptions (optionally
 	<code>null</code>)
 	* @param type the role's type (optionally <code>0</code>)
-	* @param subType the role's subtype (optionally <code>null</code>)
+	* @param subtype the role's subtype (optionally <code>null</code>)
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set the expando bridge attributes for the
+	role.
 	* @return the role
 	* @throws PortalException if a user with the primary key could not be
 	found, if the user did not have permission to add roles, if the
@@ -93,7 +94,9 @@ public class RoleServiceSoap {
 		java.lang.String[] titleMapValues,
 		java.lang.String[] descriptionMapLanguageIds,
 		java.lang.String[] descriptionMapValues, int type,
-		java.lang.String subType) throws RemoteException {
+		java.lang.String subtype,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws RemoteException {
 		try {
 			Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(titleMapLanguageIds,
 					titleMapValues);
@@ -101,7 +104,8 @@ public class RoleServiceSoap {
 					descriptionMapValues);
 
 			com.liferay.portal.model.Role returnValue = RoleServiceUtil.addRole(className,
-					classPK, name, titleMap, descriptionMap, type, subType);
+					classPK, name, titleMap, descriptionMap, type, subtype,
+					serviceContext);
 
 			return com.liferay.portal.model.RoleSoap.toSoapModel(returnValue);
 		}
@@ -127,7 +131,8 @@ public class RoleServiceSoap {
 	the class name or the role name were invalid, or if the role
 	is a duplicate
 	* @throws SystemException if a system exception occurred
-	* @deprecated {@link #addRole(String, long, String, Map, Map, int, String)}
+	* @deprecated As of 6.2.0, replaced by {@link #addRole(String, long,
+	String, Map, Map, int, String, ServiceContext)}
 	*/
 	public static com.liferay.portal.model.RoleSoap addRole(
 		java.lang.String name, java.lang.String[] titleMapLanguageIds,
@@ -463,6 +468,9 @@ public class RoleServiceSoap {
 	* @param descriptionMap the new localized descriptions (optionally
 	<code>null</code>) to replace those existing for the role
 	* @param subtype the role's new subtype (optionally <code>null</code>)
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set the expando bridge attributes for the
+	role.
 	* @return the role with the primary key
 	* @throws PortalException if the user did not have permission to update the
 	role, if a role with the primary could not be found, or if the
@@ -473,7 +481,8 @@ public class RoleServiceSoap {
 		java.lang.String name, java.lang.String[] titleMapLanguageIds,
 		java.lang.String[] titleMapValues,
 		java.lang.String[] descriptionMapLanguageIds,
-		java.lang.String[] descriptionMapValues, java.lang.String subtype)
+		java.lang.String[] descriptionMapValues, java.lang.String subtype,
+		com.liferay.portal.service.ServiceContext serviceContext)
 		throws RemoteException {
 		try {
 			Map<Locale, String> titleMap = LocalizationUtil.getLocalizationMap(titleMapLanguageIds,
@@ -482,7 +491,7 @@ public class RoleServiceSoap {
 					descriptionMapValues);
 
 			com.liferay.portal.model.Role returnValue = RoleServiceUtil.updateRole(roleId,
-					name, titleMap, descriptionMap, subtype);
+					name, titleMap, descriptionMap, subtype, serviceContext);
 
 			return com.liferay.portal.model.RoleSoap.toSoapModel(returnValue);
 		}

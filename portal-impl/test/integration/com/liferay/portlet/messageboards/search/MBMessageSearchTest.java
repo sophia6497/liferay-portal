@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,14 +14,18 @@
 
 package com.liferay.portlet.messageboards.search;
 
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.ClassedModel;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.search.BaseSearchTestCase;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
 import com.liferay.portal.test.MainServletExecutionTestListener;
 import com.liferay.portal.test.Sync;
@@ -29,7 +33,9 @@ import com.liferay.portal.test.SynchronousDestinationExecutionTestListener;
 import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBMessage;
+import com.liferay.portlet.messageboards.service.MBCategoryServiceUtil;
 import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
+import com.liferay.portlet.messageboards.service.MBThreadServiceUtil;
 import com.liferay.portlet.messageboards.util.MBTestUtil;
 
 import java.io.InputStream;
@@ -37,7 +43,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -52,9 +59,52 @@ import org.junit.runner.RunWith;
 @Sync
 public class MBMessageSearchTest extends BaseSearchTestCase {
 
+	@Ignore()
 	@Override
+	@Test
+	public void testSearchByDDMStructureField() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchByKeywordsInsideParentBaseModel() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
 	public void testSearchComments() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchExpireAllVersions() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchExpireLatestVersion() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchStatus() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchVersions() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchWithinDDMStructure() throws Exception {
 	}
 
 	@Override
@@ -69,13 +119,16 @@ public class MBMessageSearchTest extends BaseSearchTestCase {
 			existingFiles.add(fileEntry.getTitle());
 		}
 
-		ServiceContext serviceContext = new ServiceContext();
+		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
+			message.getGroupId());
 
-		serviceContext.setScopeGroupId(message.getGroupId());
+		List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
+			MBTestUtil.getInputStreamOVPs(
+				"OSX_Test.docx", getClass(), getSearchKeywords());
 
 		MBMessageLocalServiceUtil.updateMessage(
 			TestPropsValues.getUserId(), message.getMessageId(),
-			getSearchKeywords(), getSearchKeywords(), _getInputStreamOVPs(),
+			getSearchKeywords(), getSearchKeywords(), inputStreamOVPs,
 			existingFiles, 0, false, serviceContext);
 	}
 
@@ -105,26 +158,31 @@ public class MBMessageSearchTest extends BaseSearchTestCase {
 	}
 
 	@Override
+	protected String getParentBaseModelClassName() {
+		return MBCategory.class.getName();
+	}
+
+	@Override
 	protected String getSearchKeywords() {
 		return "Title";
 	}
 
-	private List<ObjectValuePair<String, InputStream>> _getInputStreamOVPs() {
-		List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
-			new ArrayList<ObjectValuePair<String, InputStream>>(1);
+	@Override
+	protected void moveParentBaseModelToTrash(long primaryKey)
+		throws Exception {
 
-		Class<?> clazz = getClass();
+		MBCategoryServiceUtil.moveCategoryToTrash(primaryKey);
+	}
 
-		InputStream inputStream = clazz.getResourceAsStream(
-			"dependencies/OSX_Test.docx");
+	@Override
+	protected long searchGroupEntriesCount(long groupId, long creatorUserId)
+		throws Exception {
 
-		ObjectValuePair<String, InputStream> inputStreamOVP =
-			new ObjectValuePair<String, InputStream>(
-				getSearchKeywords(), inputStream);
+		Hits hits =  MBThreadServiceUtil.search(
+			groupId, creatorUserId, WorkflowConstants.STATUS_APPROVED,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
-		inputStreamOVPs.add(inputStreamOVP);
-
-		return inputStreamOVPs;
+		return hits.getLength();
 	}
 
 }

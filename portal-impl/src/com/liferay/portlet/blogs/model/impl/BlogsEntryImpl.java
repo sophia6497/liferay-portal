@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,6 +33,7 @@ public class BlogsEntryImpl extends BlogsEntryBaseImpl {
 	public BlogsEntryImpl() {
 	}
 
+	@Override
 	public String getEntryImageURL(ThemeDisplay themeDisplay) {
 		if (!isSmallImage()) {
 			return null;
@@ -48,6 +49,7 @@ public class BlogsEntryImpl extends BlogsEntryBaseImpl {
 					WebServerServletTokenUtil.getToken(getSmallImageId());
 	}
 
+	@Override
 	public String getSmallImageType() throws PortalException, SystemException {
 		if ((_smallImageType == null) && isSmallImage()) {
 			Image smallImage = ImageLocalServiceUtil.getImage(
@@ -59,6 +61,7 @@ public class BlogsEntryImpl extends BlogsEntryBaseImpl {
 		return _smallImageType;
 	}
 
+	@Override
 	public boolean isVisible() {
 		Date displayDate = getDisplayDate();
 
@@ -70,6 +73,7 @@ public class BlogsEntryImpl extends BlogsEntryBaseImpl {
 		}
 	}
 
+	@Override
 	public void setSmallImageType(String smallImageType) {
 		_smallImageType = smallImageType;
 	}

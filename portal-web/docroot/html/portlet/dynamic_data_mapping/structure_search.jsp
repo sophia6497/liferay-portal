@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,7 +26,7 @@ StructureDisplayTerms displayTerms = new StructureDisplayTerms(renderRequest);
 	id="toggle_id_ddm_structure_search"
 >
 	<aui:fieldset cssClass="lfr-ddm-search-form">
-		<aui:input name="<%= displayTerms.NAME %>" size="20" value="<%= displayTerms.getName() %>" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="<%= displayTerms.NAME %>" size="20" value="<%= displayTerms.getName() %>" />
 
 		<aui:input name="<%= displayTerms.DESCRIPTION %>" size="20" value="<%= displayTerms.getDescription() %>" />
 
@@ -64,44 +64,3 @@ StructureDisplayTerms displayTerms = new StructureDisplayTerms(renderRequest);
 		</c:choose>
 	</aui:fieldset>
 </liferay-ui:search-toggle>
-
-<%
-boolean showAddStructureButton = false;
-
-if (!portletName.equals(PortletKeys.DYNAMIC_DATA_MAPPING)) {
-	showAddStructureButton = DDMPermission.contains(permissionChecker, scopeGroupId, ddmResource, ActionKeys.ADD_STRUCTURE);
-}
-
-String buttonLabel = "add-structure";
-
-if (Validator.isNotNull(scopeStructureName)) {
-	buttonLabel = LanguageUtil.format(pageContext, "add-x", scopeStructureName);
-}
-%>
-
-<c:if test="<%= showAddStructureButton %>">
-	<aui:button-row>
-		<aui:button onClick='<%= renderResponse.getNamespace() + "addStructure();" %>' value="<%= buttonLabel %>" />
-	</aui:button-row>
-</c:if>
-
-<aui:script>
-	function <portlet:namespace />addStructure() {
-		var url = '<portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/dynamic_data_mapping/edit_structure" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';
-
-		if (toggle_id_ddm_structure_searchcurClickValue == 'basic') {
-			url += '&<portlet:namespace /><%= displayTerms.NAME %>=' + document.<portlet:namespace />fm.<portlet:namespace /><%= displayTerms.KEYWORDS %>.value;
-
-			submitForm(document.hrefFm, url);
-		}
-		else {
-			document.<portlet:namespace />fm.method = 'post';
-
-			submitForm(document.<portlet:namespace />fm, url);
-		}
-	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace /><%= displayTerms.NAME %>);
-	</c:if>
-</aui:script>

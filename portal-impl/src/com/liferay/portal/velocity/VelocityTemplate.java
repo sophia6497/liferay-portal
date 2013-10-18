@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,12 @@ import com.liferay.portal.util.PropsValues;
 
 import java.io.Writer;
 
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+
+import java.util.Map;
+
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -37,35 +43,18 @@ public class VelocityTemplate extends AbstractTemplate {
 
 	public VelocityTemplate(
 		TemplateResource templateResource,
-		TemplateResource errorTemplateResource, VelocityContext velocityContext,
+		TemplateResource errorTemplateResource, Map<String, Object> context,
 		VelocityEngine velocityEngine,
-		TemplateContextHelper templateContextHelper) {
+		TemplateContextHelper templateContextHelper, boolean privileged) {
 
 		super(
-			templateResource, errorTemplateResource, templateContextHelper,
-			TemplateConstants.LANG_TYPE_VM,
+			templateResource, errorTemplateResource, context,
+			templateContextHelper, TemplateConstants.LANG_TYPE_VM,
 			PropsValues.VELOCITY_ENGINE_RESOURCE_MODIFICATION_CHECK_INTERVAL);
 
-		if (velocityContext == null) {
-			_velocityContext = new VelocityContext();
-		}
-		else {
-			_velocityContext = new VelocityContext(velocityContext);
-		}
-
+		_velocityContext = new VelocityContext(super.context);
 		_velocityEngine = velocityEngine;
-	}
-
-	public Object get(String key) {
-		return _velocityContext.get(key);
-	}
-
-	public void put(String key, Object value) {
-		if (value == null) {
-			return;
-		}
-
-		_velocityContext.put(key, value);
+		_privileged = privileged;
 	}
 
 	@Override
@@ -108,11 +97,22 @@ public class VelocityTemplate extends AbstractTemplate {
 			TemplateConstants.LANG_TYPE_VM, templateResource);
 
 		try {
-			Template template = _velocityEngine.getTemplate(
-				getTemplateResourceUUID(templateResource),
-				TemplateConstants.DEFAUT_ENCODING);
+			Template template = null;
+
+			if (_privileged) {
+				template = AccessController.doPrivileged(
+					new TemplatePrivilegedExceptionAction(templateResource));
+			}
+			else {
+				template = _velocityEngine.getTemplate(
+					getTemplateResourceUUID(templateResource),
+					TemplateConstants.DEFAUT_ENCODING);
+			}
 
 			template.merge(_velocityContext, writer);
+		}
+		catch (PrivilegedActionException pae) {
+			throw pae.getException();
 		}
 		finally {
 			TemplateResourceThreadLocal.setTemplateResource(
@@ -120,7 +120,28 @@ public class VelocityTemplate extends AbstractTemplate {
 		}
 	}
 
+	private boolean _privileged;
 	private VelocityContext _velocityContext;
 	private VelocityEngine _velocityEngine;
+
+	private class TemplatePrivilegedExceptionAction
+		implements PrivilegedExceptionAction<Template> {
+
+		public TemplatePrivilegedExceptionAction(
+			TemplateResource templateResource) {
+
+			_templateResource = templateResource;
+		}
+
+		@Override
+		public Template run() throws Exception {
+			return _velocityEngine.getTemplate(
+				getTemplateResourceUUID(_templateResource),
+				TemplateConstants.DEFAUT_ENCODING);
+		}
+
+		private TemplateResource _templateResource;
+
+	}
 
 }

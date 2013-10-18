@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.model;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -28,7 +29,6 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReader;
 import com.liferay.portal.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.util.PropsUtil;
-import com.liferay.util.PwdGenerator;
 
 import java.io.InputStream;
 
@@ -49,6 +49,7 @@ import java.util.TreeSet;
  * @author Brian Wing Shun Chan
  * @author Tomas Polesovsky
  */
+@DoPrivileged
 public class ModelHintsImpl implements ModelHints {
 
 	public void afterPropertiesSet() {
@@ -95,15 +96,18 @@ public class ModelHintsImpl implements ModelHints {
 		}
 	}
 
+	@Override
 	public String buildCustomValidatorName(String validatorName) {
 		return validatorName.concat(StringPool.UNDERLINE).concat(
-			PwdGenerator.getPassword(PwdGenerator.KEY3, 4));
+			StringUtil.randomId());
 	}
 
+	@Override
 	public Map<String, String> getDefaultHints(String model) {
 		return _defaultHints.get(model);
 	}
 
+	@Override
 	public com.liferay.portal.kernel.xml.Element getFieldsEl(
 		String model, String field) {
 
@@ -113,21 +117,21 @@ public class ModelHintsImpl implements ModelHints {
 		if (fields == null) {
 			return null;
 		}
-		else {
-			Element fieldsEl = (Element)fields.get(field + _ELEMENTS_SUFFIX);
 
-			if (fieldsEl == null) {
-				return null;
-			}
-			else {
-				return fieldsEl;
-			}
+		Element fieldsEl = (Element)fields.get(field + _ELEMENTS_SUFFIX);
+
+		if (fieldsEl == null) {
+			return null;
+		}
+		else {
+			return fieldsEl;
 		}
 	}
 
+	@Override
 	public Map<String, String> getHints(String model, String field) {
-		Map<String, Object> fields =
-			(Map<String, Object>)_modelFields.get(model);
+		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
+			model);
 
 		if (fields == null) {
 			return null;
@@ -137,6 +141,7 @@ public class ModelHintsImpl implements ModelHints {
 		}
 	}
 
+	@Override
 	public int getMaxLength(String model, String field) {
 		Map<String, String> hints = getHints(model, field);
 
@@ -152,10 +157,12 @@ public class ModelHintsImpl implements ModelHints {
 		return maxLength;
 	}
 
+	@Override
 	public List<String> getModels() {
 		return ListUtil.fromCollection(_models);
 	}
 
+	@Override
 	public Tuple getSanitizeTuple(String model, String field) {
 		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
 			model);
@@ -168,6 +175,7 @@ public class ModelHintsImpl implements ModelHints {
 		}
 	}
 
+	@Override
 	public List<Tuple> getSanitizeTuples(String model) {
 		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
 			model);
@@ -175,23 +183,23 @@ public class ModelHintsImpl implements ModelHints {
 		if (fields == null) {
 			return Collections.emptyList();
 		}
-		else {
-			List<Tuple> sanitizeTuples = new ArrayList<Tuple>();
 
-			for (Map.Entry<String, Object> entry : fields.entrySet()) {
-				String key = entry.getKey();
+		List<Tuple> sanitizeTuples = new ArrayList<Tuple>();
 
-				if (key.endsWith(_SANITIZE_SUFFIX)) {
-					Tuple sanitizeTuple = (Tuple)entry.getValue();
+		for (Map.Entry<String, Object> entry : fields.entrySet()) {
+			String key = entry.getKey();
 
-					sanitizeTuples.add(sanitizeTuple);
-				}
+			if (key.endsWith(_SANITIZE_SUFFIX)) {
+				Tuple sanitizeTuple = (Tuple)entry.getValue();
+
+				sanitizeTuples.add(sanitizeTuple);
 			}
-
-			return sanitizeTuples;
 		}
+
+		return sanitizeTuples;
 	}
 
+	@Override
 	public String getType(String model, String field) {
 		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
 			model);
@@ -204,6 +212,7 @@ public class ModelHintsImpl implements ModelHints {
 		}
 	}
 
+	@Override
 	public List<Tuple> getValidators(String model, String field) {
 		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
 			model);
@@ -218,6 +227,7 @@ public class ModelHintsImpl implements ModelHints {
 		}
 	}
 
+	@Override
 	public String getValue(
 		String model, String field, String name, String defaultValue) {
 
@@ -230,6 +240,19 @@ public class ModelHintsImpl implements ModelHints {
 		return GetterUtil.getString(hints.get(name), defaultValue);
 	}
 
+	@Override
+	public boolean hasField(String model, String field) {
+		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
+			model);
+
+		if (fields == null) {
+			return false;
+		}
+
+		return fields.containsKey(field + _ELEMENTS_SUFFIX);
+	}
+
+	@Override
 	public boolean isCustomValidator(String validatorName) {
 		if (validatorName.equals("custom")) {
 			return true;
@@ -238,6 +261,7 @@ public class ModelHintsImpl implements ModelHints {
 		return false;
 	}
 
+	@Override
 	public boolean isLocalized(String model, String field) {
 		Map<String, Object> fields = (Map<String, Object>)_modelFields.get(
 			model);
@@ -245,19 +269,18 @@ public class ModelHintsImpl implements ModelHints {
 		if (fields == null) {
 			return false;
 		}
-		else {
-			Boolean localized = (Boolean)fields.get(
-				field + _LOCALIZATION_SUFFIX);
 
-			if (localized != null) {
-				return localized;
-			}
-			else {
-				return false;
-			}
+		Boolean localized = (Boolean)fields.get(field + _LOCALIZATION_SUFFIX);
+
+		if (localized != null) {
+			return localized;
+		}
+		else {
+			return false;
 		}
 	}
 
+	@Override
 	public void read(ClassLoader classLoader, String source) throws Exception {
 		read(classLoader, source, classLoader.getResourceAsStream(source));
 	}
@@ -439,6 +462,7 @@ public class ModelHintsImpl implements ModelHints {
 		_saxReader = saxReader;
 	}
 
+	@Override
 	public String trimString(String model, String field, String value) {
 		if (value == null) {
 			return value;

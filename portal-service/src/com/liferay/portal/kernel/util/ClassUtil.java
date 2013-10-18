@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -271,30 +271,32 @@ public class ClassUtil {
 			tokens.add(annotationName.replace("@", ""));
 		}
 		else if (annotationParametersMatcher.matches()) {
-			if (!s.trim().endsWith(")")) {
+			String annotationName = annotationParametersMatcher.group(1);
+
+			tokens.add(annotationName);
+
+			String annotationParameters = null;
+
+			if (s.trim().endsWith(")")) {
+				annotationParameters = annotationParametersMatcher.group(2);
+			}
+			else {
+				StringBundler sb = new StringBundler();
+
 				while (st.nextToken() != StreamTokenizer.TT_EOF) {
 					if (st.ttype == StreamTokenizer.TT_WORD) {
-						s += st.sval;
-						if (s.trim().endsWith(")")) {
+						sb.append(st.sval);
+
+						if (st.sval.trim().endsWith(")")) {
 							break;
 						}
 					}
 				}
+
+				annotationParameters = sb.toString();
 			}
 
-			annotationParametersMatcher = _ANNOTATION_PARAMETERS_REGEXP.matcher(
-				s);
-
-			if (annotationParametersMatcher.matches()) {
-				String annotationName = annotationParametersMatcher.group(1);
-				String annotationParameters = annotationParametersMatcher.group(
-					2);
-
-				tokens.add(annotationName.replace("@", ""));
-
-				tokens = _processAnnotationParameters(
-					annotationParameters, tokens);
-			}
+			tokens = _processAnnotationParameters(annotationParameters, tokens);
 		}
 
 		return tokens.toArray(new String[tokens.size()]);

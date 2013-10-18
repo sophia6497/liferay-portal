@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -53,17 +53,23 @@ public class PerFieldAnalyzerTest extends PowerMockito {
 
 			when(
 				analyzer.getPositionIncrementGap(fieldName)
-			).thenReturn(1);
+			).thenReturn(
+				1
+			);
 
 			when(
 				analyzer.getOffsetGap(Mockito.any(Fieldable.class))
-			).thenReturn(1);
+			).thenReturn(
+				1
+			);
 
 			Fieldable fieldable = mock(Fieldable.class);
 
 			when(
 				fieldable.name()
-			).thenReturn(fieldName);
+			).thenReturn(
+				fieldName
+			);
 
 			_perFieldAnalyzer.addAnalyzer(fieldName, analyzer);
 

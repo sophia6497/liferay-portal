@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -111,10 +111,7 @@ public class DDMXMLImplTest extends PowerMockito {
 			return false;
 		}
 
-		Attribute defaultLocaleAttribute = rootElement.attribute(
-			"default-locale");
-
-		if (!newLocaleId.equals(defaultLocaleAttribute.getValue())) {
+		if (!newLocaleId.equals(rootElement.attributeValue("default-locale"))) {
 			return false;
 		}
 
@@ -148,10 +145,8 @@ public class DDMXMLImplTest extends PowerMockito {
 			Element rootElement = (Element)structureDocument.selectSingleNode(
 				"/structure/root");
 
-			Attribute defaultLocale = rootElement.attribute("default-locale");
-
 			Locale contentDefaultLocale = LocaleUtil.fromLanguageId(
-				defaultLocale.getValue());
+				rootElement.attributeValue("default-locale"));
 
 			Locale availableDefaultLocale = LocaleUtil.fromLanguageId("es_ES");
 
@@ -178,7 +173,6 @@ public class DDMXMLImplTest extends PowerMockito {
 	}
 
 	private DDMXMLImpl _ddmXML = new DDMXMLImpl();
-
 	private SAXReaderImpl _saxReader = new SAXReaderImpl();
 
 }

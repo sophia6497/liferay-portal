@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DiffHtmlUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
@@ -107,12 +108,12 @@ public class WikiUtil {
 		String targetContent = StringPool.BLANK;
 
 		if (sourcePage != null) {
-			sourceContent = WikiUtil.convert(
+			sourceContent = convert(
 				sourcePage, viewPageURL, editPageURL, attachmentURLPrefix);
 		}
 
 		if (targetPage != null) {
-			targetContent = WikiUtil.convert(
+			targetContent = convert(
 				targetPage, viewPageURL, editPageURL, attachmentURLPrefix);
 		}
 
@@ -137,6 +138,8 @@ public class WikiUtil {
 			for (Map<String, Boolean> pageTitle : pageTitles) {
 				String pageTitleLowerCase = page.getTitle();
 
+				pageTitleLowerCase = StringUtil.toLowerCase(pageTitleLowerCase);
+
 				if (pageTitle.get(pageTitleLowerCase) != null) {
 					notOrphans.add(page);
 
@@ -156,6 +159,23 @@ public class WikiUtil {
 		orphans = ListUtil.sort(orphans);
 
 		return orphans;
+	}
+
+	public static String getAttachmentURLPrefix(
+		String mainPath, long plid, long nodeId, String title) {
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(mainPath);
+		sb.append("/wiki/get_page_attachment?p_l_id=");
+		sb.append(plid);
+		sb.append("&nodeId=");
+		sb.append(nodeId);
+		sb.append("&title=");
+		sb.append(HttpUtil.encodeURL(title));
+		sb.append("&fileName=");
+
+		return sb.toString();
 	}
 
 	public static String getEditPage(String format) {
@@ -221,18 +241,18 @@ public class WikiUtil {
 		}
 	}
 
-	public static String getEmailPageAddedSubjectPrefix(
+	public static String getEmailPageAddedSubject(
 		PortletPreferences preferences) {
 
-		String emailPageAddedSubjectPrefix = preferences.getValue(
-			"emailPageAddedSubjectPrefix", StringPool.BLANK);
+		String emailPageAddedSubject = preferences.getValue(
+			"emailPageAddedSubject", StringPool.BLANK);
 
-		if (Validator.isNotNull(emailPageAddedSubjectPrefix)) {
-			return emailPageAddedSubjectPrefix;
+		if (Validator.isNotNull(emailPageAddedSubject)) {
+			return emailPageAddedSubject;
 		}
 		else {
 			return ContentUtil.get(
-				PropsUtil.get(PropsKeys.WIKI_EMAIL_PAGE_ADDED_SUBJECT_PREFIX));
+				PropsUtil.get(PropsKeys.WIKI_EMAIL_PAGE_ADDED_SUBJECT));
 		}
 	}
 
@@ -281,19 +301,18 @@ public class WikiUtil {
 		}
 	}
 
-	public static String getEmailPageUpdatedSubjectPrefix(
+	public static String getEmailPageUpdatedSubject(
 		PortletPreferences preferences) {
 
 		String emailPageUpdatedSubject = preferences.getValue(
-			"emailPageUpdatedSubjectPrefix", StringPool.BLANK);
+			"emailPageUpdatedSubject", StringPool.BLANK);
 
 		if (Validator.isNotNull(emailPageUpdatedSubject)) {
 			return emailPageUpdatedSubject;
 		}
 		else {
 			return ContentUtil.get(
-				PropsUtil.get(
-					PropsKeys.WIKI_EMAIL_PAGE_UPDATED_SUBJECT_PREFIX));
+				PropsUtil.get(PropsKeys.WIKI_EMAIL_PAGE_UPDATED_SUBJECT));
 		}
 	}
 
@@ -367,8 +386,8 @@ public class WikiUtil {
 
 		for (WikiNode node : nodes) {
 			if ((Arrays.binarySearch(hiddenNodes, node.getName()) < 0) &&
-				(WikiNodePermission.contains(
-					permissionChecker, node, ActionKeys.VIEW))) {
+				WikiNodePermission.contains(
+					permissionChecker, node, ActionKeys.VIEW)) {
 
 				return node;
 			}
@@ -416,7 +435,7 @@ public class WikiUtil {
 			}
 		}
 
-		return WikiUtil.convert(
+		return convert(
 			wikiPage, curViewPageURL, curEditPageURL, attachmentURLPrefix);
 	}
 
@@ -495,7 +514,7 @@ public class WikiUtil {
 	public static List<WikiNode> orderNodes(
 		List<WikiNode> nodes, String[] visibleNodeNames) {
 
-		if ((visibleNodeNames == null) || (visibleNodeNames.length == 0)) {
+		if (ArrayUtil.isEmpty(visibleNodeNames)) {
 			return nodes;
 		}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,11 +18,12 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the asset category remote service. This utility wraps {@link com.liferay.portlet.asset.service.impl.AssetCategoryServiceImpl} and is the primary access point for service operations in application layer code running on a remote server.
- *
- * <p>
- * This is a remote service. Methods of this service are expected to have security checks based on the propagated JAAS credentials because this service can be accessed remotely.
- * </p>
+ * Provides the remote service utility for AssetCategory. This utility wraps
+ * {@link com.liferay.portlet.asset.service.impl.AssetCategoryServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on a remote server. Methods of this service are expected to have security
+ * checks based on the propagated JAAS credentials because this service can be
+ * accessed remotely.
  *
  * @author Brian Wing Shun Chan
  * @see AssetCategoryService
@@ -76,10 +77,22 @@ public class AssetCategoryServiceUtil {
 		return getService().addCategory(title, vocabularyId, serviceContext);
 	}
 
+	/**
+	* @deprecated As of 6.2.0, Replaced by {@link #deleteCategories(long[],
+	ServiceContext)}
+	*/
 	public static void deleteCategories(long[] categoryIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		getService().deleteCategories(categoryIds);
+	}
+
+	public static java.util.List<com.liferay.portlet.asset.model.AssetCategory> deleteCategories(
+		long[] categoryIds,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService().deleteCategories(categoryIds, serviceContext);
 	}
 
 	public static void deleteCategory(long categoryId)
@@ -118,7 +131,8 @@ public class AssetCategoryServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #search(long[], String, long[], int, int)}
+	* @deprecated As of 6.2.0, replaced by {@link #search(long[], String,
+	long[], int, int)}
 	*/
 	public static com.liferay.portal.kernel.json.JSONArray getJSONSearch(
 		long groupId, java.lang.String name, long[] vocabularyIds, int start,
@@ -129,6 +143,11 @@ public class AssetCategoryServiceUtil {
 				   .getJSONSearch(groupId, name, vocabularyIds, start, end);
 	}
 
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link
+	#getVocabularyCategoriesDisplay(long, int, int,
+	OrderByComparator)}
+	*/
 	public static com.liferay.portal.kernel.json.JSONObject getJSONVocabularyCategories(
 		long vocabularyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -138,6 +157,11 @@ public class AssetCategoryServiceUtil {
 				   .getJSONVocabularyCategories(vocabularyId, start, end, obc);
 	}
 
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link
+	#getVocabularyCategoriesDisplay(long, String, long, int, int,
+	OrderByComparator)}
+	*/
 	public static com.liferay.portal.kernel.json.JSONObject getJSONVocabularyCategories(
 		long groupId, java.lang.String name, long vocabularyId, int start,
 		int end, com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -189,6 +213,30 @@ public class AssetCategoryServiceUtil {
 				   .getVocabularyCategoriesCount(groupId, name, vocabularyId);
 	}
 
+	public static com.liferay.portlet.asset.model.AssetCategoryDisplay getVocabularyCategoriesDisplay(
+		long vocabularyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator obc)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getVocabularyCategoriesDisplay(vocabularyId, start, end, obc);
+	}
+
+	public static com.liferay.portlet.asset.model.AssetCategoryDisplay getVocabularyCategoriesDisplay(
+		long groupId, java.lang.String name, long vocabularyId, int start,
+		int end, com.liferay.portal.kernel.util.OrderByComparator obc)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getVocabularyCategoriesDisplay(groupId, name, vocabularyId,
+			start, end, obc);
+	}
+
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link
+	#getVocabularyRootCategories(long, long, int, int,
+	OrderByComparator)}
+	*/
 	public static java.util.List<com.liferay.portlet.asset.model.AssetCategory> getVocabularyRootCategories(
 		long vocabularyId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -196,6 +244,22 @@ public class AssetCategoryServiceUtil {
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .getVocabularyRootCategories(vocabularyId, start, end, obc);
+	}
+
+	public static java.util.List<com.liferay.portlet.asset.model.AssetCategory> getVocabularyRootCategories(
+		long groupId, long vocabularyId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator obc)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getVocabularyRootCategories(groupId, vocabularyId, start,
+			end, obc);
+	}
+
+	public static int getVocabularyRootCategoriesCount(long groupId,
+		long vocabularyId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getVocabularyRootCategoriesCount(groupId, vocabularyId);
 	}
 
 	public static com.liferay.portlet.asset.model.AssetCategory moveCategory(
@@ -257,7 +321,7 @@ public class AssetCategoryServiceUtil {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public void setService(AssetCategoryService service) {
 	}

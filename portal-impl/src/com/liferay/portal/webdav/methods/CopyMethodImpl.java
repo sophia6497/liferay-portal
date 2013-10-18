@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.webdav.WebDAVException;
 import com.liferay.portal.kernel.webdav.WebDAVRequest;
 import com.liferay.portal.kernel.webdav.WebDAVStorage;
 import com.liferay.portal.kernel.webdav.WebDAVUtil;
+import com.liferay.portal.kernel.webdav.methods.Method;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,11 +33,12 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CopyMethodImpl implements Method {
 
-	public int process(WebDAVRequest webDavRequest) throws WebDAVException {
-		WebDAVStorage storage = webDavRequest.getWebDAVStorage();
-		HttpServletRequest request = webDavRequest.getHttpServletRequest();
+	@Override
+	public int process(WebDAVRequest webDAVRequest) throws WebDAVException {
+		WebDAVStorage storage = webDAVRequest.getWebDAVStorage();
+		HttpServletRequest request = webDAVRequest.getHttpServletRequest();
 
-		long companyId = webDavRequest.getCompanyId();
+		long companyId = webDAVRequest.getCompanyId();
 		String destination = WebDAVUtil.getDestination(
 			request, storage.getRootPath());
 
@@ -47,11 +49,11 @@ public class CopyMethodImpl implements Method {
 			sb.append(destination);
 		}
 
-		if (!destination.equals(webDavRequest.getPath()) &&
+		if (!destination.equals(webDAVRequest.getPath()) &&
 			(WebDAVUtil.getGroupId(companyId, destination) ==
-				webDavRequest.getGroupId())) {
+				webDAVRequest.getGroupId())) {
 
-			Resource resource = storage.getResource(webDavRequest);
+			Resource resource = storage.getResource(webDAVRequest);
 
 			if (resource == null) {
 				return HttpServletResponse.SC_NOT_FOUND;
@@ -71,7 +73,7 @@ public class CopyMethodImpl implements Method {
 				}
 
 				return storage.copyCollectionResource(
-					webDavRequest, resource, destination, overwrite, depth);
+					webDAVRequest, resource, destination, overwrite, depth);
 			}
 
 			boolean overwrite = WebDAVUtil.isOverwrite(request);
@@ -84,7 +86,7 @@ public class CopyMethodImpl implements Method {
 			}
 
 			return storage.copySimpleResource(
-				webDavRequest, resource, destination, overwrite);
+				webDAVRequest, resource, destination, overwrite);
 		}
 
 		return HttpServletResponse.SC_FORBIDDEN;

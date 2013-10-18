@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -49,6 +49,7 @@ Map<String, String> fileBrowserParamsMap = (Map<String, String>)request.getAttri
 String configParams = marshallParams(configParamsMap);
 String fileBrowserParams = marshallParams(fileBrowserParamsMap);
 
+String contentsLanguageId = (String)request.getAttribute("liferay-ui:input-editor:contentsLanguageId");
 String cssClass = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-editor:cssClass"));
 String cssClasses = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-editor:cssClasses"));
 String editorImpl = (String)request.getAttribute("liferay-ui:input-editor:editorImpl");
@@ -57,10 +58,22 @@ String initMethod = (String)request.getAttribute("liferay-ui:input-editor:initMe
 boolean inlineEdit = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-editor:inlineEdit"));
 String inlineEditSaveURL = GetterUtil.getString((String)request.getAttribute("liferay-ui:input-editor:inlineEditSaveURL"));
 
+String onBlurMethod = (String)request.getAttribute("liferay-ui:input-editor:onBlurMethod");
+
+if (Validator.isNotNull(onBlurMethod)) {
+	onBlurMethod = namespace + onBlurMethod;
+}
+
 String onChangeMethod = (String)request.getAttribute("liferay-ui:input-editor:onChangeMethod");
 
 if (Validator.isNotNull(onChangeMethod)) {
 	onChangeMethod = namespace + onChangeMethod;
+}
+
+String onFocusMethod = (String)request.getAttribute("liferay-ui:input-editor:onFocusMethod");
+
+if (Validator.isNotNull(onFocusMethod)) {
+	onFocusMethod = namespace + onFocusMethod;
 }
 
 boolean resizable = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-editor:resizable"));
@@ -115,7 +128,7 @@ if (!inlineEdit) {
 		destroy: function() {
 			CKEDITOR.instances['<%= name %>'].destroy();
 
-			delete window['<%= name %>'];
+			window['<%= name %>'] = null;
 		},
 
 		focus: function() {
@@ -140,11 +153,14 @@ if (!inlineEdit) {
 			return window['<%= name %>'].getCkData();
 		},
 
-		<%
-		if (Validator.isNotNull(onChangeMethod)) {
-		%>
+		<c:if test="<%= Validator.isNotNull(onBlurMethod) %>">
+			onBlurCallback: function() {
+				<%= HtmlUtil.escapeJS(onBlurMethod) %>(CKEDITOR.instances['<%= name %>']);
+			},
+		</c:if>
 
-			onChangeCallback: function () {
+		<c:if test="<%= Validator.isNotNull(onChangeMethod) %>">
+			onChangeCallback: function() {
 				var ckEditor = CKEDITOR.instances['<%= name %>'];
 				var dirty = ckEditor.checkDirty();
 
@@ -154,10 +170,13 @@ if (!inlineEdit) {
 					ckEditor.resetDirty();
 				}
 			},
+		</c:if>
 
-		<%
-		}
-		%>
+		<c:if test="<%= Validator.isNotNull(onFocusMethod) %>">
+			onFocusCallback: function() {
+				<%= HtmlUtil.escapeJS(onFocusMethod) %>(CKEDITOR.instances['<%= name %>']);
+			},
+		</c:if>
 
 		setHTML: function(value) {
 			CKEDITOR.instances['<%= name %>'].setData(value);
@@ -183,13 +202,33 @@ if (inlineEdit && (inlineEditSaveURL != null)) {
 
 <script type="text/javascript">
 	CKEDITOR.disableAutoInline = true;
+
+	CKEDITOR.env.isCompatible = true;
 </script>
 
 <aui:script use="<%= modules %>">
 	(function() {
-		function setData() {
+		var Util = Liferay.Util;
+
+		function getToolbarSet(toolbarSet) {
+			if (Util.isPhone()) {
+				toolbarSet = 'phone';
+			}
+			else if (Util.isTablet()) {
+				toolbarSet = 'tablet';
+			}
+
+			return toolbarSet;
+		}
+
+		function initData() {
 			<c:if test="<%= Validator.isNotNull(initMethod) && !(inlineEdit && (inlineEditSaveURL != null)) %>">
-				ckEditor.setData(<%= HtmlUtil.escapeJS(namespace + initMethod) %>());
+				ckEditor.setData(
+					<%= HtmlUtil.escapeJS(namespace + initMethod) %>(),
+					function() {
+						ckEditor.resetDirty();
+					}
+				);
 			</c:if>
 		}
 
@@ -221,10 +260,10 @@ if (inlineEdit && (inlineEditSaveURL != null)) {
 
 			'<%= name %>',
 			{
-				customConfig: '<%= PortalUtil.getPathContext() %>/html/js/editor/ckeditor/<%= HtmlUtil.escapeJS(ckEditorConfigFileName) %>?p_l_id=<%= plid %>&p_p_id=<%= HttpUtil.encodeURL(portletId) %>&p_main_path=<%= HttpUtil.encodeURL(mainPath) %>&doAsUserId=<%= HttpUtil.encodeURL(doAsUserId) %>&doAsGroupId=<%= HttpUtil.encodeURL(String.valueOf(doAsGroupId)) %>&cssPath=<%= HttpUtil.encodeURL(themeDisplay.getPathThemeCss()) %>&cssClasses=<%= HttpUtil.encodeURL(cssClasses) %>&imagesPath=<%= HttpUtil.encodeURL(themeDisplay.getPathThemeImages()) %>&languageId=<%= HttpUtil.encodeURL(LocaleUtil.toLanguageId(locale)) %>&resizable=<%= resizable %>&inlineEdit=<%= inlineEdit %><%= configParams %>',
+				customConfig: '<%= PortalUtil.getPathContext() %>/html/js/editor/ckeditor/<%= HtmlUtil.escapeJS(ckEditorConfigFileName) %>?p_l_id=<%= plid %>&p_p_id=<%= HttpUtil.encodeURL(portletId) %>&p_main_path=<%= HttpUtil.encodeURL(mainPath) %>&doAsUserId=<%= HttpUtil.encodeURL(doAsUserId) %>&doAsGroupId=<%= HttpUtil.encodeURL(String.valueOf(doAsGroupId)) %>&contentsLanguageId=<%= HttpUtil.encodeURL(Validator.isNotNull(contentsLanguageId) ? contentsLanguageId : LocaleUtil.toLanguageId(locale)) %>&cssPath=<%= HttpUtil.encodeURL(themeDisplay.getPathThemeCss()) %>&cssClasses=<%= HttpUtil.encodeURL(cssClasses) %>&imagesPath=<%= HttpUtil.encodeURL(themeDisplay.getPathThemeImages()) %>&languageId=<%= HttpUtil.encodeURL(LocaleUtil.toLanguageId(locale)) %>&resizable=<%= resizable %>&inlineEdit=<%= inlineEdit %><%= configParams %>',
 				filebrowserBrowseUrl: '<%= PortalUtil.getPathContext() %>/html/js/editor/ckeditor/editor/filemanager/browser/liferay/browser.html?Connector=<%= connectorURL %><%= fileBrowserParams %>',
 				filebrowserUploadUrl: null,
-				toolbar: '<%= TextFormatter.format(HtmlUtil.escapeJS(toolbarSet), TextFormatter.M) %>'
+				toolbar: getToolbarSet('<%= TextFormatter.format(HtmlUtil.escapeJS(toolbarSet), TextFormatter.M) %>')
 			}
 		);
 
@@ -235,6 +274,7 @@ if (inlineEdit && (inlineEditSaveURL != null)) {
 				{
 					editor: ckEditor,
 					editorName: '<%= name %>',
+					namespace: '<portlet:namespace />',
 					saveURL: '<%= inlineEditSaveURL %>'
 				}
 			);
@@ -242,24 +282,18 @@ if (inlineEdit && (inlineEditSaveURL != null)) {
 
 		var customDataProcessorLoaded = false;
 
-		<%
-		if (useCustomDataProcessor) {
-		%>
-
+		<c:if test="<%= useCustomDataProcessor %>">
 			ckEditor.on(
 				'customDataProcessorLoaded',
 				function() {
 					customDataProcessorLoaded = true;
 
 					if (instanceReady) {
-						setData();
+						initData();
 					}
 				}
 			);
-
-		<%
-		}
-		%>
+		</c:if>
 
 		var instanceReady = false;
 
@@ -267,23 +301,24 @@ if (inlineEdit && (inlineEditSaveURL != null)) {
 			'instanceReady',
 			function() {
 
-			<c:choose>
-				<c:when test="<%= useCustomDataProcessor %>">
-					instanceReady = true;
+				<c:choose>
+					<c:when test="<%= useCustomDataProcessor %>">
+						instanceReady = true;
 
-					if (customDataProcessorLoaded) {
-						setData();
-					}
-				</c:when>
-				<c:otherwise>
-					setData();
-				</c:otherwise>
-			</c:choose>
+						if (customDataProcessorLoaded) {
+							initData();
+						}
+					</c:when>
+					<c:otherwise>
+						initData();
+					</c:otherwise>
+				</c:choose>
 
-	<%
-			if (Validator.isNotNull(onChangeMethod)) {
-				%>
+				<c:if test="<%= Validator.isNotNull(onBlurMethod) %>">
+					CKEDITOR.instances['<%= name %>'].on('blur', window['<%= name %>'].onBlurCallback);
+				</c:if>
 
+				<c:if test="<%= Validator.isNotNull(onChangeMethod) %>">
 					setInterval(
 						function() {
 							try {
@@ -294,10 +329,11 @@ if (inlineEdit && (inlineEditSaveURL != null)) {
 						},
 						300
 					);
+				</c:if>
 
-				<%
-				}
-				%>
+				<c:if test="<%= Validator.isNotNull(onFocusMethod) %>">
+					CKEDITOR.instances['<%= name %>'].on('focus', window['<%= name %>'].onFocusCallback);
+				</c:if>
 
 			}
 		);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.osgi.bootstrap;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.module.framework.ModuleFramework;
 
 import java.io.InputStream;
 
@@ -22,8 +23,6 @@ import java.net.URL;
 
 import java.util.List;
 import java.util.Map;
-
-import org.osgi.framework.launch.Framework;
 
 /**
  * @author Raymond Augé
@@ -49,7 +48,7 @@ public class ModuleFrameworkUtil {
 		return getModuleFramework().getExtraPackageURLs();
 	}
 
-	public static Framework getFramework() {
+	public static Object getFramework() {
 		return getModuleFramework().getFramework();
 	}
 

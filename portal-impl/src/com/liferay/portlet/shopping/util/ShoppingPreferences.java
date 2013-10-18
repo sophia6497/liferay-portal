@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -104,18 +104,16 @@ public class ShoppingPreferences {
 		if (value == null) {
 			return new String[0][0];
 		}
-		else {
-			String[] array = StringUtil.split(
-				"alternativeShipping", "[$_ARRAY_$]");
 
-			String[][] alternativeShipping = new String[array.length][0];
+		String[] array = StringUtil.split("alternativeShipping", "[$_ARRAY_$]");
 
-			for (int i = 0; i < array.length; i++) {
-				alternativeShipping[i] = StringUtil.split(array[i]);
-			}
+		String[][] alternativeShipping = new String[array.length][0];
 
-			return alternativeShipping;
+		for (int i = 0; i < array.length; i++) {
+			alternativeShipping[i] = StringUtil.split(array[i]);
 		}
+
+		return alternativeShipping;
 	}
 
 	public String getAlternativeShippingName(int altShipping) {
@@ -153,7 +151,7 @@ public class ShoppingPreferences {
 	}
 
 	public String getEmailFromName(long companyId) throws SystemException {
-		return PortalUtil.getEmailFromAddress(
+		return PortalUtil.getEmailFromName(
 			_portletPreferences, companyId,
 			PropsValues.SHOPPING_EMAIL_FROM_NAME);
 	}

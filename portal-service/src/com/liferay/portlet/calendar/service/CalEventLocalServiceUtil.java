@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,11 +18,12 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the cal event local service. This utility wraps {@link com.liferay.portlet.calendar.service.impl.CalEventLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for CalEvent. This utility wraps
+ * {@link com.liferay.portlet.calendar.service.impl.CalEventLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see CalEventLocalService
@@ -164,10 +165,53 @@ public class CalEventLocalServiceUtil {
 		return getService().dynamicQueryCount(dynamicQuery);
 	}
 
+	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
 	public static com.liferay.portlet.calendar.model.CalEvent fetchCalEvent(
 		long eventId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService().fetchCalEvent(eventId);
+	}
+
+	/**
+	* Returns the cal event with the matching UUID and company.
+	*
+	* @param uuid the cal event's UUID
+	* @param companyId the primary key of the company
+	* @return the matching cal event, or <code>null</code> if a matching cal event could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portlet.calendar.model.CalEvent fetchCalEventByUuidAndCompanyId(
+		java.lang.String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchCalEventByUuidAndCompanyId(uuid, companyId);
+	}
+
+	/**
+	* Returns the cal event matching the UUID and group.
+	*
+	* @param uuid the cal event's UUID
+	* @param groupId the primary key of the group
+	* @return the matching cal event, or <code>null</code> if a matching cal event could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portlet.calendar.model.CalEvent fetchCalEventByUuidAndGroupId(
+		java.lang.String uuid, long groupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchCalEventByUuidAndGroupId(uuid, groupId);
 	}
 
 	/**
@@ -193,12 +237,28 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
-	* Returns the cal event with the UUID in the group.
+	* Returns the cal event with the matching UUID and company.
 	*
-	* @param uuid the UUID of cal event
-	* @param groupId the group id of the cal event
-	* @return the cal event
-	* @throws PortalException if a cal event with the UUID in the group could not be found
+	* @param uuid the cal event's UUID
+	* @param companyId the primary key of the company
+	* @return the matching cal event
+	* @throws PortalException if a matching cal event could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portlet.calendar.model.CalEvent getCalEventByUuidAndCompanyId(
+		java.lang.String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService().getCalEventByUuidAndCompanyId(uuid, companyId);
+	}
+
+	/**
+	* Returns the cal event matching the UUID and group.
+	*
+	* @param uuid the cal event's UUID
+	* @param groupId the primary key of the group
+	* @return the matching cal event
+	* @throws PortalException if a matching cal event could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portlet.calendar.model.CalEvent getCalEventByUuidAndGroupId(
@@ -288,9 +348,10 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #addEvent(long, String, String, String, int, int, int,
-	int, int, int, int, boolean, boolean, String, boolean,
-	TZSRecurrence, int, int, int, ServiceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #addEvent(long, String,
+	String, String, int, int, int, int, int, int, int, boolean,
+	boolean, String, boolean, TZSRecurrence, int, int, int,
+	ServiceContext)}
 	*/
 	public static com.liferay.portlet.calendar.model.CalEvent addEvent(
 		long userId, java.lang.String title, java.lang.String description,
@@ -347,8 +408,7 @@ public class CalEventLocalServiceUtil {
 	}
 
 	public static void checkEvents()
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.SystemException {
 		getService().checkEvents();
 	}
 
@@ -524,9 +584,10 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #updateEvent(long, long, String, String, String, int,
-	int, int, int, int, int, int, boolean, boolean, String,
-	boolean, TZSRecurrence, int, int, int, ServiceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #updateEvent(long, long,
+	String, String, String, int, int, int, int, int, int, int,
+	boolean, boolean, String, boolean, TZSRecurrence, int, int,
+	int, ServiceContext)}
 	*/
 	public static com.liferay.portlet.calendar.model.CalEvent updateEvent(
 		long userId, long eventId, java.lang.String title,
@@ -562,7 +623,7 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public void setService(CalEventLocalService service) {
 	}

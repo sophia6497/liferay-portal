@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,81 +16,71 @@ package com.liferay.portlet.documentlibrary.asset;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.repository.model.Folder;
-import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortletKeys;
-import com.liferay.portal.util.WebKeys;
-import com.liferay.portlet.PortletURLFactoryUtil;
 import com.liferay.portlet.asset.model.AssetRenderer;
 import com.liferay.portlet.asset.model.BaseAssetRendererFactory;
-import com.liferay.portlet.assetpublisher.util.AssetPublisherUtil;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission;
-import com.liferay.portlet.documentlibrary.service.permission.DLPermission;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
+import javax.portlet.WindowState;
+import javax.portlet.WindowStateException;
 
 /**
  * @author Alexander Chow
  */
 public class DLFolderAssetRendererFactory extends BaseAssetRendererFactory {
 
-	public static final String CLASS_NAME = DLFolder.class.getName();
+	public static final String TYPE = "document_folder";
 
-	public static final String TYPE = "folder";
-
+	@Override
 	public AssetRenderer getAssetRenderer(long classPK, int type)
 		throws PortalException, SystemException {
 
 		Folder folder = DLAppLocalServiceUtil.getFolder(classPK);
 
-		return new DLFolderAssetRenderer(folder);
+		DLFolderAssetRenderer dlFolderAssetRenderer = new DLFolderAssetRenderer(
+			folder);
+
+		dlFolderAssetRenderer.setAssetRendererType(type);
+
+		return dlFolderAssetRenderer;
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return DLFolder.class.getName();
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}
 
 	@Override
-	public PortletURL getURLAdd(
-			LiferayPortletRequest liferayPortletRequest,
-			LiferayPortletResponse liferayPortletResponse)
-		throws PortalException, SystemException {
+	public PortletURL getURLView(
+		LiferayPortletResponse liferayPortletResponse,
+		WindowState windowState) {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)liferayPortletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
+		LiferayPortletURL liferayPortletURL =
+			liferayPortletResponse.createLiferayPortletURL(
+				PortletKeys.DOCUMENT_LIBRARY_DISPLAY,
+				PortletRequest.RENDER_PHASE);
 
-		if (!DLPermission.contains(
-				themeDisplay.getPermissionChecker(),
-				themeDisplay.getScopeGroupId(), ActionKeys.ADD_FOLDER)) {
-
-			return null;
+		try {
+			liferayPortletURL.setWindowState(windowState);
+		}
+		catch (WindowStateException wse) {
 		}
 
-		PortletURL portletURL = PortletURLFactoryUtil.create(
-			liferayPortletRequest, PortletKeys.DOCUMENT_LIBRARY,
-			getControlPanelPlid(themeDisplay), PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(
-			"struts_action", "/document_library/edit_folder");
-		portletURL.setParameter(
-			"folderId",
-			String.valueOf(
-				AssetPublisherUtil.getRecentFolderId(
-					liferayPortletRequest, CLASS_NAME)));
-
-		return portletURL;
+		return liferayPortletURL;
 	}
 
 	@Override
@@ -104,6 +94,11 @@ public class DLFolderAssetRendererFactory extends BaseAssetRendererFactory {
 	}
 
 	@Override
+	public boolean isCategorizable() {
+		return _CATEGORIZABLE;
+	}
+
+	@Override
 	public boolean isLinkable() {
 		return _LINKABLE;
 	}
@@ -113,6 +108,8 @@ public class DLFolderAssetRendererFactory extends BaseAssetRendererFactory {
 		return themeDisplay.getPathThemeImages() + "/common/folder.png";
 	}
 
-	private static final boolean _LINKABLE = true;
+	private static final boolean _CATEGORIZABLE = false;
+
+	private static final boolean _LINKABLE = false;
 
 }

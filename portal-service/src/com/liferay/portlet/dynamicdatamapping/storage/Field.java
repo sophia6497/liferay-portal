@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,6 +27,7 @@ import com.liferay.portlet.dynamicdatamapping.service.DDMStructureLocalServiceUt
 import java.io.Serializable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -92,6 +93,10 @@ public class Field implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
 		if (!(obj instanceof Field)) {
 			return false;
 		}
@@ -239,14 +244,17 @@ public class Field implements Serializable {
 	}
 
 	public void setValue(Locale locale, Serializable value) {
-		Class<?> clazz = value.getClass();
-
 		List<Serializable> values = null;
 
-		if (clazz.isArray()) {
-			values = ListUtil.fromArray((Serializable[])value);
+		if (value != null) {
+			Class<?> clazz = value.getClass();
+
+			if (clazz.isArray()) {
+				values = ListUtil.fromArray((Serializable[])value);
+			}
 		}
-		else {
+
+		if (values == null) {
 			values = new ArrayList<Serializable>();
 
 			values.add(value);
@@ -256,7 +264,7 @@ public class Field implements Serializable {
 	}
 
 	public void setValue(Serializable value) {
-		setValue(LocaleUtil.getDefault(), value);
+		setValue(LocaleUtil.getSiteDefault(), value);
 	}
 
 	public void setValues(Locale locale, List<Serializable> values) {
@@ -289,10 +297,16 @@ public class Field implements Serializable {
 		}
 
 		if (locale == null) {
-			locale = LocaleUtil.getDefault();
+			locale = LocaleUtil.getSiteDefault();
 		}
 
-		return _valuesMap.get(locale);
+		List<Serializable> values = _valuesMap.get(locale);
+
+		if (values == null) {
+			return Collections.emptyList();
+		}
+
+		return values;
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(Field.class);

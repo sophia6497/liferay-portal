@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,12 +22,15 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
 import com.liferay.portal.kernel.plugin.Version;
 import com.liferay.portal.kernel.servlet.ServletContextUtil;
+import com.liferay.portal.kernel.util.ColorSchemeFactoryUtil;
 import com.liferay.portal.kernel.util.ContextPathUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.ThemeFactoryUtil;
+import com.liferay.portal.kernel.util.UniqueList;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
@@ -36,8 +39,6 @@ import com.liferay.portal.model.ColorScheme;
 import com.liferay.portal.model.PluginSetting;
 import com.liferay.portal.model.PortletConstants;
 import com.liferay.portal.model.Theme;
-import com.liferay.portal.model.impl.ColorSchemeImpl;
-import com.liferay.portal.model.impl.ThemeImpl;
 import com.liferay.portal.plugin.PluginUtil;
 import com.liferay.portal.service.base.ThemeLocalServiceBaseImpl;
 import com.liferay.portal.theme.ThemeCompanyId;
@@ -68,6 +69,7 @@ import javax.servlet.ServletContext;
  */
 public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 
+	@Override
 	public ColorScheme fetchColorScheme(
 		long companyId, String themeId, String colorSchemeId) {
 
@@ -84,6 +86,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		return colorSchemesMap.get(colorSchemeId);
 	}
 
+	@Override
 	public Theme fetchTheme(long companyId, String themeId) {
 		themeId = GetterUtil.getString(themeId);
 
@@ -92,6 +95,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		return themes.get(themeId);
 	}
 
+	@Override
 	public ColorScheme getColorScheme(
 			long companyId, String themeId, String colorSchemeId,
 			boolean wapTheme)
@@ -121,21 +125,18 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 
 		if (colorScheme == null) {
 			if (wapTheme) {
-				colorSchemeId = ColorSchemeImpl.getDefaultWapColorSchemeId();
+				colorScheme = ColorSchemeFactoryUtil.getDefaultWapColorScheme();
 			}
 			else {
-				colorSchemeId =
-					ColorSchemeImpl.getDefaultRegularColorSchemeId();
+				colorScheme =
+					ColorSchemeFactoryUtil.getDefaultRegularColorScheme();
 			}
-		}
-
-		if (colorScheme == null) {
-			colorScheme = ColorSchemeImpl.getNullColorScheme();
 		}
 
 		return colorScheme;
 	}
 
+	@Override
 	public Theme getTheme(long companyId, String themeId, boolean wapTheme)
 		throws SystemException {
 
@@ -153,10 +154,10 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 			}
 
 			if (wapTheme) {
-				themeId = ThemeImpl.getDefaultWapThemeId(companyId);
+				themeId = ThemeFactoryUtil.getDefaultWapThemeId(companyId);
 			}
 			else {
-				themeId = ThemeImpl.getDefaultRegularThemeId(companyId);
+				themeId = ThemeFactoryUtil.getDefaultRegularThemeId(companyId);
 			}
 
 			theme = _themes.get(themeId);
@@ -185,6 +186,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		return theme;
 	}
 
+	@Override
 	public List<Theme> getThemes(long companyId) {
 		Map<String, Theme> themes = _getThemes(companyId);
 
@@ -193,6 +195,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		return ListUtil.sort(themesList);
 	}
 
+	@Override
 	public List<Theme> getThemes(
 			long companyId, long groupId, long userId, boolean wapTheme)
 		throws SystemException {
@@ -217,6 +220,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		return themes;
 	}
 
+	@Override
 	public List<Theme> getWARThemes() {
 		List<Theme> themes = ListUtil.fromMapValues(_themes);
 
@@ -233,7 +237,8 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		return themes;
 	}
 
-	public List<String> init(
+	@Override
+	public List<Theme> init(
 		ServletContext servletContext, String themesPath,
 		boolean loadFromServletContext, String[] xmls,
 		PluginPackage pluginPackage) {
@@ -243,38 +248,35 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 			pluginPackage);
 	}
 
-	public List<String> init(
+	@Override
+	public List<Theme> init(
 		String servletContextName, ServletContext servletContext,
 		String themesPath, boolean loadFromServletContext, String[] xmls,
 		PluginPackage pluginPackage) {
 
-		List<String> themeIdsList = new ArrayList<String>();
+		List<Theme> themes = new UniqueList<Theme>();
 
 		try {
 			for (String xml : xmls) {
-				Set<String> themeIds = _readThemes(
-					servletContextName, servletContext, themesPath,
-					loadFromServletContext, xml, pluginPackage);
-
-				for (String themeId : themeIds) {
-					if (!themeIdsList.contains(themeId)) {
-						themeIdsList.add(themeId);
-					}
-				}
+				themes.addAll(
+					_readThemes(
+						servletContextName, servletContext, themesPath,
+						loadFromServletContext, xml, pluginPackage));
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			_log.error(e, e);
 		}
 
 		_themesPool.clear();
 
-		return themeIdsList;
+		return themes;
 	}
 
-	public void uninstallThemes(List<String> themeIds) {
-		for (int i = 0; i < themeIds.size(); i++) {
-			String themeId = themeIds.get(i);
+	@Override
+	public void uninstallThemes(List<Theme> themes) {
+		for (Theme theme : themes) {
+			String themeId = theme.getThemeId();
 
 			_themes.remove(themeId);
 
@@ -405,7 +407,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 			ColorScheme colorSchemeModel = colorSchemes.get(id);
 
 			if (colorSchemeModel == null) {
-				colorSchemeModel = new ColorSchemeImpl(id);
+				colorSchemeModel = ColorSchemeFactoryUtil.getColorScheme(id);
 			}
 
 			String name = GetterUtil.getString(
@@ -445,16 +447,16 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 		}
 	}
 
-	private Set<String> _readThemes(
+	private Set<Theme> _readThemes(
 			String servletContextName, ServletContext servletContext,
 			String themesPath, boolean loadFromServletContext, String xml,
 			PluginPackage pluginPackage)
 		throws Exception {
 
-		Set<String> themeIds = new HashSet<String>();
+		Set<Theme> themes = new HashSet<Theme>();
 
 		if (xml == null) {
-			return themeIds;
+			return themes;
 		}
 
 		Document document = SAXReaderUtil.read(xml, true);
@@ -487,7 +489,7 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 				"Themes in this WAR are not compatible with " +
 					ReleaseInfo.getServerInfo());
 
-			return themeIds;
+			return themes;
 		}
 
 		ThemeCompanyLimit companyLimit = null;
@@ -559,12 +561,10 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 
 			themeContextReplace.addValue("theme-id", themeId);
 
-			themeIds.add(themeId);
-
 			Theme theme = _themes.get(themeId);
 
 			if (theme == null) {
-				theme = new ThemeImpl(themeId);
+				theme = ThemeFactoryUtil.getTheme(themeId);
 			}
 
 			theme.setTimestamp(timestamp);
@@ -717,9 +717,11 @@ public class ThemeLocalServiceImpl extends ThemeLocalServiceBaseImpl {
 			if (!_themes.containsKey(themeId)) {
 				_themes.put(themeId, theme);
 			}
+
+			themes.add(theme);
 		}
 
-		return themeIds;
+		return themes;
 	}
 
 	private void _setSpriteImages(

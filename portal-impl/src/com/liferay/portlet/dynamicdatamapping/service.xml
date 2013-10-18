@@ -86,10 +86,17 @@
 		<column name="storageType" type="String" />
 		<column name="type" type="int" />
 
+		<!-- Relationships -->
+
+		<column name="dlFileEntryTypes" type="Collection" entity="com.liferay.portlet.documentlibrary.DLFileEntryType" mapping-table="DLFileEntryTypes_DDMStructures" />
+
 		<!-- Finder methods -->
 
 		<finder name="GroupId" return-type="Collection">
 			<finder-column name="groupId" arrayable-operator="OR" />
+		</finder>
+		<finder name="ParentStructureId" return-type="Collection">
+			<finder-column name="parentStructureId" />
 		</finder>
 		<finder name="ClassNameId" return-type="Collection">
 			<finder-column name="classNameId" />
@@ -97,17 +104,22 @@
 		<finder name="StructureKey" return-type="Collection">
 			<finder-column name="structureKey" />
 		</finder>
-		<finder name="G_C" return-type="Collection" >
+		<finder name="G_P" return-type="Collection" >
 			<finder-column name="groupId" />
-			<finder-column name="classNameId" />
+			<finder-column name="parentStructureId" />
 		</finder>
-		<finder name="G_S" return-type="DDMStructure" unique="true">
-			<finder-column name="groupId" />
-			<finder-column name="structureKey" />
+		<finder name="G_C" return-type="Collection" >
+			<finder-column name="groupId" arrayable-operator="OR" />
+			<finder-column name="classNameId" />
 		</finder>
 		<finder name="C_C" return-type="Collection">
 			<finder-column name="companyId" />
 			<finder-column name="classNameId" />
+		</finder>
+		<finder name="G_C_S" return-type="DDMStructure" unique="true">
+			<finder-column name="groupId" />
+			<finder-column name="classNameId" />
+			<finder-column name="structureKey" />
 		</finder>
 		<finder name="G_N_D" return-type="Collection" db-index="false">
 			<finder-column name="groupId" />
@@ -118,6 +130,7 @@
 		<!-- References -->
 
 		<reference package-path="com.liferay.portal" entity="Group" />
+		<reference package-path="com.liferay.portal" entity="SystemEvent" />
 		<reference package-path="com.liferay.portlet.documentlibrary" entity="DLFileEntryType" />
 	</entity>
 	<entity name="DDMStructureLink" local-service="true" remote-service="false">
@@ -195,18 +208,26 @@
 		<finder name="Language" return-type="Collection">
 			<finder-column name="language" />
 		</finder>
+		<finder name="SmallImageId" return-type="DDMTemplate">
+			<finder-column name="smallImageId" />
+		</finder>
 		<finder name="G_C" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="classNameId" />
 		</finder>
-		<finder name="G_T" return-type="DDMStructure" unique="true">
-			<finder-column name="groupId" />
-			<finder-column name="templateKey" />
+		<finder name="G_CPK" return-type="Collection">
+			<finder-column name="groupId" arrayable-operator="OR" />
+			<finder-column name="classPK" />
 		</finder>
 		<finder name="G_C_C" return-type="Collection">
 			<finder-column name="groupId" />
 			<finder-column name="classNameId" />
 			<finder-column name="classPK" />
+		</finder>
+		<finder name="G_C_T" return-type="DDMTemplate" unique="true">
+			<finder-column name="groupId" />
+			<finder-column name="classNameId" />
+			<finder-column name="templateKey" />
 		</finder>
 		<finder name="C_C_T" return-type="Collection">
 			<finder-column name="classNameId" />
@@ -231,12 +252,14 @@
 
 		<reference package-path="com.liferay.portal" entity="Group" />
 		<reference package-path="com.liferay.portal" entity="Image" />
+		<reference package-path="com.liferay.portal" entity="SystemEvent" />
 	</entity>
 	<exceptions>
 		<exception>Content</exception>
 		<exception>ContentName</exception>
 		<exception>ContentXml</exception>
 		<exception>RequiredStructure</exception>
+		<exception>RequiredTemplate</exception>
 		<exception>Storage</exception>
 		<exception>StorageFieldName</exception>
 		<exception>StorageFieldRequired</exception>

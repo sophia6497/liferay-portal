@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,10 +20,13 @@ import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -158,6 +161,17 @@ public class CustomSQL {
 	}
 
 	/**
+	 * Returns <code>true</code> if Hibernate is connecting to a Hypersonic
+	 * database.
+	 *
+	 * @return <code>true</code> if Hibernate is connecting to a Hypersonic
+	 *         database
+	 */
+	public boolean isVendorHSQL() {
+		return _vendorHSQL;
+	}
+
+	/**
 	 * Returns <code>true</code> if Hibernate is connecting to an Informix
 	 * database.
 	 *
@@ -221,8 +235,12 @@ public class CustomSQL {
 			return new String[] {null};
 		}
 
+		if (_CUSTOM_SQL_AUTO_ESCAPE_WILDCARDS_ENABLED) {
+			keywords = escapeWildCards(keywords);
+		}
+
 		if (lowerCase) {
-			keywords = keywords.toLowerCase();
+			keywords = StringUtil.toLowerCase(keywords);
 		}
 
 		keywords = keywords.trim();
@@ -281,7 +299,7 @@ public class CustomSQL {
 	}
 
 	public String[] keywords(String[] keywordsArray, boolean lowerCase) {
-		if ((keywordsArray == null) || (keywordsArray.length == 0)) {
+		if (ArrayUtil.isEmpty(keywordsArray)) {
 			return new String[] {null};
 		}
 
@@ -310,9 +328,9 @@ public class CustomSQL {
 				_functionIsNotNull = functionIsNotNull;
 
 				if (_log.isDebugEnabled()) {
-					_log.info(
+					_log.debug(
 						"functionIsNull is manually set to " + functionIsNull);
-					_log.info(
+					_log.debug(
 						"functionIsNotNull is manually set to " +
 							functionIsNotNull);
 				}
@@ -334,6 +352,13 @@ public class CustomSQL {
 
 					if (_log.isInfoEnabled()) {
 						_log.info("Detected DB2 with database name " + dbName);
+					}
+				}
+				else if (dbName.startsWith("HSQL")) {
+					_vendorHSQL = true;
+
+					if (_log.isInfoEnabled()) {
+						_log.info("Detected HSQL with database name " + dbName);
 					}
 				}
 				else if (dbName.startsWith("Informix")) {
@@ -550,7 +575,7 @@ public class CustomSQL {
 
 		StringBundler oldSql = new StringBundler(4);
 
-		oldSql.append("(");
+		oldSql.append(StringPool.OPEN_PARENTHESIS);
 		oldSql.append(field);
 		oldSql.append(" = ?)");
 
@@ -558,25 +583,25 @@ public class CustomSQL {
 			oldSql.append(" [$AND_OR_CONNECTOR$]");
 		}
 
-		if ((values == null) || (values.length == 0)) {
+		if (ArrayUtil.isEmpty(values)) {
 			return StringUtil.replace(sql, oldSql.toString(), StringPool.BLANK);
 		}
 
 		StringBundler newSql = new StringBundler(values.length * 4 + 3);
 
-		newSql.append("(");
+		newSql.append(StringPool.OPEN_PARENTHESIS);
 
 		for (int i = 0; i < values.length; i++) {
 			if (i > 0) {
 				newSql.append(" OR ");
 			}
 
-			newSql.append("(");
+			newSql.append(StringPool.OPEN_PARENTHESIS);
 			newSql.append(field);
 			newSql.append(" = ?)");
 		}
 
-		newSql.append(")");
+		newSql.append(StringPool.CLOSE_PARENTHESIS);
 
 		if (!last) {
 			newSql.append(" [$AND_OR_CONNECTOR$]");
@@ -594,7 +619,7 @@ public class CustomSQL {
 
 		StringBundler oldSql = new StringBundler(4);
 
-		oldSql.append("(");
+		oldSql.append(StringPool.OPEN_PARENTHESIS);
 		oldSql.append(field);
 		oldSql.append(" = ?)");
 
@@ -602,25 +627,25 @@ public class CustomSQL {
 			oldSql.append(" [$AND_OR_CONNECTOR$]");
 		}
 
-		if ((values == null) || (values.length == 0)) {
+		if (ArrayUtil.isEmpty(values)) {
 			return StringUtil.replace(sql, oldSql.toString(), StringPool.BLANK);
 		}
 
 		StringBundler newSql = new StringBundler(values.length * 4 + 3);
 
-		newSql.append("(");
+		newSql.append(StringPool.OPEN_PARENTHESIS);
 
 		for (int i = 0; i < values.length; i++) {
 			if (i > 0) {
 				newSql.append(" OR ");
 			}
 
-			newSql.append("(");
+			newSql.append(StringPool.OPEN_PARENTHESIS);
 			newSql.append(field);
 			newSql.append(" = ?)");
 		}
 
-		newSql.append(")");
+		newSql.append(StringPool.CLOSE_PARENTHESIS);
 
 		if (!last) {
 			newSql.append(" [$AND_OR_CONNECTOR$]");
@@ -639,7 +664,7 @@ public class CustomSQL {
 
 		StringBundler oldSql = new StringBundler(6);
 
-		oldSql.append("(");
+		oldSql.append(StringPool.OPEN_PARENTHESIS);
 		oldSql.append(field);
 		oldSql.append(" ");
 		oldSql.append(operator);
@@ -651,21 +676,21 @@ public class CustomSQL {
 
 		StringBundler newSql = new StringBundler(values.length * 6 + 3);
 
-		newSql.append("(");
+		newSql.append(StringPool.OPEN_PARENTHESIS);
 
 		for (int i = 0; i < values.length; i++) {
 			if (i > 0) {
 				newSql.append(" OR ");
 			}
 
-			newSql.append("(");
+			newSql.append(StringPool.OPEN_PARENTHESIS);
 			newSql.append(field);
 			newSql.append(" ");
 			newSql.append(operator);
 			newSql.append(" ? [$AND_OR_NULL_CHECK$])");
 		}
 
-		newSql.append(")");
+		newSql.append(StringPool.CLOSE_PARENTHESIS);
 
 		if (!last) {
 			newSql.append(" [$AND_OR_CONNECTOR$]");
@@ -767,6 +792,38 @@ public class CustomSQL {
 		return sb.toString();
 	}
 
+	private String escapeWildCards(String keywords) {
+		if (!isVendorMySQL() && !isVendorOracle()) {
+			return keywords;
+		}
+
+		StringBuilder sb = new StringBuilder(keywords);
+
+		for (int i = 0; i < sb.length(); ++i) {
+			char c = sb.charAt(i);
+
+			if (c == CharPool.BACK_SLASH) {
+				i++;
+
+				continue;
+			}
+
+			if ((c == CharPool.UNDERLINE) || (c == CharPool.PERCENT)) {
+				sb.insert(i, CharPool.BACK_SLASH);
+
+				i++;
+
+				continue;
+			}
+		}
+
+		return sb.toString();
+	}
+
+	private static final boolean _CUSTOM_SQL_AUTO_ESCAPE_WILDCARDS_ENABLED =
+		GetterUtil.getBoolean(
+			PropsUtil.get(PropsKeys.CUSTOM_SQL_AUTO_ESCAPE_WILDCARDS_ENABLED));
+
 	private static final String _GROUP_BY_CLAUSE = " GROUP BY ";
 
 	private static final String _ORDER_BY_CLAUSE = " ORDER BY ";
@@ -786,6 +843,7 @@ public class CustomSQL {
 	private String _functionIsNull;
 	private Map<String, String> _sqlPool;
 	private boolean _vendorDB2;
+	private boolean _vendorHSQL;
 	private boolean _vendorInformix;
 	private boolean _vendorMySQL;
 	private boolean _vendorOracle;

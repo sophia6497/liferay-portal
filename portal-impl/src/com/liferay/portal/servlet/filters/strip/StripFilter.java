@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.KMPSearch;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.servlet.filters.dynamiccss.DynamicCSSUtil;
@@ -331,7 +332,7 @@ public class StripFilter extends BasePortalFilter {
 			}
 		}
 
-		if (!Validator.isNull(minifiedContent)) {
+		if (Validator.isNotNull(minifiedContent)) {
 			writer.write(minifiedContent);
 		}
 
@@ -360,7 +361,9 @@ public class StripFilter extends BasePortalFilter {
 			filterChain);
 
 		String contentType = GetterUtil.getString(
-			bufferCacheServletResponse.getContentType()).toLowerCase();
+			bufferCacheServletResponse.getContentType());
+
+		contentType = StringUtil.toLowerCase(contentType);
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Stripping content of type " + contentType);
@@ -549,7 +552,7 @@ public class StripFilter extends BasePortalFilter {
 			}
 		}
 
-		if (!Validator.isNull(minifiedContent)) {
+		if (Validator.isNotNull(minifiedContent)) {
 			writer.write(minifiedContent);
 		}
 

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,21 +27,21 @@ String redirect = ParamUtil.getString(request, "redirect");
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
 	<aui:fieldset>
-		<ul class="lfr-tree lfr-component">
+		<ul class="lfr-tree unstyled">
 			<li class="tree-item">
-				<aui:input label="show-tags-with-zero-assets" name="preferences--showZeroAssetCount--" type="checkbox" value="<%= showZeroAssetCount %>" />
+				<aui:input label="show-unused-tags" name="preferences--showZeroAssetCount--" type="checkbox" value="<%= showZeroAssetCount %>" />
 			</li>
 
 			<li class="tree-item">
 				<aui:input name="preferences--showAssetCount--" type="checkbox" value="<%= showAssetCount %>" />
 
-				<ul class="lfr-tree lfr-component aui-helper-hidden" id="<portlet:namespace />assetCountOptions">
+				<ul class="lfr-tree hide unstyled" id="<portlet:namespace />assetCountOptions">
 					<li class="tree-item">
 						<aui:select helpMessage="asset-type-asset-count-help" label="asset-type" name="preferences--classNameId--">
 							<aui:option label="any" value="<%= classNameId == 0 %>" />
 
 							<%
-							List<AssetRendererFactory> assetRendererFactories = AssetRendererFactoryRegistryUtil.getAssetRendererFactories();
+							List<AssetRendererFactory> assetRendererFactories = AssetRendererFactoryRegistryUtil.getAssetRendererFactories(company.getCompanyId());
 
 							for (AssetRendererFactory assetRendererFactory : assetRendererFactories) {
 							%>
@@ -58,11 +58,11 @@ String redirect = ParamUtil.getString(request, "redirect");
 			</li>
 
 			<li class="tree-item">
-				<ul class="lfr-tree lfr-component" id="<portlet:namespace />displayTemplateSettings">
+				<ul class="lfr-tree unstyled" id="<portlet:namespace />displayTemplateSettings">
 					<div class="display-template">
 
 						<%
-						PortletDisplayTemplateHandler portletDisplayTemplateHandler = PortletDisplayTemplateHandlerRegistryUtil.getPortletDisplayTemplateHandler(AssetTag.class.getName());
+						TemplateHandler templateHandler = TemplateHandlerRegistryUtil.getTemplateHandler(AssetTag.class.getName());
 
 						List<String> displayStyles = new ArrayList<String>();
 
@@ -71,9 +71,10 @@ String redirect = ParamUtil.getString(request, "redirect");
 						%>
 
 						<liferay-ui:ddm-template-selector
-							classNameId="<%= PortalUtil.getClassNameId(portletDisplayTemplateHandler.getClassName()) %>"
+							classNameId="<%= PortalUtil.getClassNameId(templateHandler.getClassName()) %>"
+							displayStyle="<%= displayStyle %>"
+							displayStyleGroupId="<%= displayStyleGroupId %>"
 							displayStyles="<%= displayStyles %>"
-							preferenceValue="<%= displayStyle %>"
 							refreshURL="<%= currentURL %>"
 						/>
 					</div>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -74,6 +74,7 @@ public class OrgLaborCacheModel implements CacheModel<OrgLabor>, Externalizable 
 		return sb.toString();
 	}
 
+	@Override
 	public OrgLabor toEntityModel() {
 		OrgLaborImpl orgLaborImpl = new OrgLaborImpl();
 
@@ -100,6 +101,7 @@ public class OrgLaborCacheModel implements CacheModel<OrgLabor>, Externalizable 
 		return orgLaborImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		orgLaborId = objectInput.readLong();
 		organizationId = objectInput.readLong();
@@ -120,6 +122,7 @@ public class OrgLaborCacheModel implements CacheModel<OrgLabor>, Externalizable 
 		satClose = objectInput.readInt();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(orgLaborId);

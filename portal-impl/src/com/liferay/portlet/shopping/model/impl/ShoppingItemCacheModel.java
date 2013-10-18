@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -113,6 +113,7 @@ public class ShoppingItemCacheModel implements CacheModel<ShoppingItem>,
 		return sb.toString();
 	}
 
+	@Override
 	public ShoppingItem toEntityModel() {
 		ShoppingItemImpl shoppingItemImpl = new ShoppingItemImpl();
 
@@ -227,6 +228,7 @@ public class ShoppingItemCacheModel implements CacheModel<ShoppingItem>,
 		return shoppingItemImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		itemId = objectInput.readLong();
 		groupId = objectInput.readLong();
@@ -264,6 +266,7 @@ public class ShoppingItemCacheModel implements CacheModel<ShoppingItem>,
 		largeImageURL = objectInput.readUTF();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(itemId);

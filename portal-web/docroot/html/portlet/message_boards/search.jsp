@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -55,11 +55,9 @@ String keywords = ParamUtil.getString(request, "keywords");
 		title="search"
 	/>
 
-	<span class="aui-search-bar">
-		<aui:input inlineField="<%= true %>" label="" name="keywords" size="30" title="search-messages" type="text" value="<%= keywords %>" />
-
-		<aui:button type="submit" value="search" />
-	</span>
+	<div class="form-search">
+		<liferay-ui:input-search autoFocus="<%= (windowState.equals(WindowState.MAXIMIZED) && !themeDisplay.isFacebook()) %>" id="keywords" placeholder='<%= LanguageUtil.get(locale, "keywords") %>' title='<%= LanguageUtil.get(locale, "search-messages") %>' />
+	</div>
 
 	<%
 	PortletURL portletURL = renderResponse.createRenderURL();
@@ -79,33 +77,42 @@ String keywords = ParamUtil.getString(request, "keywords");
 	>
 
 		<%
-		Indexer indexer = IndexerRegistryUtil.getIndexer(MBMessage.class);
-
-		SearchContext searchContext = SearchContextFactory.getInstance(request);
-
-		searchContext.setAttribute("paginationType", "more");
-		searchContext.setCategoryIds(categoryIdsArray);
-		searchContext.setEnd(searchContainer.getEnd());
-		searchContext.setIncludeAttachments(true);
-		searchContext.setKeywords(keywords);
-
-		QueryConfig queryConfig = new QueryConfig();
-
-		queryConfig.setHighlightEnabled(true);
-
-		searchContext.setQueryConfig(queryConfig);
-
-		searchContext.setStart(searchContainer.getStart());
-
-		Hits hits = indexer.search(searchContext);
-
-		PortletURL hitURL = renderResponse.createRenderURL();
+		Hits hits = null;
 		%>
 
-		<liferay-ui:search-container-results
-			results="<%= SearchResultUtil.getSearchResults(hits, locale, hitURL) %>"
-			total="<%= hits.getLength() %>"
-		/>
+		<liferay-ui:search-container-results>
+
+			<%
+			Indexer indexer = IndexerRegistryUtil.getIndexer(MBMessage.class);
+
+			SearchContext searchContext = SearchContextFactory.getInstance(request);
+
+			searchContext.setAttribute("paginationType", "more");
+			searchContext.setCategoryIds(categoryIdsArray);
+			searchContext.setEnd(searchContainer.getEnd());
+			searchContext.setIncludeAttachments(true);
+			searchContext.setKeywords(keywords);
+
+			QueryConfig queryConfig = new QueryConfig();
+
+			queryConfig.setHighlightEnabled(true);
+
+			searchContext.setQueryConfig(queryConfig);
+
+			searchContext.setStart(searchContainer.getStart());
+
+			hits = indexer.search(searchContext);
+
+			searchContainer.setTotal(hits.getLength());
+
+			PortletURL hitURL = renderResponse.createRenderURL();
+
+			results = SearchResultUtil.getSearchResults(hits, locale, hitURL);
+
+			searchContainer.setResults(results);
+			%>
+
+		</liferay-ui:search-container-results>
 
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.kernel.search.SearchResult"
@@ -127,10 +134,10 @@ String keywords = ParamUtil.getString(request, "keywords");
 			<liferay-ui:app-view-search-entry
 				containerIcon="../common/conversation"
 				containerName="<%= MBUtil.getAbsolutePath(renderRequest, message.getCategoryId()) %>"
-				containerType='<%= LanguageUtil.get(locale, "category") %>'
-				cssClass='<%= MathUtil.isEven(index) ? "search alt" : "search" %>'
+				containerType='<%= LanguageUtil.get(locale, "category[message-board]") %>'
+				cssClass='<%= MathUtil.isEven(index) ? "search" : "search alt" %>'
 				description="<%= (summary != null) ? HtmlUtil.escape(summary.getContent()) : StringPool.BLANK %>"
-				fileEntries="<%= searchResult.getFileEntries() %>"
+				fileEntryTuples="<%= searchResult.getFileEntryTuples() %>"
 				queryTerms="<%= hits.getQueryTerms() %>"
 				title="<%= (summary != null) ? HtmlUtil.escape(summary.getTitle()) : HtmlUtil.escape(message.getSubject()) %>"
 				url="<%= rowURL %>"
@@ -141,12 +148,6 @@ String keywords = ParamUtil.getString(request, "keywords");
 	</liferay-ui:search-container>
 
 </aui:form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) && !themeDisplay.isFacebook() %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />keywords);
-	</aui:script>
-</c:if>
 
 <%
 if (breadcrumbsCategoryId > 0) {

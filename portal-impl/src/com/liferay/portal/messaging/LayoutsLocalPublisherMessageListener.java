@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.messaging.MessageStatus;
 import com.liferay.portal.kernel.messaging.sender.MessageSender;
 import com.liferay.portal.kernel.messaging.sender.SingleDestinationMessageSender;
 import com.liferay.portal.kernel.staging.StagingUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Time;
@@ -52,7 +53,7 @@ public class LayoutsLocalPublisherMessageListener
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public LayoutsLocalPublisherMessageListener(
 		SingleDestinationMessageSender statusSender,
@@ -102,6 +103,10 @@ public class LayoutsLocalPublisherMessageListener
 				Date scheduledFireTime =
 					publisherRequest.getScheduledFireTime();
 
+				if (scheduledFireTime == null) {
+					scheduledFireTime = new Date();
+				}
+
 				startDate = new Date(
 					scheduledFireTime.getTime() - (last * Time.HOUR));
 
@@ -132,7 +137,7 @@ public class LayoutsLocalPublisherMessageListener
 			String param = entry.getKey();
 			String[] values = entry.getValue();
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				if (values.length == 1) {
 					attributes.put(param, values[0]);
 				}
@@ -155,7 +160,7 @@ public class LayoutsLocalPublisherMessageListener
 					parameterMap, startDate, endDate);
 			}
 			else if (command.equals(
-				LayoutsLocalPublisherRequest.COMMAND_SELECTED_PAGES)) {
+						LayoutsLocalPublisherRequest.COMMAND_SELECTED_PAGES)) {
 
 				StagingUtil.publishLayouts(
 					userId, sourceGroupId, targetGroupId, privateLayout,

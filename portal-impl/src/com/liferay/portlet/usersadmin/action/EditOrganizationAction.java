@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -78,8 +78,9 @@ public class EditOrganizationAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -164,8 +165,9 @@ public class EditOrganizationAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -177,14 +179,14 @@ public class EditOrganizationAction extends PortletAction {
 
 				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.users_admin.error");
+				return actionMapping.findForward("portlet.users_admin.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.users_admin.edit_organization"));
 	}
 
@@ -212,7 +214,6 @@ public class EditOrganizationAction extends PortletAction {
 			actionRequest, "parentOrganizationSearchContainerPrimaryKeys",
 			OrganizationConstants.DEFAULT_PARENT_ORGANIZATION_ID);
 		String name = ParamUtil.getString(actionRequest, "name");
-		boolean recursable = ParamUtil.getBoolean(actionRequest, "recursable");
 		int statusId = ParamUtil.getInteger(actionRequest, "statusId");
 		String type = ParamUtil.getString(actionRequest, "type");
 		long regionId = ParamUtil.getLong(actionRequest, "regionId");
@@ -236,18 +237,18 @@ public class EditOrganizationAction extends PortletAction {
 			// Add organization
 
 			organization = OrganizationServiceUtil.addOrganization(
-				parentOrganizationId, name, type, recursable, regionId,
-				countryId, statusId, comments, site, addresses, emailAddresses,
-				orgLabors, phones, websites, serviceContext);
+				parentOrganizationId, name, type, regionId, countryId, statusId,
+				comments, site, addresses, emailAddresses, orgLabors, phones,
+				websites, serviceContext);
 		}
 		else {
 
 			// Update organization
 
 			organization = OrganizationServiceUtil.updateOrganization(
-				organizationId, parentOrganizationId, name, type, recursable,
-				regionId, countryId, statusId, comments, site, addresses,
-				emailAddresses, orgLabors, phones, websites, serviceContext);
+				organizationId, parentOrganizationId, name, type, regionId,
+				countryId, statusId, comments, site, addresses, emailAddresses,
+				orgLabors, phones, websites, serviceContext);
 
 			boolean deleteLogo = ParamUtil.getBoolean(
 				actionRequest, "deleteLogo");
@@ -288,14 +289,14 @@ public class EditOrganizationAction extends PortletAction {
 
 		String reminderQueries = actionRequest.getParameter("reminderQueries");
 
-		PortletPreferences preferences = organization.getPreferences();
+		PortletPreferences portletPreferences = organization.getPreferences();
 
 		LocalizationUtil.setLocalizedPreferencesValues(
-			actionRequest, preferences, "reminderQueries");
+			actionRequest, portletPreferences, "reminderQueries");
 
-		preferences.setValue("reminderQueries", reminderQueries);
+		portletPreferences.setValue("reminderQueries", reminderQueries);
 
-		preferences.store();
+		portletPreferences.store();
 
 		return organization;
 	}

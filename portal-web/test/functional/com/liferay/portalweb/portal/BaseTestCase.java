@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,9 @@ import com.liferay.portalweb.portal.util.LiferaySeleneseTestCase;
 import com.liferay.portalweb.portal.util.SeleniumUtil;
 import com.liferay.portalweb.portal.util.TestPropsValues;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Brian Wing Shun Chan
  */
@@ -26,11 +29,6 @@ public class BaseTestCase extends LiferaySeleneseTestCase {
 
 	public BaseTestCase() {
 		InitUtil.initWithSpring();
-
-		String chromeDriverPath =
-			TestPropsValues.SELENIUM_EXECUTABLE_DIR + "\\chromedriver.exe";
-
-		System.setProperty("webdriver.chrome.driver", chromeDriverPath);
 	}
 
 	@Override
@@ -39,15 +37,32 @@ public class BaseTestCase extends LiferaySeleneseTestCase {
 
 		String className = clazz.getName();
 
-		if (className.contains(".evaluatelog.")) {
+		if (className.contains("evaluatelog")) {
 			return;
 		}
 
 		selenium = SeleniumUtil.getSelenium();
+
+		selenium.startLogger();
 	}
 
 	@Override
 	public void tearDown() throws Exception {
+		String primaryTestSuiteName = selenium.getPrimaryTestSuiteName();
+
+		if (!primaryTestSuiteName.endsWith("TestSuite")) {
+			testCaseCount--;
+		}
+
+		if (!primaryTestSuiteName.endsWith("TestSuite") &&
+			(testCaseCount < 1)) {
+
+			SeleniumUtil.stopSelenium();
+		}
+
+		if (TestPropsValues.TESTING_CLASS_METHOD) {
+			SeleniumUtil.stopSelenium();
+		}
 	}
 
 	protected void loadRequiredJavaScriptModules() {
@@ -99,7 +114,13 @@ public class BaseTestCase extends LiferaySeleneseTestCase {
 
 			selenium.getEval("window.Liferay.fire(\'initDockbar\');");
 		}
-
 	}
+
+	protected static int testCaseCount;
+
+	protected Map<String, String> commandScopeVariables;
+	protected Map<String, String> definitionScopeVariables =
+		new HashMap<String, String>();
+	protected Map<String, String> executeScopeVariables;
 
 }

@@ -75,13 +75,15 @@ AUI.add(
 							submitForm(instance._hrefFm, uri);
 						}
 						else {
-							var data = {
-								duplicateEntryId: responseData.duplicateEntryId,
-								oldName: responseData.oldName,
-								overrideMessage: instance.get('overrideMessage'),
-								renameMessage: instance.get('renameMessage'),
-								trashEntryId: responseData.trashEntryId
-							};
+							var data = instance.ns(
+								{
+									duplicateEntryId: responseData.duplicateEntryId,
+									oldName: responseData.oldName,
+									overrideMessage: instance.get('overrideMessage'),
+									renameMessage: instance.get('renameMessage'),
+									trashEntryId: responseData.trashEntryId
+								}
+							);
 
 							instance._showPopup(data, instance.get('duplicateEntryURL'));
 						}
@@ -118,13 +120,15 @@ AUI.add(
 							instance.get(STR_RESTORE_ENTRY_URL),
 							{
 								after: {
-									failure: A.rbind(instance._afterCheckEntryFailure, instance),
-									success: A.rbind(instance._afterCheckEntrySuccess, instance)
+									failure: A.rbind('_afterCheckEntryFailure', instance),
+									success: A.rbind('_afterCheckEntrySuccess', instance)
 								},
 								arguments: uri,
-								data: {
-									trashEntryId: event.trashEntryId
-								},
+								data: instance.ns(
+									{
+										trashEntryId: event.trashEntryId
+									}
+								),
 								dataType: 'json'
 							}
 						);
@@ -136,23 +140,24 @@ AUI.add(
 						var popup = instance._popup;
 
 						if (!popup) {
-							popup = new A.Dialog(
+							popup = Liferay.Util.Window.getWindow(
 								{
-									align: Liferay.Util.Window.ALIGN_CENTER,
-									cssClass: 'trash-restore-popup',
-									modal: true,
-									title: Liferay.Language.get('warning'),
-									width: 500
+									dialog: {
+										cssClass: 'trash-restore-popup'
+									},
+									title: Liferay.Language.get('warning')
 								}
-							).plug(
+							);
+
+							popup.plug(
 								A.Plugin.IO,
 								{
 									after: {
-										success: A.bind(instance._initializeRestorePopup, instance)
+										success: A.bind('_initializeRestorePopup', instance)
 									},
 									autoLoad: false
 								}
-							).render();
+							);
 
 							instance._popup = popup;
 						}
@@ -167,9 +172,11 @@ AUI.add(
 
 						restoreTrashEntryFm.on('submit', instance._onRestoreTrashEntryFmSubmit, instance, restoreTrashEntryFm);
 
-						var closeButton = restoreTrashEntryFm.one('.aui-button-input-cancel');
+						var closeButton = restoreTrashEntryFm.one('.btn-cancel');
 
-						closeButton.on('click', instance._popup.hide, instance._popup);
+						if (closeButton) {
+							closeButton.on('click', instance._popup.hide, instance._popup);
+						}
 
 						var rename = instance.byId('rename');
 						var newName = instance.byId('newName');
@@ -199,14 +206,16 @@ AUI.add(
 								instance.get(STR_RESTORE_ENTRY_URL),
 								{
 									after: {
-										failure: A.rbind(instance._afterPopupCheckEntryFailure, instance),
-										success: A.rbind(instance._afterPopupCheckEntrySuccess, instance)
+										failure: A.rbind('_afterPopupCheckEntryFailure', instance),
+										success: A.rbind('_afterPopupCheckEntrySuccess', instance)
 									},
 									arguments: form,
-									data: {
-										trashEntryId: trashEntryId.val(),
-										newName: newName.val()
-									},
+									data: instance.ns(
+										{
+											trashEntryId: trashEntryId.val(),
+											newName: newName.val()
+										}
+									),
 									dataType: 'json'
 								}
 							);
@@ -235,6 +244,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-dialog', 'aui-io-request', 'liferay-portlet-base']
+		requires: ['aui-io-plugin-deprecated', 'aui-io-request', 'liferay-portlet-base', 'liferay-util-window']
 	}
 );

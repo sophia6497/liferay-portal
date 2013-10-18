@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,13 +26,11 @@ public interface TemplateManager {
 	public String getName();
 
 	public Template getTemplate(
-		TemplateResource templateResource,
-		TemplateContextType templateContextType);
+		TemplateResource templateResource, boolean restricted);
 
 	public Template getTemplate(
 		TemplateResource templateResource,
-		TemplateResource errorTemplateResource,
-		TemplateContextType templateContextType);
+		TemplateResource errorTemplateResource, boolean restricted);
 
 	public void init() throws TemplateException;
 

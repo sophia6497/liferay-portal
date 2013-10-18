@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.upgrade.util;
 
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.BaseUpgradePortletPreferences;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
@@ -154,7 +155,7 @@ public class UpgradeAssetPublisherManualEntries
 		String[] assetEntryXmls = portletPreferences.getValues(
 			"asset-entry-xml", new String[0]);
 
-		if (Validator.isNull(assetEntryXmls)) {
+		if (ArrayUtil.isEmpty(assetEntryXmls)) {
 			assetEntryXmls = portletPreferences.getValues(
 				"assetEntryXml", new String[0]);
 		}
@@ -162,13 +163,13 @@ public class UpgradeAssetPublisherManualEntries
 		String[] manualEntries = portletPreferences.getValues(
 			"manual-entries", new String[0]);
 
-		if (Validator.isNull(manualEntries)) {
+		if (ArrayUtil.isEmpty(manualEntries)) {
 			manualEntries = portletPreferences.getValues(
 				"manualEntries", new String[0]);
 		}
 
-		if (Validator.isNull(assetEntryXmls) &&
-			Validator.isNotNull(manualEntries)) {
+		if (ArrayUtil.isEmpty(assetEntryXmls) &&
+			ArrayUtil.isNotEmpty(manualEntries)) {
 
 			assetEntryXmls = getAssetEntryXmls(manualEntries);
 

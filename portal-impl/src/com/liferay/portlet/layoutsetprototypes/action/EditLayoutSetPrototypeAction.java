@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,7 +29,11 @@ import com.liferay.portal.service.LayoutSetPrototypeServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletKeys;
+import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.sites.util.SitesUtil;
 
 import java.util.Locale;
 import java.util.Map;
@@ -37,6 +41,7 @@ import java.util.Map;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
+import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -48,26 +53,53 @@ import org.apache.struts.action.ActionMapping;
  * @author Brian Wing Shun Chan
  * @author Ryan Park
  * @author Máté Thurzó
+ * @author Josef Sustacek
  */
 public class EditLayoutSetPrototypeAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
+		String redirect = ParamUtil.getString(actionRequest, "redirect");
+
 		try {
 			if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
-				updateLayoutSetPrototype(actionRequest);
+				hideDefaultSuccessMessage(actionRequest);
+
+				LayoutSetPrototype layoutSetPrototype =
+					updateLayoutSetPrototype(actionRequest);
+
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)actionRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
+				ThemeDisplay siteThemeDisplay =
+					(ThemeDisplay)themeDisplay.clone();
+
+				siteThemeDisplay.setScopeGroupId(
+					layoutSetPrototype.getGroupId());
+
+				PortletURL siteAdministrationURL =
+					PortalUtil.getSiteAdministrationURL(
+						actionResponse, siteThemeDisplay,
+						PortletKeys.SITE_TEMPLATE_SETTINGS);
+
+				redirect = siteAdministrationURL.toString();
 			}
 			else if (cmd.equals(Constants.DELETE)) {
 				deleteLayoutSetPrototypes(actionRequest);
 			}
+			else if (cmd.equals("reset_merge_fail_count")) {
+				resetMergeFailCount(actionRequest);
+			}
 
-			sendRedirect(actionRequest, actionResponse);
+			sendRedirect(actionRequest, actionResponse, redirect);
 		}
 		catch (Exception e) {
 			if (e instanceof PrincipalException) {
@@ -79,8 +111,7 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 			else if (e instanceof RequiredLayoutSetPrototypeException) {
 				SessionErrors.add(actionRequest, e.getClass());
 
-				String redirect = PortalUtil.escapeRedirect(
-					ParamUtil.getString(actionRequest, "redirect"));
+				redirect = PortalUtil.escapeRedirect(redirect);
 
 				if (Validator.isNotNull(redirect)) {
 					actionResponse.sendRedirect(redirect);
@@ -94,8 +125,9 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -107,7 +139,7 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 
 				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward(
+				return actionMapping.findForward(
 					"portlet.layout_set_prototypes.error");
 			}
 			else {
@@ -115,7 +147,7 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(
 				renderRequest,
 				"portlet.layout_set_prototypes.edit_layout_set_prototype"));
@@ -133,7 +165,26 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 		}
 	}
 
-	protected void updateLayoutSetPrototype(ActionRequest actionRequest)
+	@Override
+	protected boolean isCheckMethodOnProcessAction() {
+		return _CHECK_METHOD_ON_PROCESS_ACTION;
+	}
+
+	protected void resetMergeFailCount(ActionRequest actionRequest)
+		throws Exception {
+
+		long layoutSetPrototypeId = ParamUtil.getLong(
+			actionRequest, "layoutSetPrototypeId");
+
+		LayoutSetPrototype layoutSetPrototype =
+			LayoutSetPrototypeServiceUtil.getLayoutSetPrototype(
+				layoutSetPrototypeId);
+
+		SitesUtil.setMergeFailCount(layoutSetPrototype, 0);
+	}
+
+	protected LayoutSetPrototype updateLayoutSetPrototype(
+			ActionRequest actionRequest)
 		throws Exception {
 
 		long layoutSetPrototypeId = ParamUtil.getLong(
@@ -181,9 +232,11 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 		settingsProperties.setProperty(
 			"customJspServletContextName", customJspServletContextName);
 
-		LayoutSetPrototypeServiceUtil.updateLayoutSetPrototype(
+		return LayoutSetPrototypeServiceUtil.updateLayoutSetPrototype(
 			layoutSetPrototype.getLayoutSetPrototypeId(),
 			settingsProperties.toString());
 	}
+
+	private static final boolean _CHECK_METHOD_ON_PROCESS_ACTION = false;
 
 }

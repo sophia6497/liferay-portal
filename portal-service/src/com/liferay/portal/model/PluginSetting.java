@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -59,11 +59,6 @@ public interface PluginSetting extends PluginSettingModel, PersistedModel {
 	name
 	*/
 	public boolean hasRoleWithName(java.lang.String roleName);
-
-	/**
-	* Sets a string of ordered comma delimited plugin IDs.
-	*/
-	public void setRoles(java.lang.String roles);
 
 	/**
 	* Sets an array of required roles of the plugin.

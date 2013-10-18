@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -203,6 +203,9 @@ public class Validator_IW {
 		return Validator.isNotNull(obj);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public boolean isNotNull(java.lang.Object[] array) {
 		return Validator.isNotNull(array);
 	}
@@ -219,6 +222,9 @@ public class Validator_IW {
 		return Validator.isNull(obj);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public boolean isNull(java.lang.Object[] array) {
 		return Validator.isNull(array);
 	}
@@ -237,6 +243,10 @@ public class Validator_IW {
 
 	public boolean isPhoneNumber(java.lang.String phoneNumber) {
 		return Validator.isPhoneNumber(phoneNumber);
+	}
+
+	public boolean isUri(java.lang.String uri) {
+		return Validator.isUri(uri);
 	}
 
 	public boolean isUrl(java.lang.String url) {

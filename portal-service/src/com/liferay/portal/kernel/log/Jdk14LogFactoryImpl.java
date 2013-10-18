@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -42,14 +42,17 @@ public class Jdk14LogFactoryImpl implements LogFactory {
 		}
 	}
 
+	@Override
 	public Log getLog(Class<?> c) {
 		return getLog(c.getName());
 	}
 
+	@Override
 	public Log getLog(String name) {
 		return new Jdk14LogImpl(Logger.getLogger(name));
 	}
 
+	@Override
 	public void setLevel(String name, String priority, boolean custom) {
 	}
 

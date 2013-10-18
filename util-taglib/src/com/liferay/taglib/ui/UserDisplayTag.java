@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.taglib.ui;
 
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.servlet.PortalIncludeUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.User;
@@ -57,11 +56,9 @@ public class UserDisplayTag extends TagSupport {
 			request.setAttribute(
 				"liferay-ui:user-display:user-name", _userName);
 
-			User user = null;
+			User user = UserLocalServiceUtil.fetchUserById(_userId);
 
-			try {
-				user = UserLocalServiceUtil.getUserById(_userId);
-
+			if (user != null) {
 				if (user.isDefaultUser()) {
 					user = null;
 				}
@@ -70,7 +67,7 @@ public class UserDisplayTag extends TagSupport {
 
 				pageContext.setAttribute("userDisplay", user);
 			}
-			catch (NoSuchUserException nsue) {
+			else {
 				request.removeAttribute("liferay-ui:user-display:user");
 
 				pageContext.removeAttribute("userDisplay");

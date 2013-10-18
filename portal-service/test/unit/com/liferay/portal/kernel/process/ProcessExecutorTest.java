@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,18 +14,22 @@
 
 package com.liferay.portal.kernel.process;
 
+import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.process.ProcessExecutor.ProcessContext;
 import com.liferay.portal.kernel.process.ProcessExecutor.ShutdownHook;
 import com.liferay.portal.kernel.process.log.ProcessOutputStream;
+import com.liferay.portal.kernel.test.CodeCoverageAssertor;
 import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.ReflectionUtil;
-import com.liferay.portal.kernel.util.SocketUtil.ServerSocketConfigurator;
 import com.liferay.portal.kernel.util.SocketUtil;
+import com.liferay.portal.kernel.util.SocketUtil.ServerSocketConfigurator;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.SystemProperties;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
@@ -40,6 +44,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -72,12 +77,17 @@ import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * @author Shuyang Zhou
  */
 public class ProcessExecutorTest {
+
+	@ClassRule
+	public static CodeCoverageAssertor codeCoverageAssertor =
+		new CodeCoverageAssertor();
 
 	@Before
 	public void setUp() throws Exception {
@@ -114,7 +124,7 @@ public class ProcessExecutorTest {
 			int port = serverSocket.getLocalPort();
 
 			ProcessExecutor.execute(
-				_classPath, _createArguments(),
+				_classPath, _createArguments(_JPDA_OPTIONS1),
 				new AttachParentProcessCallable(
 					AttachChildProcessCallable1.class.getName(), port));
 
@@ -162,7 +172,7 @@ public class ProcessExecutorTest {
 			int port = serverSocket.getLocalPort();
 
 			ProcessExecutor.execute(
-				_classPath, _createArguments(),
+				_classPath, _createArguments(_JPDA_OPTIONS1),
 				new AttachParentProcessCallable(
 					AttachChildProcessCallable2.class.getName(), port));
 
@@ -219,7 +229,7 @@ public class ProcessExecutorTest {
 			int port = serverSocket.getLocalPort();
 
 			ProcessExecutor.execute(
-				_classPath, _createArguments(),
+				_classPath, _createArguments(_JPDA_OPTIONS1),
 				new AttachParentProcessCallable(
 					AttachChildProcessCallable3.class.getName(), port));
 
@@ -235,7 +245,9 @@ public class ProcessExecutorTest {
 
 			ServerThread.exit(parentSocket);
 
-			_log.info("Waiting subprocess to exit...");
+			if (_log.isInfoEnabled()) {
+				_log.info("Waiting subprocess to exit...");
+			}
 
 			long startTime = System.currentTimeMillis();
 
@@ -243,9 +255,12 @@ public class ProcessExecutorTest {
 				Thread.sleep(10);
 
 				if (!ServerThread.isAlive(childSocket)) {
-					_log.info(
-						"Subprocess exited. Waited " +
-							(System.currentTimeMillis() - startTime) + " ms");
+					if (_log.isInfoEnabled()) {
+						_log.info(
+							"Subprocess exited. Waited " +
+								(System.currentTimeMillis() - startTime) +
+									" ms");
+					}
 
 					return;
 				}
@@ -271,7 +286,7 @@ public class ProcessExecutorTest {
 			int port = serverSocket.getLocalPort();
 
 			ProcessExecutor.execute(
-				_classPath, _createArguments(),
+				_classPath, _createArguments(_JPDA_OPTIONS1),
 				new AttachParentProcessCallable(
 					AttachChildProcessCallable4.class.getName(), port));
 
@@ -311,7 +326,7 @@ public class ProcessExecutorTest {
 			int port = serverSocket.getLocalPort();
 
 			ProcessExecutor.execute(
-				_classPath, _createArguments(),
+				_classPath, _createArguments(_JPDA_OPTIONS1),
 				new AttachParentProcessCallable(
 					AttachChildProcessCallable5.class.getName(), port));
 
@@ -351,7 +366,7 @@ public class ProcessExecutorTest {
 			int port = serverSocket.getLocalPort();
 
 			ProcessExecutor.execute(
-				_classPath, _createArguments(),
+				_classPath, _createArguments(_JPDA_OPTIONS1),
 				new AttachParentProcessCallable(
 					AttachChildProcessCallable6.class.getName(), port));
 
@@ -395,6 +410,52 @@ public class ProcessExecutorTest {
 		finally {
 			serverSocket.close();
 		}
+	}
+
+	@Test
+	public void testBrokenPiping() throws Exception {
+		List<LogRecord> logRecords = JDKLoggerTestUtil.configureJDKLogger(
+			ProcessExecutor.class.getName(), Level.SEVERE);
+
+		BrokenPipingProcessCallable brokenPipingProcessCallable =
+			new BrokenPipingProcessCallable();
+
+		Future<String> future = ProcessExecutor.execute(
+			_classPath, brokenPipingProcessCallable);
+
+		try {
+			future.get();
+
+			Assert.fail();
+		}
+		catch (ExecutionException ee) {
+			Throwable cause = ee.getCause();
+
+			Assert.assertTrue(cause instanceof ProcessException);
+
+			Assert.assertEquals(
+				"Corrupted object input stream", cause.getMessage());
+		}
+
+		Assert.assertFalse(future.isCancelled());
+		Assert.assertTrue(future.isDone());
+
+		Assert.assertEquals(1, logRecords.size());
+
+		String message = logRecords.get(0).getMessage();
+
+		int index = message.lastIndexOf(' ');
+
+		Assert.assertTrue(index != -1);
+		Assert.assertEquals(
+			"Dumping content of corrupted object input stream to",
+			message.substring(0, index));
+
+		File file = new File(message.substring(index + 1));
+
+		Assert.assertTrue(file.exists());
+
+		file.delete();
 	}
 
 	@Test
@@ -616,7 +677,8 @@ public class ProcessExecutorTest {
 			new DummyExceptionProcessCallable();
 
 		Future<Serializable> future = ProcessExecutor.execute(
-			_classPath, _createArguments(), dummyExceptionProcessCallable);
+			_classPath, _createArguments(_JPDA_OPTIONS1),
+			dummyExceptionProcessCallable);
 
 		try {
 			future.get();
@@ -715,8 +777,6 @@ public class ProcessExecutorTest {
 
 		// Warn level
 
-		boolean junitCodeCoverage = Boolean.getBoolean("junit.code.coverage");
-
 		String leadingLog = "Test leading log.\n";
 		String bodyLog = "Test body log.\n";
 
@@ -726,7 +786,7 @@ public class ProcessExecutorTest {
 		LeadingLogProcessCallable leadingLogProcessCallable =
 			new LeadingLogProcessCallable(leadingLog, bodyLog);
 
-		List<String> arguments = _createArguments();
+		List<String> arguments = _createArguments(_JPDA_OPTIONS1);
 
 		Future<String> future = ProcessExecutor.execute(
 			_classPath, arguments, leadingLogProcessCallable);
@@ -736,35 +796,22 @@ public class ProcessExecutorTest {
 		Assert.assertFalse(future.isCancelled());
 		Assert.assertTrue(future.isDone());
 
-		if (junitCodeCoverage) {
-			Assert.assertEquals(2, logRecords.size());
-		}
-		else {
-			Assert.assertEquals(1, logRecords.size());
-		}
+		Assert.assertEquals(1, logRecords.size());
 
 		LogRecord logRecord = logRecords.get(0);
 
 		Assert.assertEquals(
 			"Found corrupt leading log " + leadingLog, logRecord.getMessage());
 
-		if (junitCodeCoverage) {
-			logRecord = logRecords.get(1);
-
-			String message = logRecord.getMessage();
-
-			_assertBrokenPiping(message);
-		}
-
 		// Fine level
 
 		logRecords = JDKLoggerTestUtil.configureJDKLogger(
 			ProcessExecutor.class.getName(), Level.FINE);
 
-		leadingLogProcessCallable =
-			new LeadingLogProcessCallable(leadingLog, bodyLog);
+		leadingLogProcessCallable = new LeadingLogProcessCallable(
+			leadingLog, bodyLog);
 
-		arguments = _createArguments();
+		arguments = _createArguments(_JPDA_OPTIONS1);
 
 		future = ProcessExecutor.execute(
 			_classPath, arguments, leadingLogProcessCallable);
@@ -774,12 +821,7 @@ public class ProcessExecutorTest {
 		Assert.assertFalse(future.isCancelled());
 		Assert.assertTrue(future.isDone());
 
-		if (junitCodeCoverage) {
-			Assert.assertEquals(3, logRecords.size());
-		}
-		else {
-			Assert.assertEquals(2, logRecords.size());
-		}
+		Assert.assertEquals(2, logRecords.size());
 
 		LogRecord logRecord1 = logRecords.get(0);
 
@@ -792,23 +834,15 @@ public class ProcessExecutorTest {
 
 		Assert.assertTrue(message.contains("Invoked generic process callable"));
 
-		if (junitCodeCoverage) {
-			LogRecord logRecord3 = logRecords.get(2);
-
-			message = logRecord3.getMessage();
-
-			_assertBrokenPiping(message);
-		}
-
 		// Severe level
 
 		logRecords = JDKLoggerTestUtil.configureJDKLogger(
 			ProcessExecutor.class.getName(), Level.SEVERE);
 
-		leadingLogProcessCallable =
-			new LeadingLogProcessCallable(leadingLog, bodyLog);
+		leadingLogProcessCallable = new LeadingLogProcessCallable(
+			leadingLog, bodyLog);
 
-		arguments = _createArguments();
+		arguments = _createArguments(_JPDA_OPTIONS1);
 
 		future = ProcessExecutor.execute(
 			_classPath, arguments, leadingLogProcessCallable);
@@ -818,16 +852,7 @@ public class ProcessExecutorTest {
 		Assert.assertFalse(future.isCancelled());
 		Assert.assertTrue(future.isDone());
 
-		if (junitCodeCoverage) {
-			Assert.assertEquals(1, logRecords.size());
-
-			logRecord = logRecords.get(0);
-
-			_assertBrokenPiping(logRecord.getMessage());
-		}
-		else {
-			Assert.assertEquals(0, logRecords.size());
-		}
+		Assert.assertEquals(0, logRecords.size());
 	}
 
 	@Test
@@ -857,7 +882,7 @@ public class ProcessExecutorTest {
 		signalFile.delete();
 
 		try {
-			String logMessage= "Log Message";
+			String logMessage = "Log Message";
 
 			final LoggingProcessCallable loggingProcessCallable =
 				new LoggingProcessCallable(logMessage, signalFile);
@@ -928,7 +953,7 @@ public class ProcessExecutorTest {
 		ReadPropertyProcessCallable readPropertyProcessCallable =
 			new ReadPropertyProcessCallable(propertyKey);
 
-		List<String> arguments = _createArguments();
+		List<String> arguments = _createArguments(_JPDA_OPTIONS1);
 
 		arguments.add("-D" + propertyKey + "=" + propertyValue);
 
@@ -1031,23 +1056,38 @@ public class ProcessExecutorTest {
 		}
 	}
 
-	private static void _assertBrokenPiping(String message) {
-		int index = message.lastIndexOf(' ');
-
-		Assert.assertTrue(index != -1);
-		Assert.assertEquals(
-			"Dumping content of corrupted object input stream to",
-			message.substring(0, index));
-
-		File file = new File(message.substring(index + 1));
-
-		Assert.assertTrue(file.exists());
-
-		file.delete();
-	}
-
-	private static List<String> _createArguments() {
+	private static List<String> _createArguments(String jpdaOptions) {
 		List<String> arguments = new ArrayList<String>();
+
+		arguments.add(
+			"-D" + SystemProperties.SYSTEM_PROPERTIES_QUIET + "=true");
+
+		boolean coberturaParentDynamicallyInstrumented = Boolean.getBoolean(
+			"cobertura.parent.dynamically.instrumented");
+
+		if (coberturaParentDynamicallyInstrumented) {
+			arguments.add("-Dcobertura.parent.dynamically.instrumented=true");
+		}
+
+		String agentLine = System.getProperty("junit.cobertura.agent");
+
+		if (Validator.isNotNull(agentLine)) {
+			arguments.add(agentLine);
+			arguments.add("-Djunit.cobertura.agent=" + agentLine);
+		}
+
+		boolean junitCodeCoverage = Boolean.getBoolean("junit.code.coverage");
+
+		if (junitCodeCoverage) {
+			arguments.add("-Djunit.code.coverage=true");
+		}
+
+		boolean junitDebug = Boolean.getBoolean("junit.debug");
+
+		if (junitDebug) {
+			arguments.add(jpdaOptions);
+			arguments.add("-Djunit.debug=true");
+		}
 
 		String fileName = System.getProperty(
 			"net.sourceforge.cobertura.datafile");
@@ -1136,6 +1176,12 @@ public class ProcessExecutorTest {
 		}
 	}
 
+	private static final String _JPDA_OPTIONS1 =
+		"-agentlib:jdwp=transport=dt_socket,address=8001,server=y,suspend=y";
+
+	private static final String _JPDA_OPTIONS2 =
+		"-agentlib:jdwp=transport=dt_socket,address=8002,server=y,suspend=y";
+
 	private static Log _log = LogFactoryUtil.getLog(ProcessExecutorTest.class);
 
 	private static String _classPath = System.getProperty("java.class.path");
@@ -1143,11 +1189,13 @@ public class ProcessExecutorTest {
 	private static ServerSocketConfigurator _serverSocketConfigurator =
 		new ServerSocketConfigurator() {
 
+		@Override
 		public void configure(ServerSocket serverSocket)
 			throws SocketException {
 
 			serverSocket.setReuseAddress(true);
 		}
+
 	};
 
 	private static class AttachChildProcessCallable1
@@ -1157,6 +1205,7 @@ public class ProcessExecutorTest {
 			_serverPort = serverPort;
 		}
 
+		@Override
 		public Serializable call() throws ProcessException {
 			try {
 				ServerThread serverThread = new ServerThread(
@@ -1183,6 +1232,8 @@ public class ProcessExecutorTest {
 
 			return clazz.getSimpleName();
 		}
+
+		private static final long serialVersionUID = 1L;
 
 		private int _serverPort;
 
@@ -1230,6 +1281,8 @@ public class ProcessExecutorTest {
 
 			return null;
 		}
+
+		private static final long serialVersionUID = 1L;
 
 	}
 
@@ -1296,6 +1349,8 @@ public class ProcessExecutorTest {
 			return null;
 		}
 
+		private static final long serialVersionUID = 1L;
+
 	}
 
 	private static class AttachChildProcessCallable4
@@ -1324,6 +1379,8 @@ public class ProcessExecutorTest {
 			return null;
 		}
 
+		private static final long serialVersionUID = 1L;
+
 	}
 
 	private static class AttachChildProcessCallable5
@@ -1340,6 +1397,19 @@ public class ProcessExecutorTest {
 					"Child Process", Long.MAX_VALUE,
 					new TestShutdownHook(true));
 
+				Thread heartbeatThread = _getHeartbeatThread(false);
+
+				heartbeatThread.setUncaughtExceptionHandler(
+					new UncaughtExceptionHandler() {
+
+						@Override
+						public void uncaughtException(Thread t, Throwable e) {
+
+							// Swallow unconcerned uncaught exception
+
+						}
+					});
+
 				if (!result || !ProcessContext.isAttached()) {
 					throw new ProcessException("Unable to attach");
 				}
@@ -1352,6 +1422,8 @@ public class ProcessExecutorTest {
 
 			return null;
 		}
+
+		private static final long serialVersionUID = 1L;
 
 	}
 
@@ -1381,6 +1453,8 @@ public class ProcessExecutorTest {
 			return null;
 		}
 
+		private static final long serialVersionUID = 1L;
+
 	}
 
 	private static class AttachParentProcessCallable
@@ -1395,6 +1469,7 @@ public class ProcessExecutorTest {
 				className);
 		}
 
+		@Override
 		public Serializable call() throws ProcessException {
 			Class<?> clazz = getClass();
 
@@ -1415,7 +1490,7 @@ public class ProcessExecutorTest {
 					_processCallableClass.getConstructor(int.class);
 
 				ProcessExecutor.execute(
-					_classPath, _createArguments(),
+					_classPath, _createArguments(_JPDA_OPTIONS2),
 					constructor.newInstance(_serverPort));
 			}
 			catch (Exception e) {
@@ -1449,14 +1524,71 @@ public class ProcessExecutorTest {
 			return sb.toString();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 		private Class<ProcessCallable<?>> _processCallableClass;
 		private int _serverPort;
+
+	}
+
+	private static class BrokenPipingProcessCallable
+		implements ProcessCallable<Serializable> {
+
+		public BrokenPipingProcessCallable() throws IOException {
+			DummyReturnProcessCallable dummyReturnProcessCallable =
+				new DummyReturnProcessCallable();
+
+			UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+				new UnsyncByteArrayOutputStream();
+
+			ObjectOutputStream objectOutputStream = new ObjectOutputStream(
+				unsyncByteArrayOutputStream);
+
+			objectOutputStream.writeObject(dummyReturnProcessCallable);
+
+			objectOutputStream.close();
+
+			byte[] serializedData = unsyncByteArrayOutputStream.toByteArray();
+
+			serializedData[5] = (byte) (serializedData[5] + 1);
+
+			_brokenPipingData = serializedData;
+		}
+
+		@Override
+		public Serializable call() throws ProcessException {
+			try {
+				FileOutputStream fileOutputStream = new FileOutputStream(
+					FileDescriptor.out);
+
+				fileOutputStream.write(_brokenPipingData);
+
+				fileOutputStream.flush();
+			}
+			catch (Exception e) {
+				throw new ProcessException(e);
+			}
+
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			Class<?> clazz = getClass();
+
+			return clazz.getSimpleName();
+		}
+
+		private static final long serialVersionUID = 1L;
+
+		private final byte[] _brokenPipingData;
 
 	}
 
 	private static class DummyExceptionProcessCallable
 		implements ProcessCallable<Serializable> {
 
+		@Override
 		public Serializable call() throws ProcessException {
 			throw new ProcessException(
 				DummyExceptionProcessCallable.class.getName());
@@ -1469,6 +1601,8 @@ public class ProcessExecutorTest {
 			return clazz.getSimpleName();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 	}
 
 	private static class DummyJob implements Callable<Void> {
@@ -1477,6 +1611,7 @@ public class ProcessExecutorTest {
 			_countDownLatch = new CountDownLatch(1);
 		}
 
+		@Override
 		public Void call() throws Exception {
 			_countDownLatch.countDown();
 
@@ -1496,6 +1631,7 @@ public class ProcessExecutorTest {
 	private static class DummyReturnProcessCallable
 		implements ProcessCallable<String> {
 
+		@Override
 		public String call() {
 			return DummyReturnProcessCallable.class.getName();
 		}
@@ -1507,6 +1643,8 @@ public class ProcessExecutorTest {
 			return clazz.getSimpleName();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 	}
 
 	private static class KillJVMProcessCallable
@@ -1516,6 +1654,7 @@ public class ProcessExecutorTest {
 			_exitCode = exitCode;
 		}
 
+		@Override
 		public Serializable call() {
 			System.exit(_exitCode);
 
@@ -1538,6 +1677,8 @@ public class ProcessExecutorTest {
 			return sb.toString();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 		private int _exitCode;
 
 	}
@@ -1550,6 +1691,7 @@ public class ProcessExecutorTest {
 			_bodyLog = bodyLog;
 		}
 
+		@Override
 		public Serializable call() throws ProcessException {
 			try {
 				FileOutputStream fileOutputStream = new FileOutputStream(
@@ -1596,6 +1738,8 @@ public class ProcessExecutorTest {
 			return sb.toString();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 		private String _bodyLog;
 		private String _leadingLog;
 
@@ -1609,6 +1753,7 @@ public class ProcessExecutorTest {
 			_signalFile = signalFile;
 		}
 
+		@Override
 		public Serializable call() throws ProcessException {
 			try {
 				_waitForSignalFile(_signalFile, true);
@@ -1649,6 +1794,8 @@ public class ProcessExecutorTest {
 			return sb.toString();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 		private String _logMessage;
 		private File _signalFile;
 
@@ -1669,6 +1816,7 @@ public class ProcessExecutorTest {
 			_thread = Thread.currentThread();
 		}
 
+		@Override
 		public boolean shutdown(int shutdownCode, Throwable shutdownError) {
 			try {
 				ProcessOutputStream processOutputStream =
@@ -1700,6 +1848,7 @@ public class ProcessExecutorTest {
 			_propertyKey = propertyKey;
 		}
 
+		@Override
 		public String call() {
 			return System.getProperty(_propertyKey);
 		}
@@ -1720,6 +1869,8 @@ public class ProcessExecutorTest {
 			return sb.toString();
 		}
 
+		private static final long serialVersionUID = 1L;
+
 		private String _propertyKey;
 
 	}
@@ -1731,6 +1882,7 @@ public class ProcessExecutorTest {
 			_returnValue = returnValue;
 		}
 
+		@Override
 		public String call() throws ProcessException {
 			try {
 				ProcessOutputStream processOutputStream =
@@ -1765,6 +1917,8 @@ public class ProcessExecutorTest {
 
 			return sb.toString();
 		}
+
+		private static final long serialVersionUID = 1L;
 
 		private String _returnValue;
 
@@ -1935,6 +2089,7 @@ public class ProcessExecutorTest {
 			_thread = Thread.currentThread();
 		}
 
+		@Override
 		public boolean shutdown(int shutdownCode, Throwable shutdownThrowable) {
 			_thread.interrupt();
 
@@ -1953,6 +2108,7 @@ public class ProcessExecutorTest {
 	private static class UnserializableProcessCallable
 		implements ProcessCallable<Serializable> {
 
+		@Override
 		public Serializable call() {
 			return UnserializableProcessCallable.class.getName();
 		}
@@ -1963,6 +2119,8 @@ public class ProcessExecutorTest {
 
 			return clazz.getSimpleName();
 		}
+
+		private static final long serialVersionUID = 1L;
 
 		@SuppressWarnings("unused")
 		private Object _unserializableObject = new Object();

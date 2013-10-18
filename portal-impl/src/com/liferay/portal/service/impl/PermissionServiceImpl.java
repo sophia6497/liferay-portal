@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,14 +38,14 @@ import com.liferay.portal.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.service.permission.PortletPermissionUtil;
 import com.liferay.portal.service.permission.TeamPermissionUtil;
 import com.liferay.portal.service.permission.UserPermissionUtil;
+import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.service.permission.BlogsEntryPermission;
 import com.liferay.portlet.bookmarks.model.BookmarksEntry;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.service.permission.BookmarksEntryPermission;
 import com.liferay.portlet.bookmarks.service.permission.BookmarksFolderPermission;
-import com.liferay.portlet.calendar.model.CalEvent;
-import com.liferay.portlet.calendar.service.permission.CalEventPermission;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission;
@@ -76,7 +76,7 @@ import com.liferay.portlet.wiki.service.permission.WikiPagePermission;
 import java.util.List;
 
 /**
- * The implementation of the permission remote service.
+ * Provides the remote service for checking permissions.
  *
  * @author Brian Wing Shun Chan
  * @author Raymond Augé
@@ -94,6 +94,7 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 	 *         the permission information was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkPermission(long groupId, String name, long primKey)
 		throws PortalException, SystemException {
 
@@ -112,6 +113,7 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 	 *         the permission information was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void checkPermission(long groupId, String name, String primKey)
 		throws PortalException, SystemException {
 
@@ -136,11 +138,6 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 		else if (name.equals(BookmarksFolder.class.getName())) {
 			BookmarksFolderPermission.check(
 				permissionChecker, groupId, GetterUtil.getLong(primKey),
-				ActionKeys.PERMISSIONS);
-		}
-		else if (name.equals(CalEvent.class.getName())) {
-			CalEventPermission.check(
-				permissionChecker, GetterUtil.getLong(primKey),
 				ActionKeys.PERMISSIONS);
 		}
 		else if (name.equals(DLFileEntry.class.getName())) {
@@ -250,6 +247,23 @@ public class PermissionServiceImpl extends PermissionServiceBaseImpl {
 		}
 		else if (!permissionChecker.hasPermission(
 					groupId, name, primKey, ActionKeys.PERMISSIONS)) {
+
+			AssetRendererFactory assetRendererFactory =
+				AssetRendererFactoryRegistryUtil.
+					getAssetRendererFactoryByClassName(name);
+
+			if (assetRendererFactory != null) {
+				try {
+					if (assetRendererFactory.hasPermission(
+							permissionChecker, GetterUtil.getLong(primKey),
+							ActionKeys.PERMISSIONS)) {
+
+						return;
+					}
+				}
+				catch (Exception e) {
+				}
+			}
 
 			long ownerId = 0;
 

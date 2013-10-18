@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,17 +16,20 @@ package com.liferay.portal.kernel.util;
 
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.language.LanguageUtil;
 
 import java.lang.reflect.Array;
 
 import java.text.DateFormat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -551,7 +554,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(boolean[] array, boolean value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -565,7 +568,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(byte[] array, byte value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -579,7 +582,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(char[] array, char value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -593,7 +596,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(double[] array, double value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -607,7 +610,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(float[] array, float value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -621,7 +624,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(int[] array, int value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -635,7 +638,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(long[] array, long value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -649,7 +652,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(Object[] array, Object value) {
-		if ((array == null) || (array.length == 0) || (value == null)) {
+		if (isEmpty(array) || (value == null)) {
 			return false;
 		}
 
@@ -663,7 +666,7 @@ public class ArrayUtil {
 	}
 
 	public static boolean contains(short[] array, short value) {
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return false;
 		}
 
@@ -676,6 +679,132 @@ public class ArrayUtil {
 		return false;
 	}
 
+	public static boolean containsAll(boolean[] array1, boolean[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(byte[] array1, byte[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(char[] array1, char[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(double[] array1, double[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(float[] array1, float[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(int[] array1, int[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(long[] array1, long[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(Object[] array1, Object[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean containsAll(short[] array1, short[] array2) {
+		if (isEmpty(array1) || isEmpty(array2)) {
+			return false;
+		}
+
+		for (int i = 0; i < array2.length; i++) {
+			if (!contains(array1, array2[i])) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	public static String[] distinct(String[] array) {
 		return distinct(array, null);
 	}
@@ -683,7 +812,7 @@ public class ArrayUtil {
 	public static String[] distinct(
 		String[] array, Comparator<String> comparator) {
 
-		if ((array == null) || (array.length == 0)) {
+		if (isEmpty(array)) {
 			return array;
 		}
 
@@ -707,6 +836,172 @@ public class ArrayUtil {
 		return set.toArray(new String[set.size()]);
 	}
 
+	public static boolean[] filter(
+		boolean[] array, PredicateFilter<Boolean> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Boolean> filteredList = new ArrayList<Boolean>();
+
+		for (boolean b : array) {
+			if (predicateFilter.filter(b)) {
+				filteredList.add(b);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Boolean[filteredList.size()]));
+	}
+
+	public static byte[] filter(
+		byte[] array, PredicateFilter<Byte> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Byte> filteredList = new ArrayList<Byte>();
+
+		for (byte b : array) {
+			if (predicateFilter.filter(b)) {
+				filteredList.add(b);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Byte[filteredList.size()]));
+	}
+
+	public static char[] filter(
+		char[] array, PredicateFilter<Character> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Character> filteredList = new ArrayList<Character>();
+
+		for (char c : array) {
+			if (predicateFilter.filter(c)) {
+				filteredList.add(c);
+			}
+		}
+
+		return toArray(
+			filteredList.toArray(new Character[filteredList.size()]));
+	}
+
+	public static double[] filter(
+		double[] array, PredicateFilter<Double> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Double> filteredList = new ArrayList<Double>();
+
+		for (double d : array) {
+			if (predicateFilter.filter(d)) {
+				filteredList.add(d);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Double[filteredList.size()]));
+	}
+
+	public static float[] filter(
+		float[] array, PredicateFilter<Float> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Float> filteredList = new ArrayList<Float>();
+
+		for (float f : array) {
+			if (predicateFilter.filter(f)) {
+				filteredList.add(f);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Float[filteredList.size()]));
+	}
+
+	public static int[] filter(
+		int[] array, PredicateFilter<Integer> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Integer> filteredList = new ArrayList<Integer>();
+
+		for (int i : array) {
+			if (predicateFilter.filter(i)) {
+				filteredList.add(i);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Integer[filteredList.size()]));
+	}
+
+	public static long[] filter(
+		long[] array, PredicateFilter<Long> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Long> filteredList = new ArrayList<Long>();
+
+		for (long l : array) {
+			if (predicateFilter.filter(l)) {
+				filteredList.add(l);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Long[filteredList.size()]));
+	}
+
+	public static short[] filter(
+		short[] array, PredicateFilter<Short> predicateFilter) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<Short> filteredList = new ArrayList<Short>();
+
+		for (short s : array) {
+			if (predicateFilter.filter(s)) {
+				filteredList.add(s);
+			}
+		}
+
+		return toArray(filteredList.toArray(new Short[filteredList.size()]));
+	}
+
+	public static <T> T[] filter(
+		T[] array, PredicateFilter<T> filterPredicate) {
+
+		if (isEmpty(array)) {
+			return array;
+		}
+
+		List<T> filteredList = new ArrayList<T>();
+
+		for (T t : array) {
+			if (filterPredicate.filter(t)) {
+				filteredList.add(t);
+			}
+		}
+
+		Object[] filteredArray = filteredList.toArray();
+
+		return (T[])Arrays.copyOf(
+			filteredArray, filteredArray.length, array.getClass());
+	}
+
 	public static int getLength(Object[] array) {
 		if (array == null) {
 			return 0;
@@ -723,6 +1018,114 @@ public class ArrayUtil {
 		else {
 			return array[pos];
 		}
+	}
+
+	public static boolean isEmpty(boolean[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(byte[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(char[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(double[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(float[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(int[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(long[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(Object[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isEmpty(short[] array) {
+		if ((array == null) || (array.length == 0)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isNotEmpty(boolean[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(byte[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(char[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(double[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(float[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(int[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(long[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(Object[] array) {
+		return !isEmpty(array);
+	}
+
+	public static boolean isNotEmpty(short[] array) {
+		return !isEmpty(array);
 	}
 
 	public static boolean[] remove(boolean[] array, boolean value) {
@@ -771,6 +1174,18 @@ public class ArrayUtil {
 		}
 
 		return toArray(list.toArray(new Double[list.size()]));
+	}
+
+	public static float[] remove(float[] array, float value) {
+		List<Float> list = new ArrayList<Float>();
+
+		for (int i = 0; i < array.length; i++) {
+			if (value != array[i]) {
+				list.add(new Float(array[i]));
+			}
+		}
+
+		return toArray(list.toArray(new Float[list.size()]));
 	}
 
 	public static int[] remove(int[] array, int value) {
@@ -831,6 +1246,72 @@ public class ArrayUtil {
 		}
 
 		return list.toArray(new String[list.size()]);
+	}
+
+	public static void reverse(boolean[] array) {
+		for (int left = 0, right = array.length - 1; left < right;
+				left++, right--) {
+
+			boolean value = array[left];
+
+			array[left] = array[right];
+			array[right] = value;
+		}
+	}
+
+	public static void reverse(char[] array) {
+		for (int left = 0, right = array.length - 1; left < right;
+				left++, right--) {
+
+			char value = array[left];
+
+			array[left] = array[right];
+			array[right] = value;
+		}
+	}
+
+	public static void reverse(double[] array) {
+		for (int left = 0, right = array.length - 1; left < right;
+				left++, right--) {
+
+			double value = array[left];
+
+			array[left] = array[right];
+			array[right] = value;
+		}
+	}
+
+	public static void reverse(int[] array) {
+		for (int left = 0, right = array.length - 1; left < right;
+				left++, right--) {
+
+			int value = array[left];
+
+			array[left] = array[right];
+			array[right] = value;
+		}
+	}
+
+	public static void reverse(long[] array) {
+		for (int left = 0, right = array.length - 1; left < right;
+				left++, right--) {
+
+			long value = array[left];
+
+			array[left] = array[right];
+			array[right] = value;
+		}
+	}
+
+	public static void reverse(short[] array) {
+		for (int left = 0, right = array.length - 1; left < right;
+				left++, right--) {
+
+			short value = array[left];
+
+			array[left] = array[right];
+			array[right] = value;
+		}
 	}
 
 	public static void reverse(String[] array) {
@@ -1124,7 +1605,7 @@ public class ArrayUtil {
 			for (int i = 0; i < list.size(); i++) {
 				Double value = list.get(i);
 
-				newArray[i++] = value.doubleValue();
+				newArray[i] = value.doubleValue();
 			}
 		}
 		else {
@@ -1151,7 +1632,7 @@ public class ArrayUtil {
 			for (int i = 0; i < list.size(); i++) {
 				Float value = list.get(i);
 
-				newArray[i++] = value.floatValue();
+				newArray[i] = value.floatValue();
 			}
 		}
 		else {
@@ -1178,7 +1659,7 @@ public class ArrayUtil {
 			for (int i = 0; i < list.size(); i++) {
 				Integer value = list.get(i);
 
-				newArray[i++] = value.intValue();
+				newArray[i] = value.intValue();
 			}
 		}
 		else {
@@ -1205,7 +1686,7 @@ public class ArrayUtil {
 			for (int i = 0; i < list.size(); i++) {
 				Long value = list.get(i);
 
-				newArray[i++] = value.longValue();
+				newArray[i] = value.longValue();
 			}
 		}
 		else {
@@ -1242,7 +1723,7 @@ public class ArrayUtil {
 			for (int i = 0; i < list.size(); i++) {
 				Short value = list.get(i);
 
-				newArray[i++] = value.shortValue();
+				newArray[i] = value.shortValue();
 			}
 		}
 		else {
@@ -1273,7 +1754,13 @@ public class ArrayUtil {
 	public static String toString(
 		Object[] array, String param, String delimiter) {
 
-		if ((array == null) || (array.length == 0)) {
+		return toString(array, param, delimiter, null);
+	}
+
+	public static String toString(
+		Object[] array, String param, String delimiter, Locale locale) {
+
+		if (isEmpty(array)) {
 			return StringPool.BLANK;
 		}
 
@@ -1285,7 +1772,12 @@ public class ArrayUtil {
 			Object value = BeanPropertiesUtil.getObject(bean, param);
 
 			if (value != null) {
-				sb.append(value);
+				if (locale != null) {
+					sb.append(LanguageUtil.get(locale, value.toString()));
+				}
+				else {
+					sb.append(value);
+				}
 			}
 
 			if ((i + 1) != array.length) {
@@ -1309,7 +1801,13 @@ public class ArrayUtil {
 	public static <T, V> String toString(
 		T[] list, Accessor<T, V> accessor, String delimiter) {
 
-		if ((list == null) || (list.length == 0)) {
+		return toString(list, accessor, delimiter, null);
+	}
+
+	public static <T, V> String toString(
+		T[] list, Accessor<T, V> accessor, String delimiter, Locale locale) {
+
+		if (isEmpty(list)) {
 			return StringPool.BLANK;
 		}
 
@@ -1321,7 +1819,12 @@ public class ArrayUtil {
 			V value = accessor.get(bean);
 
 			if (value != null) {
-				sb.append(value);
+				if (locale != null) {
+					sb.append(LanguageUtil.get(locale, value.toString()));
+				}
+				else {
+					sb.append(value);
+				}
 			}
 
 			if ((i + 1) != list.length) {

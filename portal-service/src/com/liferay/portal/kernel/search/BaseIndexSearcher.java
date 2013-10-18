@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,6 +32,7 @@ public abstract class BaseIndexSearcher
 		_querySuggester = querySuggester;
 	}
 
+	@Override
 	public String spellCheckKeywords(SearchContext searchContext)
 		throws SearchException {
 
@@ -46,6 +47,7 @@ public abstract class BaseIndexSearcher
 		return _querySuggester.spellCheckKeywords(searchContext);
 	}
 
+	@Override
 	public Map<String, List<String>> spellCheckKeywords(
 			SearchContext searchContext, int max)
 		throws SearchException {
@@ -61,6 +63,7 @@ public abstract class BaseIndexSearcher
 		return _querySuggester.spellCheckKeywords(searchContext, max);
 	}
 
+	@Override
 	public String[] suggestKeywordQueries(SearchContext searchContext, int max)
 		throws SearchException {
 

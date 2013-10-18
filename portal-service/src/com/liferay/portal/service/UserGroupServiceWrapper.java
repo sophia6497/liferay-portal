@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,10 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link UserGroupService}.
- * </p>
+ * Provides a wrapper for {@link UserGroupService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       UserGroupService
+ * @author Brian Wing Shun Chan
+ * @see UserGroupService
  * @generated
  */
 public class UserGroupServiceWrapper implements UserGroupService,
@@ -34,6 +32,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _userGroupService.getBeanIdentifier();
 	}
@@ -43,6 +42,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_userGroupService.setBeanIdentifier(beanIdentifier);
 	}
@@ -57,6 +57,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	assign group members
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void addGroupUserGroups(long groupId, long[] userGroupIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -73,6 +74,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	assign team members
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void addTeamUserGroups(long teamId, long[] userGroupIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -93,8 +95,10 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	* @throws PortalException if the user group's information was invalid
 	or if the user did not have permission to add the user group
 	* @throws SystemException if a system exception occurred
-	* @deprecated {@link #addUserGroup(String, String, serviceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #addUserGroup(String, String,
+	ServiceContext)}
 	*/
+	@Override
 	public com.liferay.portal.model.UserGroup addUserGroup(
 		java.lang.String name, java.lang.String description)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -112,7 +116,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	*
 	* @param name the user group's name
 	* @param description the user group's description
-	* @param serviceContext the user group's service context (optionally
+	* @param serviceContext the service context to be applied (optionally
 	<code>null</code>). Can set expando bridge attributes for the
 	user group.
 	* @return the user group
@@ -120,6 +124,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	the user did not have permission to add the user group
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.UserGroup addUserGroup(
 		java.lang.String name, java.lang.String description,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -137,6 +142,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	group, or if the user group had a workflow in approved status
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteUserGroup(long userGroupId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -153,6 +159,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	group
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.UserGroup getUserGroup(long userGroupId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -168,6 +175,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	or if the user did not have permission to view the user group
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.UserGroup getUserGroup(
 		java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -184,6 +192,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	view the user or any one of the user group members
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.UserGroup> getUserUserGroups(
 		long userId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -200,6 +209,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	group members
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unsetGroupUserGroups(long groupId, long[] userGroupIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -215,6 +225,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	team members
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unsetTeamUserGroups(long teamId, long[] userGroupIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -232,9 +243,10 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	found, if the new information was invalid, or if the user did
 	not have permission to update the user group information
 	* @throws SystemException if a system exception occurred
-	* @deprecated {@link #updateUserGroup(long, String, String,
-	serviceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #updateUserGroup(long,
+	String, String, ServiceContext)}
 	*/
+	@Override
 	public com.liferay.portal.model.UserGroup updateUserGroup(
 		long userGroupId, java.lang.String name, java.lang.String description)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -248,7 +260,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	* @param userGroupId the primary key of the user group
 	* @param name the user group's name
 	* @param description the the user group's description
-	* @param serviceContext the user group's service context (optionally
+	* @param serviceContext the service context to be applied (optionally
 	<code>null</code>). Can set expando bridge attributes for the
 	user group.
 	* @return the user group
@@ -257,6 +269,7 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	have permission to update the user group information
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.UserGroup updateUserGroup(
 		long userGroupId, java.lang.String name, java.lang.String description,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -267,23 +280,25 @@ public class UserGroupServiceWrapper implements UserGroupService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public UserGroupService getWrappedUserGroupService() {
 		return _userGroupService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedUserGroupService(UserGroupService userGroupService) {
 		_userGroupService = userGroupService;
 	}
 
+	@Override
 	public UserGroupService getWrappedService() {
 		return _userGroupService;
 	}
 
+	@Override
 	public void setWrappedService(UserGroupService userGroupService) {
 		_userGroupService = userGroupService;
 	}

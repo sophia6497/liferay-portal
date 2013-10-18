@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,8 +46,8 @@ public class UpdateLicenseAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		// PLACEHOLDER 01
@@ -68,7 +68,7 @@ public class UpdateLicenseAction extends Action {
 			if (cmd.equals("licenseProperties")) {
 				String licenseProperties = _getLicenseProperties(clusterNodeId);
 
-				response.setContentType(ContentTypes.TEXT_JAVASCRIPT);
+				response.setContentType(ContentTypes.APPLICATION_JSON);
 
 				ServletResponseUtil.write(response, licenseProperties);
 
@@ -77,21 +77,19 @@ public class UpdateLicenseAction extends Action {
 			else if (cmd.equals("serverInfo")) {
 				String serverInfo = _getServerInfo(clusterNodeId);
 
-				response.setContentType(ContentTypes.TEXT_JAVASCRIPT);
+				response.setContentType(ContentTypes.APPLICATION_JSON);
 
 				ServletResponseUtil.write(response, serverInfo);
 
 				return null;
 			}
 
-			return mapping.findForward("portal.license");
+			return actionMapping.findForward("portal.license");
 		}
-		else {
-			response.sendRedirect(
-				PortalUtil.getPathContext() + "/c/portal/layout");
 
-			return null;
-		}
+		response.sendRedirect(PortalUtil.getPathContext() + "/c/portal/layout");
+
+		return null;
 	}
 
 	private String _getLicenseProperties(String clusterNodeId) {

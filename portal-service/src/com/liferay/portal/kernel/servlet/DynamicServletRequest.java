@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,8 @@ import javax.servlet.http.HttpServletRequestWrapper;
  * @author Shuyang Zhou
  */
 public class DynamicServletRequest extends HttpServletRequestWrapper {
+
+	public static final String DYNAMIC_QUERY_STRING = "DYNAMIC_QUERY_STRING";
 
 	public static HttpServletRequest addQueryString(
 		HttpServletRequest request, String queryString) {
@@ -80,6 +82,8 @@ public class DynamicServletRequest extends HttpServletRequestWrapper {
 		}
 
 		request = new DynamicServletRequest(request, parameterMap, inherit);
+
+		request.setAttribute(DYNAMIC_QUERY_STRING, queryString);
 
 		return request;
 	}
@@ -168,7 +172,7 @@ public class DynamicServletRequest extends HttpServletRequestWrapper {
 			return super.getParameter(name);
 		}
 
-		if ((values != null) && (values.length > 0)) {
+		if (ArrayUtil.isNotEmpty(values)) {
 			return values[0];
 		}
 		else {

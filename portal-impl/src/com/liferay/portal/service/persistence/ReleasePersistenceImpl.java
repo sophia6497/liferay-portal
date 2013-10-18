@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -46,6 +47,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the release service.
@@ -98,6 +100,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @throws com.liferay.portal.NoSuchReleaseException if a matching release could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release findByServletContextName(String servletContextName)
 		throws NoSuchReleaseException, SystemException {
 		Release release = fetchByServletContextName(servletContextName);
@@ -129,6 +132,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the matching release, or <code>null</code> if a matching release could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release fetchByServletContextName(String servletContextName)
 		throws SystemException {
 		return fetchByServletContextName(servletContextName, true);
@@ -142,6 +146,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the matching release, or <code>null</code> if a matching release could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release fetchByServletContextName(String servletContextName,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { servletContextName };
@@ -243,6 +248,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the release that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release removeByServletContextName(String servletContextName)
 		throws NoSuchReleaseException, SystemException {
 		Release release = findByServletContextName(servletContextName);
@@ -257,6 +263,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the number of matching releases
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByServletContextName(String servletContextName)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_SERVLETCONTEXTNAME;
@@ -324,11 +331,16 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	private static final String _FINDER_COLUMN_SERVLETCONTEXTNAME_SERVLETCONTEXTNAME_3 =
 		"(release.servletContextName IS NULL OR release.servletContextName = '')";
 
+	public ReleasePersistenceImpl() {
+		setModelClass(Release.class);
+	}
+
 	/**
 	 * Caches the release in the entity cache if it is enabled.
 	 *
 	 * @param release the release
 	 */
+	@Override
 	public void cacheResult(Release release) {
 		EntityCacheUtil.putResult(ReleaseModelImpl.ENTITY_CACHE_ENABLED,
 			ReleaseImpl.class, release.getPrimaryKey(), release);
@@ -344,6 +356,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 *
 	 * @param releases the releases
 	 */
+	@Override
 	public void cacheResult(List<Release> releases) {
 		for (Release release : releases) {
 			if (EntityCacheUtil.getResult(
@@ -459,6 +472,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @param releaseId the primary key for the new release
 	 * @return the new release
 	 */
+	@Override
 	public Release create(long releaseId) {
 		Release release = new ReleaseImpl();
 
@@ -476,6 +490,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @throws com.liferay.portal.NoSuchReleaseException if a release with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release remove(long releaseId)
 		throws NoSuchReleaseException, SystemException {
 		return remove((Serializable)releaseId);
@@ -652,6 +667,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @throws com.liferay.portal.NoSuchReleaseException if a release with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release findByPrimaryKey(long releaseId)
 		throws NoSuchReleaseException, SystemException {
 		return findByPrimaryKey((Serializable)releaseId);
@@ -711,6 +727,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the release, or <code>null</code> if a release with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Release fetchByPrimaryKey(long releaseId) throws SystemException {
 		return fetchByPrimaryKey((Serializable)releaseId);
 	}
@@ -721,6 +738,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the releases
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Release> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -737,6 +755,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the range of releases
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Release> findAll(int start, int end) throws SystemException {
 		return findAll(start, end, null);
 	}
@@ -754,6 +773,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the ordered range of releases
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Release> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -839,6 +859,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (Release release : findAll()) {
 			remove(release);
@@ -851,6 +872,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	 * @return the number of releases
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
 				FINDER_ARGS_EMPTY, this);
@@ -882,6 +904,11 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 		return count.intValue();
 	}
 
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
+	}
+
 	/**
 	 * Initializes the release persistence.
 	 */
@@ -896,7 +923,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<Release>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -923,6 +950,9 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No Release exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(ReleasePersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"state"
+			});
 	private static Release _nullRelease = new ReleaseImpl() {
 			@Override
 			public Object clone() {
@@ -936,6 +966,7 @@ public class ReleasePersistenceImpl extends BasePersistenceImpl<Release>
 		};
 
 	private static CacheModel<Release> _nullReleaseCacheModel = new CacheModel<Release>() {
+			@Override
 			public Release toEntityModel() {
 				return _nullRelease;
 			}

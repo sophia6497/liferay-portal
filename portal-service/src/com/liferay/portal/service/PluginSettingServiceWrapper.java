@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,10 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link PluginSettingService}.
- * </p>
+ * Provides a wrapper for {@link PluginSettingService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       PluginSettingService
+ * @author Brian Wing Shun Chan
+ * @see PluginSettingService
  * @generated
  */
 public class PluginSettingServiceWrapper implements PluginSettingService,
@@ -35,6 +33,7 @@ public class PluginSettingServiceWrapper implements PluginSettingService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _pluginSettingService.getBeanIdentifier();
 	}
@@ -44,10 +43,12 @@ public class PluginSettingServiceWrapper implements PluginSettingService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_pluginSettingService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portal.model.PluginSetting updatePluginSetting(
 		long companyId, java.lang.String pluginId, java.lang.String pluginType,
 		java.lang.String roles, boolean active)
@@ -58,24 +59,26 @@ public class PluginSettingServiceWrapper implements PluginSettingService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public PluginSettingService getWrappedPluginSettingService() {
 		return _pluginSettingService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedPluginSettingService(
 		PluginSettingService pluginSettingService) {
 		_pluginSettingService = pluginSettingService;
 	}
 
+	@Override
 	public PluginSettingService getWrappedService() {
 		return _pluginSettingService;
 	}
 
+	@Override
 	public void setWrappedService(PluginSettingService pluginSettingService) {
 		_pluginSettingService = pluginSettingService;
 	}

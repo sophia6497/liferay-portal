@@ -1,40 +1,69 @@
-<#setting number_format = "0">
+<#assign ddlRecordSetCounts = dataFactory.getSequence(dataFactory.maxDDLRecordSetCount)>
 
-<#if (maxDDLRecordSetCount > 0)>
-	<#assign ddmStructure = dataFactory.addDDMStructure(groupId, companyId, firstUserId, dataFactory.DDLRecordSetClassNameId)>
+<#list ddlRecordSetCounts as ddlRecordSetCount>
+	<#if (ddlRecordSetCount = 1)>
+		<#assign ddmStructureModel = dataFactory.newDDLDDMStructureModel(groupId)>
 
-	<#assign createDate = dataFactory.getDateString(ddmStructure.createDate)>
+		insert into DDMStructure values ('${ddmStructureModel.uuid}', ${ddmStructureModel.structureId}, ${ddmStructureModel.groupId}, ${ddmStructureModel.companyId}, ${ddmStructureModel.userId}, '${ddmStructureModel.userName}', '${dataFactory.getDateString(ddmStructureModel.createDate)}', '${dataFactory.getDateString(ddmStructureModel.modifiedDate)}', ${ddmStructureModel.parentStructureId}, ${ddmStructureModel.classNameId}, '${ddmStructureModel.structureKey}', '${ddmStructureModel.name}', '${ddmStructureModel.description}', '${ddmStructureModel.xsd}', '${ddmStructureModel.storageType}', ${ddmStructureModel.type});
 
-	insert into DDMStructure values ('${portalUUIDUtil.generate()}', ${ddmStructure.structureId}, ${ddmStructure.groupId}, ${ddmStructure.companyId}, ${ddmStructure.userId}, '', '${createDate}', '${createDate}', 0, ${ddmStructure.classNameId}, 'Test DDM Structure', '<?xml version="1.0" encoding="UTF-8"?><root available-locales="en_US" default-locale="en_US"><Name language-id="en_US">Test DDM Structure</Name></root>', '', '<?xml version="1.0"?><root available-locales="en_US" default-locale="en_US"><dynamic-element dataType="string" name="text2102" type="text"><meta-data locale="en_US"><entry name="label"><![CDATA[Name]]></entry><entry name="showLabel"><![CDATA[true]]></entry><entry name="required"><![CDATA[false]]></entry><entry name="predefinedValue"><![CDATA[]]></entry><entry name="tip"><![CDATA[]]></entry><entry name="width"><![CDATA[25]]></entry><entry name="fieldCssClass"><![CDATA[aui-w25]]></entry></meta-data></dynamic-element></root>', 'xml', 0);
+		<@insertResourcePermissions
+			_entry = ddmStructureModel
+		/>
+	</#if>
 
-	<#list 1..maxDDLRecordSetCount as ddlRecordSetCount>
-		<#assign ddlFriendlyURL = "dynamic_data_list_display_" + ddlRecordSetCount>
-		<#assign ddlPortletId = "169_INSTANCE_TEST" + ddlRecordSetCount>
+	<#assign layoutName = "dynamic_data_list_display_" + ddlRecordSetCount>
+	<#assign portletId = "169_INSTANCE_TEST" + ddlRecordSetCount>
 
-		<#assign ddlDisplayLayout = dataFactory.addLayout(publicLayouts?size + ddlRecordSetCount, "Dynamic Data List Display " + ddlRecordSetCount, "/" + ddlFriendlyURL, "", ddlPortletId)>
+	<#assign layoutModel = dataFactory.newLayoutModel(groupId, layoutName, "", portletId)>
 
-		<#assign publicLayouts = publicLayouts + [ddlDisplayLayout]>
+	<@insertLayout
+		_layoutModel = layoutModel
+	/>
 
-		<#assign ddlRecordSet = dataFactory.addDDLRecordSet(ddmStructure.groupId, ddmStructure.companyId, ddmStructure.userId, ddmStructure.structureId)>
+	<#assign ddlRecordSetModel = dataFactory.newDDLRecordSetModel(ddmStructureModel, ddlRecordSetCount)>
 
-		insert into DDLRecordSet values ('${portalUUIDUtil.generate()}', ${ddlRecordSet.recordSetId}, ${ddlRecordSet.groupId}, ${ddlRecordSet.companyId}, ${ddlRecordSet.userId}, '', '${createDate}', '${createDate}', ${ddlRecordSet.DDMStructureId}, 'Test DDL Record Set ${ddlRecordSetCount}', '<?xml version=\'1.0\' encoding=\'UTF-8\'?><root available-locales="en_US" default-locale="en_US"><Name language-id="en_US">Test DDL Record Set  ${ddlRecordSetCount}</Name></root>', '', 20, 0);
+	insert into DDLRecordSet values ('${ddlRecordSetModel.uuid}', ${ddlRecordSetModel.recordSetId}, ${ddlRecordSetModel.groupId}, ${ddlRecordSetModel.companyId}, ${ddlRecordSetModel.userId}, '${ddlRecordSetModel.userName}', '${dataFactory.getDateString(ddlRecordSetModel.createDate)}', '${dataFactory.getDateString(ddlRecordSetModel.modifiedDate)}', ${ddlRecordSetModel.DDMStructureId}, '${ddlRecordSetModel.recordSetKey}', '${ddlRecordSetModel.name}', '${ddlRecordSetModel.description}', ${ddlRecordSetModel.minDisplayRows}, ${ddlRecordSetModel.scope});
 
-		<#if (maxDDLRecordCount > 0)>
-			<#list 1..maxDDLRecordCount as ddlRecordCount>
-				<#assign ddlRecord = dataFactory.addDDLRecord(ddlRecordSet.groupId, ddlRecordSet.companyId, ddlRecordSet.userId, ddlRecordSet.recordSetId)>
+	<@insertDDMStructureLink
+		_entry = ddlRecordSetModel
+	/>
 
-				${sampleSQLBuilder.insertDDLRecord(ddlRecord, ddlRecordSet, ddlRecordCount)}
+	<@insertResourcePermissions
+		_entry = ddlRecordSetModel
+	/>
 
-				${writerDynamicDataListsCSV.write(ddlFriendlyURL + "," + ddlPortletId + "," + ddlRecordSet.recordSetId + "," + ddlRecord.recordId + "\n")}
-			</#list>
-		</#if>
+	<#assign ddlRecordCounts = dataFactory.getSequence(dataFactory.maxDDLRecordCount)>
 
-		<#assign preferences = "<portlet-preferences><preference><name>recordSetId</name><value>" + ddlRecordSet.recordSetId +"</value></preference><preference><name>displayDDMTemplateId</name><value></value></preference><preference><name>editable</name><value>true</value></preference></portlet-preferences>">
+	<#list ddlRecordCounts as ddlRecordCount>
+		<#assign ddlRecordModel = dataFactory.newDDLRecordModel(ddlRecordSetModel)>
 
-		<#assign portletPreferences = dataFactory.addPortletPreferences(defaultUserId, ddlDisplayLayout.plid, ddlPortletId, preferences)>
+		insert into DDLRecord values ('${ddlRecordModel.uuid}', ${ddlRecordModel.recordId}, ${ddlRecordModel.groupId}, ${ddlRecordModel.companyId}, ${ddlRecordModel.userId}, '${ddlRecordModel.userName}', ${ddlRecordModel.versionUserId}, '${ddlRecordModel.versionUserName}', '${dataFactory.getDateString(ddlRecordModel.createDate)}', '${dataFactory.getDateString(ddlRecordModel.modifiedDate)}', ${ddlRecordModel.DDMStorageId}, ${ddlRecordModel.recordSetId}, '${ddlRecordModel.version}', ${ddlRecordModel.displayIndex});
 
-		insert into PortletPreferences values (${portletPreferences.portletPreferencesId}, ${portletPreferences.ownerId}, ${portletPreferences.ownerType}, ${portletPreferences.plid}, '${portletPreferences.portletId}', '${portletPreferences.preferences}');
+		<#assign ddlRecordVersionModel = dataFactory.newDDLRecordVersionModel(ddlRecordModel)>
 
-		${sampleSQLBuilder.insertResourcePermission("169", ddlDisplayLayout.plid + "_LAYOUT_" + ddlPortletId)}
+		insert into DDLRecordVersion values (${ddlRecordVersionModel.recordVersionId}, ${ddlRecordVersionModel.groupId}, ${ddlRecordVersionModel.companyId}, ${ddlRecordVersionModel.userId}, '${ddlRecordVersionModel.userName}', '${dataFactory.getDateString(ddlRecordVersionModel.createDate)}', ${ddlRecordVersionModel.DDMStorageId}, ${ddlRecordVersionModel.recordSetId}, ${ddlRecordVersionModel.recordId}, '${ddlRecordVersionModel.version}', ${ddlRecordVersionModel.displayIndex}, ${ddlRecordVersionModel.status}, ${ddlRecordVersionModel.statusByUserId}, '${ddlRecordVersionModel.statusByUserName}', '${dataFactory.getDateString(ddlRecordVersionModel.statusDate)}');
+
+		<@insertDDMContent
+			_currentIndex = ddlRecordCount
+			_ddmStorageLinkId = dataFactory.getCounterNext()
+			_ddmStructureId = ddmStructureModel.structureId
+			_entry = ddlRecordModel
+		/>
+
+		${dynamicDataListCSVWriter.write(ddlRecordModel.groupId + "," + layoutName + "," + portletId + "," + ddlRecordSetModel.recordSetId + "," + ddlRecordModel.recordId + "\n")}
 	</#list>
-</#if>
+
+	<#assign portletPreferencesModel = dataFactory.newPortletPreferencesModel(layoutModel.plid, portletId, ddlRecordSetModel)>
+
+	<@insertPortletPreferences
+		_portletPreferencesModel = portletPreferencesModel
+	/>
+
+	<#assign portletPreferencesModels = dataFactory.newPortletPreferencesModels(layoutModel.plid)>
+
+	<#list portletPreferencesModels as portletPreferencesModel>
+		<@insertPortletPreferences
+			_portletPreferencesModel = portletPreferencesModel
+		/>
+	</#list>
+</#list>

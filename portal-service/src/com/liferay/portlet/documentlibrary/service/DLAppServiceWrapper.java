@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.documentlibrary.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link DLAppService}.
- * </p>
+ * Provides a wrapper for {@link DLAppService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       DLAppService
+ * @author Brian Wing Shun Chan
+ * @see DLAppService
  * @generated
  */
 public class DLAppServiceWrapper implements DLAppService,
@@ -36,6 +34,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _dlAppService.getBeanIdentifier();
 	}
@@ -45,6 +44,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_dlAppService.setBeanIdentifier(beanIdentifier);
 	}
@@ -82,6 +82,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	file entry's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry addFileEntry(
 		long repositoryId, long folderId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -127,6 +128,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	file entry's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry addFileEntry(
 		long repositoryId, long folderId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -142,7 +144,7 @@ public class DLAppServiceWrapper implements DLAppService,
 
 	/**
 	* Adds a file entry and associated metadata. It is created based on a
-	* {@link java.io.InputStream} object.
+	* {@link InputStream} object.
 	*
 	* <p>
 	* This method takes two file names, the <code>sourceFileName</code> and the
@@ -174,6 +176,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	file entry's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry addFileEntry(
 		long repositoryId, long folderId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -202,6 +205,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found, or if the file shortcut's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portlet.documentlibrary.model.DLFileShortcut addFileShortcut(
 		long repositoryId, long folderId, long toFileEntryId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -226,6 +230,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	new folder's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder addFolder(
 		long repositoryId, long parentFolderId, java.lang.String name,
 		java.lang.String description,
@@ -250,31 +255,56 @@ public class DLAppServiceWrapper implements DLAppService,
 	eventually reside
 	* @param fileName the file's original name
 	* @param tempFolderName the temporary folder's name
-	* @param file Name the file's original name
-	* @return the file's name
-	* @throws IOException if a problem occurred in the access or storage of the
-	file
+	* @param file the file's data (optionally <code>null</code>)
+	* @param mimeType the file's MIME type
+	* @return the temporary file entry
 	* @throws PortalException if the file name was invalid
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.kernel.util.TempFileUtil
 	*/
-	public java.lang.String addTempFileEntry(long groupId, long folderId,
-		java.lang.String fileName, java.lang.String tempFolderName,
-		java.io.File file)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException,
-			java.io.IOException {
-		return _dlAppService.addTempFileEntry(groupId, folderId, fileName,
-			tempFolderName, file);
-	}
-
-	public java.lang.String addTempFileEntry(long groupId, long folderId,
-		java.lang.String fileName, java.lang.String tempFolderName,
-		java.io.InputStream inputStream)
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry addTempFileEntry(
+		long groupId, long folderId, java.lang.String fileName,
+		java.lang.String tempFolderName, java.io.File file,
+		java.lang.String mimeType)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _dlAppService.addTempFileEntry(groupId, folderId, fileName,
-			tempFolderName, inputStream);
+			tempFolderName, file, mimeType);
+	}
+
+	/**
+	* Adds a temporary file entry. It is created based on the {@link
+	* InputStream} object.
+	*
+	* <p>
+	* This allows a client to upload a file into a temporary location and
+	* manipulate its metadata prior to making it available for public usage.
+	* This is different from checking in and checking out a file entry.
+	* </p>
+	*
+	* @param groupId the primary key of the group
+	* @param folderId the primary key of the folder where the file entry will
+	eventually reside
+	* @param fileName the file's original name
+	* @param tempFolderName the temporary folder's name
+	* @param inputStream the file's data
+	* @param mimeType the file's MIME type
+	* @return the temporary file entry
+	* @throws PortalException if the file name was invalid or if a portal
+	exception occurred
+	* @throws SystemException if a system exception occurred
+	* @see com.liferay.portal.kernel.util.TempFileUtil
+	*/
+	@Override
+	public com.liferay.portal.kernel.repository.model.FileEntry addTempFileEntry(
+		long groupId, long folderId, java.lang.String fileName,
+		java.lang.String tempFolderName, java.io.InputStream inputStream,
+		java.lang.String mimeType)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _dlAppService.addTempFileEntry(groupId, folderId, fileName,
+			tempFolderName, inputStream, mimeType);
 	}
 
 	/**
@@ -299,6 +329,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @see #checkInFileEntry(long, boolean, String, ServiceContext)
 	* @see #checkOutFileEntry(long, ServiceContext)
 	*/
+	@Override
 	public void cancelCheckOut(long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -329,6 +360,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @see #cancelCheckOut(long)
 	* @see #checkOutFileEntry(long, ServiceContext)
 	*/
+	@Override
 	public void checkInFileEntry(long fileEntryId, boolean majorVersion,
 		java.lang.String changeLog,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -339,8 +371,10 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	* @deprecated {@link #checkInFileEntry(long, String, ServiceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #checkInFileEntry(long,
+	String, ServiceContext)}
 	*/
+	@Override
 	public void checkInFileEntry(long fileEntryId, java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -371,6 +405,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @see #cancelCheckOut(long)
 	* @see #checkOutFileEntry(long, String, long, ServiceContext)
 	*/
+	@Override
 	public void checkInFileEntry(long fileEntryId, java.lang.String lockUuid,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -399,6 +434,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @see #cancelCheckOut(long)
 	* @see #checkInFileEntry(long, boolean, String, ServiceContext)
 	*/
+	@Override
 	public void checkOutFileEntry(long fileEntryId,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -433,6 +469,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @see #cancelCheckOut(long)
 	* @see #checkInFileEntry(long, String)
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry checkOutFileEntry(
 		long fileEntryId, java.lang.String owner, long expirationTime,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -456,6 +493,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	could not be found or if the new folder's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder copyFolder(
 		long repositoryId, long sourceFolderId, long parentFolderId,
 		java.lang.String name, java.lang.String description,
@@ -473,6 +511,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteFileEntry(long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -488,6 +527,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteFileEntryByTitle(long repositoryId, long folderId,
 		java.lang.String title)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -503,6 +543,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file shortcut could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteFileShortcut(long fileShortcutId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -519,6 +560,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file version could not be found or invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteFileVersion(long fileEntryId, java.lang.String version)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -533,6 +575,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteFolder(long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -549,6 +592,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteFolder(long repositoryId, long parentFolderId,
 		java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -568,6 +612,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.kernel.util.TempFileUtil
 	*/
+	@Override
 	public void deleteTempFileEntry(long groupId, long folderId,
 		java.lang.String fileName, java.lang.String tempFolderName)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -585,6 +630,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
 		long repositoryId, long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -613,6 +659,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
 		long repositoryId, long folderId, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -644,6 +691,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
 		long repositoryId, long folderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -663,6 +711,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
 		long repositoryId, long folderId, long fileEntryTypeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -684,6 +733,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
 		long repositoryId, long folderId, long fileEntryTypeId, int start,
 		int end)
@@ -709,6 +759,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
 		long repositoryId, long folderId, long fileEntryTypeId, int start,
 		int end, com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -716,6 +767,14 @@ public class DLAppServiceWrapper implements DLAppService,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _dlAppService.getFileEntries(repositoryId, folderId,
 			fileEntryTypeId, start, end, obc);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
+		long repositoryId, long folderId, java.lang.String[] mimeTypes)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _dlAppService.getFileEntries(repositoryId, folderId, mimeTypes);
 	}
 
 	/**
@@ -740,6 +799,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<java.lang.Object> getFileEntriesAndFileShortcuts(
 		long repositoryId, long folderId, int status, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -758,6 +818,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder ould not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFileEntriesAndFileShortcutsCount(long repositoryId,
 		long folderId, int status)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -777,6 +838,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder ould not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFileEntriesAndFileShortcutsCount(long repositoryId,
 		long folderId, int status, java.lang.String[] mimeTypes)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -794,6 +856,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFileEntriesCount(long repositoryId, long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -811,6 +874,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFileEntriesCount(long repositoryId, long folderId,
 		long fileEntryTypeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -827,6 +891,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry getFileEntry(
 		long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -844,6 +909,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry getFileEntry(
 		long groupId, long folderId, java.lang.String title)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -860,6 +926,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry getFileEntryByUuidAndGroupId(
 		java.lang.String uuid, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -876,6 +943,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file shortcut could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portlet.documentlibrary.model.DLFileShortcut getFileShortcut(
 		long fileShortcutId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -891,6 +959,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder getFolder(
 		long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -908,6 +977,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder getFolder(
 		long repositoryId, long parentFolderId, java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -924,6 +994,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -943,6 +1014,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId, boolean includeMountFolders)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -975,6 +1047,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId, boolean includeMountFolders,
 		int start, int end)
@@ -1011,6 +1084,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId, boolean includeMountFolders,
 		int start, int end, com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -1048,6 +1122,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId, int status,
 		boolean includeMountFolders, int start, int end,
@@ -1079,6 +1154,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1111,6 +1187,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
 		long repositoryId, long parentFolderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -1147,6 +1224,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<java.lang.Object> getFoldersAndFileEntriesAndFileShortcuts(
 		long repositoryId, long folderId, int status,
 		boolean includeMountFolders, int start, int end)
@@ -1185,6 +1263,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<java.lang.Object> getFoldersAndFileEntriesAndFileShortcuts(
 		long repositoryId, long folderId, int status,
 		boolean includeMountFolders, int start, int end,
@@ -1195,6 +1274,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			folderId, status, includeMountFolders, start, end, obc);
 	}
 
+	@Override
 	public java.util.List<java.lang.Object> getFoldersAndFileEntriesAndFileShortcuts(
 		long repositoryId, long folderId, int status,
 		java.lang.String[] mimeTypes, boolean includeMountFolders, int start,
@@ -1219,6 +1299,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFoldersAndFileEntriesAndFileShortcutsCount(
 		long repositoryId, long folderId, int status,
 		boolean includeMountFolders)
@@ -1228,6 +1309,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			folderId, status, includeMountFolders);
 	}
 
+	@Override
 	public int getFoldersAndFileEntriesAndFileShortcutsCount(
 		long repositoryId, long folderId, int status,
 		java.lang.String[] mimeTypes, boolean includeMountFolders)
@@ -1246,6 +1328,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFoldersCount(long repositoryId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1264,6 +1347,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFoldersCount(long repositoryId, long parentFolderId,
 		boolean includeMountFolders)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1285,6 +1369,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the parent folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFoldersCount(long repositoryId, long parentFolderId,
 		int status, boolean includeMountFolders)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1306,6 +1391,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the repository could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getFoldersFileEntriesCount(long repositoryId,
 		java.util.List<java.lang.Long> folderIds, int status)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1340,6 +1426,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the group could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getGroupFileEntries(
 		long groupId, long userId, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1375,6 +1462,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the group could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getGroupFileEntries(
 		long groupId, long userId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -1411,6 +1499,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the group could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getGroupFileEntries(
 		long groupId, long userId, long rootFolderId, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1449,6 +1538,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the group could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getGroupFileEntries(
 		long groupId, long userId, long rootFolderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -1458,6 +1548,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			start, end, obc);
 	}
 
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getGroupFileEntries(
 		long groupId, long userId, long rootFolderId,
 		java.lang.String[] mimeTypes, int status, int start, int end,
@@ -1481,6 +1572,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the group could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getGroupFileEntriesCount(long groupId, long userId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1502,6 +1594,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the group could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getGroupFileEntriesCount(long groupId, long userId,
 		long rootFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1510,6 +1603,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			rootFolderId);
 	}
 
+	@Override
 	public int getGroupFileEntriesCount(long groupId, long userId,
 		long rootFolderId, java.lang.String[] mimeTypes, int status)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1531,6 +1625,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getMountFolders(
 		long repositoryId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1563,6 +1658,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getMountFolders(
 		long repositoryId, long parentFolderId, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1599,6 +1695,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.kernel.repository.model.Folder> getMountFolders(
 		long repositoryId, long parentFolderId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator obc)
@@ -1621,12 +1718,14 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getMountFoldersCount(long repositoryId, long parentFolderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _dlAppService.getMountFoldersCount(repositoryId, parentFolderId);
 	}
 
+	@Override
 	public void getSubfolderIds(long repositoryId,
 		java.util.List<java.lang.Long> folderIds, long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1644,6 +1743,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<java.lang.Long> getSubfolderIds(long repositoryId,
 		long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1663,6 +1763,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<java.lang.Long> getSubfolderIds(long repositoryId,
 		long folderId, boolean recurse)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1680,10 +1781,10 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @return the temporary file entry names
 	* @throws PortalException if the folder was invalid
 	* @throws SystemException if a system exception occurred
-	* @see com.liferay.portlet.documentlibrary.service.impl.DLAppServiceImpl#addTempFileEntry(
-	long, long, String, String, File)
+	* @see #addTempFileEntry(long, long, String, String, File, String)
 	* @see com.liferay.portal.kernel.util.TempFileUtil
 	*/
+	@Override
 	public java.lang.String[] getTempFileEntryNames(long groupId,
 		long folderId, java.lang.String tempFolderName)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1693,8 +1794,10 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	* @deprecated {@link #checkOutFileEntry(long, ServiceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #checkOutFileEntry(long,
+	ServiceContext)}
 	*/
+	@Override
 	public com.liferay.portal.model.Lock lockFileEntry(long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1702,9 +1805,10 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	* @deprecated {@link #checkOutFileEntry(long, String, long,
-	ServiceContext)}
+	* @deprecated As of 6.2.0, replaced by {@link #checkOutFileEntry(long,
+	String, long, ServiceContext)}
 	*/
+	@Override
 	public com.liferay.portal.model.Lock lockFileEntry(long fileEntryId,
 		java.lang.String owner, long expirationTime)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1721,6 +1825,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the repository or folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Lock lockFolder(long repositoryId,
 		long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1743,6 +1848,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the repository or folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Lock lockFolder(long repositoryId,
 		long folderId, java.lang.String owner, boolean inheritable,
 		long expirationTime)
@@ -1763,6 +1869,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry moveFileEntry(
 		long fileEntryId, long newFolderId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -1783,6 +1890,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry moveFileEntryFromTrash(
 		long fileEntryId, long newFolderId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -1796,9 +1904,11 @@ public class DLAppServiceWrapper implements DLAppService,
 	* Moves the file entry with the primary key to the trash portlet.
 	*
 	* @param fileEntryId the primary key of the file entry
+	* @return the file entry
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry moveFileEntryToTrash(
 		long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1817,6 +1927,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portlet.documentlibrary.model.DLFileShortcut moveFileShortcutFromTrash(
 		long fileShortcutId, long newFolderId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -1834,6 +1945,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file shortcut could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portlet.documentlibrary.model.DLFileShortcut moveFileShortcutToTrash(
 		long fileShortcutId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1851,6 +1963,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder moveFolder(
 		long folderId, long parentFolderId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -1870,6 +1983,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder moveFolderFromTrash(
 		long folderId, long parentFolderId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -1883,9 +1997,11 @@ public class DLAppServiceWrapper implements DLAppService,
 	* Moves the folder with the primary key to the trash portlet.
 	*
 	* @param folderId the primary key of the folder
+	* @return the file entry
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder moveFolderToTrash(
 		long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1906,6 +2022,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry or lock could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Lock refreshFileEntryLock(
 		java.lang.String lockUuid, long companyId, long expirationTime)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1927,6 +2044,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder or lock could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Lock refreshFolderLock(
 		java.lang.String lockUuid, long companyId, long expirationTime)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1942,6 +2060,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void restoreFileEntryFromTrash(long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1955,6 +2074,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file shortcut could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void restoreFileShortcutFromTrash(long fileShortcutId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1968,6 +2088,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void restoreFolderFromTrash(long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1984,6 +2105,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry or version could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void revertFileEntry(long fileEntryId, java.lang.String version,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -1991,12 +2113,33 @@ public class DLAppServiceWrapper implements DLAppService,
 		_dlAppService.revertFileEntry(fileEntryId, version, serviceContext);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.search.Hits search(long repositoryId,
+		long creatorUserId, int status, int start, int end)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _dlAppService.search(repositoryId, creatorUserId, status, start,
+			end);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.search.Hits search(long repositoryId,
+		long creatorUserId, long folderId, java.lang.String[] mimeTypes,
+		int status, int start, int end)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _dlAppService.search(repositoryId, creatorUserId, folderId,
+			mimeTypes, status, start, end);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.search.Hits search(long repositoryId,
 		com.liferay.portal.kernel.search.SearchContext searchContext)
 		throws com.liferay.portal.kernel.search.SearchException {
 		return _dlAppService.search(repositoryId, searchContext);
 	}
 
+	@Override
 	public com.liferay.portal.kernel.search.Hits search(long repositoryId,
 		com.liferay.portal.kernel.search.SearchContext searchContext,
 		com.liferay.portal.kernel.search.Query query)
@@ -2014,6 +2157,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	subscribing was not permissible
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void subscribeFileEntryType(long groupId, long fileEntryTypeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -2030,6 +2174,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	subscribing was not permissible
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void subscribeFolder(long groupId, long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -2037,9 +2182,10 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	* @deprecated Use {@link #checkInFileEntry(long, boolean, String,
-	ServiceContext)}.
+	* @deprecated As of 6.2.0, replaced by {@link #checkInFileEntry(long,
+	boolean, String, ServiceContext)}.
 	*/
+	@Override
 	public void unlockFileEntry(long fileEntryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -2047,8 +2193,10 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	* @deprecated Use {@link #checkInFileEntry(long, String)}.
+	* @deprecated As of 6.2.0, replaced by {@link #checkInFileEntry(long,
+	String)}.
 	*/
+	@Override
 	public void unlockFileEntry(long fileEntryId, java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -2064,6 +2212,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the repository or folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unlockFolder(long repositoryId, long folderId,
 		java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -2081,6 +2230,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the repository or folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unlockFolder(long repositoryId, long parentFolderId,
 		java.lang.String name, java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -2098,6 +2248,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	unsubscribing was not permissible
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unsubscribeFileEntryType(long groupId, long fileEntryTypeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -2114,6 +2265,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	unsubscribing was not permissible
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unsubscribeFolder(long groupId, long folderId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -2155,6 +2307,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry updateFileEntry(
 		long fileEntryId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -2193,7 +2346,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @param changeLog the file's version change log (optionally
 	<code>null</code>)
 	* @param majorVersion whether the new file version is a major version
-	* @param file EntryId the primary key of the file entry
+	* @param file the file's data (optionally <code>null</code>)
 	* @param serviceContext the service context to be applied. Can set the
 	asset category IDs, asset tag names, and expando bridge
 	attributes for the file entry. In a Liferay repository, it may
@@ -2204,6 +2357,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry updateFileEntry(
 		long fileEntryId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -2218,7 +2372,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	* Updates a file entry and associated metadata based on an {@link java.io.
+	* Updates a file entry and associated metadata based on an {@link
 	* InputStream} object. If the file data is <code>null</code>, then only the
 	* associated metadata (i.e., <code>title</code>, <code>description</code>,
 	* and parameters in the <code>serviceContext</code>) will be updated.
@@ -2253,6 +2407,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry updateFileEntry(
 		long fileEntryId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -2266,6 +2421,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			serviceContext);
 	}
 
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry updateFileEntryAndCheckIn(
 		long fileEntryId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -2279,6 +2435,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			majorVersion, file, serviceContext);
 	}
 
+	@Override
 	public com.liferay.portal.kernel.repository.model.FileEntry updateFileEntryAndCheckIn(
 		long fileEntryId, java.lang.String sourceFileName,
 		java.lang.String mimeType, java.lang.String title,
@@ -2307,6 +2464,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portlet.documentlibrary.model.DLFileShortcut updateFileShortcut(
 		long fileShortcutId, long folderId, long toFileEntryId,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -2339,6 +2497,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	found or if the new parent folder's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.kernel.repository.model.Folder updateFolder(
 		long folderId, java.lang.String name, java.lang.String description,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -2360,6 +2519,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public boolean verifyFileEntryCheckOut(long repositoryId, long fileEntryId,
 		java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -2368,6 +2528,7 @@ public class DLAppServiceWrapper implements DLAppService,
 			lockUuid);
 	}
 
+	@Override
 	public boolean verifyFileEntryLock(long repositoryId, long fileEntryId,
 		java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -2388,6 +2549,7 @@ public class DLAppServiceWrapper implements DLAppService,
 	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public boolean verifyInheritableLock(long repositoryId, long folderId,
 		java.lang.String lockUuid)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -2397,23 +2559,25 @@ public class DLAppServiceWrapper implements DLAppService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public DLAppService getWrappedDLAppService() {
 		return _dlAppService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedDLAppService(DLAppService dlAppService) {
 		_dlAppService = dlAppService;
 	}
 
+	@Override
 	public DLAppService getWrappedService() {
 		return _dlAppService;
 	}
 
+	@Override
 	public void setWrappedService(DLAppService dlAppService) {
 		_dlAppService = dlAppService;
 	}

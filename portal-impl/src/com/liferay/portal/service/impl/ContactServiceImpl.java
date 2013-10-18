@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,6 +30,7 @@ import java.util.List;
  */
 public class ContactServiceImpl extends ContactServiceBaseImpl {
 
+	@Override
 	public Contact getContact(long contactId)
 		throws PortalException, SystemException {
 
@@ -42,6 +43,7 @@ public class ContactServiceImpl extends ContactServiceBaseImpl {
 		return contact;
 	}
 
+	@Override
 	public List<Contact> getContacts(
 			long classNameId, long classPK, int start, int end,
 			OrderByComparator orderByComparator)
@@ -54,6 +56,7 @@ public class ContactServiceImpl extends ContactServiceBaseImpl {
 			classNameId, classPK, start, end, orderByComparator);
 	}
 
+	@Override
 	public int getContactsCount(long classNameId, long classPK)
 		throws PortalException, SystemException {
 

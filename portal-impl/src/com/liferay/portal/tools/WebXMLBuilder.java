@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -153,21 +153,20 @@ public class WebXMLBuilder {
 
 			return x;
 		}
-		else {
-			x = content.lastIndexOf("<filter-name", x);
-			x = content.indexOf(">", x) + 1;
 
-			int y = content.indexOf("</filter-name>", x);
+		x = content.lastIndexOf("<filter-name", x);
+		x = content.indexOf(">", x) + 1;
 
-			String filterName = content.substring(x, y);
+		int y = content.indexOf("</filter-name>", x);
 
-			x = content.lastIndexOf(filterName);
+		String filterName = content.substring(x, y);
 
-			y = content.indexOf("</filter-mapping>", x);
-			y = content.indexOf(">", y) + 1;
+		x = content.lastIndexOf(filterName);
 
-			return y;
-		}
+		y = content.indexOf("</filter-mapping>", x);
+		y = content.indexOf(">", y) + 1;
+
+		return y;
 	}
 
 }

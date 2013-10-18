@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -62,6 +62,7 @@ public class AssetTagCacheModel implements CacheModel<AssetTag>, Externalizable 
 		return sb.toString();
 	}
 
+	@Override
 	public AssetTag toEntityModel() {
 		AssetTagImpl assetTagImpl = new AssetTagImpl();
 
@@ -105,6 +106,7 @@ public class AssetTagCacheModel implements CacheModel<AssetTag>, Externalizable 
 		return assetTagImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		tagId = objectInput.readLong();
 		groupId = objectInput.readLong();
@@ -117,6 +119,7 @@ public class AssetTagCacheModel implements CacheModel<AssetTag>, Externalizable 
 		assetCount = objectInput.readInt();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(tagId);

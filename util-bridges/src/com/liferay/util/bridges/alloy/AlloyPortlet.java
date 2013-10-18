@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -70,24 +70,30 @@ public class AlloyPortlet extends GenericPortlet {
 				IndexerRegistryUtil.unregister(indexer);
 			}
 
+			MessageListener controllerMessageListener =
+				baseAlloyControllerImpl.controllerMessageListener;
+
+			if (controllerMessageListener != null) {
+				MessageBusUtil.removeDestination(
+					baseAlloyControllerImpl.getControllerDestinationName());
+			}
+
 			MessageListener schedulerMessageListener =
 				baseAlloyControllerImpl.schedulerMessageListener;
 
-			if (schedulerMessageListener == null) {
-				continue;
-			}
+			if (schedulerMessageListener != null) {
+				try {
+					SchedulerEngineHelperUtil.unschedule(
+						baseAlloyControllerImpl.getSchedulerJobName(),
+						baseAlloyControllerImpl.getMessageListenerGroupName(),
+						StorageType.MEMORY_CLUSTERED);
 
-			try {
-				SchedulerEngineHelperUtil.unschedule(
-					baseAlloyControllerImpl.getSchedulerJobName(),
-					baseAlloyControllerImpl.getSchedulerGroupName(),
-					StorageType.MEMORY_CLUSTERED);
-
-				MessageBusUtil.removeDestination(
-					baseAlloyControllerImpl.getSchedulerDestinationName());
-			}
-			catch (Exception e) {
-				_log.error(e, e);
+					MessageBusUtil.removeDestination(
+						baseAlloyControllerImpl.getSchedulerDestinationName());
+				}
+				catch (Exception e) {
+					_log.error(e, e);
+				}
 			}
 		}
 	}

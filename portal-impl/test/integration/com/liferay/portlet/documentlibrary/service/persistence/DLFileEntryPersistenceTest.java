@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,13 +15,18 @@
 package com.liferay.portlet.documentlibrary.service.persistence;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.portal.kernel.util.IntegerWrapper;
+import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.ServiceTestUtil;
@@ -120,10 +125,6 @@ public class DLFileEntryPersistenceTest {
 
 		newDLFileEntry.setUserName(ServiceTestUtil.randomString());
 
-		newDLFileEntry.setVersionUserId(ServiceTestUtil.nextLong());
-
-		newDLFileEntry.setVersionUserName(ServiceTestUtil.randomString());
-
 		newDLFileEntry.setCreateDate(ServiceTestUtil.nextDate());
 
 		newDLFileEntry.setModifiedDate(ServiceTestUtil.nextDate());
@@ -135,6 +136,8 @@ public class DLFileEntryPersistenceTest {
 		newDLFileEntry.setRepositoryId(ServiceTestUtil.nextLong());
 
 		newDLFileEntry.setFolderId(ServiceTestUtil.nextLong());
+
+		newDLFileEntry.setTreePath(ServiceTestUtil.randomString());
 
 		newDLFileEntry.setName(ServiceTestUtil.randomString());
 
@@ -182,10 +185,6 @@ public class DLFileEntryPersistenceTest {
 			newDLFileEntry.getUserId());
 		Assert.assertEquals(existingDLFileEntry.getUserName(),
 			newDLFileEntry.getUserName());
-		Assert.assertEquals(existingDLFileEntry.getVersionUserId(),
-			newDLFileEntry.getVersionUserId());
-		Assert.assertEquals(existingDLFileEntry.getVersionUserName(),
-			newDLFileEntry.getVersionUserName());
 		Assert.assertEquals(Time.getShortTimestamp(
 				existingDLFileEntry.getCreateDate()),
 			Time.getShortTimestamp(newDLFileEntry.getCreateDate()));
@@ -200,6 +199,8 @@ public class DLFileEntryPersistenceTest {
 			newDLFileEntry.getRepositoryId());
 		Assert.assertEquals(existingDLFileEntry.getFolderId(),
 			newDLFileEntry.getFolderId());
+		Assert.assertEquals(existingDLFileEntry.getTreePath(),
+			newDLFileEntry.getTreePath());
 		Assert.assertEquals(existingDLFileEntry.getName(),
 			newDLFileEntry.getName());
 		Assert.assertEquals(existingDLFileEntry.getExtension(),
@@ -255,6 +256,41 @@ public class DLFileEntryPersistenceTest {
 	}
 
 	@Test
+	public void testFindAll() throws Exception {
+		try {
+			_persistence.findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+				getOrderByComparator());
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testFilterFindByGroupId() throws Exception {
+		try {
+			_persistence.filterFindByGroupId(0, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, getOrderByComparator());
+		}
+		catch (Exception e) {
+			Assert.fail(e.getMessage());
+		}
+	}
+
+	protected OrderByComparator getOrderByComparator() {
+		return OrderByComparatorFactoryUtil.create("DLFileEntry", "uuid", true,
+			"fileEntryId", true, "groupId", true, "companyId", true, "userId",
+			true, "userName", true, "createDate", true, "modifiedDate", true,
+			"classNameId", true, "classPK", true, "repositoryId", true,
+			"folderId", true, "treePath", true, "name", true, "extension",
+			true, "mimeType", true, "title", true, "description", true,
+			"extraSettings", true, "fileEntryTypeId", true, "version", true,
+			"size", true, "readCount", true, "smallImageId", true,
+			"largeImageId", true, "custom1ImageId", true, "custom2ImageId",
+			true, "manualCheckInRequired", true);
+	}
+
+	@Test
 	public void testFetchByPrimaryKeyExisting() throws Exception {
 		DLFileEntry newDLFileEntry = addDLFileEntry();
 
@@ -270,6 +306,26 @@ public class DLFileEntryPersistenceTest {
 		DLFileEntry missingDLFileEntry = _persistence.fetchByPrimaryKey(pk);
 
 		Assert.assertNull(missingDLFileEntry);
+	}
+
+	@Test
+	public void testActionableDynamicQuery() throws Exception {
+		final IntegerWrapper count = new IntegerWrapper();
+
+		ActionableDynamicQuery actionableDynamicQuery = new DLFileEntryActionableDynamicQuery() {
+				@Override
+				protected void performAction(Object object) {
+					DLFileEntry dlFileEntry = (DLFileEntry)object;
+
+					Assert.assertNotNull(dlFileEntry);
+
+					count.increment();
+				}
+			};
+
+		actionableDynamicQuery.performActions();
+
+		Assert.assertEquals(count.getValue(), _persistence.countAll());
 	}
 
 	@Test
@@ -394,10 +450,6 @@ public class DLFileEntryPersistenceTest {
 
 		dlFileEntry.setUserName(ServiceTestUtil.randomString());
 
-		dlFileEntry.setVersionUserId(ServiceTestUtil.nextLong());
-
-		dlFileEntry.setVersionUserName(ServiceTestUtil.randomString());
-
 		dlFileEntry.setCreateDate(ServiceTestUtil.nextDate());
 
 		dlFileEntry.setModifiedDate(ServiceTestUtil.nextDate());
@@ -409,6 +461,8 @@ public class DLFileEntryPersistenceTest {
 		dlFileEntry.setRepositoryId(ServiceTestUtil.nextLong());
 
 		dlFileEntry.setFolderId(ServiceTestUtil.nextLong());
+
+		dlFileEntry.setTreePath(ServiceTestUtil.randomString());
 
 		dlFileEntry.setName(ServiceTestUtil.randomString());
 

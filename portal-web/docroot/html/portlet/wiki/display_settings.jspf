@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,12 +34,13 @@
 	<div class="display-template">
 
 		<%
-		PortletDisplayTemplateHandler portletDisplayTemplateHandler = PortletDisplayTemplateHandlerRegistryUtil.getPortletDisplayTemplateHandler(WikiPage.class.getName());
+		TemplateHandler templateHandler = TemplateHandlerRegistryUtil.getTemplateHandler(WikiPage.class.getName());
 		%>
 
 		<liferay-ui:ddm-template-selector
-			classNameId="<%= PortalUtil.getClassNameId(portletDisplayTemplateHandler.getClassName()) %>"
-			preferenceValue="<%= displayStyle %>"
+			classNameId="<%= PortalUtil.getClassNameId(templateHandler.getClassName()) %>"
+			displayStyle="<%= displayStyle %>"
+			displayStyleGroupId="<%= displayStyleGroupId %>"
 			refreshURL="<%= portletURL.toString() %>"
 			showEmptyOption="<%= true %>"
 		/>
@@ -59,7 +60,7 @@
 
 	for (String folderColumn : visibleNodes) {
 		if (currentVisibleNodes.contains(folderColumn)) {
-			leftList.add(new KeyValuePair(folderColumn, LanguageUtil.get(pageContext, folderColumn)));
+			leftList.add(new KeyValuePair(folderColumn, HtmlUtil.escape(LanguageUtil.get(pageContext, folderColumn))));
 		}
 	}
 
@@ -68,7 +69,7 @@
 
 	for (String folderColumn : currentVisibleNodes) {
 		if ((Arrays.binarySearch(hiddenNodes, folderColumn) < 0) && (Arrays.binarySearch(visibleNodes, folderColumn) < 0)) {
-			leftList.add(new KeyValuePair(folderColumn, LanguageUtil.get(pageContext, folderColumn)));
+			leftList.add(new KeyValuePair(folderColumn, HtmlUtil.escape(LanguageUtil.get(pageContext, folderColumn))));
 		}
 	}
 
@@ -79,7 +80,7 @@
 	for (String folderColumn : hiddenNodes) {
 		if (currentVisibleNodes.contains(folderColumn)) {
 			if (Arrays.binarySearch(visibleNodes, folderColumn) < 0) {
-				rightList.add(new KeyValuePair(folderColumn, LanguageUtil.get(pageContext, folderColumn)));
+				rightList.add(new KeyValuePair(folderColumn, HtmlUtil.escape(LanguageUtil.get(pageContext, folderColumn))));
 			}
 		}
 	}

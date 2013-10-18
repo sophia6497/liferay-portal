@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -96,28 +96,28 @@ public class ActionUtil {
 
 		String version = ParamUtil.getString(request, "version");
 
-		if (fileEntry != null) {
-			FileVersion fileVersion = null;
+		if (fileEntry == null) {
+			return;
+		}
 
-			if (Validator.isNotNull(version)) {
-				fileVersion = fileEntry.getFileVersion(version);
+		FileVersion fileVersion = null;
 
-				request.setAttribute(
-					WebKeys.DOCUMENT_LIBRARY_FILE_VERSION, fileVersion);
-			}
-			else {
-				fileVersion = fileEntry.getFileVersion();
-			}
+		if (Validator.isNotNull(version)) {
+			fileVersion = fileEntry.getFileVersion(version);
 
-			RawMetadataProcessorUtil.generateMetadata(fileVersion);
+			request.setAttribute(
+				WebKeys.DOCUMENT_LIBRARY_FILE_VERSION, fileVersion);
+		}
+		else {
+			fileVersion = fileEntry.getFileVersion();
+		}
 
-			String cmd = ParamUtil.getString(request, Constants.CMD);
+		RawMetadataProcessorUtil.generateMetadata(fileVersion);
 
-			if ((fileVersion.isInTrash() || fileVersion.isInTrashContainer()) &&
-				!cmd.equals(Constants.MOVE_FROM_TRASH)) {
+		String cmd = ParamUtil.getString(request, Constants.CMD);
 
-				throw new NoSuchFileEntryException();
-			}
+		if (fileEntry.isInTrash() && !cmd.equals(Constants.MOVE_FROM_TRASH)) {
+			throw new NoSuchFileEntryException();
 		}
 	}
 
@@ -198,7 +198,7 @@ public class ActionUtil {
 			if (folder.getModel() instanceof DLFolder) {
 				DLFolder dlFolder = (DLFolder)folder.getModel();
 
-				if (dlFolder.isInTrash() || dlFolder.isInTrashContainer()) {
+				if (dlFolder.isInTrash()) {
 					throw new NoSuchFolderException();
 				}
 			}

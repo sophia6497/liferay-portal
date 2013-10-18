@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -283,7 +283,6 @@ public class JavadocBuilder {
 		Element commentElement = throwsElement.addElement("comment");
 
 		commentElement.addCDATA(_getCDATA(value));
-
 	}
 
 	private void _addThrowsElements(
@@ -524,7 +523,7 @@ public class JavadocBuilder {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append(methodElement.elementText("name"));
-		sb.append("(");
+		sb.append(StringPool.OPEN_PARENTHESIS);
 
 		List<Element> paramElements = methodElement.elements("param");
 
@@ -535,7 +534,7 @@ public class JavadocBuilder {
 			sb.append(",");
 		}
 
-		sb.append(")");
+		sb.append(StringPool.CLOSE_PARENTHESIS);
 
 		return sb.toString();
 	}
@@ -544,7 +543,7 @@ public class JavadocBuilder {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append(javaMethod.getName());
-		sb.append("(");
+		sb.append(StringPool.OPEN_PARENTHESIS);
 
 		JavaParameter[] javaParameters = javaMethod.getParameters();
 
@@ -555,7 +554,7 @@ public class JavadocBuilder {
 			sb.append(",");
 		}
 
-		sb.append(")");
+		sb.append(StringPool.CLOSE_PARENTHESIS);
 
 		return sb.toString();
 	}

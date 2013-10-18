@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -57,13 +57,13 @@ if (!dlFileEntries.isEmpty()) {
 
 <c:choose>
 	<c:when test="<%= dlFileEntry == null %>">
-			<div class="portlet-msg-success">
+			<div class="alert alert-success">
 				<liferay-ui:message key="there-are-no-longer-any-documents-and-media-files-with-extra-settings" />
 			</div>
 	</c:when>
 	<c:otherwise>
 		<c:if test="<%= (expandoBridgeAttributeNames != null) && !expandoBridgeAttributeNames.isEmpty() %>">
-			<div class="portlet-msg-error">
+			<div class="alert alert-error">
 				<%= LanguageUtil.format(pageContext, "custom-fields-already-exist-for-these-extra-settings-x", StringUtil.merge(expandoBridgeAttributeNames)) %>
 			</div>
 		</c:if>
@@ -129,6 +129,7 @@ if (!dlFileEntries.isEmpty()) {
 <aui:script>
 	function <portlet:namespace />convertDocumentLibraryExtraSettings(options) {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "convert";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 </aui:script>

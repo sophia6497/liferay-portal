@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -410,6 +410,12 @@ public class PluginsSummaryBuilder {
 			}
 		}
 
+		File webInfDir = relengChangeLogFile.getParentFile();
+
+		File docrootDir = webInfDir.getParentFile();
+
+		File pluginDir = docrootDir.getParentFile();
+
 		for (int i = 0; i < relengChangeLogEntries.size(); i++) {
 			String relengChangeLogEntry = relengChangeLogEntries.get(i);
 
@@ -427,12 +433,6 @@ public class PluginsSummaryBuilder {
 
 				break;
 			}
-
-			File webInfDir = relengChangeLogFile.getParentFile();
-
-			File docrootDir = webInfDir.getParentFile();
-
-			File pluginDir = docrootDir.getParentFile();
 
 			Set<String> ticketIds = _extractTicketIds(pluginDir, range);
 
@@ -495,24 +495,39 @@ public class PluginsSummaryBuilder {
 				_getChangeLogEntry(changeLogVersion, range, ticketIdsString));
 		}
 
+		File pluginPackagePropertiesFile = new File(
+			webInfDir, "liferay-plugin-package.properties");
+
+		String pluginPackagePropertiesContent = FileUtil.read(
+			pluginPackagePropertiesFile);
+
+		if (!pluginPackagePropertiesContent.contains("long-description")) {
+			int x = pluginPackagePropertiesContent.indexOf("change-log=");
+
+			pluginPackagePropertiesContent =
+				pluginPackagePropertiesContent.substring(0, x) +
+					"long-description=\n" +
+						pluginPackagePropertiesContent.substring(x);
+		}
+
 		if (moduleIncrementalVersion != changeLogVersion) {
-			File pluginPackagePropertiesFile = new File(
-				relengChangeLogFile.getParentFile(),
-				"liferay-plugin-package.properties");
-
-			String pluginPackagePropertiesContent = FileUtil.read(
-				pluginPackagePropertiesFile);
-
 			pluginPackagePropertiesContent = StringUtil.replace(
 				pluginPackagePropertiesContent,
 				"module-incremental-version=" + moduleIncrementalVersion,
 				"module-incremental-version=" + changeLogVersion);
-
-			FileUtil.write(
-				pluginPackagePropertiesFile, pluginPackagePropertiesContent);
 		}
 
+		FileUtil.write(
+			pluginPackagePropertiesFile, pluginPackagePropertiesContent);
+
 		FileUtil.write(relengChangeLogFile, sb.toString());
+
+		File relengChangeLogMD5File = new File(
+			webInfDir, "liferay-releng.changelog.md5");
+
+		String md5Checksum = FileUtil.getMD5Checksum(relengChangeLogFile);
+
+		FileUtil.write(relengChangeLogMD5File, md5Checksum);
 	}
 
 	private String _updateRelengPropertiesFile(
@@ -567,7 +582,7 @@ public class PluginsSummaryBuilder {
 		String value = GetterUtil.getString(
 			properties.getProperty(key), defaultValue);
 
-		if (sb.length() > 0) {
+		if (sb.index() > 0) {
 			sb.append(StringPool.NEW_LINE);
 		}
 

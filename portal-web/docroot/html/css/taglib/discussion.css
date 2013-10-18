@@ -1,3 +1,5 @@
+@import "compass";
+
 .taglib-discussion {
 	table.tree-walker {
 		width: 100%;
@@ -30,7 +32,7 @@
 	.lfr-discussion-details {
 		width: 15%;
 
-		.aui-column-content {
+		.column-content {
 			padding: 0;
 		}
 
@@ -57,7 +59,7 @@
 	.lfr-discussion-body {
 		width: 85%;
 
-		.lfr-discussion-controls .taglib-ratings .aui-rating-label-element {
+		.lfr-discussion-controls .taglib-ratings .rating-label-element {
 			padding-left: 0;
 		}
 	}
@@ -74,6 +76,8 @@
 
 	.lfr-discussion-message {
 		padding-bottom: 1em;
+
+		@include word-break(break-all);
 	}
 
 	.taglib-ratings {
@@ -98,7 +102,7 @@
 			}
 		}
 
-		a.aui-rating-element {
+		a.rating-element {
 			margin: 0 1px;
 		}
 	}
@@ -118,9 +122,16 @@
 			padding: 5px 5px 5px 50px;
 			position: relative;
 
-			&.lfr-discussion-form-edit {
+			&.lfr-discussion-form-edit, &.lfr-discussion-form-reply {
 				left: 0;
+				margin-left: 0;
 				padding: 5px;
+
+				textarea {
+					max-width: 100%;
+					width: 100%;
+					@include box-sizing(border-box);
+				}
 			}
 
 			.taglib-user-display {
@@ -139,7 +150,7 @@
 				}
 			}
 
-			.aui-button-holder {
+			.button-holder {
 				margin: 5px 0 0;
 			}
 		}

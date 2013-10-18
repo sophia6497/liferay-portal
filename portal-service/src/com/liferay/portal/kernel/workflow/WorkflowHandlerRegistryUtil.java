@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,13 +14,17 @@
 
 package com.liferay.portal.kernel.workflow;
 
-import com.liferay.portal.NoSuchWorkflowDefinitionLinkException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.model.WorkflowDefinitionLink;
+import com.liferay.portal.model.WorkflowInstanceLink;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
 
 import java.io.Serializable;
 
@@ -88,9 +92,8 @@ public class WorkflowHandlerRegistryUtil {
 			Map<String, Serializable> workflowContext)
 		throws PortalException, SystemException {
 
-		if (WorkflowThreadLocal.isEnabled() &&
-			(serviceContext.getWorkflowAction() !=
-				WorkflowConstants.ACTION_PUBLISH)) {
+		if (serviceContext.getWorkflowAction() !=
+				WorkflowConstants.ACTION_PUBLISH) {
 
 			return;
 		}
@@ -98,8 +101,27 @@ public class WorkflowHandlerRegistryUtil {
 		WorkflowHandler workflowHandler = getWorkflowHandler(className);
 
 		if (workflowHandler == null) {
-			throw new WorkflowException(
-				"No workflow handler found for " + className);
+			if (WorkflowThreadLocal.isEnabled()) {
+				throw new WorkflowException(
+					"No workflow handler found for " + className);
+			}
+
+			return;
+		}
+
+		WorkflowInstanceLink workflowInstanceLink =
+			WorkflowInstanceLinkLocalServiceUtil.fetchWorkflowInstanceLink(
+				companyId, groupId, className, classPK);
+
+		if (workflowInstanceLink != null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Workflow already started for class " + className +
+						" with primary key " + classPK + " in group " +
+							groupId);
+			}
+
+			return;
 		}
 
 		WorkflowDefinitionLink workflowDefinitionLink = null;
@@ -107,13 +129,8 @@ public class WorkflowHandlerRegistryUtil {
 		if (WorkflowThreadLocal.isEnabled() &&
 			WorkflowEngineManagerUtil.isDeployed()) {
 
-			try {
-				workflowDefinitionLink =
-					workflowHandler.getWorkflowDefinitionLink(
-						companyId, groupId, classPK);
-			}
-			catch (NoSuchWorkflowDefinitionLinkException nswdle) {
-			}
+			workflowDefinitionLink = workflowHandler.getWorkflowDefinitionLink(
+				companyId, groupId, classPK);
 		}
 
 		int status = WorkflowConstants.STATUS_PENDING;
@@ -139,6 +156,9 @@ public class WorkflowHandlerRegistryUtil {
 			workflowHandler.getType(LocaleUtil.getDefault()));
 		workflowContext.put(
 			WorkflowConstants.CONTEXT_SERVICE_CONTEXT, serviceContext);
+		workflowContext.put(
+			WorkflowConstants.CONTEXT_TASK_COMMENTS,
+			GetterUtil.getString(serviceContext.getAttribute("comments")));
 
 		workflowHandler.updateStatus(status, workflowContext);
 
@@ -210,6 +230,9 @@ public class WorkflowHandlerRegistryUtil {
 
 		_workflowHandlerRegistry = workflowHandlerRegistry;
 	}
+
+	private static Log _log = LogFactoryUtil.getLog(
+		WorkflowHandlerRegistryUtil.class);
 
 	private static WorkflowHandlerRegistry _workflowHandlerRegistry;
 

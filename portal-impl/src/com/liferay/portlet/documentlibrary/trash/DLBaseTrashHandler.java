@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,6 +32,7 @@ import com.liferay.portal.service.RepositoryServiceUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFileShortcut;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
+import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,10 @@ public abstract class DLBaseTrashHandler extends BaseTrashHandler {
 	@Override
 	public ContainerModel getContainerModel(long containerModelId)
 		throws PortalException, SystemException {
+
+		if (containerModelId == DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+			return null;
+		}
 
 		return getDLFolder(containerModelId);
 	}
@@ -225,6 +230,21 @@ public abstract class DLBaseTrashHandler extends BaseTrashHandler {
 	@Override
 	public boolean isMovable() {
 		return true;
+	}
+
+	protected DLFolder fetchDLFolder(long classPK)
+		throws PortalException, SystemException {
+
+		Repository repository = RepositoryServiceUtil.getRepositoryImpl(
+			classPK, 0, 0);
+
+		if (!(repository instanceof LiferayRepository)) {
+			return null;
+		}
+
+		Folder folder = repository.getFolder(classPK);
+
+		return (DLFolder)folder.getModel();
 	}
 
 	protected DLFolder getDLFolder(long classPK)

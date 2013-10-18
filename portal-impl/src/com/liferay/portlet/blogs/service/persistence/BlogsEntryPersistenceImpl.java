@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -57,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the blogs entry service.
@@ -119,6 +121,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByUuid(String uuid) throws SystemException {
 		return findByUuid(uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -136,6 +139,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByUuid(String uuid, int start, int end)
 		throws SystemException {
 		return findByUuid(uuid, start, end, null);
@@ -155,6 +159,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByUuid(String uuid, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -275,6 +280,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByUuid_First(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -304,6 +310,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByUuid_First(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByUuid(uuid, 0, 1, orderByComparator);
@@ -324,6 +331,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByUuid_Last(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -353,9 +361,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByUuid_Last(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid(uuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByUuid(uuid, count - 1, count,
 				orderByComparator);
@@ -377,6 +390,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByUuid_PrevAndNext(long entryId, String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -532,6 +546,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param uuid the uuid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid(String uuid) throws SystemException {
 		for (BlogsEntry blogsEntry : findByUuid(uuid, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null)) {
@@ -546,6 +561,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid(String uuid) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID;
 
@@ -628,6 +644,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByUUID_G(String uuid, long groupId)
 		throws NoSuchEntryException, SystemException {
 		BlogsEntry blogsEntry = fetchByUUID_G(uuid, groupId);
@@ -663,6 +680,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByUUID_G(String uuid, long groupId)
 		throws SystemException {
 		return fetchByUUID_G(uuid, groupId, true);
@@ -677,6 +695,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByUUID_G(String uuid, long groupId,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { uuid, groupId };
@@ -783,6 +802,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the blogs entry that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry removeByUUID_G(String uuid, long groupId)
 		throws NoSuchEntryException, SystemException {
 		BlogsEntry blogsEntry = findByUUID_G(uuid, groupId);
@@ -798,6 +818,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUUID_G(String uuid, long groupId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_G;
@@ -897,6 +918,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		return findByUuid_C(uuid, companyId, QueryUtil.ALL_POS,
@@ -917,6 +939,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByUuid_C(String uuid, long companyId,
 		int start, int end) throws SystemException {
 		return findByUuid_C(uuid, companyId, start, end, null);
@@ -937,6 +960,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByUuid_C(String uuid, long companyId,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -1068,6 +1092,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -1102,6 +1127,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByUuid_C(uuid, companyId, 0, 1,
@@ -1124,6 +1150,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -1158,9 +1185,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid_C(uuid, companyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByUuid_C(uuid, companyId, count - 1, count,
 				orderByComparator);
@@ -1183,6 +1215,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByUuid_C_PrevAndNext(long entryId, String uuid,
 		long companyId, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -1343,6 +1376,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param companyId the company ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByUuid_C(uuid, companyId,
@@ -1359,6 +1393,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_C;
@@ -1456,6 +1491,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByGroupId(long groupId)
 		throws SystemException {
 		return findByGroupId(groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
@@ -1474,6 +1510,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByGroupId(long groupId, int start, int end)
 		throws SystemException {
 		return findByGroupId(groupId, start, end, null);
@@ -1493,6 +1530,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByGroupId(long groupId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -1599,6 +1637,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByGroupId_First(long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -1628,6 +1667,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByGroupId_First(long groupId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByGroupId(groupId, 0, 1, orderByComparator);
@@ -1648,6 +1688,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByGroupId_Last(long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -1677,9 +1718,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByGroupId_Last(long groupId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByGroupId(groupId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByGroupId(groupId, count - 1, count,
 				orderByComparator);
@@ -1701,6 +1747,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByGroupId_PrevAndNext(long entryId, long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -1843,6 +1890,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByGroupId(long groupId)
 		throws SystemException {
 		return filterFindByGroupId(groupId, QueryUtil.ALL_POS,
@@ -1862,6 +1910,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByGroupId(long groupId, int start, int end)
 		throws SystemException {
 		return filterFindByGroupId(groupId, start, end, null);
@@ -1881,6 +1930,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByGroupId(long groupId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -1913,11 +1963,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -1971,6 +2021,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByGroupId_PrevAndNext(long entryId,
 		long groupId, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -2151,6 +2202,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param groupId the group ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByGroupId(long groupId) throws SystemException {
 		for (BlogsEntry blogsEntry : findByGroupId(groupId, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null)) {
@@ -2165,6 +2217,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByGroupId(long groupId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_GROUPID;
 
@@ -2217,6 +2270,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByGroupId(long groupId) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByGroupId(groupId);
@@ -2289,6 +2343,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByCompanyId(long companyId)
 		throws SystemException {
 		return findByCompanyId(companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
@@ -2308,6 +2363,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByCompanyId(long companyId, int start, int end)
 		throws SystemException {
 		return findByCompanyId(companyId, start, end, null);
@@ -2327,6 +2383,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByCompanyId(long companyId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -2433,6 +2490,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByCompanyId_First(long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -2463,6 +2521,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByCompanyId_First(long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByCompanyId(companyId, 0, 1,
@@ -2484,6 +2543,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByCompanyId_Last(long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -2514,9 +2574,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByCompanyId_Last(long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByCompanyId(companyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByCompanyId(companyId, count - 1, count,
 				orderByComparator);
@@ -2538,6 +2603,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByCompanyId_PrevAndNext(long entryId,
 		long companyId, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -2679,6 +2745,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param companyId the company ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByCompanyId(long companyId) throws SystemException {
 		for (BlogsEntry blogsEntry : findByCompanyId(companyId,
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
@@ -2693,6 +2760,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByCompanyId(long companyId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_COMPANYID;
 
@@ -2769,6 +2837,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U(long companyId, long userId)
 		throws SystemException {
 		return findByC_U(companyId, userId, QueryUtil.ALL_POS,
@@ -2789,6 +2858,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U(long companyId, long userId, int start,
 		int end) throws SystemException {
 		return findByC_U(companyId, userId, start, end, null);
@@ -2809,6 +2879,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U(long companyId, long userId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -2925,6 +2996,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_U_First(long companyId, long userId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -2959,6 +3031,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_U_First(long companyId, long userId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByC_U(companyId, userId, 0, 1,
@@ -2981,6 +3054,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_U_Last(long companyId, long userId,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -3015,9 +3089,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_U_Last(long companyId, long userId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByC_U(companyId, userId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_U(companyId, userId, count - 1, count,
 				orderByComparator);
@@ -3040,6 +3119,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_U_PrevAndNext(long entryId, long companyId,
 		long userId, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -3186,6 +3266,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param userId the user ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_U(long companyId, long userId)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_U(companyId, userId,
@@ -3202,6 +3283,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_U(long companyId, long userId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_C_U;
@@ -3276,6 +3358,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD(long companyId, Date displayDate)
 		throws SystemException {
 		return findByC_LtD(companyId, displayDate, QueryUtil.ALL_POS,
@@ -3296,6 +3379,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD(long companyId, Date displayDate,
 		int start, int end) throws SystemException {
 		return findByC_LtD(companyId, displayDate, start, end, null);
@@ -3316,6 +3400,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD(long companyId, Date displayDate,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -3437,6 +3522,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_LtD_First(long companyId, Date displayDate,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -3471,6 +3557,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_LtD_First(long companyId, Date displayDate,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByC_LtD(companyId, displayDate, 0, 1,
@@ -3493,6 +3580,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_LtD_Last(long companyId, Date displayDate,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -3527,9 +3615,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_LtD_Last(long companyId, Date displayDate,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByC_LtD(companyId, displayDate);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_LtD(companyId, displayDate, count - 1,
 				count, orderByComparator);
@@ -3552,6 +3645,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_LtD_PrevAndNext(long entryId, long companyId,
 		Date displayDate, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -3709,6 +3803,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param displayDate the display date
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_LtD(long companyId, Date displayDate)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_LtD(companyId, displayDate,
@@ -3725,6 +3820,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_LtD(long companyId, Date displayDate)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_C_LTD;
@@ -3811,6 +3907,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_NotS(long companyId, int status)
 		throws SystemException {
 		return findByC_NotS(companyId, status, QueryUtil.ALL_POS,
@@ -3831,6 +3928,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_NotS(long companyId, int status, int start,
 		int end) throws SystemException {
 		return findByC_NotS(companyId, status, start, end, null);
@@ -3851,6 +3949,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_NotS(long companyId, int status, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -3959,6 +4058,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_NotS_First(long companyId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -3993,6 +4093,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_NotS_First(long companyId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByC_NotS(companyId, status, 0, 1,
@@ -4015,6 +4116,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_NotS_Last(long companyId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -4049,9 +4151,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_NotS_Last(long companyId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByC_NotS(companyId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_NotS(companyId, status, count - 1,
 				count, orderByComparator);
@@ -4074,6 +4181,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_NotS_PrevAndNext(long entryId, long companyId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -4220,6 +4328,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_NotS(long companyId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_NotS(companyId, status,
@@ -4236,6 +4345,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_NotS(long companyId, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_C_NOTS;
@@ -4318,6 +4428,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_S(long companyId, int status)
 		throws SystemException {
 		return findByC_S(companyId, status, QueryUtil.ALL_POS,
@@ -4338,6 +4449,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_S(long companyId, int status, int start,
 		int end) throws SystemException {
 		return findByC_S(companyId, status, start, end, null);
@@ -4358,6 +4470,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_S(long companyId, int status, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -4474,6 +4587,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_S_First(long companyId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -4508,6 +4622,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_S_First(long companyId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByC_S(companyId, status, 0, 1,
@@ -4530,6 +4645,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_S_Last(long companyId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -4564,9 +4680,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_S_Last(long companyId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByC_S(companyId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_S(companyId, status, count - 1, count,
 				orderByComparator);
@@ -4589,6 +4710,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_S_PrevAndNext(long entryId, long companyId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -4735,6 +4857,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_S(long companyId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_S(companyId, status,
@@ -4751,6 +4874,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_S(long companyId, int status) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_C_S;
 
@@ -4822,6 +4946,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_UT(long groupId, String urlTitle)
 		throws NoSuchEntryException, SystemException {
 		BlogsEntry blogsEntry = fetchByG_UT(groupId, urlTitle);
@@ -4857,6 +4982,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_UT(long groupId, String urlTitle)
 		throws SystemException {
 		return fetchByG_UT(groupId, urlTitle, true);
@@ -4871,6 +4997,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_UT(long groupId, String urlTitle,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { groupId, urlTitle };
@@ -4977,6 +5104,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the blogs entry that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry removeByG_UT(long groupId, String urlTitle)
 		throws NoSuchEntryException, SystemException {
 		BlogsEntry blogsEntry = findByG_UT(groupId, urlTitle);
@@ -4992,6 +5120,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_UT(long groupId, String urlTitle)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_UT;
@@ -5082,6 +5211,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD(long groupId, Date displayDate)
 		throws SystemException {
 		return findByG_LtD(groupId, displayDate, QueryUtil.ALL_POS,
@@ -5102,6 +5232,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD(long groupId, Date displayDate,
 		int start, int end) throws SystemException {
 		return findByG_LtD(groupId, displayDate, start, end, null);
@@ -5122,6 +5253,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD(long groupId, Date displayDate,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -5243,6 +5375,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_LtD_First(long groupId, Date displayDate,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -5277,6 +5410,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_LtD_First(long groupId, Date displayDate,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByG_LtD(groupId, displayDate, 0, 1,
@@ -5299,6 +5433,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_LtD_Last(long groupId, Date displayDate,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -5333,9 +5468,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_LtD_Last(long groupId, Date displayDate,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_LtD(groupId, displayDate);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_LtD(groupId, displayDate, count - 1,
 				count, orderByComparator);
@@ -5358,6 +5498,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_LtD_PrevAndNext(long entryId, long groupId,
 		Date displayDate, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -5516,6 +5657,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD(long groupId, Date displayDate)
 		throws SystemException {
 		return filterFindByG_LtD(groupId, displayDate, QueryUtil.ALL_POS,
@@ -5536,6 +5678,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD(long groupId, Date displayDate,
 		int start, int end) throws SystemException {
 		return filterFindByG_LtD(groupId, displayDate, start, end, null);
@@ -5556,6 +5699,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD(long groupId, Date displayDate,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -5601,11 +5745,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -5664,6 +5808,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_LtD_PrevAndNext(long entryId,
 		long groupId, Date displayDate, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -5861,6 +6006,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param displayDate the display date
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_LtD(long groupId, Date displayDate)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_LtD(groupId, displayDate,
@@ -5877,6 +6023,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_LtD(long groupId, Date displayDate)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_LTD;
@@ -5946,6 +6093,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_LtD(long groupId, Date displayDate)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -6028,6 +6176,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_NotS(long groupId, int status)
 		throws SystemException {
 		return findByG_NotS(groupId, status, QueryUtil.ALL_POS,
@@ -6048,6 +6197,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_NotS(long groupId, int status, int start,
 		int end) throws SystemException {
 		return findByG_NotS(groupId, status, start, end, null);
@@ -6068,6 +6218,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_NotS(long groupId, int status, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -6172,6 +6323,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_NotS_First(long groupId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -6206,6 +6358,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_NotS_First(long groupId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByG_NotS(groupId, status, 0, 1,
@@ -6228,6 +6381,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_NotS_Last(long groupId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -6262,9 +6416,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_NotS_Last(long groupId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_NotS(groupId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_NotS(groupId, status, count - 1, count,
 				orderByComparator);
@@ -6287,6 +6446,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_NotS_PrevAndNext(long entryId, long groupId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -6434,6 +6594,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_NotS(long groupId, int status)
 		throws SystemException {
 		return filterFindByG_NotS(groupId, status, QueryUtil.ALL_POS,
@@ -6454,6 +6615,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_NotS(long groupId, int status,
 		int start, int end) throws SystemException {
 		return filterFindByG_NotS(groupId, status, start, end, null);
@@ -6474,6 +6636,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_NotS(long groupId, int status,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -6509,11 +6672,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -6570,6 +6733,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_NotS_PrevAndNext(long entryId,
 		long groupId, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -6756,6 +6920,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_NotS(long groupId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_NotS(groupId, status,
@@ -6772,6 +6937,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_NotS(long groupId, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_NOTS;
@@ -6830,6 +6996,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_NotS(long groupId, int status)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -6908,6 +7075,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_S(long groupId, int status)
 		throws SystemException {
 		return findByG_S(groupId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
@@ -6928,6 +7096,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_S(long groupId, int status, int start,
 		int end) throws SystemException {
 		return findByG_S(groupId, status, start, end, null);
@@ -6948,6 +7117,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_S(long groupId, int status, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -7064,6 +7234,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_S_First(long groupId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -7098,6 +7269,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_S_First(long groupId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByG_S(groupId, status, 0, 1,
@@ -7120,6 +7292,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_S_Last(long groupId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -7154,9 +7327,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_S_Last(long groupId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_S(groupId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_S(groupId, status, count - 1, count,
 				orderByComparator);
@@ -7179,6 +7357,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_S_PrevAndNext(long entryId, long groupId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -7326,6 +7505,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_S(long groupId, int status)
 		throws SystemException {
 		return filterFindByG_S(groupId, status, QueryUtil.ALL_POS,
@@ -7346,6 +7526,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_S(long groupId, int status,
 		int start, int end) throws SystemException {
 		return filterFindByG_S(groupId, status, start, end, null);
@@ -7366,6 +7547,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_S(long groupId, int status,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -7401,11 +7583,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -7462,6 +7644,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_S_PrevAndNext(long entryId, long groupId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -7648,6 +7831,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_S(long groupId, int status) throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_S(groupId, status,
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
@@ -7663,6 +7847,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_S(long groupId, int status) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_S;
 
@@ -7720,6 +7905,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_S(long groupId, int status)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -7790,6 +7976,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByLtD_S(Date displayDate, int status)
 		throws SystemException {
 		return findByLtD_S(displayDate, status, QueryUtil.ALL_POS,
@@ -7810,6 +7997,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByLtD_S(Date displayDate, int status,
 		int start, int end) throws SystemException {
 		return findByLtD_S(displayDate, status, start, end, null);
@@ -7830,6 +8018,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByLtD_S(Date displayDate, int status,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -7950,6 +8139,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByLtD_S_First(Date displayDate, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -7984,6 +8174,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByLtD_S_First(Date displayDate, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByLtD_S(displayDate, status, 0, 1,
@@ -8006,6 +8197,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByLtD_S_Last(Date displayDate, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -8040,9 +8232,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByLtD_S_Last(Date displayDate, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByLtD_S(displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByLtD_S(displayDate, status, count - 1,
 				count, orderByComparator);
@@ -8065,6 +8262,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByLtD_S_PrevAndNext(long entryId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -8222,6 +8420,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByLtD_S(Date displayDate, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByLtD_S(displayDate, status,
@@ -8238,6 +8437,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByLtD_S(Date displayDate, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_LTD_S;
@@ -8330,6 +8530,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U_NotS(long companyId, long userId,
 		int status) throws SystemException {
 		return findByC_U_NotS(companyId, userId, status, QueryUtil.ALL_POS,
@@ -8351,6 +8552,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U_NotS(long companyId, long userId,
 		int status, int start, int end) throws SystemException {
 		return findByC_U_NotS(companyId, userId, status, start, end, null);
@@ -8372,6 +8574,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U_NotS(long companyId, long userId,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -8487,6 +8690,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_U_NotS_First(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -8525,6 +8729,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_U_NotS_First(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -8549,6 +8754,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_U_NotS_Last(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -8587,10 +8793,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_U_NotS_Last(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByC_U_NotS(companyId, userId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_U_NotS(companyId, userId, status,
 				count - 1, count, orderByComparator);
@@ -8614,6 +8825,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_U_NotS_PrevAndNext(long entryId,
 		long companyId, long userId, int status,
 		OrderByComparator orderByComparator)
@@ -8766,6 +8978,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_U_NotS(long companyId, long userId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_U_NotS(companyId, userId, status,
@@ -8783,6 +8996,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_U_NotS(long companyId, long userId, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_C_U_NOTS;
@@ -8879,6 +9093,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U_S(long companyId, long userId, int status)
 		throws SystemException {
 		return findByC_U_S(companyId, userId, status, QueryUtil.ALL_POS,
@@ -8900,6 +9115,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U_S(long companyId, long userId,
 		int status, int start, int end) throws SystemException {
 		return findByC_U_S(companyId, userId, status, start, end, null);
@@ -8921,6 +9137,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_U_S(long companyId, long userId,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -9044,6 +9261,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_U_S_First(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -9082,6 +9300,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_U_S_First(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -9106,6 +9325,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_U_S_Last(long companyId, long userId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -9144,10 +9364,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_U_S_Last(long companyId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByC_U_S(companyId, userId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_U_S(companyId, userId, status,
 				count - 1, count, orderByComparator);
@@ -9171,6 +9396,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_U_S_PrevAndNext(long entryId, long companyId,
 		long userId, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -9322,6 +9548,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_U_S(long companyId, long userId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_U_S(companyId, userId, status,
@@ -9339,6 +9566,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_U_S(long companyId, long userId, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_C_U_S;
@@ -9425,6 +9653,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD_NotS(long companyId, Date displayDate,
 		int status) throws SystemException {
 		return findByC_LtD_NotS(companyId, displayDate, status,
@@ -9446,6 +9675,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD_NotS(long companyId, Date displayDate,
 		int status, int start, int end) throws SystemException {
 		return findByC_LtD_NotS(companyId, displayDate, status, start, end, null);
@@ -9467,6 +9697,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD_NotS(long companyId, Date displayDate,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -9594,6 +9825,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_LtD_NotS_First(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -9632,6 +9864,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_LtD_NotS_First(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -9656,6 +9889,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_LtD_NotS_Last(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -9694,10 +9928,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_LtD_NotS_Last(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByC_LtD_NotS(companyId, displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_LtD_NotS(companyId, displayDate,
 				status, count - 1, count, orderByComparator);
@@ -9721,6 +9960,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_LtD_NotS_PrevAndNext(long entryId,
 		long companyId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -9884,6 +10124,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_LtD_NotS(long companyId, Date displayDate, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_LtD_NotS(companyId, displayDate,
@@ -9901,6 +10142,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_LtD_NotS(long companyId, Date displayDate, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_C_LTD_NOTS;
@@ -9997,6 +10239,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD_S(long companyId, Date displayDate,
 		int status) throws SystemException {
 		return findByC_LtD_S(companyId, displayDate, status, QueryUtil.ALL_POS,
@@ -10018,6 +10261,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD_S(long companyId, Date displayDate,
 		int status, int start, int end) throws SystemException {
 		return findByC_LtD_S(companyId, displayDate, status, start, end, null);
@@ -10039,6 +10283,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByC_LtD_S(long companyId, Date displayDate,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -10166,6 +10411,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_LtD_S_First(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -10204,6 +10450,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_LtD_S_First(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -10228,6 +10475,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByC_LtD_S_Last(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -10266,10 +10514,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByC_LtD_S_Last(long companyId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByC_LtD_S(companyId, displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByC_LtD_S(companyId, displayDate, status,
 				count - 1, count, orderByComparator);
@@ -10293,6 +10546,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByC_LtD_S_PrevAndNext(long entryId, long companyId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -10455,6 +10709,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByC_LtD_S(long companyId, Date displayDate, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByC_LtD_S(companyId, displayDate,
@@ -10472,6 +10727,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByC_LtD_S(long companyId, Date displayDate, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_C_LTD_S;
@@ -10566,6 +10822,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD(long groupId, long userId,
 		Date displayDate) throws SystemException {
 		return findByG_U_LtD(groupId, userId, displayDate, QueryUtil.ALL_POS,
@@ -10587,6 +10844,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD(long groupId, long userId,
 		Date displayDate, int start, int end) throws SystemException {
 		return findByG_U_LtD(groupId, userId, displayDate, start, end, null);
@@ -10608,6 +10866,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD(long groupId, long userId,
 		Date displayDate, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -10735,6 +10994,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_LtD_First(long groupId, long userId,
 		Date displayDate, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -10773,6 +11033,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_LtD_First(long groupId, long userId,
 		Date displayDate, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -10797,6 +11058,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_LtD_Last(long groupId, long userId,
 		Date displayDate, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -10835,10 +11097,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_LtD_Last(long groupId, long userId,
 		Date displayDate, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_U_LtD(groupId, userId, displayDate);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_U_LtD(groupId, userId, displayDate,
 				count - 1, count, orderByComparator);
@@ -10862,6 +11129,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_U_LtD_PrevAndNext(long entryId, long groupId,
 		long userId, Date displayDate, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -11025,6 +11293,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD(long groupId, long userId,
 		Date displayDate) throws SystemException {
 		return filterFindByG_U_LtD(groupId, userId, displayDate,
@@ -11046,6 +11315,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD(long groupId, long userId,
 		Date displayDate, int start, int end) throws SystemException {
 		return filterFindByG_U_LtD(groupId, userId, displayDate, start, end,
@@ -11068,6 +11338,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD(long groupId, long userId,
 		Date displayDate, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -11115,11 +11386,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -11181,6 +11452,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_U_LtD_PrevAndNext(long entryId,
 		long groupId, long userId, Date displayDate,
 		OrderByComparator orderByComparator)
@@ -11384,6 +11656,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param displayDate the display date
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_U_LtD(long groupId, long userId, Date displayDate)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_U_LtD(groupId, userId,
@@ -11401,6 +11674,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_U_LtD(long groupId, long userId, Date displayDate)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_U_LTD;
@@ -11475,6 +11749,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_U_LtD(long groupId, long userId, Date displayDate)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -11568,6 +11843,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_NotS(long groupId, long userId, int status)
 		throws SystemException {
 		return findByG_U_NotS(groupId, userId, status, QueryUtil.ALL_POS,
@@ -11589,6 +11865,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_NotS(long groupId, long userId,
 		int status, int start, int end) throws SystemException {
 		return findByG_U_NotS(groupId, userId, status, start, end, null);
@@ -11610,6 +11887,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_NotS(long groupId, long userId,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -11725,6 +12003,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_NotS_First(long groupId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -11763,6 +12042,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_NotS_First(long groupId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -11787,6 +12067,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_NotS_Last(long groupId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -11825,10 +12106,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_NotS_Last(long groupId, long userId,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_U_NotS(groupId, userId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_U_NotS(groupId, userId, status,
 				count - 1, count, orderByComparator);
@@ -11852,6 +12138,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_U_NotS_PrevAndNext(long entryId, long groupId,
 		long userId, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -12004,6 +12291,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_NotS(long groupId, long userId,
 		int status) throws SystemException {
 		return filterFindByG_U_NotS(groupId, userId, status, QueryUtil.ALL_POS,
@@ -12025,6 +12313,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_NotS(long groupId, long userId,
 		int status, int start, int end) throws SystemException {
 		return filterFindByG_U_NotS(groupId, userId, status, start, end, null);
@@ -12046,6 +12335,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_NotS(long groupId, long userId,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -12084,11 +12374,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -12148,6 +12438,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_U_NotS_PrevAndNext(long entryId,
 		long groupId, long userId, int status,
 		OrderByComparator orderByComparator)
@@ -12340,6 +12631,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_U_NotS(long groupId, long userId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_U_NotS(groupId, userId, status,
@@ -12357,6 +12649,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_U_NotS(long groupId, long userId, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_U_NOTS;
@@ -12420,6 +12713,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_U_NotS(long groupId, long userId, int status)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -12512,6 +12806,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_S(long groupId, long userId, int status)
 		throws SystemException {
 		return findByG_U_S(groupId, userId, status, QueryUtil.ALL_POS,
@@ -12533,6 +12828,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_S(long groupId, long userId, int status,
 		int start, int end) throws SystemException {
 		return findByG_U_S(groupId, userId, status, start, end, null);
@@ -12554,6 +12850,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_S(long groupId, long userId, int status,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -12677,6 +12974,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_S_First(long groupId, long userId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -12715,6 +13013,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_S_First(long groupId, long userId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<BlogsEntry> list = findByG_U_S(groupId, userId, status, 0, 1,
@@ -12738,6 +13037,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_S_Last(long groupId, long userId, int status,
 		OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -12776,9 +13076,14 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_S_Last(long groupId, long userId, int status,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_U_S(groupId, userId, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_U_S(groupId, userId, status, count - 1,
 				count, orderByComparator);
@@ -12802,6 +13107,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_U_S_PrevAndNext(long entryId, long groupId,
 		long userId, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -12954,6 +13260,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_S(long groupId, long userId,
 		int status) throws SystemException {
 		return filterFindByG_U_S(groupId, userId, status, QueryUtil.ALL_POS,
@@ -12975,6 +13282,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_S(long groupId, long userId,
 		int status, int start, int end) throws SystemException {
 		return filterFindByG_U_S(groupId, userId, status, start, end, null);
@@ -12996,6 +13304,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_S(long groupId, long userId,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -13034,11 +13343,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -13098,6 +13407,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_U_S_PrevAndNext(long entryId,
 		long groupId, long userId, int status,
 		OrderByComparator orderByComparator)
@@ -13290,6 +13600,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_U_S(long groupId, long userId, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_U_S(groupId, userId, status,
@@ -13307,6 +13618,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_U_S(long groupId, long userId, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_U_S;
@@ -13370,6 +13682,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_U_S(long groupId, long userId, int status)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -13452,6 +13765,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD_NotS(long groupId, Date displayDate,
 		int status) throws SystemException {
 		return findByG_LtD_NotS(groupId, displayDate, status,
@@ -13473,6 +13787,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD_NotS(long groupId, Date displayDate,
 		int status, int start, int end) throws SystemException {
 		return findByG_LtD_NotS(groupId, displayDate, status, start, end, null);
@@ -13494,6 +13809,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD_NotS(long groupId, Date displayDate,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -13621,6 +13937,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_LtD_NotS_First(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -13659,6 +13976,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_LtD_NotS_First(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -13683,6 +14001,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_LtD_NotS_Last(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -13721,10 +14040,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_LtD_NotS_Last(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_LtD_NotS(groupId, displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_LtD_NotS(groupId, displayDate, status,
 				count - 1, count, orderByComparator);
@@ -13748,6 +14072,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_LtD_NotS_PrevAndNext(long entryId,
 		long groupId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -13912,6 +14237,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD_NotS(long groupId,
 		Date displayDate, int status) throws SystemException {
 		return filterFindByG_LtD_NotS(groupId, displayDate, status,
@@ -13933,6 +14259,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD_NotS(long groupId,
 		Date displayDate, int status, int start, int end)
 		throws SystemException {
@@ -13956,6 +14283,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD_NotS(long groupId,
 		Date displayDate, int status, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -14003,11 +14331,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -14069,6 +14397,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_LtD_NotS_PrevAndNext(long entryId,
 		long groupId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -14272,6 +14601,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_LtD_NotS(long groupId, Date displayDate, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_LtD_NotS(groupId, displayDate,
@@ -14289,6 +14619,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_LtD_NotS(long groupId, Date displayDate, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_LTD_NOTS;
@@ -14363,6 +14694,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_LtD_NotS(long groupId, Date displayDate,
 		int status) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -14455,6 +14787,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD_S(long groupId, Date displayDate,
 		int status) throws SystemException {
 		return findByG_LtD_S(groupId, displayDate, status, QueryUtil.ALL_POS,
@@ -14476,6 +14809,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD_S(long groupId, Date displayDate,
 		int status, int start, int end) throws SystemException {
 		return findByG_LtD_S(groupId, displayDate, status, start, end, null);
@@ -14497,6 +14831,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_LtD_S(long groupId, Date displayDate,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -14624,6 +14959,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_LtD_S_First(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -14662,6 +14998,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_LtD_S_First(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -14686,6 +15023,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_LtD_S_Last(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -14724,10 +15062,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_LtD_S_Last(long groupId, Date displayDate,
 		int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_LtD_S(groupId, displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_LtD_S(groupId, displayDate, status,
 				count - 1, count, orderByComparator);
@@ -14751,6 +15094,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_LtD_S_PrevAndNext(long entryId, long groupId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -14914,6 +15258,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD_S(long groupId, Date displayDate,
 		int status) throws SystemException {
 		return filterFindByG_LtD_S(groupId, displayDate, status,
@@ -14935,6 +15280,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD_S(long groupId, Date displayDate,
 		int status, int start, int end) throws SystemException {
 		return filterFindByG_LtD_S(groupId, displayDate, status, start, end,
@@ -14957,6 +15303,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_LtD_S(long groupId, Date displayDate,
 		int status, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -15004,11 +15351,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -15070,6 +15417,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_LtD_S_PrevAndNext(long entryId,
 		long groupId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -15273,6 +15621,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_LtD_S(long groupId, Date displayDate, int status)
 		throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_LtD_S(groupId, displayDate,
@@ -15290,6 +15639,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_LtD_S(long groupId, Date displayDate, int status)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_LTD_S;
@@ -15364,6 +15714,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_LtD_S(long groupId, Date displayDate, int status)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -15459,6 +15810,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		return findByG_U_LtD_NotS(groupId, userId, displayDate, status,
@@ -15481,6 +15833,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status, int start, int end)
 		throws SystemException {
@@ -15505,6 +15858,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -15638,6 +15992,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_LtD_NotS_First(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -15680,6 +16035,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_LtD_NotS_First(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -15705,6 +16061,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_LtD_NotS_Last(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -15747,10 +16104,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_LtD_NotS_Last(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_U_LtD_NotS(groupId, userId, displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_U_LtD_NotS(groupId, userId,
 				displayDate, status, count - 1, count, orderByComparator);
@@ -15775,6 +16137,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_U_LtD_NotS_PrevAndNext(long entryId,
 		long groupId, long userId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -15946,6 +16309,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		return filterFindByG_U_LtD_NotS(groupId, userId, displayDate, status,
@@ -15968,6 +16332,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status, int start, int end)
 		throws SystemException {
@@ -15992,6 +16357,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -16041,11 +16407,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -16110,6 +16476,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_U_LtD_NotS_PrevAndNext(long entryId,
 		long groupId, long userId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -16320,6 +16687,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_U_LtD_NotS(groupId, userId,
@@ -16338,6 +16706,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_U_LtD_NotS(long groupId, long userId, Date displayDate,
 		int status) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_U_LTD_NOTS;
@@ -16417,6 +16786,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_U_LtD_NotS(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -16517,6 +16887,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		return findByG_U_LtD_S(groupId, userId, displayDate, status,
@@ -16539,6 +16910,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status, int start, int end)
 		throws SystemException {
@@ -16563,6 +16935,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -16696,6 +17069,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_LtD_S_First(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -16738,6 +17112,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_LtD_S_First(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -16763,6 +17138,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByG_U_LtD_S_Last(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws NoSuchEntryException, SystemException {
@@ -16805,10 +17181,15 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the last matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByG_U_LtD_S_Last(long groupId, long userId,
 		Date displayDate, int status, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_U_LtD_S(groupId, userId, displayDate, status);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<BlogsEntry> list = findByG_U_LtD_S(groupId, userId, displayDate,
 				status, count - 1, count, orderByComparator);
@@ -16833,6 +17214,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] findByG_U_LtD_S_PrevAndNext(long entryId, long groupId,
 		long userId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -17002,6 +17384,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		return filterFindByG_U_LtD_S(groupId, userId, displayDate, status,
@@ -17024,6 +17407,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status, int start, int end)
 		throws SystemException {
@@ -17048,6 +17432,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> filterFindByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -17097,11 +17482,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -17166,6 +17551,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry[] filterFindByG_U_LtD_S_PrevAndNext(long entryId,
 		long groupId, long userId, Date displayDate, int status,
 		OrderByComparator orderByComparator)
@@ -17376,6 +17762,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param status the status
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_U_LtD_S(long groupId, long userId, Date displayDate,
 		int status) throws SystemException {
 		for (BlogsEntry blogsEntry : findByG_U_LtD_S(groupId, userId,
@@ -17394,6 +17781,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_U_LtD_S(long groupId, long userId, Date displayDate,
 		int status) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_U_LTD_S;
@@ -17473,6 +17861,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of matching blogs entries that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_U_LtD_S(long groupId, long userId,
 		Date displayDate, int status) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -17544,11 +17933,16 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	private static final String _FINDER_COLUMN_G_U_LTD_S_DISPLAYDATE_2 = "blogsEntry.displayDate < ? AND ";
 	private static final String _FINDER_COLUMN_G_U_LTD_S_STATUS_2 = "blogsEntry.status = ?";
 
+	public BlogsEntryPersistenceImpl() {
+		setModelClass(BlogsEntry.class);
+	}
+
 	/**
 	 * Caches the blogs entry in the entity cache if it is enabled.
 	 *
 	 * @param blogsEntry the blogs entry
 	 */
+	@Override
 	public void cacheResult(BlogsEntry blogsEntry) {
 		EntityCacheUtil.putResult(BlogsEntryModelImpl.ENTITY_CACHE_ENABLED,
 			BlogsEntryImpl.class, blogsEntry.getPrimaryKey(), blogsEntry);
@@ -17569,6 +17963,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 *
 	 * @param blogsEntries the blogs entries
 	 */
+	@Override
 	public void cacheResult(List<BlogsEntry> blogsEntries) {
 		for (BlogsEntry blogsEntry : blogsEntries) {
 			if (EntityCacheUtil.getResult(
@@ -17726,6 +18121,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @param entryId the primary key for the new blogs entry
 	 * @return the new blogs entry
 	 */
+	@Override
 	public BlogsEntry create(long entryId) {
 		BlogsEntry blogsEntry = new BlogsEntryImpl();
 
@@ -17747,6 +18143,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry remove(long entryId)
 		throws NoSuchEntryException, SystemException {
 		return remove((Serializable)entryId);
@@ -18164,6 +18561,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @throws com.liferay.portlet.blogs.NoSuchEntryException if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry findByPrimaryKey(long entryId)
 		throws NoSuchEntryException, SystemException {
 		return findByPrimaryKey((Serializable)entryId);
@@ -18224,6 +18622,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the blogs entry, or <code>null</code> if a blogs entry with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public BlogsEntry fetchByPrimaryKey(long entryId) throws SystemException {
 		return fetchByPrimaryKey((Serializable)entryId);
 	}
@@ -18234,6 +18633,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -18250,6 +18650,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the range of blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findAll(int start, int end)
 		throws SystemException {
 		return findAll(start, end, null);
@@ -18268,6 +18669,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the ordered range of blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<BlogsEntry> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -18353,6 +18755,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (BlogsEntry blogsEntry : findAll()) {
 			remove(blogsEntry);
@@ -18365,6 +18768,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	 * @return the number of blogs entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
 				FINDER_ARGS_EMPTY, this);
@@ -18396,6 +18800,11 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		return count.intValue();
 	}
 
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
+	}
+
 	/**
 	 * Initializes the blogs entry persistence.
 	 */
@@ -18410,7 +18819,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<BlogsEntry>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -18447,6 +18856,9 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No BlogsEntry exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(BlogsEntryPersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"uuid"
+			});
 	private static BlogsEntry _nullBlogsEntry = new BlogsEntryImpl() {
 			@Override
 			public Object clone() {
@@ -18460,6 +18872,7 @@ public class BlogsEntryPersistenceImpl extends BasePersistenceImpl<BlogsEntry>
 		};
 
 	private static CacheModel<BlogsEntry> _nullBlogsEntryCacheModel = new CacheModel<BlogsEntry>() {
+			@Override
 			public BlogsEntry toEntityModel() {
 				return _nullBlogsEntry;
 			}

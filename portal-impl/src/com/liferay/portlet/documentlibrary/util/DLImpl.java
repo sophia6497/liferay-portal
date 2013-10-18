@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -72,6 +72,7 @@ import com.liferay.portlet.documentlibrary.util.comparator.RepositoryModelReadCo
 import com.liferay.portlet.documentlibrary.util.comparator.RepositoryModelSizeComparator;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
+import com.liferay.portlet.trash.util.TrashUtil;
 import com.liferay.util.ContentUtil;
 
 import java.util.ArrayList;
@@ -99,6 +100,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class DLImpl implements DL {
 
+	@Override
 	public void addPortletBreadcrumbEntries(
 			DLFileShortcut dlFileShortcut, HttpServletRequest request,
 			RenderResponse renderResponse)
@@ -127,6 +129,7 @@ public class DLImpl implements DL {
 			portletURL.toString());
 	}
 
+	@Override
 	public void addPortletBreadcrumbEntries(
 			FileEntry fileEntry, HttpServletRequest request,
 			RenderResponse renderResponse)
@@ -153,6 +156,7 @@ public class DLImpl implements DL {
 			request, unescapedFileEntry.getTitle(), portletURL.toString());
 	}
 
+	@Override
 	public void addPortletBreadcrumbEntries(
 			Folder folder, HttpServletRequest request,
 			LiferayPortletResponse liferayPortletResponse)
@@ -177,6 +181,7 @@ public class DLImpl implements DL {
 		addPortletBreadcrumbEntries(folder, request, portletURL);
 	}
 
+	@Override
 	public void addPortletBreadcrumbEntries(
 			Folder folder, HttpServletRequest request, PortletURL portletURL)
 		throws Exception {
@@ -242,6 +247,7 @@ public class DLImpl implements DL {
 		}
 	}
 
+	@Override
 	public void addPortletBreadcrumbEntries(
 			Folder folder, HttpServletRequest request,
 			RenderResponse renderResponse)
@@ -263,10 +269,9 @@ public class DLImpl implements DL {
 			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
-
 			portletURL.setParameter("struts_action", strutsAction);
 			portletURL.setParameter("groupId", String.valueOf(groupId));
+			portletURL.setWindowState(LiferayWindowState.POP_UP);
 
 			PortalUtil.addPortletBreadcrumbEntry(
 				request, themeDisplay.translate("home"), portletURL.toString());
@@ -278,6 +283,7 @@ public class DLImpl implements DL {
 		addPortletBreadcrumbEntries(folder, request, portletURL);
 	}
 
+	@Override
 	public void addPortletBreadcrumbEntries(
 			long folderId, HttpServletRequest request,
 			RenderResponse renderResponse)
@@ -294,6 +300,7 @@ public class DLImpl implements DL {
 		}
 	}
 
+	@Override
 	public int compareVersions(String version1, String version2) {
 		int[] splitVersion1 = StringUtil.split(version1, StringPool.PERIOD, 0);
 		int[] splitVersion2 = StringUtil.split(version2, StringPool.PERIOD, 0);
@@ -324,6 +331,7 @@ public class DLImpl implements DL {
 		return 0;
 	}
 
+	@Override
 	public String getAbsolutePath(PortletRequest portletRequest, long folderId)
 		throws PortalException, SystemException {
 
@@ -334,42 +342,47 @@ public class DLImpl implements DL {
 			return themeDisplay.translate("home");
 		}
 
-		DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(folderId);
+		Folder folder = DLAppLocalServiceUtil.getFolder(folderId);
 
-		List<DLFolder> dlFolders = dlFolder.getAncestors();
+		List<Folder> folders = folder.getAncestors();
 
-		Collections.reverse(dlFolders);
+		Collections.reverse(folders);
 
-		StringBundler sb = new StringBundler((dlFolders.size() * 3) + 5);
+		StringBundler sb = new StringBundler((folders.size() * 3) + 5);
 
 		sb.append(themeDisplay.translate("home"));
 		sb.append(StringPool.SPACE);
 
-		for (DLFolder curDLFolder : dlFolders) {
+		for (Folder curFolder : folders) {
 			sb.append(StringPool.RAQUO);
 			sb.append(StringPool.SPACE);
-			sb.append(curDLFolder.getName());
+			sb.append(curFolder.getName());
 		}
 
 		sb.append(StringPool.RAQUO);
 		sb.append(StringPool.SPACE);
-		sb.append(dlFolder.getName());
+		sb.append(folder.getName());
 
 		return sb.toString();
 	}
 
+	@Override
 	public Set<String> getAllMediaGalleryMimeTypes() {
 		return _allMediaGalleryMimeTypes;
 	}
 
+	@Override
 	public String getDDMStructureKey(DLFileEntryType dlFileEntryType) {
 		return getDDMStructureKey(dlFileEntryType.getUuid());
 	}
 
+	@Override
 	public String getDDMStructureKey(String fileEntryTypeUuid) {
-		return "auto_" + fileEntryTypeUuid;
+		return _STRUCTURE_KEY_PREFIX +
+			StringUtil.toUpperCase(fileEntryTypeUuid);
 	}
 
+	@Override
 	public String getDeprecatedDDMStructureKey(
 		DLFileEntryType dlFileEntryType) {
 
@@ -377,10 +390,12 @@ public class DLImpl implements DL {
 			dlFileEntryType.getFileEntryTypeId());
 	}
 
+	@Override
 	public String getDeprecatedDDMStructureKey(long fileEntryTypeId) {
-		return "auto_" + fileEntryTypeId;
+		return _STRUCTURE_KEY_PREFIX + fileEntryTypeId;
 	}
 
+	@Override
 	public String getDividedPath(long id) {
 		StringBundler sb = new StringBundler(16);
 
@@ -399,7 +414,28 @@ public class DLImpl implements DL {
 		return sb.toString();
 	}
 
-	public String getDLControlPanelLink(
+	@Override
+	public String getDLFileEntryControlPanelLink(
+			PortletRequest portletRequest, long fileEntryId)
+		throws PortalException, SystemException {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		PortletURL portletURL = PortletURLFactoryUtil.create(
+			portletRequest, PortletKeys.DOCUMENT_LIBRARY,
+			PortalUtil.getControlPanelPlid(themeDisplay.getCompanyId()),
+			PortletRequest.RENDER_PHASE);
+
+		portletURL.setParameter(
+			"struts_action", "/document_library/view_file_entry");
+		portletURL.setParameter("fileEntryId", String.valueOf(fileEntryId));
+
+		return portletURL.toString();
+	}
+
+	@Override
+	public String getDLFolderControlPanelLink(
 			PortletRequest portletRequest, long folderId)
 		throws PortalException, SystemException {
 
@@ -417,13 +453,14 @@ public class DLImpl implements DL {
 		return portletURL.toString();
 	}
 
+	@Override
 	public Map<Locale, String> getEmailFileEntryAddedBodyMap(
 		PortletPreferences preferences) {
 
 		Map<Locale, String> map = LocalizationUtil.getLocalizationMap(
 			preferences, "emailFileEntryAddedBody");
 
-		Locale defaultLocale = LocaleUtil.getDefault();
+		Locale defaultLocale = LocaleUtil.getSiteDefault();
 
 		String defaultValue = map.get(defaultLocale);
 
@@ -439,6 +476,7 @@ public class DLImpl implements DL {
 		return map;
 	}
 
+	@Override
 	public boolean getEmailFileEntryAddedEnabled(
 		PortletPreferences preferences) {
 
@@ -453,13 +491,14 @@ public class DLImpl implements DL {
 		}
 	}
 
+	@Override
 	public Map<Locale, String> getEmailFileEntryAddedSubjectMap(
 		PortletPreferences preferences) {
 
 		Map<Locale, String> map = LocalizationUtil.getLocalizationMap(
 			preferences, "emailFileEntryAddedSubject");
 
-		Locale defaultLocale = LocaleUtil.getDefault();
+		Locale defaultLocale = LocaleUtil.getSiteDefault();
 
 		String defaultValue = map.get(defaultLocale);
 
@@ -475,13 +514,14 @@ public class DLImpl implements DL {
 		return map;
 	}
 
+	@Override
 	public Map<Locale, String> getEmailFileEntryUpdatedBodyMap(
 		PortletPreferences preferences) {
 
 		Map<Locale, String> map = LocalizationUtil.getLocalizationMap(
 			preferences, "emailFileEntryUpdatedBody");
 
-		Locale defaultLocale = LocaleUtil.getDefault();
+		Locale defaultLocale = LocaleUtil.getSiteDefault();
 
 		String defaultValue = map.get(defaultLocale);
 
@@ -497,6 +537,7 @@ public class DLImpl implements DL {
 		return map;
 	}
 
+	@Override
 	public boolean getEmailFileEntryUpdatedEnabled(
 		PortletPreferences preferences) {
 
@@ -511,13 +552,14 @@ public class DLImpl implements DL {
 		}
 	}
 
+	@Override
 	public Map<Locale, String> getEmailFileEntryUpdatedSubjectMap(
 		PortletPreferences preferences) {
 
 		Map<Locale, String> map = LocalizationUtil.getLocalizationMap(
 			preferences, "emailFileEntryUpdatedSubject");
 
-		Locale defaultLocale = LocaleUtil.getDefault();
+		Locale defaultLocale = LocaleUtil.getSiteDefault();
 
 		String defaultValue = map.get(defaultLocale);
 
@@ -533,6 +575,7 @@ public class DLImpl implements DL {
 		return map;
 	}
 
+	@Override
 	public String getEmailFromAddress(
 			PortletPreferences preferences, long companyId)
 		throws SystemException {
@@ -541,6 +584,7 @@ public class DLImpl implements DL {
 			preferences, companyId, PropsValues.DL_EMAIL_FROM_ADDRESS);
 	}
 
+	@Override
 	public String getEmailFromName(
 			PortletPreferences preferences, long companyId)
 		throws SystemException {
@@ -549,6 +593,7 @@ public class DLImpl implements DL {
 			preferences, companyId, PropsValues.DL_EMAIL_FROM_NAME);
 	}
 
+	@Override
 	public List<Object> getEntries(Hits hits) {
 		List<Object> entries = new ArrayList<Object>();
 
@@ -588,6 +633,7 @@ public class DLImpl implements DL {
 		return entries;
 	}
 
+	@Override
 	public String getFileEntryImage(
 		FileEntry fileEntry, ThemeDisplay themeDisplay) {
 
@@ -602,6 +648,7 @@ public class DLImpl implements DL {
 		return sb.toString();
 	}
 
+	@Override
 	public Set<Long> getFileEntryTypeSubscriptionClassPKs(long userId)
 		throws SystemException {
 
@@ -618,6 +665,7 @@ public class DLImpl implements DL {
 		return classPKs;
 	}
 
+	@Override
 	public String getFileIcon(String extension) {
 		if (!_fileIcons.contains(extension)) {
 			extension = _DEFAULT_FILE_ICON;
@@ -626,6 +674,7 @@ public class DLImpl implements DL {
 		return extension;
 	}
 
+	@Override
 	public String getGenericName(String extension) {
 		String genericName = _genericNames.get(extension);
 
@@ -636,6 +685,40 @@ public class DLImpl implements DL {
 		return genericName;
 	}
 
+	@Override
+	public String getImagePreviewURL(
+			FileEntry fileEntry, FileVersion fileVersion,
+			ThemeDisplay themeDisplay)
+		throws Exception {
+
+		String previewQueryString = null;
+
+		if (PropsValues.DL_FILE_ENTRY_THUMBNAIL_ENABLED) {
+			if (ImageProcessorUtil.hasImages(fileVersion)) {
+				previewQueryString = "&imagePreview=1";
+			}
+			else if (PDFProcessorUtil.hasImages(fileVersion)) {
+				previewQueryString = "&previewFileIndex=1";
+			}
+			else if (VideoProcessorUtil.hasVideo(fileVersion)) {
+				previewQueryString = "&videoThumbnail=1";
+			}
+		}
+
+		return getImageSrc(
+			fileEntry, fileVersion, themeDisplay, previewQueryString);
+	}
+
+	@Override
+	public String getImagePreviewURL(
+			FileEntry fileEntry, ThemeDisplay themeDisplay)
+		throws Exception {
+
+		return getImagePreviewURL(
+			fileEntry, fileEntry.getFileVersion(), themeDisplay);
+	}
+
+	@Override
 	public String[] getMediaGalleryMimeTypes(
 		PortletPreferences portletPreferences, PortletRequest portletRequest) {
 
@@ -650,6 +733,7 @@ public class DLImpl implements DL {
 		return mimeTypesArray;
 	}
 
+	@Override
 	public String getPreviewURL(
 		FileEntry fileEntry, FileVersion fileVersion, ThemeDisplay themeDisplay,
 		String queryString) {
@@ -659,9 +743,10 @@ public class DLImpl implements DL {
 	}
 
 	/**
-	 * @deprecated {@link #getPreviewURL(FileEntry, FileVersion, ThemeDisplay,
-	 *             String, boolean, boolean)}
+	 * @deprecated As of 6.2.0, replaced by {@link #getPreviewURL(FileEntry,
+	 *             FileVersion, ThemeDisplay, String, boolean, boolean)}
 	 */
+	@Override
 	public String getPreviewURL(
 		FileEntry fileEntry, FileVersion fileVersion, ThemeDisplay themeDisplay,
 		String queryString, boolean appendToken) {
@@ -670,6 +755,7 @@ public class DLImpl implements DL {
 			fileEntry, fileVersion, themeDisplay, queryString, true, true);
 	}
 
+	@Override
 	public String getPreviewURL(
 		FileEntry fileEntry, FileVersion fileVersion, ThemeDisplay themeDisplay,
 		String queryString, boolean appendVersion, boolean absoluteURL) {
@@ -688,7 +774,15 @@ public class DLImpl implements DL {
 		sb.append(StringPool.SLASH);
 		sb.append(fileEntry.getFolderId());
 		sb.append(StringPool.SLASH);
-		sb.append(HttpUtil.encodeURL(HtmlUtil.unescape(fileEntry.getTitle())));
+
+		String title = fileEntry.getTitle();
+
+		if (fileEntry.isInTrash()) {
+			title = TrashUtil.getOriginalTitle(fileEntry.getTitle());
+		}
+
+		sb.append(HttpUtil.encodeURL(HtmlUtil.unescape(title)));
+
 		sb.append(StringPool.SLASH);
 		sb.append(fileEntry.getUuid());
 
@@ -735,6 +829,7 @@ public class DLImpl implements DL {
 		return previewURL;
 	}
 
+	@Override
 	public OrderByComparator getRepositoryModelOrderByComparator(
 		String orderByCol, String orderByType) {
 
@@ -768,10 +863,12 @@ public class DLImpl implements DL {
 		return orderByComparator;
 	}
 
+	@Override
 	public String getTempFileId(long id, String version) {
 		return getTempFileId(id, version, null);
 	}
 
+	@Override
 	public String getTempFileId(long id, String version, String languageId) {
 		if (Validator.isNull(languageId)) {
 			return String.valueOf(id).concat(StringPool.PERIOD).concat(version);
@@ -788,6 +885,7 @@ public class DLImpl implements DL {
 		return sb.toString();
 	}
 
+	@Override
 	public String getThumbnailSrc(
 			FileEntry fileEntry, DLFileShortcut dlFileShortcut,
 			ThemeDisplay themeDisplay)
@@ -798,25 +896,15 @@ public class DLImpl implements DL {
 			themeDisplay);
 	}
 
+	@Override
 	public String getThumbnailSrc(
 			FileEntry fileEntry, FileVersion fileVersion,
 			DLFileShortcut dlFileShortcut, ThemeDisplay themeDisplay)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(themeDisplay.getPathThemeImages());
-		sb.append("/file_system/large/");
-		sb.append(getGenericName(fileEntry.getExtension()));
-		sb.append(".png");
-
-		String thumbnailSrc = sb.toString();
-
 		String thumbnailQueryString = null;
 
-		if (GetterUtil.getBoolean(
-				PropsUtil.get(PropsKeys.DL_FILE_ENTRY_THUMBNAIL_ENABLED))) {
-
+		if (PropsValues.DL_FILE_ENTRY_THUMBNAIL_ENABLED) {
 			if (ImageProcessorUtil.hasImages(fileVersion)) {
 				thumbnailQueryString = "&imageThumbnail=1";
 			}
@@ -828,19 +916,16 @@ public class DLImpl implements DL {
 			}
 		}
 
-		if (Validator.isNotNull(thumbnailQueryString)) {
-			thumbnailSrc = getPreviewURL(
-				fileEntry, fileVersion, themeDisplay, thumbnailQueryString,
-				true, true);
-		}
-
-		return thumbnailSrc;
+		return getImageSrc(
+			fileEntry, fileVersion, themeDisplay, thumbnailQueryString);
 	}
 
+	@Override
 	public String getThumbnailStyle() throws Exception {
 		return getThumbnailStyle(true, 0);
 	}
 
+	@Override
 	public String getThumbnailStyle(boolean max, int margin) throws Exception {
 		StringBundler sb = new StringBundler(5);
 
@@ -870,6 +955,7 @@ public class DLImpl implements DL {
 		return sb.toString();
 	}
 
+	@Override
 	public String getTitleWithExtension(FileEntry fileEntry) {
 		String title = fileEntry.getTitle();
 		String extension = fileEntry.getExtension();
@@ -877,9 +963,10 @@ public class DLImpl implements DL {
 		return getTitleWithExtension(title, extension);
 	}
 
+	@Override
 	public String getTitleWithExtension(String title, String extension) {
 		if (Validator.isNotNull(extension)) {
-			String periodAndExtension = StringPool.PERIOD + extension;
+			String periodAndExtension = StringPool.PERIOD.concat(extension);
 
 			if (!title.endsWith(periodAndExtension)) {
 				title += periodAndExtension;
@@ -889,6 +976,7 @@ public class DLImpl implements DL {
 		return title;
 	}
 
+	@Override
 	public String getWebDavURL(
 			ThemeDisplay themeDisplay, Folder folder, FileEntry fileEntry)
 		throws PortalException, SystemException {
@@ -896,6 +984,7 @@ public class DLImpl implements DL {
 		return getWebDavURL(themeDisplay, folder, fileEntry, false);
 	}
 
+	@Override
 	public String getWebDavURL(
 			ThemeDisplay themeDisplay, Folder folder, FileEntry fileEntry,
 			boolean manualCheckInRequired)
@@ -905,6 +994,7 @@ public class DLImpl implements DL {
 			themeDisplay, folder, fileEntry, manualCheckInRequired, false);
 	}
 
+	@Override
 	public String getWebDavURL(
 			ThemeDisplay themeDisplay, Folder folder, FileEntry fileEntry,
 			boolean manualCheckInRequired, boolean openDocumentUrl)
@@ -929,7 +1019,7 @@ public class DLImpl implements DL {
 		webDavURL.append("/webdav");
 
 		if (manualCheckInRequired) {
-			webDavURL.append(DLUtil.MANUAL_CHECK_IN_REQUIRED_PATH);
+			webDavURL.append(MANUAL_CHECK_IN_REQUIRED_PATH);
 		}
 
 		String fileEntryTitle = null;
@@ -937,12 +1027,12 @@ public class DLImpl implements DL {
 		if (fileEntry != null) {
 			String extension = fileEntry.getExtension();
 
-			fileEntryTitle = fileEntry.getTitle();
+			fileEntryTitle = HtmlUtil.unescape(fileEntry.getTitle());
 
-			if (openDocumentUrl && DLUtil.isOfficeExtension(extension) &&
+			if (openDocumentUrl && isOfficeExtension(extension) &&
 				!fileEntryTitle.endsWith(StringPool.PERIOD + extension)) {
 
-				webDavURL.append(DLUtil.OFFICE_EXTENSION_PATH);
+				webDavURL.append(OFFICE_EXTENSION_PATH);
 
 				fileEntryTitle += StringPool.PERIOD + extension;
 			}
@@ -955,7 +1045,10 @@ public class DLImpl implements DL {
 
 		StringBuilder sb = new StringBuilder();
 
-		if (folder != null) {
+		if ((folder != null) &&
+			(folder.getFolderId() !=
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
+
 			Folder curFolder = folder;
 
 			while (true) {
@@ -967,10 +1060,9 @@ public class DLImpl implements DL {
 
 					break;
 				}
-				else {
-					curFolder = DLAppLocalServiceUtil.getFolder(
-						curFolder.getParentFolderId());
-				}
+
+				curFolder = DLAppLocalServiceUtil.getFolder(
+					curFolder.getParentFolderId());
 			}
 		}
 
@@ -984,6 +1076,7 @@ public class DLImpl implements DL {
 		return webDavURL.toString();
 	}
 
+	@Override
 	public boolean hasWorkflowDefinitionLink(
 			long companyId, long groupId, long folderId, long fileEntryTypeId)
 		throws Exception {
@@ -1016,24 +1109,26 @@ public class DLImpl implements DL {
 		return false;
 	}
 
+	@Override
 	public boolean isAutoGeneratedDLFileEntryTypeDDMStructureKey(
 		String ddmStructureKey) {
 
-		if (ddmStructureKey.startsWith("auto_")) {
+		if (ddmStructureKey.startsWith(_STRUCTURE_KEY_PREFIX)) {
 			return true;
 		}
 
 		return false;
 	}
 
+	@Override
 	public boolean isOfficeExtension(String extension) {
-		if (extension.equalsIgnoreCase("doc") ||
-			extension.equalsIgnoreCase("docx") ||
-			extension.equalsIgnoreCase("dot") ||
-			extension.equalsIgnoreCase("ppt") ||
-			extension.equalsIgnoreCase("pptx") ||
-			extension.equalsIgnoreCase("xls") ||
-			extension.equalsIgnoreCase("xlsx")) {
+		if (StringUtil.equalsIgnoreCase(extension, "doc") ||
+			StringUtil.equalsIgnoreCase(extension, "docx") ||
+			StringUtil.equalsIgnoreCase(extension, "dot") ||
+			StringUtil.equalsIgnoreCase(extension, "ppt") ||
+			StringUtil.equalsIgnoreCase(extension, "pptx") ||
+			StringUtil.equalsIgnoreCase(extension, "xls") ||
+			StringUtil.equalsIgnoreCase(extension, "xlsx")) {
 
 			return true;
 		}
@@ -1041,6 +1136,7 @@ public class DLImpl implements DL {
 		return false;
 	}
 
+	@Override
 	public boolean isSubscribedToFileEntryType(
 			long companyId, long groupId, long userId, long fileEntryTypeId)
 		throws SystemException {
@@ -1056,6 +1152,7 @@ public class DLImpl implements DL {
 			fileEntryTypeId);
 	}
 
+	@Override
 	public boolean isSubscribedToFolder(
 			long companyId, long groupId, long userId, long folderId)
 		throws PortalException, SystemException {
@@ -1063,6 +1160,7 @@ public class DLImpl implements DL {
 		return isSubscribedToFolder(companyId, groupId, userId, folderId, true);
 	}
 
+	@Override
 	public boolean isSubscribedToFolder(
 			long companyId, long groupId, long userId, long folderId,
 			boolean recursive)
@@ -1104,6 +1202,28 @@ public class DLImpl implements DL {
 				String.valueOf(DLFolderConstants.DEFAULT_PARENT_FOLDER_ID)));
 	}
 
+	protected String getImageSrc(
+			FileEntry fileEntry, FileVersion fileVersion,
+			ThemeDisplay themeDisplay, String queryString)
+		throws Exception {
+
+		StringBundler sb = new StringBundler(4);
+
+		sb.append(themeDisplay.getPathThemeImages());
+		sb.append("/file_system/large/");
+		sb.append(getGenericName(fileEntry.getExtension()));
+		sb.append(".png");
+
+		String thumbnailSrc = sb.toString();
+
+		if (Validator.isNotNull(queryString)) {
+			thumbnailSrc = getPreviewURL(
+				fileEntry, fileVersion, themeDisplay, queryString, true, true);
+		}
+
+		return thumbnailSrc;
+	}
+
 	private static void _populateGenericNamesMap(String genericName) {
 		String[] extensions = PropsUtil.getArray(
 			PropsKeys.DL_FILE_GENERIC_EXTENSIONS, new Filter(genericName));
@@ -1118,6 +1238,8 @@ public class DLImpl implements DL {
 	private static final String _DEFAULT_GENERIC_NAME = "default";
 
 	private static final long _DIVISOR = 256;
+
+	private static final String _STRUCTURE_KEY_PREFIX = "AUTO_";
 
 	private static Log _log = LogFactoryUtil.getLog(DLImpl.class);
 

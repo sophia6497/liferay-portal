@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -44,6 +44,7 @@ public class Entity {
 	public static final Accessor<Entity, String> NAME_ACCESSOR =
 		new Accessor<Entity, String>() {
 
+			@Override
 			public String get(Entity entity) {
 				return entity.getName();
 			}
@@ -87,8 +88,8 @@ public class Entity {
 	public Entity(String name) {
 		this(
 			null, null, null, name, null, null, null, false, false, false, true,
-			null, null, null, null, null, true, false, null, null, null, null,
-			null, null, null, null, null);
+			null, null, null, null, null, true, false, false, false, null, null,
+			null, null, null, null, null, null, null);
 	}
 
 	public Entity(
@@ -97,11 +98,12 @@ public class Entity {
 		boolean uuidAccessor, boolean localService, boolean remoteService,
 		String persistenceClass, String finderClass, String dataSource,
 		String sessionFactory, String txManager, boolean cacheEnabled,
-		boolean jsonEnabled, List<EntityColumn> pkList,
-		List<EntityColumn> regularColList, List<EntityColumn> blobList,
-		List<EntityColumn> collectionList, List<EntityColumn> columnList,
-		EntityOrder order, List<EntityFinder> finderList,
-		List<Entity> referenceList, List<String> txRequiredList) {
+		boolean jsonEnabled, boolean trashEnabled, boolean deprecated,
+		List<EntityColumn> pkList, List<EntityColumn> regularColList,
+		List<EntityColumn> blobList, List<EntityColumn> collectionList,
+		List<EntityColumn> columnList, EntityOrder order,
+		List<EntityFinder> finderList, List<Entity> referenceList,
+		List<String> txRequiredList) {
 
 		_packagePath = packagePath;
 		_portletName = portletName;
@@ -123,6 +125,8 @@ public class Entity {
 		_txManager = GetterUtil.getString(txManager, DEFAULT_TX_MANAGER);
 		_cacheEnabled = cacheEnabled;
 		_jsonEnabled = jsonEnabled;
+		_trashEnabled = trashEnabled;
+		_deprecated = deprecated;
 		_pkList = pkList;
 		_regularColList = regularColList;
 		_blobList = blobList;
@@ -171,6 +175,14 @@ public class Entity {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Entity)) {
+			return false;
+		}
+
 		Entity entity = (Entity)obj;
 
 		String name = entity.getName();
@@ -185,6 +197,24 @@ public class Entity {
 
 	public String getAlias() {
 		return _alias;
+	}
+
+	public List<EntityColumn> getBadNamedColumnsList() {
+		List<EntityColumn> badNamedColumnsList = ListUtil.copy(_columnList);
+
+		Iterator<EntityColumn> itr = badNamedColumnsList.iterator();
+
+		while (itr.hasNext()) {
+			EntityColumn col = itr.next();
+
+			String name = col.getName();
+
+			if (name.equals(col.getDBName())) {
+				itr.remove();
+			}
+		}
+
+		return badNamedColumnsList;
 	}
 
 	public List<EntityColumn> getBlobList() {
@@ -293,22 +323,20 @@ public class Entity {
 		if (hasCompoundPK()) {
 			return _name + "PK";
 		}
-		else {
-			EntityColumn col = _getPKColumn();
 
-			return col.getType();
-		}
+		EntityColumn col = _getPKColumn();
+
+		return col.getType();
 	}
 
 	public String getPKDBName() {
 		if (hasCompoundPK()) {
 			return getVarName() + "PK";
 		}
-		else {
-			EntityColumn col = _getPKColumn();
 
-			return col.getDBName();
-		}
+		EntityColumn col = _getPKColumn();
+
+		return col.getDBName();
 	}
 
 	public List<EntityColumn> getPKList() {
@@ -319,11 +347,20 @@ public class Entity {
 		if (hasCompoundPK()) {
 			return getVarName() + "PK";
 		}
-		else {
-			EntityColumn col = _getPKColumn();
 
-			return col.getName();
+		EntityColumn col = _getPKColumn();
+
+		return col.getName();
+	}
+
+	public String getPKVarNames() {
+		if (hasCompoundPK()) {
+			return getVarName() + "PKs";
 		}
+
+		EntityColumn col = _getPKColumn();
+
+		return col.getNames();
 	}
 
 	public String getPortletName() {
@@ -397,6 +434,21 @@ public class Entity {
 
 	public String getVarNames() {
 		return TextFormatter.formatPlural(getVarName());
+	}
+
+	public boolean hasActionableDynamicQuery() {
+		if (hasColumns() && hasLocalService()) {
+			if (hasCompoundPK()) {
+				EntityColumn col = _pkList.get(0);
+
+				return col.isPrimitiveType();
+			}
+			else {
+				return hasPrimitivePK();
+			}
+		}
+
+		return false;
 	}
 
 	public boolean hasArrayableOperator() {
@@ -499,15 +551,14 @@ public class Entity {
 		if (hasCompoundPK()) {
 			return false;
 		}
-		else {
-			EntityColumn col = _getPKColumn();
 
-			if (col.isPrimitiveType(includeWrappers)) {
-				return true;
-			}
-			else {
-				return false;
-			}
+		EntityColumn col = _getPKColumn();
+
+		if (col.isPrimitiveType(includeWrappers)) {
+			return true;
+		}
+		else {
+			return false;
 		}
 	}
 
@@ -524,18 +575,16 @@ public class Entity {
 	}
 
 	public boolean isAttachedModel() {
-		if (hasColumn("classNameId") && hasColumn("classPK")) {
-			EntityColumn classNameIdCol = getColumn("classNameId");
+		if (!isTypedModel()) {
+			return false;
+		}
 
-			String classNameIdColType = classNameIdCol.getType();
-
+		if (hasColumn("classPK")) {
 			EntityColumn classPKCol = getColumn("classPK");
 
 			String classPKColType = classPKCol.getType();
 
-			if (classNameIdColType.equals("long") &&
-				classPKColType.equals("long")) {
-
+			if (classPKColType.equals("long")) {
 				return true;
 			}
 		}
@@ -587,6 +636,10 @@ public class Entity {
 		else {
 			return false;
 		}
+	}
+
+	public boolean isDeprecated() {
+		return _deprecated;
 	}
 
 	public boolean isGroupedModel() {
@@ -689,9 +742,46 @@ public class Entity {
 		}
 	}
 
-	public boolean isStagedModel() {
-		if (isGroupedModel() && hasUuid()) {
+	public boolean isStagedAuditedModel() {
+		if (isAuditedModel() && isStagedModel()) {
 			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isStagedGroupedModel() {
+		if (isGroupedModel() && isStagedModel()) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isStagedModel() {
+		if (hasUuid() && hasColumn("companyId") &&
+			hasColumn("createDate", "Date") &&
+			hasColumn("modifiedDate", "Date")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isTrashEnabled() {
+		return _trashEnabled;
+	}
+
+	public boolean isTypedModel() {
+		if (hasColumn("classNameId")) {
+			EntityColumn classNameIdCol = getColumn("classNameId");
+
+			String classNameIdColType = classNameIdCol.getType();
+
+			if (classNameIdColType.equals("long")) {
+				return true;
+			}
 		}
 
 		return false;
@@ -736,6 +826,7 @@ public class Entity {
 	private List<EntityColumn> _columnList;
 	private boolean _containerModel;
 	private String _dataSource;
+	private boolean _deprecated;
 	private String _finderClass;
 	private List<EntityColumn> _finderColumnsList;
 	private List<EntityFinder> _finderList;
@@ -757,6 +848,7 @@ public class Entity {
 	private String _sessionFactory;
 	private String _table;
 	private List<String> _transients;
+	private boolean _trashEnabled;
 	private String _txManager;
 	private List<String> _txRequiredList;
 	private boolean _uuid;

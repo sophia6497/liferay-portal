@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,6 +32,8 @@ AssetEntry layoutAssetEntry = AssetEntryLocalServiceUtil.getEntry(BookmarksEntry
 request.setAttribute(WebKeys.LAYOUT_ASSET_ENTRY, layoutAssetEntry);
 
 request.setAttribute("view_entry.jsp-entry", entry);
+
+BookmarksUtil.addPortletBreadcrumbEntries(entry, request, renderResponse);
 %>
 
 <liferay-util:include page="/html/portlet/bookmarks/top_links.jsp" />
@@ -46,6 +48,7 @@ request.setAttribute("view_entry.jsp-entry", entry);
 		<liferay-ui:header
 			backLabel='<%= (folder != null) ? folder.getName() : "home" %>'
 			backURL="<%= backURL.toString() %>"
+			escapeXml="<%= false %>"
 			localizeTitle="<%= false %>"
 			title="<%= entry.getName() %>"
 		/>
@@ -53,14 +56,15 @@ request.setAttribute("view_entry.jsp-entry", entry);
 	<c:otherwise>
 		<liferay-ui:header
 			backURL="<%= redirect %>"
+			escapeXml="<%= false %>"
 			localizeTitle="<%= false %>"
 			title="<%= entry.getName() %>"
 		/>
 	</c:otherwise>
 </c:choose>
 
-<aui:layout>
-	<aui:column columnWidth="<%= 75 %>" cssClass="lfr-asset-column lfr-asset-column-details" first="<%= true %>">
+<aui:row>
+	<aui:col cssClass="lfr-asset-column lfr-asset-column-details" width="<%= 75 %>">
 		<div class="lfr-asset-categories">
 			<liferay-ui:asset-categories-summary
 				className="<%= BookmarksEntry.class.getName() %>"
@@ -121,9 +125,9 @@ request.setAttribute("view_entry.jsp-entry", entry);
 				classPK="<%= entryId %>"
 			/>
 		</div>
-	</aui:column>
+	</aui:col>
 
-	<aui:column columnWidth="<%= 25 %>" cssClass="lfr-asset-column lfr-asset-column-actions" last="<%= true %>">
+	<aui:col cssClass="lfr-asset-column lfr-asset-column-actions" last="<%= true %>" width="<%= 25 %>">
 		<div class="lfr-asset-summary">
 			<liferay-ui:icon
 				cssClass="lfr-asset-avatar"
@@ -145,9 +149,5 @@ request.setAttribute("view_entry.jsp-entry", entry);
 		%>
 
 		<liferay-util:include page="/html/portlet/bookmarks/entry_action.jsp" />
-	</aui:column>
-</aui:layout>
-
-<%
-BookmarksUtil.addPortletBreadcrumbEntries(entry, request, renderResponse);
-%>
+	</aui:col>
+</aui:row>

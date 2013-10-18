@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,8 +40,6 @@ public interface LayoutSetBranch extends LayoutSetBranchModel, PersistedModel {
 
 	public long getLiveLogoId();
 
-	public java.lang.String getSettings();
-
 	public com.liferay.portal.kernel.util.UnicodeProperties getSettingsProperties();
 
 	public java.lang.String getSettingsProperty(java.lang.String key);
@@ -60,8 +58,6 @@ public interface LayoutSetBranch extends LayoutSetBranchModel, PersistedModel {
 		throws com.liferay.portal.kernel.exception.SystemException;
 
 	public boolean isLayoutSetPrototypeLinkActive();
-
-	public void setSettings(java.lang.String settings);
 
 	public void setSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties settingsProperties);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portal.security.auth;
 
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -140,17 +139,16 @@ public class OpenSSOAutoLogin extends BaseAutoLogin {
 
 		if (PrefsPropsUtil.getBoolean(
 				companyId, PropsKeys.USERS_SCREEN_NAME_ALWAYS_AUTOGENERATE)) {
-			try {
-				user = UserLocalServiceUtil.getUserByEmailAddress(
-					companyId, emailAddress);
 
+			user = UserLocalServiceUtil.fetchUserByEmailAddress(
+				companyId, emailAddress);
+
+			if (user != null) {
 				ScreenNameGenerator screenNameGenerator =
 					ScreenNameGeneratorFactory.getInstance();
 
 				screenName = screenNameGenerator.generate(
 					companyId, user.getUserId(), emailAddress);
-			}
-			catch (NoSuchUserException nsue) {
 			}
 		}
 
@@ -180,12 +178,8 @@ public class OpenSSOAutoLogin extends BaseAutoLogin {
 		}
 
 		if (user == null) {
-			try {
-				user = UserLocalServiceUtil.getUserByScreenName(
-					companyId, screenName);
-			}
-			catch (NoSuchUserException nsue) {
-			}
+			user = UserLocalServiceUtil.fetchUserByScreenName(
+				companyId, screenName);
 		}
 
 		if (user == null) {
@@ -196,8 +190,8 @@ public class OpenSSOAutoLogin extends BaseAutoLogin {
 
 			if (themeDisplay != null) {
 
-				// ThemeDisplay should never be null, but some users
-				// complain of this error. Cause is unknown.
+				// ThemeDisplay should never be null, but some users complain of
+				// this error. Cause is unknown.
 
 				locale = themeDisplay.getLocale();
 			}

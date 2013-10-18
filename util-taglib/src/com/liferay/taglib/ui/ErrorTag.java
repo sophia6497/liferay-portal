@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -67,6 +67,8 @@ public class ErrorTag extends TagSupport {
 					Validator.isNotNull(errorMarkerValue)) {
 
 					request.setAttribute(errorMarkerKey, errorMarkerValue);
+					request.setAttribute(
+						"liferay-ui:error:focusField", _focusField);
 				}
 			}
 
@@ -137,6 +139,10 @@ public class ErrorTag extends TagSupport {
 		}
 	}
 
+	public void setFocusField(String focusField) {
+		_focusField = focusField;
+	}
+
 	public void setKey(String key) {
 		_key = key;
 	}
@@ -181,6 +187,7 @@ public class ErrorTag extends TagSupport {
 
 	private String _endPage;
 	private Class<?> _exception;
+	private String _focusField;
 	private String _key;
 	private String _message;
 	private String _rowBreak = StringPool.BLANK;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.io.unsync.UnsyncPrintWriter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.CharPool;
+import com.liferay.portal.kernel.util.ContextPathUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.SessionParamUtil;
@@ -31,10 +33,10 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.PortletConstants;
 import com.liferay.portal.model.Theme;
 import com.liferay.portal.scripting.ruby.RubyExecutor;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.service.ThemeLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.tools.SassToCssBuilder;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 
@@ -63,7 +65,7 @@ public class DynamicCSSUtil {
 	public static void init() {
 		try {
 			_rubyScript = StringUtil.read(
-				PACLClassLoaderUtil.getPortalClassLoader(),
+				ClassLoaderUtil.getPortalClassLoader(),
 				"com/liferay/portal/servlet/filters/dynamiccss/main.rb");
 		}
 		catch (Exception e) {
@@ -171,13 +173,28 @@ public class DynamicCSSUtil {
 			return content;
 		}
 
+		String portalContextPath = PortalUtil.getPathContext();
+
+		String baseURL = portalContextPath;
+
+		String contextPath = ContextPathUtil.getContextPath(servletContext);
+
+		if (!contextPath.equals(portalContextPath)) {
+			baseURL = StringPool.SLASH.concat(
+				GetterUtil.getString(servletContext.getServletContextName()));
+		}
+
+		if (baseURL.endsWith(StringPool.SLASH)) {
+			baseURL = baseURL.substring(0, baseURL.length() - 1);
+		}
+
 		parsedContent = StringUtil.replace(
 			parsedContent,
 			new String[] {
-				"@portal_ctx@", "@theme_image_path@"
+				"@base_url@", "@portal_ctx@", "@theme_image_path@"
 			},
 			new String[] {
-				PortalUtil.getPathContext(),
+				baseURL, portalContextPath,
 				_getThemeImagesPath(request, themeDisplay, theme)
 			});
 
@@ -185,7 +202,8 @@ public class DynamicCSSUtil {
 	}
 
 	private static URL _getCacheResource(
-		ServletContext servletContext, String resourcePath) throws Exception {
+			ServletContext servletContext, String resourcePath)
+		throws Exception {
 
 		int pos = resourcePath.lastIndexOf(StringPool.SLASH);
 
@@ -197,28 +215,24 @@ public class DynamicCSSUtil {
 	}
 
 	private static String _getCssThemePath(
-			HttpServletRequest request, ThemeDisplay themeDisplay, Theme theme)
+			ServletContext servletContext, HttpServletRequest request,
+			ThemeDisplay themeDisplay, Theme theme)
 		throws Exception {
 
-		String cssThemePath = null;
-
 		if (themeDisplay != null) {
-			cssThemePath = themeDisplay.getPathThemeCss();
+			return themeDisplay.getPathThemeCss();
 		}
-		else {
-			String cdnHost = StringPool.BLANK;
 
-			if (PortalUtil.isCDNDynamicResourcesEnabled(request)) {
-				cdnHost = PortalUtil.getCDNHost(request);
+		if (PortalUtil.isCDNDynamicResourcesEnabled(request)) {
+			String cdnHost = PortalUtil.getCDNHost(request);
+
+			if (Validator.isNotNull(cdnHost)) {
+				return cdnHost.concat(theme.getStaticResourcePath()).concat(
+					theme.getCssPath());
 			}
-
-			String themeStaticResourcePath = theme.getStaticResourcePath();
-
-			cssThemePath =
-				cdnHost + themeStaticResourcePath + theme.getCssPath();
 		}
 
-		return cssThemePath;
+		return servletContext.getRealPath(theme.getCssPath());
 	}
 
 	private static File _getSassTempDir(ServletContext servletContext) {
@@ -246,6 +260,18 @@ public class DynamicCSSUtil {
 		long companyId = PortalUtil.getCompanyId(request);
 
 		String themeId = ParamUtil.getString(request, "themeId");
+
+		if (Validator.isNotNull(themeId)) {
+			try {
+				Theme theme = ThemeLocalServiceUtil.getTheme(
+					companyId, themeId, false);
+
+				return theme;
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+			}
+		}
 
 		String requestURI = URLDecoder.decode(
 			request.getRequestURI(), StringPool.UTF8);
@@ -339,10 +365,16 @@ public class DynamicCSSUtil {
 
 		Map<String, Object> inputObjects = new HashMap<String, Object>();
 
+		String portalWebDir = PortalUtil.getPortalWebDir();
+
+		inputObjects.put(
+			"commonSassPath", portalWebDir.concat(_SASS_COMMON_DIR));
+
 		inputObjects.put("content", content);
 		inputObjects.put("cssRealPath", resourcePath);
 		inputObjects.put(
-			"cssThemePath", _getCssThemePath(request, themeDisplay, theme));
+			"cssThemePath",
+			_getCssThemePath(servletContext, request, themeDisplay, theme));
 
 		File sassTempDir = _getSassTempDir(servletContext);
 
@@ -398,6 +430,8 @@ public class DynamicCSSUtil {
 	private static final String _CSS_IMPORT_BEGIN = "@import url(";
 
 	private static final String _CSS_IMPORT_END = ");";
+
+	private static final String _SASS_COMMON_DIR = "/html/css/common";
 
 	private static final String _SASS_DIR = "sass";
 

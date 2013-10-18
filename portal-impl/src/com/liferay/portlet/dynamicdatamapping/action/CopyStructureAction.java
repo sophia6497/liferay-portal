@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portlet.dynamicdatamapping.action;
 
-import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -59,8 +58,9 @@ public class CopyStructureAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		try {
@@ -75,12 +75,9 @@ public class CopyStructureAction extends PortletAction {
 				redirect = HttpUtil.setParameter(
 					redirect, "closeRedirect", closeRedirect);
 
-				LiferayPortletConfig liferayPortletConfig =
-					(LiferayPortletConfig)portletConfig;
-
 				SessionMessages.add(
 					actionRequest,
-					liferayPortletConfig.getPortletId() +
+					PortalUtil.getPortletId(actionRequest) +
 						SessionMessages.KEY_SUFFIX_CLOSE_REDIRECT,
 					closeRedirect);
 			}
@@ -106,8 +103,9 @@ public class CopyStructureAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -123,7 +121,7 @@ public class CopyStructureAction extends PortletAction {
 			if (e instanceof PrincipalException) {
 				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward(
+				return actionMapping.findForward(
 					"portlet.dynamic_data_mapping.error");
 			}
 			else {
@@ -131,7 +129,7 @@ public class CopyStructureAction extends PortletAction {
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(
 				renderRequest, "portlet.dynamic_data_mapping.copy_structure"));
 	}
@@ -143,12 +141,14 @@ public class CopyStructureAction extends PortletAction {
 
 		Map<Locale, String> nameMap = LocalizationUtil.getLocalizationMap(
 			actionRequest, "name");
+		Map<Locale, String> descriptionMap =
+			LocalizationUtil.getLocalizationMap(actionRequest, "description");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			DDMStructure.class.getName(), actionRequest);
 
 		DDMStructure structure = DDMStructureServiceUtil.copyStructure(
-			classPK, nameMap, null, serviceContext);
+			classPK, nameMap, descriptionMap, serviceContext);
 
 		copyTemplates(actionRequest, classPK, structure.getStructureId());
 
@@ -156,7 +156,7 @@ public class CopyStructureAction extends PortletAction {
 	}
 
 	protected void copyTemplates(
-			ActionRequest actionRequest, long structureId, long newStructureId)
+			ActionRequest actionRequest, long oldClassPK, long newClassPK)
 		throws Exception {
 
 		long classNameId = PortalUtil.getClassNameId(DDMStructure.class);
@@ -169,7 +169,7 @@ public class CopyStructureAction extends PortletAction {
 
 		if (copyDisplayTemplates) {
 			DDMTemplateServiceUtil.copyTemplates(
-				classNameId, structureId, newStructureId,
+				classNameId, oldClassPK, newClassPK,
 				DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY, serviceContext);
 		}
 
@@ -178,7 +178,7 @@ public class CopyStructureAction extends PortletAction {
 
 		if (copyFormTemplates) {
 			DDMTemplateServiceUtil.copyTemplates(
-				classNameId, structureId, newStructureId,
+				classNameId, oldClassPK, newClassPK,
 				DDMTemplateConstants.TEMPLATE_TYPE_FORM, serviceContext);
 		}
 	}
@@ -195,8 +195,6 @@ public class CopyStructureAction extends PortletAction {
 			actionRequest, portletConfig.getPortletName(),
 			themeDisplay.getPlid(), PortletRequest.RENDER_PHASE);
 
-		portletURL.setWindowState(actionRequest.getWindowState());
-
 		portletURL.setParameter(
 			"struts_action", "/dynamic_data_mapping/copy_structure");
 
@@ -208,11 +206,12 @@ public class CopyStructureAction extends PortletAction {
 		portletURL.setParameter(
 			"classPK", String.valueOf(structure.getStructureId()), false);
 		portletURL.setParameter(
-			"copyDetailTemplates",
-			ParamUtil.getString(actionRequest, "copyDetailTemplates"), false);
+			"copyFormTemplates",
+			ParamUtil.getString(actionRequest, "copyFormTemplates"), false);
 		portletURL.setParameter(
-			"copyListTemplates",
-			ParamUtil.getString(actionRequest, "copyListTemplates"), false);
+			"copyDisplayTemplates",
+			ParamUtil.getString(actionRequest, "copyDisplayTemplates"), false);
+		portletURL.setWindowState(actionRequest.getWindowState());
 
 		return portletURL.toString();
 	}

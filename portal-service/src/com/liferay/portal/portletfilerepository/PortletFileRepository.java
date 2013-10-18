@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,7 +20,9 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.model.Repository;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.theme.ThemeDisplay;
 
 import java.io.File;
 import java.io.InputStream;
@@ -29,6 +31,7 @@ import java.util.List;
 
 /**
  * @author Eudaldo Alonso
+ * @author Alexander Chow
  */
 public interface PortletFileRepository {
 
@@ -40,13 +43,23 @@ public interface PortletFileRepository {
 
 	public FileEntry addPortletFileEntry(
 			long groupId, long userId, String className, long classPK,
-			String portletId, long folderId, File file, String fileName)
+			String portletId, long folderId, File file, String fileName,
+			String mimeType, boolean indexingEnabled)
 		throws PortalException, SystemException;
 
 	public FileEntry addPortletFileEntry(
 			long groupId, long userId, String className, long classPK,
 			String portletId, long folderId, InputStream inputStream,
-			String fileName)
+			String fileName, String mimeType, boolean indexingEnabled)
+		throws PortalException, SystemException;
+
+	public Folder addPortletFolder(
+			long userId, long repositoryId, long parentFolderId,
+			String folderName, ServiceContext serviceContext)
+		throws PortalException, SystemException;
+
+	public Repository addPortletRepository(
+			long groupId, String portletId, ServiceContext serviceContext)
 		throws PortalException, SystemException;
 
 	public void deleteFolder(long folderId)
@@ -68,6 +81,9 @@ public interface PortletFileRepository {
 
 	public void deletePortletRepository(long groupId, String portletId)
 		throws PortalException, SystemException;
+
+	public Repository fetchPortletRepository(long groupId, String portletId)
+		throws SystemException;
 
 	public List<FileEntry> getPortletFileEntries(long groupId, long folderId)
 		throws SystemException;
@@ -95,22 +111,30 @@ public interface PortletFileRepository {
 			long groupId, long folderId, String fileName)
 		throws PortalException, SystemException;
 
+	public FileEntry getPortletFileEntry(String uuid, long groupId)
+		throws PortalException, SystemException;
+
+	public String getPortletFileEntryURL(
+		ThemeDisplay themeDisplay, FileEntry fileEntry, String queryString);
+
+	public String getPortletFileEntryURL(
+		ThemeDisplay themeDisplay, FileEntry fileEntry, String queryString,
+		boolean absoluteURL);
+
 	public Folder getPortletFolder(long folderId)
 		throws PortalException, SystemException;
 
 	public Folder getPortletFolder(
-			long userId, long repositoryId, long parentFolderId,
-			String folderName, ServiceContext serviceContext)
+			long repositoryId, long parentFolderId, String folderName)
 		throws PortalException, SystemException;
 
-	public long getPortletRepositoryId(
-			long groupId, String portletId, ServiceContext serviceContext)
+	public Repository getPortletRepository(long groupId, String portletId)
 		throws PortalException, SystemException;
 
-	public void movePortletFileEntryToTrash(long userId, long fileEntryId)
+	public FileEntry movePortletFileEntryToTrash(long userId, long fileEntryId)
 		throws PortalException, SystemException;
 
-	public void movePortletFileEntryToTrash(
+	public FileEntry movePortletFileEntryToTrash(
 			long groupId, long userId, long folderId, String fileName)
 		throws PortalException, SystemException;
 

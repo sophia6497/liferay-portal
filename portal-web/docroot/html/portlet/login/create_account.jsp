@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,16 +20,13 @@
 String redirect = ParamUtil.getString(request, "redirect");
 
 String openId = ParamUtil.getString(request, "openId");
-
-PasswordPolicy passwordPolicy = PasswordPolicyLocalServiceUtil.getDefaultPasswordPolicy(company.getCompanyId());
-
-Calendar birthday = CalendarFactoryUtil.getCalendar();
-
-birthday.set(Calendar.MONTH, Calendar.JANUARY);
-birthday.set(Calendar.DATE, 1);
-birthday.set(Calendar.YEAR, 1970);
-
 boolean male = ParamUtil.getBoolean(request, "male", true);
+
+Calendar birthdayCalendar = CalendarFactoryUtil.getCalendar();
+
+birthdayCalendar.set(Calendar.MONTH, Calendar.JANUARY);
+birthdayCalendar.set(Calendar.DATE, 1);
+birthdayCalendar.set(Calendar.YEAR, 1970);
 %>
 
 <portlet:actionURL secure="<%= PropsValues.COMPANY_SECURITY_AUTH_REQUIRES_HTTPS || request.isSecure() %>" var="createAccountURL">
@@ -95,6 +92,11 @@ boolean male = ParamUtil.getBoolean(request, "male", true);
 		</c:if>
 
 		<c:if test="<%= upe.getType() == UserPasswordException.PASSWORD_LENGTH %>">
+
+			<%
+			PasswordPolicy passwordPolicy = PasswordPolicyLocalServiceUtil.getDefaultPasswordPolicy(company.getCompanyId());
+			%>
+
 			<%= LanguageUtil.format(pageContext, "that-password-is-too-short-or-too-long-please-make-sure-your-password-is-between-x-and-512-characters", String.valueOf(passwordPolicy.getMinLength()), false) %>
 		</c:if>
 
@@ -110,30 +112,30 @@ boolean male = ParamUtil.getBoolean(request, "male", true);
 	<liferay-ui:error exception="<%= UserScreenNameException.class %>" message="please-enter-a-valid-screen-name" />
 	<liferay-ui:error exception="<%= WebsiteURLException.class %>" message="please-enter-a-valid-url" />
 
-	<c:if test='<%= SessionMessages.contains(request, "missingOpenIdUserInformation") %>'>
-		<div class="portlet-msg-info">
+	<c:if test='<%= SessionMessages.contains(request, "openIdUserInformationMissing") %>'>
+		<div class="alert alert-info">
 			<liferay-ui:message key="you-have-successfully-authenticated-please-provide-the-following-required-information-to-access-the-portal" />
 		</div>
 	</c:if>
 
 	<aui:model-context model="<%= Contact.class %>" />
 
-	<aui:fieldset>
-		<aui:column>
+	<aui:fieldset column="<%= true %>">
+		<aui:col width="<%= 50 %>">
 			<%@ include file="/html/portlet/login/create_account_user_name.jspf" %>
 
 			<c:if test="<%= !PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_SCREEN_NAME_ALWAYS_AUTOGENERATE) %>">
 				<aui:input model="<%= User.class %>" name="screenName" />
 			</c:if>
 
-			<aui:input model="<%= User.class %>" name="emailAddress">
-				<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_EMAIL_ADDRESS_REQUIRED, PropsValues.USERS_EMAIL_ADDRESS_REQUIRED) %>">
+			<aui:input autoFocus="<%= true %>" model="<%= User.class %>" name="emailAddress">
+				<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.USERS_EMAIL_ADDRESS_REQUIRED) %>">
 					<aui:validator name="required" />
 				</c:if>
 			</aui:input>
-		</aui:column>
+		</aui:col>
 
-		<aui:column>
+		<aui:col width="<%= 50 %>">
 			<c:if test="<%= PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD %>">
 				<aui:input label="password" name="password1" size="30" type="password" value="" />
 
@@ -146,7 +148,7 @@ boolean male = ParamUtil.getBoolean(request, "male", true);
 
 			<c:choose>
 				<c:when test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.FIELD_ENABLE_COM_LIFERAY_PORTAL_MODEL_CONTACT_BIRTHDAY) %>">
-					<aui:input name="birthday" value="<%= birthday %>" />
+					<aui:input name="birthday" value="<%= birthdayCalendar %>" />
 				</c:when>
 				<c:otherwise>
 					<aui:input name="birthdayMonth" type="hidden" value="<%= Calendar.JANUARY %>" />
@@ -169,7 +171,7 @@ boolean male = ParamUtil.getBoolean(request, "male", true);
 
 				<liferay-ui:captcha url="<%= captchaURL %>" />
 			</c:if>
-		</aui:column>
+		</aui:col>
 	</aui:fieldset>
 
 	<aui:button-row>
@@ -178,9 +180,3 @@ boolean male = ParamUtil.getBoolean(request, "male", true);
 </aui:form>
 
 <liferay-util:include page="/html/portlet/login/navigation.jsp" />
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />firstName);
-	</aui:script>
-</c:if>

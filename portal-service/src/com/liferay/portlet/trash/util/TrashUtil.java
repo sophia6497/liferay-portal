@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,20 +34,6 @@ import javax.servlet.http.HttpServletRequest;
  * @author Julio Camarero
  */
 public class TrashUtil {
-
-	public static final String TRASH_ATTACHMENTS_DIR = ".trashed_";
-
-	public static final int TRASH_DEFAULT_VALUE = -1;
-
-	public static final int TRASH_DISABLED = 0;
-
-	public static final int TRASH_DISABLED_BY_DEFAULT = 1;
-
-	public static final int TRASH_ENABLED = 3;
-
-	public static final int TRASH_ENABLED_BY_DEFAULT = 2;
-
-	public static final String TRASH_TIME_SEPARATOR = "_TRASH_TIME_";
 
 	public static void addBaseModelBreadcrumbEntries(
 			HttpServletRequest request, String className, long classPK,
@@ -94,8 +80,16 @@ public class TrashUtil {
 		return getTrash().getMaxAge(group);
 	}
 
-	public static String getNewName(ThemeDisplay themeDisplay, String oldName) {
-		return getTrash().getNewName(themeDisplay, oldName);
+	public static String getNewName(String oldName, String token) {
+		return getTrash().getNewName(oldName, token);
+	}
+
+	public static String getNewName(
+			ThemeDisplay themeDisplay, String className, long classPK,
+			String oldName)
+		throws PortalException, SystemException {
+
+		return getTrash().getNewName(themeDisplay, className, classPK, oldName);
 	}
 
 	public static String getOriginalTitle(String title) {
@@ -114,6 +108,13 @@ public class TrashUtil {
 
 	public static String getTrashTitle(long trashEntryId) {
 		return getTrash().getTrashTitle(trashEntryId);
+	}
+
+	public static PortletURL getViewContentURL(
+			HttpServletRequest request, String className, long classPK)
+		throws PortalException, SystemException {
+
+		return getTrash().getViewContentURL(request, className, classPK);
 	}
 
 	public static boolean isInTrash(String className, long classPK)

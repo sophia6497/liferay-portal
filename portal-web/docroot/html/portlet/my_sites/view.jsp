@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -69,25 +69,28 @@ request.setAttribute("view.jsp-tabs1", tabs1);
 
 			<%
 			if (searchTerms.isAdvancedSearch()) {
-				results = GroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator(), searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
 				total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator());
+
+				searchContainer.setTotal(total);
+
+				results = GroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator(), searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
 			}
 			else {
-				results = GroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getKeywords(), groupParams, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
 				total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), searchTerms.getKeywords(), groupParams);
+
+				searchContainer.setTotal(total);
+
+				results = GroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getKeywords(), groupParams, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
 			}
 
-			pageContext.setAttribute("results", results);
-			pageContext.setAttribute("total", total);
+			searchContainer.setResults(results);
 			%>
 
 		</liferay-ui:search-container-results>
 
-		<liferay-ui:search-form
-			page="/html/portlet/users_admin/group_search.jsp"
-			searchContainer="<%= searchContainer %>"
-			showAddButton="<%= false %>"
-		/>
+		<aui:nav-bar>
+			<aui:nav-bar-search cssClass="pull-right" file="/html/portlet/users_admin/group_search.jsp" searchContainer="<%= searchContainer %>" />
+		</aui:nav-bar>
 
 		<liferay-ui:error exception="<%= RequiredGroupException.class %>">
 
@@ -110,7 +113,6 @@ request.setAttribute("view.jsp-tabs1", tabs1);
 
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.model.Group"
-			escapedModel="<%= true %>"
 			keyProperty="groupId"
 			modelVar="group"
 			rowIdProperty="friendlyURL"
@@ -122,22 +124,20 @@ request.setAttribute("view.jsp-tabs1", tabs1);
 			if (group.getPublicLayoutsPageCount() > 0) {
 				rowURL = renderResponse.createActionURL();
 
-				rowURL.setWindowState(WindowState.NORMAL);
-
 				rowURL.setParameter("struts_action", "/sites_admin/page");
 				rowURL.setParameter("redirect", currentURL);
 				rowURL.setParameter("groupId", String.valueOf(group.getGroupId()));
 				rowURL.setParameter("privateLayout", Boolean.FALSE.toString());
+				rowURL.setWindowState(WindowState.NORMAL);
 			}
 			else if (tabs1.equals("my-sites") && (group.getPrivateLayoutsPageCount() > 0)) {
 				rowURL = renderResponse.createActionURL();
-
-				rowURL.setWindowState(WindowState.NORMAL);
 
 				rowURL.setParameter("struts_action", "/sites_admin/page");
 				rowURL.setParameter("redirect", currentURL);
 				rowURL.setParameter("groupId", String.valueOf(group.getGroupId()));
 				rowURL.setParameter("privateLayout", Boolean.TRUE.toString());
+				rowURL.setWindowState(WindowState.NORMAL);
 			}
 			%>
 
@@ -163,7 +163,7 @@ request.setAttribute("view.jsp-tabs1", tabs1);
 
 			if (!tabs1.equals("my-sites") && Validator.isNotNull(group.getDescription())) {
 				buffer.append("<br /><em>");
-				buffer.append(group.getDescription());
+				buffer.append(HtmlUtil.escape(group.getDescription()));
 				buffer.append("</em>");
 			}
 			%>
@@ -173,7 +173,7 @@ request.setAttribute("view.jsp-tabs1", tabs1);
 			<%
 			LinkedHashMap<String, Object> userParams = new LinkedHashMap<String, Object>();
 
-			userParams.put("inherit", true);
+			userParams.put("inherit", Boolean.TRUE);
 			userParams.put("usersGroups", new Long(group.getGroupId()));
 			%>
 

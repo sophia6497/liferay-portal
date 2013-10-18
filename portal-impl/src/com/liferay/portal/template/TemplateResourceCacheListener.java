@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,6 +36,7 @@ public class TemplateResourceCacheListener
 		_portalCache = SingleVMPoolUtil.getCache(cacheName);
 	}
 
+	@Override
 	public void notifyEntryEvicted(
 			PortalCache<String, TemplateResource> portalCache, String key,
 			TemplateResource templateResource)
@@ -46,6 +47,7 @@ public class TemplateResourceCacheListener
 		}
 	}
 
+	@Override
 	public void notifyEntryExpired(
 			PortalCache<String, TemplateResource> portalCache, String key,
 			TemplateResource templateResource)
@@ -56,12 +58,14 @@ public class TemplateResourceCacheListener
 		}
 	}
 
+	@Override
 	public void notifyEntryPut(
 			PortalCache<String, TemplateResource> portalCache, String key,
 			TemplateResource templateResource)
 		throws PortalCacheException {
 	}
 
+	@Override
 	public void notifyEntryRemoved(
 			PortalCache<String, TemplateResource> portalCache, String key,
 			TemplateResource templateResource)
@@ -72,6 +76,7 @@ public class TemplateResourceCacheListener
 		}
 	}
 
+	@Override
 	public void notifyEntryUpdated(
 			PortalCache<String, TemplateResource> portalCache, String key,
 			TemplateResource templateResource)
@@ -82,6 +87,7 @@ public class TemplateResourceCacheListener
 		}
 	}
 
+	@Override
 	public void notifyRemoveAll(
 			PortalCache<String, TemplateResource> portalCache)
 		throws PortalCacheException {

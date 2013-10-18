@@ -9,6 +9,18 @@
 
 		<column name="choiceId" type="long" primary="true" />
 
+		<!-- Group instance -->
+
+		<column name="groupId" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
+		<column name="createDate" type="Date" />
+		<column name="modifiedDate" type="Date" />
+
 		<!-- Other fields -->
 
 		<column name="questionId" type="long" />
@@ -68,12 +80,20 @@
 		<finder name="GroupId" return-type="Collection">
 			<finder-column name="groupId" />
 		</finder>
+
+		<!-- References -->
+
+		<reference package-path="com.liferay.portal" entity="SystemEvent" />
 	</entity>
-	<entity name="PollsVote" local-service="true" remote-service="true">
+	<entity name="PollsVote" uuid="true" local-service="true" remote-service="true">
 
 		<!-- PK fields -->
 
 		<column name="voteId" type="long" primary="true" />
+
+		<!-- Group instance -->
+
+		<column name="groupId" type="long" />
 
 		<!-- Audit fields -->
 

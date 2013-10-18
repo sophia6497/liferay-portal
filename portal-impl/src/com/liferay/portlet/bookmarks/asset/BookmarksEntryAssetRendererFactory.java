@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -34,6 +35,8 @@ import com.liferay.portlet.bookmarks.service.permission.BookmarksPermission;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
+import javax.portlet.WindowState;
+import javax.portlet.WindowStateException;
 
 /**
  * @author Julio Camarero
@@ -44,22 +47,28 @@ import javax.portlet.PortletURL;
 public class BookmarksEntryAssetRendererFactory
 	extends BaseAssetRendererFactory {
 
-	public static final String CLASS_NAME =BookmarksEntry.class.getName();
-
 	public static final String TYPE = "bookmark";
 
+	@Override
 	public AssetRenderer getAssetRenderer(long classPK, int type)
 		throws PortalException, SystemException {
 
 		BookmarksEntry entry = BookmarksEntryLocalServiceUtil.getEntry(classPK);
 
-		return new BookmarksEntryAssetRenderer(entry);
+		BookmarksEntryAssetRenderer bookmarksEntryAssetRenderer =
+			new BookmarksEntryAssetRenderer(entry);
+
+		bookmarksEntryAssetRenderer.setAssetRendererType(type);
+
+		return bookmarksEntryAssetRenderer;
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return BookmarksEntry.class.getName();
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}
@@ -90,9 +99,27 @@ public class BookmarksEntryAssetRendererFactory
 			"folderId",
 			String.valueOf(
 				AssetPublisherUtil.getRecentFolderId(
-					liferayPortletRequest, CLASS_NAME)));
+					liferayPortletRequest, getClassName())));
 
 		return portletURL;
+	}
+
+	@Override
+	public PortletURL getURLView(
+		LiferayPortletResponse liferayPortletResponse,
+		WindowState windowState) {
+
+		LiferayPortletURL liferayPortletURL =
+			liferayPortletResponse.createLiferayPortletURL(
+				PortletKeys.BOOKMARKS, PortletRequest.RENDER_PHASE);
+
+		try {
+			liferayPortletURL.setWindowState(windowState);
+		}
+		catch (WindowStateException wse) {
+		}
+
+		return liferayPortletURL;
 	}
 
 	@Override

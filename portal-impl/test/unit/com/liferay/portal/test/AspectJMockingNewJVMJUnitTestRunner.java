@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.process.ClassPathUtil;
 import com.liferay.portal.kernel.process.ProcessCallable;
 import com.liferay.portal.kernel.process.ProcessException;
 import com.liferay.portal.kernel.test.NewJVMJUnitTestRunner;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.ReflectionUtil;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -64,7 +65,7 @@ public class AspectJMockingNewJVMJUnitTestRunner extends NewJVMJUnitTestRunner {
 
 		Class<?>[] adviceClasses = adviseWith.adviceClasses();
 
-		if ((adviceClasses == null) || (adviceClasses.length == 0)) {
+		if (ArrayUtil.isEmpty(adviceClasses)) {
 			return Collections.emptyList();
 		}
 
@@ -123,6 +124,7 @@ public class AspectJMockingNewJVMJUnitTestRunner extends NewJVMJUnitTestRunner {
 			_toString = processCallable.toString();
 		}
 
+		@Override
 		public Serializable call() throws ProcessException {
 			attachProcess("Attached " + toString());
 
@@ -171,6 +173,8 @@ public class AspectJMockingNewJVMJUnitTestRunner extends NewJVMJUnitTestRunner {
 		public String toString() {
 			return _toString;
 		}
+
+		private static final long serialVersionUID = 1L;
 
 		private File _dumpDir;
 		private byte[] _encodedProcessCallable;

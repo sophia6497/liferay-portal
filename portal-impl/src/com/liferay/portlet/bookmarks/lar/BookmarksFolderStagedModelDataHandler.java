@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,16 +14,19 @@
 
 package com.liferay.portlet.bookmarks.lar;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.lar.BaseStagedModelDataHandler;
+import com.liferay.portal.kernel.lar.ExportImportPathUtil;
 import com.liferay.portal.kernel.lar.PortletDataContext;
-import com.liferay.portal.kernel.lar.StagedModelPathUtil;
+import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.model.BookmarksFolderConstants;
 import com.liferay.portlet.bookmarks.service.BookmarksFolderLocalServiceUtil;
-import com.liferay.portlet.bookmarks.service.persistence.BookmarksFolderUtil;
 
 import java.util.Map;
 
@@ -34,40 +37,66 @@ import java.util.Map;
 public class BookmarksFolderStagedModelDataHandler
 	extends BaseStagedModelDataHandler<BookmarksFolder> {
 
+	public static final String[] CLASS_NAMES =
+		{BookmarksFolder.class.getName()};
+
 	@Override
-	public String getClassName() {
-		return BookmarksFolder.class.getName();
+	public void deleteStagedModel(
+			String uuid, long groupId, String className, String extraData)
+		throws PortalException, SystemException {
+
+		BookmarksFolder folder =
+			BookmarksFolderLocalServiceUtil.
+				fetchBookmarksFolderByUuidAndGroupId(uuid, groupId);
+
+		if (folder != null) {
+			BookmarksFolderLocalServiceUtil.deleteFolder(folder);
+		}
+	}
+
+	@Override
+	public String[] getClassNames() {
+		return CLASS_NAMES;
+	}
+
+	@Override
+	public String getDisplayName(BookmarksFolder folder) {
+		return folder.getName();
 	}
 
 	@Override
 	protected void doExportStagedModel(
-			PortletDataContext portletDataContext, Element[] elements,
-			BookmarksFolder folder)
+			PortletDataContext portletDataContext, BookmarksFolder folder)
 		throws Exception {
-
-		Element foldersElement = elements[0];
 
 		if (folder.getParentFolderId() !=
 				BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 
-			exportStagedModel(
-				portletDataContext, foldersElement, folder.getParentFolder());
+			StagedModelDataHandlerUtil.exportReferenceStagedModel(
+				portletDataContext, folder, folder.getParentFolder(),
+				PortletDataContext.REFERENCE_TYPE_PARENT);
 		}
 
-		Element folderElement = foldersElement.addElement("folder");
+		Element folderElement = portletDataContext.getExportDataElement(folder);
 
 		portletDataContext.addClassedModel(
-			folderElement, StagedModelPathUtil.getPath(folder), folder,
-			BookmarksPortletDataHandler.NAMESPACE);
+			folderElement, ExportImportPathUtil.getModelPath(folder), folder);
 	}
 
 	@Override
 	protected void doImportStagedModel(
-			PortletDataContext portletDataContext, String path,
-			BookmarksFolder folder)
+			PortletDataContext portletDataContext, BookmarksFolder folder)
 		throws Exception {
 
 		long userId = portletDataContext.getUserId(folder.getUserUuid());
+
+		if (folder.getParentFolderId() !=
+				BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+
+			StagedModelDataHandlerUtil.importReferenceStagedModel(
+				portletDataContext, folder, BookmarksFolder.class,
+				folder.getParentFolderId());
+		}
 
 		Map<Long, Long> folderIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -76,34 +105,16 @@ public class BookmarksFolderStagedModelDataHandler
 		long parentFolderId = MapUtil.getLong(
 			folderIds, folder.getParentFolderId(), folder.getParentFolderId());
 
-		if ((parentFolderId !=
-				BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) &&
-			(parentFolderId == folder.getParentFolderId())) {
-
-			String parentFolderPath = StagedModelPathUtil.getPath(
-				portletDataContext, BookmarksFolder.class.getName(),
-				parentFolderId);
-
-			BookmarksFolder parentFolder =
-				(BookmarksFolder)portletDataContext.getZipEntryAsObject(
-					parentFolderPath);
-
-			importStagedModel(
-				portletDataContext, parentFolderPath, parentFolder);
-
-			parentFolderId = MapUtil.getLong(
-				folderIds, folder.getParentFolderId(),
-				folder.getParentFolderId());
-		}
-
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			path, folder, BookmarksPortletDataHandler.NAMESPACE);
+			folder);
 
 		BookmarksFolder importedFolder = null;
 
 		if (portletDataContext.isDataStrategyMirror()) {
-			BookmarksFolder existingFolder = BookmarksFolderUtil.fetchByUUID_G(
-				folder.getUuid(), portletDataContext.getScopeGroupId());
+			BookmarksFolder existingFolder =
+				BookmarksFolderLocalServiceUtil.
+					fetchBookmarksFolderByUuidAndGroupId(
+						folder.getUuid(), portletDataContext.getScopeGroupId());
 
 			if (existingFolder == null) {
 				serviceContext.setUuid(folder.getUuid());
@@ -114,7 +125,7 @@ public class BookmarksFolderStagedModelDataHandler
 			}
 			else {
 				importedFolder = BookmarksFolderLocalServiceUtil.updateFolder(
-					existingFolder.getFolderId(), parentFolderId,
+					userId, existingFolder.getFolderId(), parentFolderId,
 					folder.getName(), folder.getDescription(), false,
 					serviceContext);
 			}
@@ -125,8 +136,47 @@ public class BookmarksFolderStagedModelDataHandler
 				folder.getDescription(), serviceContext);
 		}
 
-		portletDataContext.importClassedModel(
-			folder, importedFolder, BookmarksPortletDataHandler.NAMESPACE);
+		portletDataContext.importClassedModel(folder, importedFolder);
+	}
+
+	@Override
+	protected void doRestoreStagedModel(
+			PortletDataContext portletDataContext, BookmarksFolder folder)
+		throws Exception {
+
+		long userId = portletDataContext.getUserId(folder.getUserUuid());
+
+		BookmarksFolder existingFolder =
+			BookmarksFolderLocalServiceUtil.
+				fetchBookmarksFolderByUuidAndGroupId(
+					folder.getUuid(), portletDataContext.getScopeGroupId());
+
+		if ((existingFolder == null) || !existingFolder.isInTrash()) {
+			return;
+		}
+
+		TrashHandler trashHandler = existingFolder.getTrashHandler();
+
+		if (trashHandler.isRestorable(existingFolder.getFolderId())) {
+			trashHandler.restoreTrashEntry(
+				userId, existingFolder.getFolderId());
+		}
+	}
+
+	@Override
+	protected boolean validateMissingReference(
+			String uuid, long companyId, long groupId)
+		throws Exception {
+
+		BookmarksFolder folder =
+			BookmarksFolderLocalServiceUtil.
+				fetchBookmarksFolderByUuidAndGroupId(uuid, groupId);
+
+		if (folder == null) {
+			return false;
+		}
+
+		return true;
 	}
 
 }

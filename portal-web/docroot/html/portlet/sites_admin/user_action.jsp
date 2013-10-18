@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -43,7 +43,7 @@ boolean userGroupUser = GetterUtil.getBoolean(row.getParameter("userGroupUser"))
 			url="<%= assignURL %>"
 		/>
 
-		<c:if test="<%= !(organizationUser || userGroupUser) %>">
+		<c:if test="<%= !(organizationUser || userGroupUser) && !SiteMembershipPolicyUtil.isMembershipRequired(user2.getUserId(), group.getGroupId()) %>">
 			<portlet:actionURL var="removeURL">
 				<portlet:param name="struts_action" value="/sites_admin/edit_site_assignments" />
 				<portlet:param name="<%= Constants.CMD %>" value="group_users" />

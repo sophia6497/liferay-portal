@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -47,6 +47,7 @@ import org.apache.tools.ant.DirectoryScanner;
 /**
  * @author Brian Wing Shun Chan
  * @author Raymond Augé
+ * @author Eduardo Lundgren
  */
 public class SassToCssBuilder {
 
@@ -86,8 +87,11 @@ public class SassToCssBuilder {
 			}
 		}
 
+		String docrootDirName = arguments.get("sass.docroot.dir");
+		String portalCommonDirName = arguments.get("sass.portal.common.dir");
+
 		try {
-			new SassToCssBuilder(dirNames);
+			new SassToCssBuilder(dirNames, docrootDirName, portalCommonDirName);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -111,7 +115,11 @@ public class SassToCssBuilder {
 			});
 	}
 
-	public SassToCssBuilder(List<String> dirNames) throws Exception {
+	public SassToCssBuilder(
+			List<String> dirNames, String docrootDirName,
+			String portalCommonDirName)
+		throws Exception {
+
 		Class<?> clazz = getClass();
 
 		ClassLoader classLoader = clazz.getClassLoader();
@@ -131,15 +139,21 @@ public class SassToCssBuilder {
 
 			_rubyExecutor = new RubyExecutor();
 
-			_parseSassDirectory(dirName);
+			_rubyExecutor.setExecuteInSeparateThread(false);
+
+			_parseSassDirectory(dirName, docrootDirName, portalCommonDirName);
 		}
 	}
 
-	private String _getContent(File file) throws Exception {
+	private String _getContent(String docrootDirName, String fileName)
+		throws Exception {
+
+		File file = new File(docrootDirName.concat(fileName));
+
 		String content = FileUtil.read(file);
 
 		content = AggregateFilter.aggregateCss(
-			new FileAggregateContext(file), content);
+			new FileAggregateContext(docrootDirName, fileName), content);
 
 		return parseStaticTokens(content);
 	}
@@ -170,10 +184,45 @@ public class SassToCssBuilder {
 		PropsUtil.setProps(new PropsImpl());
 	}
 
-	private void _parseSassDirectory(String dirName) throws Exception {
+	private boolean _isModified(String dirName, String[] fileNames)
+		throws Exception {
+
+		for (String fileName : fileNames) {
+			fileName = _normalizeFileName(dirName, fileName);
+
+			File file = new File(fileName);
+			File cacheFile = getCacheFile(fileName);
+
+			if (file.lastModified() != cacheFile.lastModified()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private String _normalizeFileName(String dirName, String fileName) {
+		return StringUtil.replace(
+			dirName + StringPool.SLASH + fileName,
+			new String[] {
+				StringPool.BACK_SLASH, StringPool.DOUBLE_SLASH
+			},
+			new String[] {
+				StringPool.SLASH, StringPool.SLASH
+			}
+		);
+	}
+
+	private void _parseSassDirectory(
+			String dirName, String docrootDirName, String portalCommonDirName)
+		throws Exception {
+
 		DirectoryScanner directoryScanner = new DirectoryScanner();
 
-		directoryScanner.setBasedir(dirName);
+		String basedir = docrootDirName.concat(dirName);
+
+		directoryScanner.setBasedir(basedir);
+
 		directoryScanner.setExcludes(
 			new String[] {
 				"**\\_diffs\\**", "**\\.sass-cache*\\**",
@@ -186,20 +235,23 @@ public class SassToCssBuilder {
 
 		String[] fileNames = directoryScanner.getIncludedFiles();
 
+		if (!_isModified(basedir, fileNames)) {
+			return;
+		}
+
 		for (String fileName : fileNames) {
-			fileName = StringUtil.replace(
-				dirName + StringPool.SLASH + fileName, StringPool.BACK_SLASH,
-				StringPool.SLASH);
+			fileName = _normalizeFileName(dirName, fileName);
 
 			try {
 				long start = System.currentTimeMillis();
 
-				if (_parseSassFile(fileName)) {
-					long end = System.currentTimeMillis();
+				_parseSassFile(docrootDirName, portalCommonDirName, fileName);
 
-					System.out.println(
-						"Parsed " + fileName + " in " + (end - start) + " ms");
-				}
+				long end = System.currentTimeMillis();
+
+				System.out.println(
+					"Parsed " + docrootDirName + fileName + " in " +
+						(end - start) + " ms");
 			}
 			catch (Exception e) {
 				System.out.println("Unable to parse " + fileName);
@@ -209,19 +261,21 @@ public class SassToCssBuilder {
 		}
 	}
 
-	private boolean _parseSassFile(String fileName) throws Exception {
-		File file = new File(fileName);
-		File cacheFile = getCacheFile(fileName);
+	private void _parseSassFile(
+			String docrootDirName, String portalCommonDirName, String fileName)
+		throws Exception {
 
-		if (file.lastModified() == cacheFile.lastModified()) {
-			return false;
-		}
+		String filePath = docrootDirName.concat(fileName);
+
+		File file = new File(filePath);
+		File cacheFile = getCacheFile(filePath);
 
 		Map<String, Object> inputObjects = new HashMap<String, Object>();
 
-		inputObjects.put("content", _getContent(file));
-		inputObjects.put("cssRealPath", fileName);
-		inputObjects.put("cssThemePath", _getCssThemePath(fileName));
+		inputObjects.put("commonSassPath", portalCommonDirName);
+		inputObjects.put("content", _getContent(docrootDirName, fileName));
+		inputObjects.put("cssRealPath", filePath);
+		inputObjects.put("cssThemePath", _getCssThemePath(filePath));
 		inputObjects.put("sassCachePath", _tempDir);
 
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
@@ -241,8 +295,6 @@ public class SassToCssBuilder {
 		FileUtil.write(cacheFile, parsedContent);
 
 		cacheFile.setLastModified(file.lastModified());
-
-		return true;
 	}
 
 	private RubyExecutor _rubyExecutor;

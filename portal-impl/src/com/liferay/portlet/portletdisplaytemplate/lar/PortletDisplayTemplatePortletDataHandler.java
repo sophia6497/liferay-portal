@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,19 +14,26 @@
 
 package com.liferay.portlet.portletdisplaytemplate.lar;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.lar.BasePortletDataHandler;
+import com.liferay.portal.kernel.lar.ManifestSummary;
 import com.liferay.portal.kernel.lar.PortletDataContext;
 import com.liferay.portal.kernel.lar.PortletDataHandlerBoolean;
-import com.liferay.portal.kernel.portletdisplaytemplate.PortletDisplayTemplateHandlerRegistryUtil;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.xml.Document;
+import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.portal.kernel.lar.StagedModelType;
+import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portal.util.PortletKeys;
-import com.liferay.portlet.dynamicdatamapping.lar.DDMPortletDataHandler;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
-import com.liferay.portlet.dynamicdatamapping.service.DDMTemplateLocalServiceUtil;
+import com.liferay.portlet.dynamicdatamapping.model.DDMTemplateConstants;
+import com.liferay.portlet.dynamicdatamapping.service.persistence.DDMTemplateExportActionableDynamicQuery;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.portlet.PortletPreferences;
@@ -40,10 +47,38 @@ public class PortletDisplayTemplatePortletDataHandler
 	public static final String NAMESPACE = "portlet_display_templates";
 
 	public PortletDisplayTemplatePortletDataHandler() {
-		setAlwaysExportable(true);
 		setExportControls(
 			new PortletDataHandlerBoolean(
-				NAMESPACE, "application-display-templates"));
+				NAMESPACE, "application-display-templates", true, true));
+	}
+
+	@Override
+	public StagedModelType[] getDeletionSystemEventStagedModelTypes() {
+		return getStagedModelTypes();
+	}
+
+	@Override
+	public long getExportModelCount(ManifestSummary manifestSummary) {
+		long totalModelCount = -1;
+
+		for (StagedModelType stagedModelType : getStagedModelTypes()) {
+			long modelCount = manifestSummary.getModelAdditionCount(
+				stagedModelType.getClassName(),
+				stagedModelType.getReferrerClassName());
+
+			if (modelCount == -1) {
+				continue;
+			}
+
+			if (totalModelCount == -1) {
+				totalModelCount = modelCount;
+			}
+			else {
+				totalModelCount += modelCount;
+			}
+		}
+
+		return totalModelCount;
 	}
 
 	@Override
@@ -52,13 +87,20 @@ public class PortletDisplayTemplatePortletDataHandler
 			PortletPreferences portletPreferences)
 		throws Exception {
 
-		Document document = SAXReaderUtil.createDocument();
+		Element rootElement = addExportDataRootElement(portletDataContext);
 
-		Element rootElement = document.addElement("portlet-display-templates");
+		long[] classNameIds = TemplateHandlerRegistryUtil.getClassNameIds();
 
-		exportPortletDisplayTemplates(portletDataContext, rootElement);
+		ActionableDynamicQuery actionableDynamicQuery =
+			getDDMTemplateActionableDynamicQuery(
+				portletDataContext, ArrayUtil.toArray(classNameIds),
+				new StagedModelType(
+					PortalUtil.getClassNameId(DDMTemplate.class),
+					StagedModelType.REFERRER_CLASS_NAME_ID_ALL));
 
-		return document.formattedString();
+		actionableDynamicQuery.performActions();
+
+		return getExportDataRootElementString(rootElement);
 	}
 
 	@Override
@@ -67,55 +109,94 @@ public class PortletDisplayTemplatePortletDataHandler
 			PortletPreferences portletPreferences, String data)
 		throws Exception {
 
-		Document document = SAXReaderUtil.read(data);
+		Element ddmTemplatesElement =
+			portletDataContext.getImportDataGroupElement(DDMTemplate.class);
 
-		Element rootElement = document.getRootElement();
-
-		List<Element> ddmTemplateElements = rootElement.elements("template");
+		List<Element> ddmTemplateElements = ddmTemplatesElement.elements();
 
 		for (Element ddmTemplateElement : ddmTemplateElements) {
-			DDMPortletDataHandler.importTemplate(
+			StagedModelDataHandlerUtil.importStagedModel(
 				portletDataContext, ddmTemplateElement);
 		}
 
 		return null;
 	}
 
-	protected void exportPortletDisplayTemplates(
+	@Override
+	protected void doPrepareManifestSummary(
 			PortletDataContext portletDataContext,
-			Element portletDisplayTemplatesElement)
+			PortletPreferences portletPreferences)
 		throws Exception {
 
-		long[] classNameIds =
-			PortletDisplayTemplateHandlerRegistryUtil.getClassNameIds();
+		for (StagedModelType stagedModelType : getStagedModelTypes()) {
+			ActionableDynamicQuery actionableDynamicQuery =
+				getDDMTemplateActionableDynamicQuery(
+					portletDataContext,
+					new Long[] {stagedModelType.getReferrerClassNameId()},
+					stagedModelType);
 
-		for (long classNameId : classNameIds) {
-			List<DDMTemplate> ddmTemplates =
-				DDMTemplateLocalServiceUtil.getTemplates(
-					portletDataContext.getScopeGroupId(), classNameId);
-
-			for (DDMTemplate ddmTemplate : ddmTemplates) {
-				DDMPortletDataHandler.exportTemplate(
-					portletDataContext, portletDisplayTemplatesElement,
-					getTemplatePath(portletDataContext, ddmTemplate),
-					ddmTemplate);
-			}
+			actionableDynamicQuery.performCount();
 		}
 	}
 
-	protected String getTemplatePath(
-		PortletDataContext portletDataContext, DDMTemplate template) {
+	protected ActionableDynamicQuery getDDMTemplateActionableDynamicQuery(
+			final PortletDataContext portletDataContext,
+			final Long[] classNameIds, final StagedModelType stagedModelType)
+		throws SystemException {
 
-		StringBundler sb = new StringBundler(4);
+		return new DDMTemplateExportActionableDynamicQuery(
+			portletDataContext) {
 
-		sb.append(
-			portletDataContext.getPortletPath(
-				PortletKeys.PORTLET_DISPLAY_TEMPLATES));
-		sb.append("/templates/");
-		sb.append(template.getTemplateId());
-		sb.append(".xml");
+			@Override
+			protected void addCriteria(DynamicQuery dynamicQuery) {
+				super.addCriteria(dynamicQuery);
 
-		return sb.toString();
+				Property classNameIdProperty = PropertyFactoryUtil.forName(
+					"classNameId");
+
+				dynamicQuery.add(classNameIdProperty.in(classNameIds));
+
+				Property classPKProperty = PropertyFactoryUtil.forName(
+					"classPK");
+
+				dynamicQuery.add(classPKProperty.eq(0L));
+
+				Property typeProperty = PropertyFactoryUtil.forName("type");
+
+				dynamicQuery.add(
+					typeProperty.eq(
+						DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY));
+			}
+
+			@Override
+			protected StagedModelType getStagedModelType() {
+				return stagedModelType;
+			}
+		};
 	}
+
+	protected StagedModelType[] getStagedModelTypes() {
+		if (_stagedModelTypes != null) {
+			return _stagedModelTypes;
+		}
+
+		List<StagedModelType> stagedModelTypes =
+			new ArrayList<StagedModelType>();
+
+		long ddmTemplateClassNameId = PortalUtil.getClassNameId(
+			DDMTemplate.class);
+
+		for (long classNameId : TemplateHandlerRegistryUtil.getClassNameIds()) {
+			stagedModelTypes.add(
+				new StagedModelType(ddmTemplateClassNameId, classNameId));
+		}
+
+		_stagedModelTypes = stagedModelTypes.toArray(
+			new StagedModelType[stagedModelTypes.size()]);
+
+		return _stagedModelTypes;
+	}
+
+	private StagedModelType[] _stagedModelTypes;
 
 }

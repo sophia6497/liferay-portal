@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,11 +14,33 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.kernel.lar.StagedModelType;
+
+import java.util.Date;
+
 /**
  * @author Michael C. Han
  */
-public interface StagedModel extends GroupedModel {
+public interface StagedModel extends ClassedModel {
+
+	public Object clone();
+
+	public long getCompanyId();
+
+	public Date getCreateDate();
+
+	public Date getModifiedDate();
+
+	public StagedModelType getStagedModelType();
 
 	public String getUuid();
+
+	public void setCompanyId(long companyId);
+
+	public void setCreateDate(Date date);
+
+	public void setModifiedDate(Date date);
+
+	public void setUuid(String uuid);
 
 }

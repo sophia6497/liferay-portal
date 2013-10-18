@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -101,23 +101,29 @@ public class BaseClusterTestCase {
 
 	protected class MockAddress implements org.jgroups.Address {
 
+		@Override
 		public int compareTo(org.jgroups.Address jGroupsAddress) {
 			return 0;
 		}
 
+		@Override
 		public void readExternal(ObjectInput objectInput) {
 		}
 
+		@Override
 		public void readFrom(DataInput dataInput) throws Exception {
 		}
 
+		@Override
 		public int size() {
 			return 0;
 		}
 
+		@Override
 		public void writeExternal(ObjectOutput objectOutput) {
 		}
 
+		@Override
 		public void writeTo(DataOutput dataOutput) throws Exception {
 		}
 

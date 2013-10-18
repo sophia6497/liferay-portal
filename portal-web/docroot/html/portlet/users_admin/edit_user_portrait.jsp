@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,10 +25,13 @@ long maxFileSize = PrefsPropsUtil.getLong(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_
 <c:choose>
 	<c:when test='<%= SessionMessages.contains(renderRequest, "requestProcessed") %>'>
 		<aui:script>
-			opener.<portlet:namespace />changeLogo('<%= selUser.getPortraitURL(themeDisplay) %>');
+			Liferay.Util.getOpener().<portlet:namespace />changeLogo('<%= selUser.getPortraitURL(themeDisplay) %>');
 
-			window.close();
+			Liferay.Util.getWindow().hide();
 		</aui:script>
+	</c:when>
+	<c:when test='<%= !UsersAdminUtil.hasUpdateFieldPermission(selUser, "portrait") %>'>
+		<img src="<%= selUser.getPortraitURL(themeDisplay) %>" />
 	</c:when>
 	<c:otherwise>
 		<portlet:actionURL var="editUserPortraitURL">
@@ -48,7 +51,7 @@ long maxFileSize = PrefsPropsUtil.getLong(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_
 			</liferay-ui:error>
 
 			<aui:fieldset>
-				<aui:input label='<%= LanguageUtil.format(pageContext, "upload-images-no-larger-than-x-k", maxFileSize, false) %>' name="fileName" size="50" type="file" />
+				<aui:input autoFocus="<= windowState.equals(WindowState.MAXIMIZED) %>" label='<%= LanguageUtil.format(pageContext, "upload-images-no-larger-than-x-k", maxFileSize, false) %>' name="fileName" size="50" type="file" />
 
 				<div class="lfr-change-logo lfr-portrait-preview" id="<portlet:namespace />portraitPreview">
 					<img class="lfr-portrait-preview-img" id="<portlet:namespace />portraitPreviewImg" src="<%= HtmlUtil.escape(selUser.getPortraitURL(themeDisplay)) %>" />
@@ -61,12 +64,6 @@ long maxFileSize = PrefsPropsUtil.getLong(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_
 				</aui:button-row>
 			</aui:fieldset>
 		</aui:form>
-
-		<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-			<aui:script>
-				Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />fileName);
-			</aui:script>
-		</c:if>
 
 		<aui:script use="liferay-logo-editor">
 			new Liferay.LogoEditor(

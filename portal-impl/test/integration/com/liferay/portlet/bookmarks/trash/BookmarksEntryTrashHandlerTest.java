@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,7 +36,8 @@ import com.liferay.portlet.bookmarks.service.BookmarksFolderLocalServiceUtil;
 import com.liferay.portlet.bookmarks.service.BookmarksFolderServiceUtil;
 import com.liferay.portlet.trash.BaseTrashHandlerTestCase;
 
-import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -51,29 +52,40 @@ import org.junit.runner.RunWith;
 @Sync
 public class BookmarksEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 
+	@Ignore()
 	@Override
+	@Test
 	public void testTrashAndDeleteDraft() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
 	}
 
+	@Ignore()
 	@Override
+	@Test
 	public void testTrashAndRestoreDraft() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
 	}
 
+	@Ignore()
 	@Override
+	@Test
 	public void testTrashDuplicate() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
 	}
 
+	@Ignore()
 	@Override
-	public void testTrashVersionAndDelete() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
+	@Test
+	public void testTrashVersionBaseModelAndDelete() throws Exception {
 	}
 
+	@Ignore()
 	@Override
-	public void testTrashVersionAndRestore() throws Exception {
-		Assert.assertTrue("This test does not apply", true);
+	@Test
+	public void testTrashVersionBaseModelAndRestore() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testTrashVersionParentBaseModel() throws Exception {
 	}
 
 	@Override
@@ -84,13 +96,42 @@ public class BookmarksEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 
 		BookmarksFolder folder = (BookmarksFolder)parentBaseModel;
 
+		return addBaseModelWithWorkflow(
+			folder.getUserId(), folder.getGroupId(), folder.getFolderId(),
+			serviceContext);
+	}
+
+	@Override
+	protected BaseModel<?> addBaseModelWithWorkflow(
+			boolean approved, ServiceContext serviceContext)
+		throws Exception {
+
+		return addBaseModelWithWorkflow(
+			TestPropsValues.getUserId(), serviceContext.getScopeGroupId(),
+			BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID, serviceContext);
+	}
+
+	protected BaseModel<?> addBaseModelWithWorkflow(
+			long userId, long groupId, long folderId,
+			ServiceContext serviceContext)
+		throws Exception {
+
 		String name = getSearchKeywords();
 		String url = "http://www.liferay.com";
 		String description = "Content: Enterprise. Open Source.";
 
 		return BookmarksEntryLocalServiceUtil.addEntry(
-			folder.getUserId(), folder.getGroupId(), folder.getFolderId(), name,
-			url, description, serviceContext);
+			userId, groupId, folderId, name, url, description, serviceContext);
+	}
+
+	@Override
+	protected void deleteParentBaseModel(
+			BaseModel<?> parentBaseModel, boolean includeTrashedEntries)
+		throws Exception {
+
+		BookmarksFolder folder = (BookmarksFolder)parentBaseModel;
+
+		BookmarksFolderServiceUtil.deleteFolder(folder.getFolderId(), false);
 	}
 
 	@Override
@@ -108,6 +149,13 @@ public class BookmarksEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 		BookmarksEntry entry = (BookmarksEntry)classedModel;
 
 		return entry.getName();
+	}
+
+	@Override
+	protected int getMineBaseModelsCount(long groupId, long userId)
+		throws Exception {
+
+		return BookmarksEntryServiceUtil.getGroupEntriesCount(groupId, userId);
 	}
 
 	@Override
@@ -137,6 +185,11 @@ public class BookmarksEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 	}
 
 	@Override
+	protected int getRecentBaseModelsCount(long groupId) throws Exception {
+		return BookmarksEntryServiceUtil.getGroupEntriesCount(groupId, 0);
+	}
+
+	@Override
 	protected String getSearchKeywords() {
 		return "Title";
 	}
@@ -153,15 +206,6 @@ public class BookmarksEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 		BookmarksEntry entry = (BookmarksEntry)baseModel;
 
 		return entry;
-	}
-
-	@Override
-	protected boolean isInTrashContainer(ClassedModel classedModel)
-		throws Exception {
-
-		BookmarksEntry entry = (BookmarksEntry)baseModel;
-
-		return entry.isInTrashContainer();
 	}
 
 	@Override
@@ -190,22 +234,6 @@ public class BookmarksEntryTrashHandlerTest extends BaseTrashHandlerTestCase {
 		throws Exception {
 
 		BookmarksFolderServiceUtil.moveFolderToTrash(primaryKey);
-	}
-
-	@Override
-	protected BaseModel<?> updateBaseModel(
-			long primaryKey, ServiceContext serviceContext)
-		throws Exception {
-
-		BookmarksEntry entry = BookmarksEntryLocalServiceUtil.getEntry(
-			primaryKey);
-
-		String description = "Content: Enterprise. Open Source. For Life.";
-
-		return BookmarksEntryLocalServiceUtil.updateEntry(
-			entry.getUserId(), primaryKey, entry.getGroupId(),
-			entry.getFolderId(), entry.getName(), entry.getUrl(), description,
-			serviceContext);
 	}
 
 }

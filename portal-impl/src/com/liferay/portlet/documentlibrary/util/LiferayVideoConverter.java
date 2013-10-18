@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -87,26 +87,28 @@ public class LiferayVideoConverter extends LiferayConverter {
 	protected void createMP4FastStart() {
 		File videoFile = new File(_outputURL);
 
-		if (_videoContainer.equals("mp4") && videoFile.exists()) {
-			File tempFile = new File(_outputURL + ".tmp");
+		if (!_videoContainer.equals("mp4") || !videoFile.exists()) {
+			return;
+		}
 
-			try {
-				JQTFastStart.convert(videoFile, tempFile);
+		File tempFile = new File(_outputURL + ".tmp");
 
-				if (tempFile.exists() && (tempFile.length() > 0)) {
-					videoFile.delete();
+		try {
+			JQTFastStart.convert(videoFile, tempFile);
 
-					tempFile.renameTo(videoFile);
-				}
+			if (tempFile.exists() && (tempFile.length() > 0)) {
+				videoFile.delete();
+
+				tempFile.renameTo(videoFile);
 			}
-			catch (Exception e) {
-				if (_log.isWarnEnabled()) {
-					_log.warn("Unable to move MOOV atom to front of MP4 file");
-				}
+		}
+		catch (Exception e) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to move MOOV atom to front of MP4 file");
 			}
-			finally {
-				tempFile.delete();
-			}
+		}
+		finally {
+			tempFile.delete();
 		}
 	}
 

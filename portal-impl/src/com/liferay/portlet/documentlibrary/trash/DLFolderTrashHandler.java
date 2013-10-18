@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.repository.Repository;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.trash.TrashActionKeys;
 import com.liferay.portal.kernel.trash.TrashRenderer;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.ContainerModel;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.security.permission.ActionKeys;
@@ -29,10 +30,9 @@ import com.liferay.portal.service.RepositoryServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.documentlibrary.asset.DLFolderAssetRenderer;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
+import com.liferay.portlet.documentlibrary.service.DLAppHelperLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.service.DLAppServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.service.DLFolderServiceUtil;
 import com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission;
 import com.liferay.portlet.documentlibrary.util.DLUtil;
 import com.liferay.portlet.trash.DuplicateEntryException;
@@ -49,50 +49,37 @@ import javax.portlet.PortletRequest;
  */
 public class DLFolderTrashHandler extends DLBaseTrashHandler {
 
-	public static final String CLASS_NAME = DLFolder.class.getName();
+	@Override
+	public void checkDuplicateEntry(
+			long classPK, long containerModelId, String newName)
+		throws PortalException, SystemException {
+
+		DLFolder dlFolder = getDLFolder(classPK);
+
+		checkDuplicateEntry(
+			classPK, 0, containerModelId, dlFolder.getName(), newName);
+	}
 
 	@Override
 	public void checkDuplicateTrashEntry(
 			TrashEntry trashEntry, long containerModelId, String newName)
 		throws PortalException, SystemException {
 
-		DLFolder dlFolder = getDLFolder(trashEntry.getClassPK());
-
-		if (containerModelId == TrashEntryConstants.DEFAULT_CONTAINER_ID) {
-			containerModelId = dlFolder.getParentFolderId();
-		}
-
-		String originalTitle = trashEntry.getTypeSettingsProperty("title");
-
-		DLFolder duplicateDLFolder = DLFolderLocalServiceUtil.fetchFolder(
-			dlFolder.getGroupId(), dlFolder.getParentFolderId(), originalTitle);
-
-		if (duplicateDLFolder != null) {
-			DuplicateEntryException dee = new DuplicateEntryException();
-
-			dee.setDuplicateEntryId(duplicateDLFolder.getFolderId());
-			dee.setOldName(duplicateDLFolder.getName());
-			dee.setTrashEntryId(trashEntry.getEntryId());
-
-			throw dee;
-		}
+		checkDuplicateEntry(
+			trashEntry.getClassPK(), trashEntry.getEntryId(), containerModelId,
+			trashEntry.getTypeSettingsProperty("title"), newName);
 	}
 
-	public void deleteTrashEntries(long[] classPKs, boolean checkPermission)
+	@Override
+	public void deleteTrashEntry(long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			if (checkPermission) {
-				DLFolderServiceUtil.deleteFolder(classPK, false);
-			}
-			else {
-				DLFolderLocalServiceUtil.deleteFolder(classPK, false);
-			}
-		}
+		DLFolderLocalServiceUtil.deleteFolder(classPK, false);
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return DLFolder.class.getName();
 	}
 
 	@Override
@@ -116,12 +103,24 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 	}
 
 	@Override
-	public String getRestoreLink(PortletRequest portletRequest, long classPK)
+	public String getRestoreContainedModelLink(
+			PortletRequest portletRequest, long classPK)
 		throws PortalException, SystemException {
 
 		DLFolder dlFolder = getDLFolder(classPK);
 
-		return DLUtil.getDLControlPanelLink(
+		return DLUtil.getDLFolderControlPanelLink(
+			portletRequest, dlFolder.getFolderId());
+	}
+
+	@Override
+	public String getRestoreContainerModelLink(
+			PortletRequest portletRequest, long classPK)
+		throws PortalException, SystemException {
+
+		DLFolder dlFolder = getDLFolder(classPK);
+
+		return DLUtil.getDLFolderControlPanelLink(
 			portletRequest, dlFolder.getParentFolderId());
 	}
 
@@ -133,6 +132,20 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 
 		return DLUtil.getAbsolutePath(
 			portletRequest, dlFolder.getParentFolderId());
+	}
+
+	@Override
+	public String getSystemEventClassName() {
+		return Folder.class.getName();
+	}
+
+	@Override
+	public TrashEntry getTrashEntry(long classPK)
+		throws PortalException, SystemException {
+
+		DLFolder dlFolder = getDLFolder(classPK);
+
+		return dlFolder.getTrashEntry();
 	}
 
 	@Override
@@ -164,17 +177,14 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		return true;
 	}
 
+	@Override
 	public boolean isInTrash(long classPK)
 		throws PortalException, SystemException {
 
 		try {
 			DLFolder dlFolder = getDLFolder(classPK);
 
-			if (dlFolder.isInTrash() || dlFolder.isInTrashContainer()) {
-				return true;
-			}
-
-			return false;
+			return dlFolder.isInTrash();
 		}
 		catch (InvalidRepositoryException ire) {
 			return false;
@@ -185,19 +195,10 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 	public boolean isInTrashContainer(long classPK)
 		throws PortalException, SystemException {
 
-		DLFolder dlFolder = getDLFolder(classPK);
-
-		return dlFolder.isInTrashContainer();
-	}
-
-	@Override
-	public boolean isRestorable(long classPK)
-		throws PortalException, SystemException {
-
 		try {
 			DLFolder dlFolder = getDLFolder(classPK);
 
-			return !dlFolder.isInTrashContainer();
+			return dlFolder.isInTrashContainer();
 		}
 		catch (InvalidRepositoryException ire) {
 			return false;
@@ -205,28 +206,53 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 	}
 
 	@Override
-	public void moveEntry(
-			long classPK, long containerModelId, ServiceContext serviceContext)
+	public boolean isRestorable(long classPK)
 		throws PortalException, SystemException {
 
-		DLAppServiceUtil.moveFolder(classPK, containerModelId, serviceContext);
+		DLFolder dlFolder = fetchDLFolder(classPK);
+
+		if ((dlFolder == null) ||
+			((dlFolder.getParentFolderId() > 0) &&
+			 (DLFolderLocalServiceUtil.fetchFolder(
+				dlFolder.getParentFolderId()) == null))) {
+
+			return false;
+		}
+
+		return !dlFolder.isInTrashContainer();
+	}
+
+	@Override
+	public void moveEntry(
+			long userId, long classPK, long containerModelId,
+			ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		DLFolderLocalServiceUtil.moveFolder(
+			userId, classPK, containerModelId, serviceContext);
 	}
 
 	@Override
 	public void moveTrashEntry(
-			long classPK, long containerModelId, ServiceContext serviceContext)
+			long userId, long classPK, long containerModelId,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
-		DLAppServiceUtil.moveFolderFromTrash(
-			classPK, containerModelId, serviceContext);
+		Repository repository = getRepository(classPK);
+
+		DLAppHelperLocalServiceUtil.moveFolderFromTrash(
+			userId, repository.getFolder(classPK), containerModelId,
+			serviceContext);
 	}
 
-	public void restoreTrashEntries(long[] classPKs)
+	@Override
+	public void restoreTrashEntry(long userId, long classPK)
 		throws PortalException, SystemException {
 
-		for (long classPK : classPKs) {
-			DLAppServiceUtil.restoreFolderFromTrash(classPK);
-		}
+		Repository repository = getRepository(classPK);
+
+		DLAppHelperLocalServiceUtil.restoreFolderFromTrash(
+			userId, repository.getFolder(classPK));
 	}
 
 	@Override
@@ -238,6 +264,35 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		dlFolder.setName(name);
 
 		DLFolderLocalServiceUtil.updateDLFolder(dlFolder);
+	}
+
+	protected void checkDuplicateEntry(
+			long classPK, long trashEntryId, long containerModelId,
+			String originalTitle, String newName)
+		throws PortalException, SystemException {
+
+		DLFolder dlFolder = getDLFolder(classPK);
+
+		if (containerModelId == TrashEntryConstants.DEFAULT_CONTAINER_ID) {
+			containerModelId = dlFolder.getParentFolderId();
+		}
+
+		if (Validator.isNotNull(newName)) {
+			originalTitle = newName;
+		}
+
+		DLFolder duplicateDLFolder = DLFolderLocalServiceUtil.fetchFolder(
+			dlFolder.getGroupId(), containerModelId, originalTitle);
+
+		if (duplicateDLFolder != null) {
+			DuplicateEntryException dee = new DuplicateEntryException();
+
+			dee.setDuplicateEntryId(duplicateDLFolder.getFolderId());
+			dee.setOldName(duplicateDLFolder.getName());
+			dee.setTrashEntryId(trashEntryId);
+
+			throw dee;
+		}
 	}
 
 	@Override
@@ -262,6 +317,10 @@ public class DLFolderTrashHandler extends DLBaseTrashHandler {
 		throws PortalException, SystemException {
 
 		DLFolder dlFolder = getDLFolder(classPK);
+
+		if (dlFolder.isInHiddenFolder() && actionId.equals(ActionKeys.VIEW)) {
+			return false;
+		}
 
 		return DLFolderPermission.contains(
 			permissionChecker, dlFolder, actionId);

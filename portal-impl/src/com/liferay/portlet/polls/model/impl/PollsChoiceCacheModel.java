@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import java.util.Date;
+
 /**
  * The cache model class for representing PollsChoice in entity cache.
  *
@@ -36,12 +38,24 @@ public class PollsChoiceCacheModel implements CacheModel<PollsChoice>,
 	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(11);
+		StringBundler sb = new StringBundler(23);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
 		sb.append(", choiceId=");
 		sb.append(choiceId);
+		sb.append(", groupId=");
+		sb.append(groupId);
+		sb.append(", companyId=");
+		sb.append(companyId);
+		sb.append(", userId=");
+		sb.append(userId);
+		sb.append(", userName=");
+		sb.append(userName);
+		sb.append(", createDate=");
+		sb.append(createDate);
+		sb.append(", modifiedDate=");
+		sb.append(modifiedDate);
 		sb.append(", questionId=");
 		sb.append(questionId);
 		sb.append(", name=");
@@ -53,6 +67,7 @@ public class PollsChoiceCacheModel implements CacheModel<PollsChoice>,
 		return sb.toString();
 	}
 
+	@Override
 	public PollsChoice toEntityModel() {
 		PollsChoiceImpl pollsChoiceImpl = new PollsChoiceImpl();
 
@@ -64,6 +79,31 @@ public class PollsChoiceCacheModel implements CacheModel<PollsChoice>,
 		}
 
 		pollsChoiceImpl.setChoiceId(choiceId);
+		pollsChoiceImpl.setGroupId(groupId);
+		pollsChoiceImpl.setCompanyId(companyId);
+		pollsChoiceImpl.setUserId(userId);
+
+		if (userName == null) {
+			pollsChoiceImpl.setUserName(StringPool.BLANK);
+		}
+		else {
+			pollsChoiceImpl.setUserName(userName);
+		}
+
+		if (createDate == Long.MIN_VALUE) {
+			pollsChoiceImpl.setCreateDate(null);
+		}
+		else {
+			pollsChoiceImpl.setCreateDate(new Date(createDate));
+		}
+
+		if (modifiedDate == Long.MIN_VALUE) {
+			pollsChoiceImpl.setModifiedDate(null);
+		}
+		else {
+			pollsChoiceImpl.setModifiedDate(new Date(modifiedDate));
+		}
+
 		pollsChoiceImpl.setQuestionId(questionId);
 
 		if (name == null) {
@@ -85,14 +125,22 @@ public class PollsChoiceCacheModel implements CacheModel<PollsChoice>,
 		return pollsChoiceImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		uuid = objectInput.readUTF();
 		choiceId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
 		questionId = objectInput.readLong();
 		name = objectInput.readUTF();
 		description = objectInput.readUTF();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		if (uuid == null) {
@@ -103,6 +151,19 @@ public class PollsChoiceCacheModel implements CacheModel<PollsChoice>,
 		}
 
 		objectOutput.writeLong(choiceId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
 		objectOutput.writeLong(questionId);
 
 		if (name == null) {
@@ -122,6 +183,12 @@ public class PollsChoiceCacheModel implements CacheModel<PollsChoice>,
 
 	public String uuid;
 	public long choiceId;
+	public long groupId;
+	public long companyId;
+	public long userId;
+	public String userName;
+	public long createDate;
+	public long modifiedDate;
 	public long questionId;
 	public String name;
 	public String description;

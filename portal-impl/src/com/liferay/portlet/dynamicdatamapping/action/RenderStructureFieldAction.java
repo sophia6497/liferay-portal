@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,7 +25,6 @@ import com.liferay.portlet.dynamicdatamapping.util.DDMXSDUtil;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspFactory;
-import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
 
 import org.apache.struts.action.Action;
@@ -40,8 +39,8 @@ public class RenderStructureFieldAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		try {
@@ -51,20 +50,22 @@ public class RenderStructureFieldAction extends Action {
 			JspFactory jspFactory = JspFactory.getDefaultFactory();
 
 			PageContext pageContext = jspFactory.getPageContext(
-				getServlet(), request, response, null, true,
-				JspWriter.DEFAULT_BUFFER, true);
+				getServlet(), request, response, null, true, 0, true);
 
 			long classNameId = ParamUtil.getLong(request, "classNameId");
 			long classPK = ParamUtil.getLong(request, "classPK");
 			String fieldName = ParamUtil.getString(request, "fieldName");
 			String namespace = ParamUtil.getString(request, "namespace");
+			String portletNamespace = ParamUtil.getString(
+				request, "portletNamespace");
 			boolean readOnly = ParamUtil.getBoolean(request, "readOnly");
 
-			request.setAttribute("aui:form:namespace", namespace);
+			request.setAttribute("aui:form:portletNamespace", portletNamespace);
 
 			String fieldHTML = DDMXSDUtil.getFieldHTMLByName(
-				pageContext, classNameId, classPK, fieldName, null, null, null,
-				readOnly, themeDisplay.getLocale());
+				pageContext, classNameId, classPK, fieldName, null,
+				portletNamespace, namespace, null, readOnly,
+				themeDisplay.getLocale());
 
 			response.setContentType(ContentTypes.TEXT_HTML);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -99,7 +99,8 @@ public class VerifyUser extends VerifyProcess {
 			GroupLocalServiceUtil.addGroup(
 				user.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
 				User.class.getName(), user.getUserId(),
-				GroupConstants.DEFAULT_LIVE_GROUP_ID, null, null, 0,
+				GroupConstants.DEFAULT_LIVE_GROUP_ID, null, null, 0, true,
+				GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
 				StringPool.SLASH + user.getScreenName(), false, true, null);
 		}
 

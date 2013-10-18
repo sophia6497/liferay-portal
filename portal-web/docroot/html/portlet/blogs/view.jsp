@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -57,6 +57,12 @@ portletURL.setParameter("struts_action", "/blogs/view");
 		assetEntryQuery.setVisible(Boolean.TRUE);
 
 		total = AssetEntryServiceUtil.getEntriesCount(assetEntryQuery);
+
+		searchContainer.setTotal(total);
+
+		assetEntryQuery.setEnd(searchContainer.getEnd());
+		assetEntryQuery.setStart(searchContainer.getStart());
+
 		results = AssetEntryServiceUtil.getEntries(assetEntryQuery);
 	}
 	else {
@@ -67,18 +73,14 @@ portletURL.setParameter("struts_action", "/blogs/view");
 		}
 
 		total = BlogsEntryServiceUtil.getGroupEntriesCount(scopeGroupId, status);
+
+		searchContainer.setTotal(total);
+
 		results = BlogsEntryServiceUtil.getGroupEntries(scopeGroupId, status, searchContainer.getStart(), searchContainer.getEnd());
 	}
 
-	searchContainer.setTotal(total);
 	searchContainer.setResults(results);
 	%>
 
 	<%@ include file="/html/portlet/blogs/view_entries.jspf" %>
 </aui:form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm1.<portlet:namespace />keywords);
-	</aui:script>
-</c:if>

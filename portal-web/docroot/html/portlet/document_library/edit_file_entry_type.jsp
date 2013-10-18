@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -74,7 +74,7 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 	<liferay-ui:header
 		backURL="<%= redirect %>"
 		localizeTitle="<%= (fileEntryType == null) %>"
-		title='<%= (fileEntryType == null) ? "new-document-type" : fileEntryType.getName() %>'
+		title='<%= (fileEntryType == null) ? "new-document-type" : fileEntryType.getName(locale) %>'
 	/>
 
 	<liferay-ui:error exception="<%= DuplicateFileEntryTypeException.class %>" message="please-enter-a-unique-document-type-name" />
@@ -86,9 +86,17 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 	<aui:model-context bean="<%= fileEntryType %>" model="<%= DLFileEntryType.class %>" />
 
 	<aui:fieldset cssClass="edit-file-entry-type">
+		<c:if test="<%= DDMStorageLinkLocalServiceUtil.getStructureStorageLinksCount(ddmStructureId) > 0 %>">
+			<div class="alert alert-warning">
+				<liferay-ui:message key="there-are-content-references-to-this-structure.-you-may-lose-data-if-a-field-name-is-renamed-or-removed" />
+			</div>
+		</c:if>
+
 		<aui:input name="name" />
 
-		<aui:input name="description" />
+		<liferay-ui:panel collapsible="<%= true %>" extended="<%= false %>" id="detailsMetadataFields" persistState="<%= true %>" title="details">
+			<aui:input name="description" />
+		</liferay-ui:panel>
 
 		<liferay-ui:panel collapsible="<%= true %>" extended="<%= false %>" id="mainMetadataFields" persistState="<%= true %>" title="main-metadata-fields">
 			<%@ include file="/html/portlet/dynamic_data_mapping/form_builder.jspf" %>
@@ -97,10 +105,10 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 		<liferay-ui:panel collapsible="<%= true %>" extended="<%= false %>" id="additionalMetadataFields" persistState="<%= true %>" title="additional-metadata-fields">
 			<liferay-ui:search-container
 				headerNames='<%= (fileEntryType == null) ? "name,null" : "name" %>'
+				total="<%= (ddmStructures != null) ? ddmStructures.size() : 0 %>"
 			>
 				<liferay-ui:search-container-results
 					results="<%= ddmStructures %>"
-					total="<%= ddmStructures != null ? ddmStructures.size() : 0 %>"
 				/>
 
 				<liferay-ui:search-container-row
@@ -124,12 +132,21 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 
 			<liferay-ui:icon
 				cssClass="modify-link select-metadata"
-				image="add"
+				iconClass="icon-search"
 				label="<%= true %>"
+				linkCssClass="btn"
 				message="select-metadata-set"
 				url='<%= "javascript:" + renderResponse.getNamespace() + "openDDMStructureSelector();" %>'
 			/>
 		</liferay-ui:panel>
+
+		<c:if test="<%= (fileEntryType == null) %>">
+			<aui:field-wrapper label="permissions">
+				<liferay-ui:input-permissions
+					modelName="<%= DLFileEntryType.class.getName() %>"
+				/>
+			</aui:field-wrapper>
+		</c:if>
 	</aui:fieldset>
 </aui:form>
 
@@ -143,19 +160,29 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 	function <portlet:namespace />openDDMStructureSelector() {
 		Liferay.Util.openDDMPortlet(
 			{
-				ddmResource: '<%= ddmResource %>',
+				basePortletURL: '<%= PortletURLFactoryUtil.create(request, PortletKeys.DYNAMIC_DATA_MAPPING, themeDisplay.getPlid(), PortletRequest.RENDER_PHASE) %>',
+				classPK: '<%= ddmStructureId %>',
 				dialog: {
-					width:680
+					destroyOnHide: true
 				},
-				saveCallback: '<%= renderResponse.getNamespace() + "selectDDMStructure" %>',
+				eventName: '<portlet:namespace />selectDDMStructure',
+				refererPortletName: '<%= PortletKeys.DOCUMENT_LIBRARY %>',
 				showGlobalScope: true,
 				showManageTemplates: false,
 				showToolbar: true,
-				storageType: 'xml',
-				structureName: '<%= UnicodeLanguageUtil.get(pageContext, "metadata-sets") %>',
-				structureType: 'com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata',
 				struts_action: '/dynamic_data_mapping/select_structure',
 				title: '<%= UnicodeLanguageUtil.get(pageContext, "metadata-sets") %>'
+			},
+			function(event) {
+				var A = AUI();
+
+				var searchContainer = Liferay.SearchContainer.get('<portlet:namespace />ddmStructuresSearchContainer');
+
+				var ddmStructureLink = '<a class="modify-link" data-rowId="' + event.ddmstructureid + '" href="javascript:;"><%= UnicodeFormatter.toString(removeStructureIcon) %></a>';
+
+				searchContainer.addRow([event.name, ddmStructureLink], event.ddmstructureid);
+
+				searchContainer.updateDataStore();
 			}
 		);
 	}
@@ -169,27 +196,6 @@ String scopeAvailableFields = ParamUtil.getString(request, "scopeAvailableFields
 			submitForm(document.<portlet:namespace />fm);
 		},
 		['liferay-portlet-dynamic-data-mapping']
-	);
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />selectDDMStructure',
-		function(ddmStructureId, ddmStructureName, dialog) {
-			var A = AUI();
-
-			var searchContainer = Liferay.SearchContainer.get('<portlet:namespace />ddmStructuresSearchContainer');
-
-			var ddmStructureLink = '<a class="modify-link" data-rowId="' + ddmStructureId + '" href="javascript:;"><%= UnicodeFormatter.toString(removeStructureIcon) %></a>';
-
-			searchContainer.addRow([ddmStructureName, ddmStructureLink], ddmStructureId);
-
-			searchContainer.updateDataStore();
-
-			if (dialog) {
-				dialog.close();
-			}
-		},
-		['liferay-search-container']
 	);
 </aui:script>
 

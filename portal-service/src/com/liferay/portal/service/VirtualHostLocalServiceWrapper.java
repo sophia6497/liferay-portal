@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,10 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link VirtualHostLocalService}.
- * </p>
+ * Provides a wrapper for {@link VirtualHostLocalService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       VirtualHostLocalService
+ * @author Brian Wing Shun Chan
+ * @see VirtualHostLocalService
  * @generated
  */
 public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
@@ -37,6 +35,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the virtual host that was added
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.VirtualHost addVirtualHost(
 		com.liferay.portal.model.VirtualHost virtualHost)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -49,6 +48,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @param virtualHostId the primary key for the new virtual host
 	* @return the new virtual host
 	*/
+	@Override
 	public com.liferay.portal.model.VirtualHost createVirtualHost(
 		long virtualHostId) {
 		return _virtualHostLocalService.createVirtualHost(virtualHostId);
@@ -62,6 +62,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @throws PortalException if a virtual host with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.VirtualHost deleteVirtualHost(
 		long virtualHostId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -76,12 +77,14 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the virtual host that was removed
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.VirtualHost deleteVirtualHost(
 		com.liferay.portal.model.VirtualHost virtualHost)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _virtualHostLocalService.deleteVirtualHost(virtualHost);
 	}
 
+	@Override
 	public com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
 		return _virtualHostLocalService.dynamicQuery();
 	}
@@ -93,6 +96,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the matching rows
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	@SuppressWarnings("rawtypes")
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
@@ -113,6 +117,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the range of matching rows
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	@SuppressWarnings("rawtypes")
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
@@ -134,6 +139,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the ordered range of matching rows
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	@SuppressWarnings("rawtypes")
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
@@ -151,12 +157,31 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the number of rows that match the dynamic query
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public long dynamicQueryCount(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _virtualHostLocalService.dynamicQueryCount(dynamicQuery);
 	}
 
+	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _virtualHostLocalService.dynamicQueryCount(dynamicQuery,
+			projection);
+	}
+
+	@Override
 	public com.liferay.portal.model.VirtualHost fetchVirtualHost(
 		long virtualHostId)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -171,6 +196,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @throws PortalException if a virtual host with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.VirtualHost getVirtualHost(
 		long virtualHostId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -178,6 +204,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 		return _virtualHostLocalService.getVirtualHost(virtualHostId);
 	}
 
+	@Override
 	public com.liferay.portal.model.PersistedModel getPersistedModel(
 		java.io.Serializable primaryKeyObj)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -197,6 +224,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the range of virtual hosts
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.VirtualHost> getVirtualHosts(
 		int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -209,6 +237,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the number of virtual hosts
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getVirtualHostsCount()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _virtualHostLocalService.getVirtualHostsCount();
@@ -221,6 +250,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	* @return the virtual host that was updated
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.VirtualHost updateVirtualHost(
 		com.liferay.portal.model.VirtualHost virtualHost)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -232,6 +262,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _virtualHostLocalService.getBeanIdentifier();
 	}
@@ -241,22 +272,26 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_virtualHostLocalService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portal.model.VirtualHost fetchVirtualHost(
 		long companyId, long layoutSetId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _virtualHostLocalService.fetchVirtualHost(companyId, layoutSetId);
 	}
 
+	@Override
 	public com.liferay.portal.model.VirtualHost fetchVirtualHost(
 		java.lang.String hostname)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _virtualHostLocalService.fetchVirtualHost(hostname);
 	}
 
+	@Override
 	public com.liferay.portal.model.VirtualHost getVirtualHost(long companyId,
 		long layoutSetId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -264,6 +299,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 		return _virtualHostLocalService.getVirtualHost(companyId, layoutSetId);
 	}
 
+	@Override
 	public com.liferay.portal.model.VirtualHost getVirtualHost(
 		java.lang.String hostname)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -271,6 +307,7 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 		return _virtualHostLocalService.getVirtualHost(hostname);
 	}
 
+	@Override
 	public com.liferay.portal.model.VirtualHost updateVirtualHost(
 		long companyId, long layoutSetId, java.lang.String hostname)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -279,24 +316,26 @@ public class VirtualHostLocalServiceWrapper implements VirtualHostLocalService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public VirtualHostLocalService getWrappedVirtualHostLocalService() {
 		return _virtualHostLocalService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedVirtualHostLocalService(
 		VirtualHostLocalService virtualHostLocalService) {
 		_virtualHostLocalService = virtualHostLocalService;
 	}
 
+	@Override
 	public VirtualHostLocalService getWrappedService() {
 		return _virtualHostLocalService;
 	}
 
+	@Override
 	public void setWrappedService(
 		VirtualHostLocalService virtualHostLocalService) {
 		_virtualHostLocalService = virtualHostLocalService;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -39,6 +39,7 @@ import java.io.InputStream;
  * methods can be used in plugins and other portlets, as shown below.
  * </p>
  *
+ * <p>
  * <pre>
  * <code>
  * long repositoryId = CompanyConstants.SYSTEM;
@@ -54,6 +55,7 @@ import java.io.InputStream;
  * companyId, repositoryId, dirName + "/" + fileName, file);
  * </code>
  * </pre>
+ * </p>
  *
  * @author Brian Wing Shun Chan
  * @author Alexander Chow

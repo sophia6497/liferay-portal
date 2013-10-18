@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,13 +14,7 @@
  */
 --%>
 
-<%@ include file="/html/taglib/init.jsp" %>
-
-<%@ page import="com.liferay.portlet.expando.model.ExpandoBridge" %>
-<%@ page import="com.liferay.portlet.expando.model.ExpandoColumnConstants" %>
-<%@ page import="com.liferay.portlet.expando.model.ExpandoTableConstants" %>
-<%@ page import="com.liferay.portlet.expando.service.permission.ExpandoColumnPermissionUtil" %>
-<%@ page import="com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil" %>
+<%@ include file="/html/taglib/ui/custom_attribute/init.jsp" %>
 
 <%
 String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_custom_attribute_page") + StringPool.UNDERLINE;
@@ -165,10 +159,8 @@ ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(company.
 									disabled="<%= false %>"
 									firstDayOfWeek="<%= valueDate.getFirstDayOfWeek() - 1 %>"
 									monthParam='<%= fieldParam + "Month" %>'
-									monthValue='<%= month %>'
+									monthValue="<%= month %>"
 									yearParam='<%= fieldParam + "Year" %>'
-									yearRangeEnd="<%= valueDate.get(Calendar.YEAR) + 100 %>"
-									yearRangeStart="<%= valueDate.get(Calendar.YEAR) - 100 %>"
 									yearValue="<%= year %>"
 								/>
 
@@ -178,7 +170,6 @@ ExpandoBridge expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(company.
 									disabled="<%= false %>"
 									hourParam='<%= fieldParam + "Hour" %>'
 									hourValue="<%= hour %>"
-									minuteInterval="1"
 									minuteParam='<%= fieldParam + "Minute" %>'
 									minuteValue="<%= minute %>"
 								/>

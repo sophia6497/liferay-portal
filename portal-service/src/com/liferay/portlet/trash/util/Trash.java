@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,8 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface Trash {
 
+	public static final String TRASH_TIME_SEPARATOR = "_TRASH_TIME_";
+
 	public void addBaseModelBreadcrumbEntries(
 			HttpServletRequest request, String className, long classPK,
 			PortletURL containerModelURL)
@@ -57,13 +59,22 @@ public interface Trash {
 
 	public int getMaxAge(Group group) throws PortalException, SystemException;
 
-	public String getNewName(ThemeDisplay themeDisplay, String oldName);
+	public String getNewName(String oldName, String token);
+
+	public String getNewName(
+			ThemeDisplay themeDisplay, String className, long classPK,
+			String oldName)
+		throws PortalException, SystemException;
 
 	public String getOriginalTitle(String title);
 
 	public String getTrashTime(String title, String separator);
 
 	public String getTrashTitle(long trashEntryId);
+
+	public PortletURL getViewContentURL(
+			HttpServletRequest request, String className, long classPK)
+		throws PortalException, SystemException;
 
 	public boolean isInTrash(String className, long classPK)
 		throws PortalException, SystemException;

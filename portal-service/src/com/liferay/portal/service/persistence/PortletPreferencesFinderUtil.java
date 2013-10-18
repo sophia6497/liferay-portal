@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,6 +21,22 @@ import com.liferay.portal.kernel.util.ReferenceRegistry;
  * @author Brian Wing Shun Chan
  */
 public class PortletPreferencesFinderUtil {
+	public static long countByO_O_P(long ownerId, int ownerType,
+		java.lang.String portletId, boolean excludeDefaultPreferences)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder()
+				   .countByO_O_P(ownerId, ownerType, portletId,
+			excludeDefaultPreferences);
+	}
+
+	public static long countByO_O_P_P_P(long ownerId, int ownerType, long plid,
+		java.lang.String portletId, boolean excludeDefaultPreferences)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder()
+				   .countByO_O_P_P_P(ownerId, ownerType, plid, portletId,
+			excludeDefaultPreferences);
+	}
+
 	public static java.util.List<com.liferay.portal.model.PortletPreferences> findByPortletId(
 		java.lang.String portletId)
 		throws com.liferay.portal.kernel.exception.SystemException {

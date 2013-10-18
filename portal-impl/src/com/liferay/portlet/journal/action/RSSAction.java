@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -188,26 +188,24 @@ public class RSSAction extends com.liferay.portal.struts.RSSAction {
 
 			return PortalUtil.getLayoutFriendlyURL(hitLayout, themeDisplay);
 		}
-		else {
-			long plid = PortalUtil.getPlidFromFriendlyURL(
-				feed.getCompanyId(), feed.getTargetLayoutFriendlyUrl());
 
-			String portletId = PortletKeys.JOURNAL_CONTENT;
+		long plid = PortalUtil.getPlidFromFriendlyURL(
+			feed.getCompanyId(), feed.getTargetLayoutFriendlyUrl());
 
-			if (Validator.isNotNull(feed.getTargetPortletId())) {
-				portletId = feed.getTargetPortletId();
-			}
+		String portletId = PortletKeys.JOURNAL_CONTENT;
 
-			PortletURL entryURL = new PortletURLImpl(
-				resourceRequest, portletId, plid, PortletRequest.RENDER_PHASE);
-
-			entryURL.setParameter("struts_action", "/journal_content/view");
-			entryURL.setParameter(
-				"groupId", String.valueOf(article.getGroupId()));
-			entryURL.setParameter("articleId", article.getArticleId());
-
-			return entryURL.toString();
+		if (Validator.isNotNull(feed.getTargetPortletId())) {
+			portletId = feed.getTargetPortletId();
 		}
+
+		PortletURL entryURL = new PortletURLImpl(
+			resourceRequest, portletId, plid, PortletRequest.RENDER_PHASE);
+
+		entryURL.setParameter("struts_action", "/journal_content/view");
+		entryURL.setParameter("groupId", String.valueOf(article.getGroupId()));
+		entryURL.setParameter("articleId", article.getArticleId());
+
+		return entryURL.toString();
 	}
 
 	@Override

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,28 +17,38 @@ package com.liferay.portal.verify;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.service.ResourceLocalServiceUtil;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.portlet.asset.NoSuchEntryException;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
+import com.liferay.portlet.dynamicdatamapping.NoSuchStructureException;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalArticleConstants;
 import com.liferay.portlet.journal.model.JournalContentSearch;
+import com.liferay.portlet.journal.model.JournalFolder;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalContentSearchLocalServiceUtil;
+import com.liferay.portlet.journal.service.JournalFolderLocalServiceUtil;
+import com.liferay.portlet.journal.service.persistence.JournalArticleActionableDynamicQuery;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.portlet.PortletPreferences;
 
@@ -54,115 +64,72 @@ public class VerifyJournal extends VerifyProcess {
 
 	@Override
 	protected void doVerify() throws Exception {
-
-		// Oracle new line
-
+		updateFolderAssets();
 		verifyOracleNewLine();
+		verifyPermissionsAndAssets();
+		verifySearch();
+		verifyTree();
+		verifyURLTitle();
+	}
 
-		// Articles
+	protected void updateFolderAssets() throws Exception {
+		List<JournalFolder> folders =
+			JournalFolderLocalServiceUtil.getNoAssetFolders();
 
-		List<JournalArticle> articles =
-			JournalArticleLocalServiceUtil.getArticles();
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				"Processing " + folders.size() + " folders with no asset");
+		}
 
-		for (JournalArticle article : articles) {
-			long groupId = article.getGroupId();
-			String articleId = article.getArticleId();
-			double version = article.getVersion();
-			String structureId = article.getStructureId();
-
-			if (article.getResourcePrimKey() <= 0) {
-				article =
-					JournalArticleLocalServiceUtil.checkArticleResourcePrimKey(
-						groupId, articleId, version);
-			}
-
-			ResourceLocalServiceUtil.addResources(
-				article.getCompanyId(), 0, 0, JournalArticle.class.getName(),
-				article.getResourcePrimKey(), false, false, false);
-
+		for (JournalFolder folder : folders) {
 			try {
-				AssetEntry assetEntry = AssetEntryLocalServiceUtil.getEntry(
-					JournalArticle.class.getName(),
-					article.getResourcePrimKey());
-
-				if ((article.getStatus() == WorkflowConstants.STATUS_DRAFT) &&
-					(article.getVersion() ==
-						JournalArticleConstants.VERSION_DEFAULT)) {
-
-					AssetEntryLocalServiceUtil.updateEntry(
-						assetEntry.getClassName(), assetEntry.getClassPK(),
-						null, assetEntry.isVisible());
+				JournalFolderLocalServiceUtil.updateAsset(
+					folder.getUserId(), folder, null, null, null);
+			}
+			catch (Exception e) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to update asset for folder " +
+							folder.getFolderId() + ": " + e.getMessage());
 				}
 			}
-			catch (NoSuchEntryException nsee) {
-				try {
-					JournalArticleLocalServiceUtil.updateAsset(
-						article.getUserId(), article, null, null, null);
-				}
-				catch (Exception e) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Unable to update asset for article " +
-								article.getId() + ": " + e.getMessage());
-					}
-				}
-			}
-
-			String content = GetterUtil.getString(article.getContent());
-
-			String newContent = HtmlUtil.replaceMsWordCharacters(content);
-
-			if (Validator.isNotNull(structureId)) {
-				/*JournalStructure structure =
-					JournalStructureLocalServiceUtil.getStructure(
-						groupId, structureId);
-
-				newContent = JournalUtil.removeOldContent(
-					newContent, structure.getXsd());*/
-			}
-
-			if (!content.equals(newContent)) {
-				JournalArticleLocalServiceUtil.updateContent(
-					groupId, articleId, version, newContent);
-			}
-
-			JournalArticleLocalServiceUtil.checkStructure(
-				groupId, articleId, version);
 		}
 
 		if (_log.isDebugEnabled()) {
-			_log.debug("Permissions and assets verified for articles");
+			_log.debug("Assets verified for folders");
 		}
-
-		// Content searches
-
-		verifyContentSearch();
 	}
 
-	protected void verifyContentSearch() throws Exception {
+	protected void updateURLTitle(
+			long groupId, String articleId, String urlTitle)
+		throws Exception {
+
+		String normalizedURLTitle = FriendlyURLNormalizerUtil.normalize(
+			urlTitle, _friendlyURLPattern);
+
+		if (urlTitle.equals(normalizedURLTitle)) {
+			return;
+		}
+
+		normalizedURLTitle = JournalArticleLocalServiceUtil.getUniqueUrlTitle(
+			groupId, articleId, normalizedURLTitle);
+
 		Connection con = null;
 		PreparedStatement ps = null;
-		ResultSet rs = null;
 
 		try {
 			con = DataAccess.getUpgradeOptimizedConnection();
 
 			ps = con.prepareStatement(
-				"select groupId, portletId from JournalContentSearch group " +
-					"by groupId, portletId having count(groupId) > 1 and " +
-						"count(portletId) > 1");
+				"update JournalArticle set urlTitle = ? where urlTitle = ?");
 
-			rs = ps.executeQuery();
+			ps.setString(1, normalizedURLTitle);
+			ps.setString(2, urlTitle);
 
-			while (rs.next()) {
-				long groupId = rs.getLong("groupId");
-				String portletId = rs.getString("portletId");
-
-				verifyContentSearch(groupId, portletId);
-			}
+			ps.executeUpdate();
 		}
 		finally {
-			DataAccess.cleanUp(con, ps, rs);
+			DataAccess.cleanUp(con, ps);
 		}
 	}
 
@@ -262,7 +229,7 @@ public class VerifyJournal extends VerifyProcess {
 
 		if (!checkNewLine) {
 			if (_log.isInfoEnabled()) {
-				_log.debug("Do not fix oracle new line");
+				_log.info("Do not fix oracle new line");
 			}
 
 			return;
@@ -272,9 +239,173 @@ public class VerifyJournal extends VerifyProcess {
 				_log.info("Fix oracle new line");
 			}
 		}
+	}
 
+	protected void verifyPermissionsAndAssets() throws Exception {
+		ActionableDynamicQuery actionableDynamicQuery =
+			new JournalArticleActionableDynamicQuery() {
+
+			@Override
+			protected void performAction(Object object)
+				throws PortalException, SystemException {
+
+				JournalArticle article = (JournalArticle)object;
+
+				long groupId = article.getGroupId();
+				String articleId = article.getArticleId();
+				double version = article.getVersion();
+				String structureId = article.getStructureId();
+
+				if (article.getResourcePrimKey() <= 0) {
+					article =
+						JournalArticleLocalServiceUtil.
+							checkArticleResourcePrimKey(
+								groupId, articleId, version);
+				}
+
+				ResourceLocalServiceUtil.addResources(
+					article.getCompanyId(), 0, 0,
+					JournalArticle.class.getName(),
+					article.getResourcePrimKey(), false, false, false);
+
+				AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(
+					JournalArticle.class.getName(),
+					article.getResourcePrimKey());
+
+				if (assetEntry == null) {
+					try {
+						JournalArticleLocalServiceUtil.updateAsset(
+							article.getUserId(), article, null, null, null);
+					}
+					catch (Exception e) {
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								"Unable to update asset for article " +
+									article.getId() + ": " + e.getMessage());
+						}
+					}
+				}
+				else if ((article.getStatus() ==
+							WorkflowConstants.STATUS_DRAFT) &&
+						 (article.getVersion() ==
+							JournalArticleConstants.VERSION_DEFAULT)) {
+
+					AssetEntryLocalServiceUtil.updateEntry(
+						assetEntry.getClassName(), assetEntry.getClassPK(),
+						null, assetEntry.isVisible());
+				}
+
+				String content = GetterUtil.getString(article.getContent());
+
+				String newContent = HtmlUtil.replaceMsWordCharacters(content);
+
+				if (Validator.isNotNull(structureId)) {
+					/*JournalStructure structure =
+						JournalStructureLocalServiceUtil.getStructure(
+							groupId, structureId);
+
+					newContent = JournalUtil.removeOldContent(
+						newContent, structure.getXsd());*/
+				}
+
+				if (!content.equals(newContent)) {
+					JournalArticleLocalServiceUtil.updateContent(
+						groupId, articleId, version, newContent);
+				}
+
+				try {
+					JournalArticleLocalServiceUtil.checkStructure(
+						groupId, articleId, version);
+				}
+				catch (NoSuchStructureException nsse) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							"Removing reference to missing structure for " +
+								"article " + article.getId());
+					}
+
+					article.setStructureId(StringPool.BLANK);
+					article.setTemplateId(StringPool.BLANK);
+
+					JournalArticleLocalServiceUtil.updateJournalArticle(
+						article);
+				}
+			}
+
+		};
+
+		actionableDynamicQuery.performActions();
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Permissions and assets verified for articles");
+		}
+	}
+
+	protected void verifySearch() throws Exception {
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"select groupId, portletId from JournalContentSearch group " +
+					"by groupId, portletId having count(groupId) > 1 and " +
+						"count(portletId) > 1");
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				long groupId = rs.getLong("groupId");
+				String portletId = rs.getString("portletId");
+
+				verifyContentSearch(groupId, portletId);
+			}
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
+	}
+
+	protected void verifyTree() throws Exception {
+		long[] companyIds = PortalInstances.getCompanyIdsBySQL();
+
+		for (long companyId : companyIds) {
+			JournalArticleLocalServiceUtil.rebuildTree(companyId);
+			JournalFolderLocalServiceUtil.rebuildTree(companyId);
+		}
+	}
+
+	protected void verifyURLTitle() throws Exception {
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"select distinct groupId, articleId, urlTitle from " +
+					"JournalArticle");
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				long groupId = rs.getLong("groupId");
+				String articleId = rs.getString("articleId");
+				String urlTitle = rs.getString("urlTitle");
+
+				updateURLTitle(groupId, articleId, urlTitle);
+			}
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(VerifyJournal.class);
+
+	private static Pattern _friendlyURLPattern = Pattern.compile("[^a-z0-9_-]");
 
 }

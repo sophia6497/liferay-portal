@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -34,6 +35,8 @@ import com.liferay.portlet.blogs.service.permission.BlogsPermission;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
+import javax.portlet.WindowState;
+import javax.portlet.WindowStateException;
 
 /**
  * @author Jorge Ferrer
@@ -43,16 +46,20 @@ import javax.portlet.PortletURL;
  */
 public class BlogsEntryAssetRendererFactory extends BaseAssetRendererFactory {
 
-	public static final String CLASS_NAME = BlogsEntry.class.getName();
-
 	public static final String TYPE = "blog";
 
+	@Override
 	public AssetRenderer getAssetRenderer(long classPK, int type)
 		throws PortalException, SystemException {
 
 		BlogsEntry entry = BlogsEntryLocalServiceUtil.getEntry(classPK);
 
-		return new BlogsEntryAssetRenderer(entry);
+		BlogsEntryAssetRenderer blogsEntryAssetRenderer =
+			new BlogsEntryAssetRenderer(entry);
+
+		blogsEntryAssetRenderer.setAssetRendererType(type);
+
+		return blogsEntryAssetRenderer;
 	}
 
 	@Override
@@ -64,10 +71,12 @@ public class BlogsEntryAssetRendererFactory extends BaseAssetRendererFactory {
 		return new BlogsEntryAssetRenderer(entry);
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return BlogsEntry.class.getName();
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}
@@ -96,6 +105,24 @@ public class BlogsEntryAssetRendererFactory extends BaseAssetRendererFactory {
 		portletURL.setParameter("struts_action", "/blogs/edit_entry");
 
 		return portletURL;
+	}
+
+	@Override
+	public PortletURL getURLView(
+		LiferayPortletResponse liferayPortletResponse,
+		WindowState windowState) {
+
+		LiferayPortletURL liferayPortletURL =
+			liferayPortletResponse.createLiferayPortletURL(
+				PortletKeys.BLOGS, PortletRequest.RENDER_PHASE);
+
+		try {
+			liferayPortletURL.setWindowState(windowState);
+		}
+		catch (WindowStateException wse) {
+		}
+
+		return liferayPortletURL;
 	}
 
 	@Override

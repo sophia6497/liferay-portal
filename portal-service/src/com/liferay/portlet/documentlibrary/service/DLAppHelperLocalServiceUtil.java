@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,11 +18,12 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the d l app helper local service. This utility wraps {@link com.liferay.portlet.documentlibrary.service.impl.DLAppHelperLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for DLAppHelper. This utility wraps
+ * {@link com.liferay.portlet.documentlibrary.service.impl.DLAppHelperLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see DLAppHelperLocalService
@@ -121,7 +122,8 @@ public class DLAppHelperLocalServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #getFileShortcuts(long, long, boolean, int)}
+	* @deprecated As of 6.2.0, replaced by {@link #getFileShortcuts(long, long,
+	boolean, int)}
 	*/
 	public static java.util.List<com.liferay.portlet.documentlibrary.model.DLFileShortcut> getFileShortcuts(
 		long groupId, long folderId, int status)
@@ -137,7 +139,8 @@ public class DLAppHelperLocalServiceUtil {
 	}
 
 	/**
-	* @deprecated {@link #getFileShortcutsCount(long, long, boolean, int)}
+	* @deprecated As of 6.2.0, replaced by {@link #getFileShortcutsCount(long,
+	long, boolean, int)}
 	*/
 	public static int getFileShortcutsCount(long groupId, long folderId,
 		int status) throws com.liferay.portal.kernel.exception.SystemException {
@@ -146,6 +149,15 @@ public class DLAppHelperLocalServiceUtil {
 
 	public static java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getNoAssetFileEntries() {
 		return getService().getNoAssetFileEntries();
+	}
+
+	public static void moveDependentsToTrash(
+		java.util.List<java.lang.Object> dlFileEntriesAndDLFolders,
+		long trashEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.moveDependentsToTrash(dlFileEntriesAndDLFolders, trashEntryId);
 	}
 
 	public static void moveFileEntry(
@@ -215,8 +227,7 @@ public class DLAppHelperLocalServiceUtil {
 
 	public static void moveFolder(
 		com.liferay.portal.kernel.repository.model.Folder folder)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.SystemException {
 		getService().moveFolder(folder);
 	}
 
@@ -245,6 +256,28 @@ public class DLAppHelperLocalServiceUtil {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService().moveFolderToTrash(userId, folder);
+	}
+
+	public static void registerDLSyncEventCallback(java.lang.String event,
+		com.liferay.portal.kernel.repository.model.FileEntry fileEntry)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService().registerDLSyncEventCallback(event, fileEntry);
+	}
+
+	public static void registerDLSyncEventCallback(java.lang.String event,
+		com.liferay.portal.kernel.repository.model.Folder folder)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService().registerDLSyncEventCallback(event, folder);
+	}
+
+	public static void restoreDependentsFromTrash(
+		java.util.List<java.lang.Object> dlFileEntriesAndDLFolders,
+		long trashEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.restoreDependentsFromTrash(dlFileEntriesAndDLFolders, trashEntryId);
 	}
 
 	public static void restoreFileEntryFromTrash(long userId,
@@ -301,15 +334,6 @@ public class DLAppHelperLocalServiceUtil {
 		return getService()
 				   .updateAsset(userId, folder, assetCategoryIds,
 			assetTagNames, assetLinkEntryIds);
-	}
-
-	public static void updateDependentStatus(
-		com.liferay.portal.model.User user,
-		java.util.List<java.lang.Object> dlFileEntriesAndDLFolders, int status)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		getService()
-			.updateDependentStatus(user, dlFileEntriesAndDLFolders, status);
 	}
 
 	public static void updateFileEntry(long userId,
@@ -369,7 +393,7 @@ public class DLAppHelperLocalServiceUtil {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public void setService(DLAppHelperLocalService service) {
 	}

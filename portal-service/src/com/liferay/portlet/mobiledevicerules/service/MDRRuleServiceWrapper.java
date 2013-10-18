@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.mobiledevicerules.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link MDRRuleService}.
- * </p>
+ * Provides a wrapper for {@link MDRRuleService}.
  *
- * @author    Edward C. Han
- * @see       MDRRuleService
+ * @author Edward C. Han
+ * @see MDRRuleService
  * @generated
  */
 public class MDRRuleServiceWrapper implements MDRRuleService,
@@ -36,6 +34,7 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _mdrRuleService.getBeanIdentifier();
 	}
@@ -45,10 +44,12 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_mdrRuleService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portlet.mobiledevicerules.model.MDRRule addRule(
 		long ruleGroupId,
 		java.util.Map<java.util.Locale, java.lang.String> nameMap,
@@ -61,6 +62,7 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 			type, typeSettings, serviceContext);
 	}
 
+	@Override
 	public com.liferay.portlet.mobiledevicerules.model.MDRRule addRule(
 		long ruleGroupId,
 		java.util.Map<java.util.Locale, java.lang.String> nameMap,
@@ -74,12 +76,14 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 			type, typeSettings, serviceContext);
 	}
 
+	@Override
 	public void deleteRule(long ruleId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_mdrRuleService.deleteRule(ruleId);
 	}
 
+	@Override
 	public com.liferay.portlet.mobiledevicerules.model.MDRRule fetchRule(
 		long ruleId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -87,6 +91,7 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 		return _mdrRuleService.fetchRule(ruleId);
 	}
 
+	@Override
 	public com.liferay.portlet.mobiledevicerules.model.MDRRule getRule(
 		long ruleId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -94,6 +99,7 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 		return _mdrRuleService.getRule(ruleId);
 	}
 
+	@Override
 	public com.liferay.portlet.mobiledevicerules.model.MDRRule updateRule(
 		long ruleId, java.util.Map<java.util.Locale, java.lang.String> nameMap,
 		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
@@ -105,6 +111,7 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 			type, typeSettings, serviceContext);
 	}
 
+	@Override
 	public com.liferay.portlet.mobiledevicerules.model.MDRRule updateRule(
 		long ruleId, java.util.Map<java.util.Locale, java.lang.String> nameMap,
 		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
@@ -118,23 +125,25 @@ public class MDRRuleServiceWrapper implements MDRRuleService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public MDRRuleService getWrappedMDRRuleService() {
 		return _mdrRuleService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedMDRRuleService(MDRRuleService mdrRuleService) {
 		_mdrRuleService = mdrRuleService;
 	}
 
+	@Override
 	public MDRRuleService getWrappedService() {
 		return _mdrRuleService;
 	}
 
+	@Override
 	public void setWrappedService(MDRRuleService mdrRuleService) {
 		_mdrRuleService = mdrRuleService;
 	}

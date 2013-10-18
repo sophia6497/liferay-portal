@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.announcements.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link AnnouncementsEntryService}.
- * </p>
+ * Provides a wrapper for {@link AnnouncementsEntryService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       AnnouncementsEntryService
+ * @author Brian Wing Shun Chan
+ * @see AnnouncementsEntryService
  * @generated
  */
 public class AnnouncementsEntryServiceWrapper
@@ -38,6 +36,7 @@ public class AnnouncementsEntryServiceWrapper
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _announcementsEntryService.getBeanIdentifier();
 	}
@@ -47,10 +46,36 @@ public class AnnouncementsEntryServiceWrapper
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_announcementsEntryService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
+	public com.liferay.portlet.announcements.model.AnnouncementsEntry addEntry(
+		long plid, long classNameId, long classPK, java.lang.String title,
+		java.lang.String content, java.lang.String url, java.lang.String type,
+		int displayDateMonth, int displayDateDay, int displayDateYear,
+		int displayDateHour, int displayDateMinute, boolean displayImmediately,
+		int expirationDateMonth, int expirationDateDay, int expirationDateYear,
+		int expirationDateHour, int expirationDateMinute, int priority,
+		boolean alert)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _announcementsEntryService.addEntry(plid, classNameId, classPK,
+			title, content, url, type, displayDateMonth, displayDateDay,
+			displayDateYear, displayDateHour, displayDateMinute,
+			displayImmediately, expirationDateMonth, expirationDateDay,
+			expirationDateYear, expirationDateHour, expirationDateMinute,
+			priority, alert);
+	}
+
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link #addEntry(long, long, long,
+	String, String, String, String, int, int, int, int, int,
+	boolean, int, int, int, int, int, int, boolean)}
+	*/
+	@Override
 	public com.liferay.portlet.announcements.model.AnnouncementsEntry addEntry(
 		long plid, long classNameId, long classPK, java.lang.String title,
 		java.lang.String content, java.lang.String url, java.lang.String type,
@@ -67,12 +92,14 @@ public class AnnouncementsEntryServiceWrapper
 			expirationDateHour, expirationDateMinute, priority, alert);
 	}
 
+	@Override
 	public void deleteEntry(long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_announcementsEntryService.deleteEntry(entryId);
 	}
 
+	@Override
 	public com.liferay.portlet.announcements.model.AnnouncementsEntry getEntry(
 		long entryId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -80,6 +107,7 @@ public class AnnouncementsEntryServiceWrapper
 		return _announcementsEntryService.getEntry(entryId);
 	}
 
+	@Override
 	public com.liferay.portlet.announcements.model.AnnouncementsEntry updateEntry(
 		long entryId, java.lang.String title, java.lang.String content,
 		java.lang.String url, java.lang.String type, int displayDateMonth,
@@ -97,24 +125,26 @@ public class AnnouncementsEntryServiceWrapper
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public AnnouncementsEntryService getWrappedAnnouncementsEntryService() {
 		return _announcementsEntryService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedAnnouncementsEntryService(
 		AnnouncementsEntryService announcementsEntryService) {
 		_announcementsEntryService = announcementsEntryService;
 	}
 
+	@Override
 	public AnnouncementsEntryService getWrappedService() {
 		return _announcementsEntryService;
 	}
 
+	@Override
 	public void setWrappedService(
 		AnnouncementsEntryService announcementsEntryService) {
 		_announcementsEntryService = announcementsEntryService;

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,31 +14,27 @@
  */
 --%>
 
-<%@ page import="com.liferay.portal.kernel.search.Hits" %>
-<%@ page import="com.liferay.portal.kernel.search.Sort" %>
-<%@ page import="com.liferay.portal.kernel.search.SortFactoryUtil" %>
-<%@ page import="com.liferay.portlet.usersadmin.util.UsersAdminUtil" %>
-
 <%
 userGroupParams.put("expandoAttributes", searchTerms.getKeywords());
 
 Sort sort = SortFactoryUtil.getSort(UserGroup.class, searchContainer.getOrderByCol(), searchContainer.getOrderByType());
 
-while (true) {
-	Hits hits = UserGroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getKeywords(), userGroupParams, searchContainer.getStart(), searchContainer.getEnd(), sort);
+boolean corruptIndex = false;
 
-	Tuple tuple = UsersAdminUtil.getUserGroups(hits);
+Hits hits = null;
+Tuple tuple = null;
 
-	boolean corruptIndex = (Boolean)tuple.getObject(1);
+do {
+	hits = UserGroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getKeywords(), userGroupParams, searchContainer.getStart(), searchContainer.getEnd(), sort);
 
-	if (!corruptIndex) {
-		results = (List<UserGroup>)tuple.getObject(0);
-		total = hits.getLength();
+	tuple = UsersAdminUtil.getUserGroups(hits);
 
-		break;
-	}
+	corruptIndex = (Boolean)tuple.getObject(1);
 }
+while (corruptIndex);
 
-pageContext.setAttribute("results", results);
-pageContext.setAttribute("total", total);
+results = (List<UserGroup>)tuple.getObject(0);
+
+searchContainer.setResults(results);
+searchContainer.setTotal(hits.getLength());
 %>

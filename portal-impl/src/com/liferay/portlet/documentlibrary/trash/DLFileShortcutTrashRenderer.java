@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -48,10 +48,12 @@ public class DLFileShortcutTrashRenderer extends BaseTrashRenderer {
 			fileShortcut.getToFileEntryId());
 	}
 
+	@Override
 	public String getClassName() {
 		return DLFileShortcut.class.getName();
 	}
 
+	@Override
 	public long getClassPK() {
 		return _fileShortcut.getPrimaryKey();
 	}
@@ -62,19 +64,23 @@ public class DLFileShortcutTrashRenderer extends BaseTrashRenderer {
 			_fileEntry.getIcon() + ".png";
 	}
 
+	@Override
 	public String getPortletId() {
 		return PortletKeys.DOCUMENT_LIBRARY;
 	}
 
+	@Override
 	public String getSummary(Locale locale) {
 		return HtmlUtil.stripHtml(_fileEntry.getDescription());
 	}
 
+	@Override
 	public String getTitle(Locale locale) {
 		return LanguageUtil.format(
 			locale, "shortcut-to-x", _fileShortcut.getToTitle());
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -83,9 +83,16 @@ public class TunnelServlet extends HttpServlet {
 			returnObj = ite.getCause();
 
 			if (!(returnObj instanceof PortalException)) {
-				ite.printStackTrace();
+				_log.error(ite, ite);
 
-				returnObj = new SystemException();
+				if (returnObj != null) {
+					Throwable throwable = (Throwable)returnObj;
+
+					returnObj = new SystemException(throwable.getMessage());
+				}
+				else {
+					returnObj = new SystemException();
+				}
 			}
 		}
 		catch (Exception e) {

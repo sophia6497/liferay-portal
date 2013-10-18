@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.lar;
 
+import com.liferay.portal.kernel.lar.ExportImportPathUtil;
 import com.liferay.portal.kernel.lar.PortletDataContext;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -53,105 +54,13 @@ public class PermissionExporter {
 
 	public static final String ROLE_TEAM_PREFIX = "ROLE_TEAM_,*";
 
-	protected void exportGroupRoles(
-			LayoutCache layoutCache, long companyId, long groupId,
-			String resourceName, String entityName, Element parentElement)
-		throws Exception {
-
-		List<Role> roles = layoutCache.getGroupRoles_1to4(groupId);
-
-		Element groupElement = exportRoles(
-			companyId, resourceName, ResourceConstants.SCOPE_GROUP,
-			String.valueOf(groupId), parentElement, entityName + "-roles",
-			roles);
-
-		if (groupElement.elements().isEmpty()) {
-			parentElement.remove(groupElement);
-		}
-	}
-
-	protected void exportInheritedRoles(
-			LayoutCache layoutCache, long companyId, long groupId,
-			String resourceName, String entityName, Element parentElement)
-		throws Exception {
-
-		Element entityRolesElement = SAXReaderUtil.createElement(
-			entityName + "-roles");
-
-		Map<String, Long> entityMap = layoutCache.getEntityMap(
-			companyId, entityName);
-
-		for (Map.Entry<String, Long> entry : entityMap.entrySet()) {
-			String name = entry.getKey();
-
-			long entityGroupId = entry.getValue();
-
-			List<Role> entityRoles = layoutCache.getGroupRoles_1to4(
-				entityGroupId);
-
-			Element entityElement = exportRoles(
-				companyId, resourceName, ResourceConstants.SCOPE_GROUP,
-				String.valueOf(groupId), entityRolesElement, entityName,
-				entityRoles);
-
-			if (entityElement.elements().isEmpty()) {
-				entityRolesElement.remove(entityElement);
-			}
-			else {
-				entityElement.addAttribute("name", name);
-			}
-		}
-
-		if (!entityRolesElement.elements().isEmpty()) {
-			parentElement.add(entityRolesElement);
-		}
-	}
-
-	protected void exportLayoutPermissions(
-			PortletDataContext portletDataContext, LayoutCache layoutCache,
-			long companyId, long groupId, Layout layout, Element layoutElement)
-		throws Exception {
-
-		String resourceName = Layout.class.getName();
-		String resourcePrimKey = String.valueOf(layout.getPlid());
-
-		Element permissionsElement = layoutElement.addElement("permissions");
-
-		exportPermissions(
-			layoutCache, companyId, groupId, resourceName, resourcePrimKey,
-			permissionsElement, false);
-	}
-
-	protected void exportLayoutRoles(
-			LayoutCache layoutCache, long companyId, long groupId,
-			Element rolesElement)
-		throws Exception {
-
-		String resourceName = Layout.class.getName();
-
-		exportGroupRoles(
-			layoutCache, companyId, groupId, resourceName, "community",
-			rolesElement);
-
-		exportUserRoles(
-			layoutCache, companyId, groupId, resourceName, rolesElement);
-
-		exportInheritedRoles(
-			layoutCache, companyId, groupId, resourceName, "organization",
-			rolesElement);
-
-		exportInheritedRoles(
-			layoutCache, companyId, groupId, resourceName, "user-group",
-			rolesElement);
-	}
-
 	protected void exportPermissions(
 			LayoutCache layoutCache, long companyId, long groupId,
 			String resourceName, String resourcePrimKey,
 			Element permissionsElement, boolean portletActions)
 		throws Exception {
 
-		List<Role> roles = layoutCache.getGroupRoles_5(groupId, resourceName);
+		List<Role> roles = layoutCache.getGroupRoles(groupId, resourceName);
 
 		List<String> actionIds = null;
 
@@ -198,7 +107,7 @@ public class PermissionExporter {
 			roleElement.addAttribute("title", role.getTitle());
 			roleElement.addAttribute("description", role.getDescription());
 			roleElement.addAttribute("type", String.valueOf(role.getType()));
-			roleElement.addAttribute("subType", role.getSubtype());
+			roleElement.addAttribute("subtype", role.getSubtype());
 
 			if ((availableActionIds == null) || availableActionIds.isEmpty()) {
 				continue;
@@ -253,7 +162,8 @@ public class PermissionExporter {
 		}
 
 		portletDataContext.addZipEntry(
-			portletDataContext.getRootPath() + "/portlet-data-permissions.xml",
+			ExportImportPathUtil.getRootPath(portletDataContext) +
+				"/portlet-data-permissions.xml",
 			document.formattedString());
 	}
 
@@ -274,37 +184,6 @@ public class PermissionExporter {
 		exportPermissions(
 			layoutCache, companyId, groupId, resourceName, resourcePrimKey,
 			permissionsElement, true);
-	}
-
-	protected void exportPortletRoles(
-			LayoutCache layoutCache, long companyId, long groupId,
-			String portletId, Element rolesElement)
-		throws Exception {
-
-		String resourceName = PortletConstants.getRootPortletId(portletId);
-
-		Element portletElement = rolesElement.addElement("portlet");
-
-		portletElement.addAttribute("portlet-id", portletId);
-
-		exportGroupRoles(
-			layoutCache, companyId, groupId, resourceName, "community",
-			portletElement);
-
-		exportUserRoles(
-			layoutCache, companyId, groupId, resourceName, portletElement);
-
-		exportInheritedRoles(
-			layoutCache, companyId, groupId, resourceName, "organization",
-			portletElement);
-
-		exportInheritedRoles(
-			layoutCache, companyId, groupId, resourceName, "user-group",
-			portletElement);
-
-		if (portletElement.elements().isEmpty()) {
-			rolesElement.remove(portletElement);
-		}
 	}
 
 	protected Element exportRoles(

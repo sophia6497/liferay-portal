@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.webdav.methods.Method;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.Role;
@@ -34,7 +35,7 @@ import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
 import com.liferay.portal.test.MainServletExecutionTestListener;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.TestPropsValues;
-import com.liferay.portal.webdav.methods.Method;
+import com.liferay.portal.util.UserTestUtil;
 import com.liferay.portlet.documentlibrary.service.DLAppServiceUtil;
 import com.liferay.portlet.documentlibrary.util.DLAppTestUtil;
 
@@ -58,7 +59,7 @@ public class WebServerTrashTest extends BaseWebServerTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_user = ServiceTestUtil.addUser(null, group.getGroupId());
+		_user = UserTestUtil.addUser(null, group.getGroupId());
 
 		_role = ServiceTestUtil.addRole(
 			"Trash Admin", RoleConstants.TYPE_REGULAR, PortletKeys.TRASH,

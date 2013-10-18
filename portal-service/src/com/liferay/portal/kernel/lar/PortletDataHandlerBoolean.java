@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,10 +40,27 @@ public class PortletDataHandlerBoolean extends PortletDataHandlerControl {
 		String namespace, String controlName, boolean defaultState,
 		boolean disabled, PortletDataHandlerControl[] children) {
 
-		super(namespace, controlName, disabled);
+		this(namespace, controlName, defaultState, disabled, children, null);
+	}
 
-		_children = children;
-		_defaultState = defaultState;
+	public PortletDataHandlerBoolean(
+		String namespace, String controlName, boolean defaultState,
+		boolean disabled, PortletDataHandlerControl[] children,
+		String className) {
+
+		this(
+			namespace, controlName, defaultState, disabled, children, className,
+			null);
+	}
+
+	public PortletDataHandlerBoolean(
+		String namespace, String controlName, boolean defaultState,
+		boolean disabled, PortletDataHandlerControl[] children,
+		String className, String referrerClassName) {
+
+		this(
+			namespace, controlName, controlName, defaultState, disabled,
+			children, className, referrerClassName);
 	}
 
 	public PortletDataHandlerBoolean(
@@ -51,6 +68,20 @@ public class PortletDataHandlerBoolean extends PortletDataHandlerControl {
 		PortletDataHandlerControl[] children) {
 
 		this(namespace, controlName, defaultState, false, children);
+	}
+
+	public PortletDataHandlerBoolean(
+		String namespace, String controlName, String controlLabel,
+		boolean defaultState, boolean disabled,
+		PortletDataHandlerControl[] children, String className,
+		String referrerClassName) {
+
+		super(
+			namespace, controlName, controlLabel, disabled, className,
+			referrerClassName);
+
+		_children = children;
+		_defaultState = defaultState;
 	}
 
 	public PortletDataHandlerControl[] getChildren() {

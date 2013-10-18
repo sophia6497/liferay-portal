@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,8 @@
 
 package com.liferay.portlet.wiki.search;
 
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.ClassedModel;
@@ -31,11 +31,13 @@ import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portlet.wiki.asset.WikiPageAssetRenderer;
 import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.service.WikiNodeLocalServiceUtil;
-import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
+import com.liferay.portlet.wiki.service.WikiPageServiceUtil;
 import com.liferay.portlet.wiki.util.WikiTestUtil;
 
-import java.io.File;
+import java.util.List;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -50,26 +52,49 @@ import org.junit.runner.RunWith;
 @Sync
 public class WikiPageSearchTest extends BaseSearchTestCase {
 
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchByDDMStructureField() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchByKeywordsInsideParentBaseModel() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchMyEntries() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchRecentEntries() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchStatus() throws Exception {
+	}
+
+	@Ignore()
+	@Override
+	@Test
+	public void testSearchWithinDDMStructure() throws Exception {
+	}
+
 	@Override
 	protected void addAttachment(ClassedModel classedModel) throws Exception {
 		WikiPage page = (WikiPage)classedModel;
 
-		String fileName = ServiceTestUtil.randomString() + ".txt";
-
-		Class<?> clazz = getClass();
-
-		byte[] bytes = FileUtil.getBytes(
-			clazz.getResourceAsStream("dependencies/OSX_Test.docx"));
-
-		File file = null;
-
-		if ((bytes != null) && (bytes.length > 0)) {
-			file = FileUtil.createTempFile(bytes);
-		}
-
-		WikiPageLocalServiceUtil.addPageAttachment(
+		WikiTestUtil.addWikiAttachment(
 			TestPropsValues.getUserId(), page.getNodeId(), page.getTitle(),
-			fileName, file);
+			getClass());
 	}
 
 	@Override
@@ -79,8 +104,34 @@ public class WikiPageSearchTest extends BaseSearchTestCase {
 		throws Exception {
 
 		return WikiTestUtil.addPage(
-			TestPropsValues.getUserId(), serviceContext.getScopeGroupId(),
-			(Long)parentBaseModel.getPrimaryKeyObj(), keywords, approved);
+			TestPropsValues.getUserId(),
+			(Long)parentBaseModel.getPrimaryKeyObj(),
+			ServiceTestUtil.randomString(), keywords, approved, serviceContext);
+	}
+
+	@Override
+	protected void expireBaseModelVersions(
+			BaseModel<?> baseModel, boolean expireAllVersions,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		WikiPage page = (WikiPage)baseModel;
+
+		if (expireAllVersions) {
+			WikiPageServiceUtil.deletePage(page.getNodeId(), page.getTitle());
+		}
+		else {
+			List<WikiPage> pages = WikiPageServiceUtil.getPages(
+				page.getGroupId(), page.getNodeId(), false,
+				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null);
+
+			WikiPage previousPage = pages.get(0);
+
+			WikiPageServiceUtil.revertPage(
+				page.getNodeId(), page.getTitle(), previousPage.getVersion(),
+				serviceContext);
+		}
 	}
 
 	@Override
@@ -110,6 +161,23 @@ public class WikiPageSearchTest extends BaseSearchTestCase {
 	@Override
 	protected String getSearchKeywords() {
 		return "Title";
+	}
+
+	@Override
+	protected boolean isExpirableAllVersions() {
+		return true;
+	}
+
+	@Override
+	protected BaseModel<?> updateBaseModel(
+			BaseModel<?> baseModel, String keywords,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		WikiPage page = (WikiPage)baseModel;
+
+		return WikiTestUtil.updatePage(
+			page, TestPropsValues.getUserId(), keywords, serviceContext);
 	}
 
 }

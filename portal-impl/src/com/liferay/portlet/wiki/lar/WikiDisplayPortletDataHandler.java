@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,34 +14,37 @@
 
 package com.liferay.portlet.wiki.lar;
 
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.lar.DataLevel;
 import com.liferay.portal.kernel.lar.PortletDataContext;
+import com.liferay.portal.kernel.lar.PortletDataHandlerControl;
+import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portlet.journal.lar.JournalPortletDataHandler;
-import com.liferay.portlet.wiki.NoSuchNodeException;
 import com.liferay.portlet.wiki.model.WikiNode;
 import com.liferay.portlet.wiki.model.WikiPage;
+import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
+import com.liferay.portlet.wiki.service.permission.WikiPermission;
 import com.liferay.portlet.wiki.service.persistence.WikiNodeUtil;
-import com.liferay.portlet.wiki.util.WikiCacheUtil;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.portlet.PortletPreferences;
 
 /**
  * @author Marcellus Tavares
+ * @author Zsolt Berentey
  */
 public class WikiDisplayPortletDataHandler extends WikiPortletDataHandler {
 
 	public WikiDisplayPortletDataHandler() {
+		setDataLevel(DataLevel.PORTLET_INSTANCE);
 		setDataPortletPreferences("title", "nodeId");
+		setExportControls(new PortletDataHandlerControl[0]);
 	}
 
 	@Override
@@ -61,7 +64,7 @@ public class WikiDisplayPortletDataHandler extends WikiPortletDataHandler {
 	}
 
 	@Override
-	protected String doExportData(
+	protected PortletPreferences doProcessExportPortletPreferences(
 			PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
@@ -75,7 +78,7 @@ public class WikiDisplayPortletDataHandler extends WikiPortletDataHandler {
 					"No node id found in preferences of portlet " + portletId);
 			}
 
-			return StringPool.BLANK;
+			return portletPreferences;
 		}
 
 		String title = portletPreferences.getValue("title", null);
@@ -86,105 +89,58 @@ public class WikiDisplayPortletDataHandler extends WikiPortletDataHandler {
 					"No title found in preferences of portlet " + portletId);
 			}
 
-			return StringPool.BLANK;
+			return portletPreferences;
 		}
 
-		WikiNode node = null;
+		WikiNode node = WikiNodeUtil.fetchByPrimaryKey(nodeId);
 
-		try {
-			node = WikiNodeUtil.findByPrimaryKey(nodeId);
-		}
-		catch (NoSuchNodeException nsne) {
+		if (node == null) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(nsne, nsne);
+				_log.warn("Unable to find wiki node");
 			}
 
-			return StringPool.BLANK;
+			return portletPreferences;
 		}
 
-		portletDataContext.addPermissions(
-			"com.liferay.portlet.wiki", portletDataContext.getScopeGroupId());
+		portletDataContext.addPortletPermissions(WikiPermission.RESOURCE_NAME);
 
-		Document document = SAXReaderUtil.createDocument();
+		StagedModelDataHandlerUtil.exportReferenceStagedModel(
+			portletDataContext, portletId, node);
 
-		Element rootElement = document.addElement("wiki-display-data");
+		List<WikiPage> pages = WikiPageLocalServiceUtil.getPages(
+			node.getNodeId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
-		rootElement.addAttribute(
-			"group-id", String.valueOf(portletDataContext.getScopeGroupId()));
+		for (WikiPage page : pages) {
+			StagedModelDataHandlerUtil.exportReferenceStagedModel(
+				portletDataContext, portletId, page);
+		}
 
-		Element nodesElement = rootElement.addElement("nodes");
-		Element pagesElement = rootElement.addElement("pages");
-
-		WikiPortletDataHandler.exportNode(
-			portletDataContext, nodesElement, pagesElement, node);
-
-		return document.formattedString();
+		return portletPreferences;
 	}
 
 	@Override
-	protected PortletPreferences doImportData(
+	protected PortletPreferences doProcessImportPortletPreferences(
 			PortletDataContext portletDataContext, String portletId,
-			PortletPreferences portletPreferences, String data)
+			PortletPreferences portletPreferences)
 		throws Exception {
 
-		portletDataContext.importPermissions(
-			"com.liferay.portlet.wiki", portletDataContext.getSourceGroupId(),
-			portletDataContext.getScopeGroupId());
+		portletDataContext.importPortletPermissions(
+			WikiPermission.RESOURCE_NAME);
 
-		if (Validator.isNull(data)) {
-			return null;
-		}
+		StagedModelDataHandlerUtil.importReferenceStagedModels(
+			portletDataContext, WikiNode.class);
 
-		Document document = SAXReaderUtil.read(data);
-
-		Element rootElement = document.getRootElement();
-
-		Element nodesElement = rootElement.element("nodes");
-
-		for (Element nodeElement : nodesElement.elements("node")) {
-			String path = nodeElement.attributeValue("path");
-
-			if (!portletDataContext.isPathNotProcessed(path)) {
-				continue;
-			}
-
-			WikiNode node = (WikiNode)portletDataContext.getZipEntryAsObject(
-				path);
-
-			WikiPortletDataHandler.importNode(portletDataContext, node);
-		}
-
-		Element pagesElement = rootElement.element("pages");
-
-		JournalPortletDataHandler.importReferencedData(
-			portletDataContext, pagesElement);
-
-		for (Element pageElement : pagesElement.elements("page")) {
-			String path = pageElement.attributeValue("path");
-
-			if (!portletDataContext.isPathNotProcessed(path)) {
-				continue;
-			}
-
-			WikiPage page = (WikiPage)portletDataContext.getZipEntryAsObject(
-				path);
-
-			WikiPortletDataHandler.importPage(
-				portletDataContext, pageElement, page);
-		}
-
-		Map<Long, Long> nodeIds =
-			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-				WikiNode.class);
-
-		for (long nodeId : nodeIds.values()) {
-			WikiCacheUtil.clearCache(nodeId);
-		}
+		StagedModelDataHandlerUtil.importReferenceStagedModels(
+			portletDataContext, WikiPage.class);
 
 		long nodeId = GetterUtil.getLong(
 			portletPreferences.getValue("nodeId", StringPool.BLANK));
 
 		if (nodeId > 0) {
+			Map<Long, Long> nodeIds =
+				(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+					WikiNode.class);
+
 			nodeId = MapUtil.getLong(nodeIds, nodeId, nodeId);
 
 			portletPreferences.setValue("nodeId", String.valueOf(nodeId));

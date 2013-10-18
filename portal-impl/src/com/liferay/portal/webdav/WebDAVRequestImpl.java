@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -63,50 +63,62 @@ public class WebDAVRequestImpl implements WebDAVRequest {
 		_permissionChecker = permissionChecker;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public HttpServletRequest getHttpServletRequest() {
 		return _request;
 	}
 
+	@Override
 	public HttpServletResponse getHttpServletResponse() {
 		return _response;
 	}
 
+	@Override
 	public String getLockUuid() {
 		return _lockUuid;
 	}
 
+	@Override
 	public String getPath() {
 		return _path;
 	}
 
+	@Override
 	public String[] getPathArray() {
 		return WebDAVUtil.getPathArray(_path);
 	}
 
+	@Override
 	public PermissionChecker getPermissionChecker() {
 		return _permissionChecker;
 	}
 
+	@Override
 	public String getRootPath() {
 		return _storage.getRootPath();
 	}
 
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public WebDAVStorage getWebDAVStorage() {
 		return _storage;
 	}
 
+	@Override
 	public boolean isAppleDoubleRequest() {
 		String[] pathArray = getPathArray();
 
@@ -120,18 +132,22 @@ public class WebDAVRequestImpl implements WebDAVRequest {
 		}
 	}
 
+	@Override
 	public boolean isLitmus() {
 		return _userAgent.contains("litmus");
 	}
 
+	@Override
 	public boolean isMac() {
 		return _userAgent.contains("WebDAVFS");
 	}
 
+	@Override
 	public boolean isManualCheckInRequired() {
 		return _manualCheckInRequired;
 	}
 
+	@Override
 	public boolean isWindows() {
 		return _userAgent.contains(
 			"Microsoft Data Access Internet Publishing Provider");

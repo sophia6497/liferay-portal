@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,10 +34,12 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 
+	@Override
 	public String getAuthType() {
 		return HttpServletRequest.DIGEST_AUTH;
 	}
 
+	@Override
 	public AuthVerifierResult verify(
 			AccessControlContext accessControlContext, Properties configuration)
 		throws AuthException {
@@ -92,11 +94,11 @@ public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 
 			return authVerifierResult;
 		}
-		catch (PortalException e) {
-			throw new AuthException(e);
+		catch (PortalException pe) {
+			throw new AuthException(pe);
 		}
-		catch (SystemException e) {
-			throw new AuthException(e);
+		catch (SystemException se) {
+			throw new AuthException(se);
 		}
 	}
 

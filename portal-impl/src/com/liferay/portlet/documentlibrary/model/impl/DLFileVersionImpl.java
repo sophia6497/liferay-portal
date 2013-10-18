@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,8 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -40,6 +42,16 @@ public class DLFileVersionImpl extends DLFileVersionBaseImpl {
 	public DLFileVersionImpl() {
 	}
 
+	@Override
+	public String buildTreePath() throws PortalException, SystemException {
+		StringBundler sb = new StringBundler();
+
+		buildTreePath(sb, getFolder());
+
+		return sb.toString();
+	}
+
+	@Override
 	public InputStream getContentStream(boolean incrementCounter)
 		throws PortalException, SystemException {
 
@@ -68,6 +80,7 @@ public class DLFileVersionImpl extends DLFileVersionBaseImpl {
 		}
 	}
 
+	@Override
 	public UnicodeProperties getExtraSettingsProperties() {
 		if (_extraSettingsProperties == null) {
 			_extraSettingsProperties = new UnicodeProperties(true);
@@ -83,51 +96,23 @@ public class DLFileVersionImpl extends DLFileVersionBaseImpl {
 		return _extraSettingsProperties;
 	}
 
+	@Override
 	public DLFileEntry getFileEntry() throws PortalException, SystemException {
 		return DLFileEntryLocalServiceUtil.getFileEntry(getFileEntryId());
 	}
 
-	public DLFolder getFolder() {
-		DLFolder dlFolder = null;
-
-		if (getFolderId() > 0) {
-			try {
-				dlFolder = DLFolderLocalServiceUtil.getFolder(getFolderId());
-			}
-			catch (Exception e) {
-				dlFolder = new DLFolderImpl();
-
-				_log.error(e, e);
-			}
-		}
-		else {
-			dlFolder = new DLFolderImpl();
+	@Override
+	public DLFolder getFolder() throws PortalException, SystemException {
+		if (getFolderId() <= 0) {
+			return new DLFolderImpl();
 		}
 
-		return dlFolder;
+		return DLFolderLocalServiceUtil.getFolder(getFolderId());
 	}
 
+	@Override
 	public String getIcon() {
 		return DLUtil.getFileIcon(getExtension());
-	}
-
-	public DLFolder getTrashContainer() {
-		DLFolder dlFolder = getFolder();
-
-		if (dlFolder.isInTrash()) {
-			return dlFolder;
-		}
-
-		return dlFolder.getTrashContainer();
-	}
-
-	public boolean isInTrashContainer() {
-		if (getTrashContainer() != null) {
-			return true;
-		}
-		else {
-			return false;
-		}
 	}
 
 	@Override
@@ -137,12 +122,27 @@ public class DLFileVersionImpl extends DLFileVersionBaseImpl {
 		super.setExtraSettings(extraSettings);
 	}
 
+	@Override
 	public void setExtraSettingsProperties(
 		UnicodeProperties extraSettingsProperties) {
 
 		_extraSettingsProperties = extraSettingsProperties;
 
 		super.setExtraSettings(_extraSettingsProperties.toString());
+	}
+
+	protected void buildTreePath(StringBundler sb, DLFolder dlFolder)
+		throws PortalException, SystemException {
+
+		if (dlFolder == null) {
+			sb.append(StringPool.SLASH);
+		}
+		else {
+			buildTreePath(sb, dlFolder.getParentFolder());
+
+			sb.append(dlFolder.getFolderId());
+			sb.append(StringPool.SLASH);
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(DLFileVersionImpl.class);

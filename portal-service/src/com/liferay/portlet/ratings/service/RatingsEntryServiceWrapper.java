@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,10 @@ package com.liferay.portlet.ratings.service;
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
- * <p>
- * This class is a wrapper for {@link RatingsEntryService}.
- * </p>
+ * Provides a wrapper for {@link RatingsEntryService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       RatingsEntryService
+ * @author Brian Wing Shun Chan
+ * @see RatingsEntryService
  * @generated
  */
 public class RatingsEntryServiceWrapper implements RatingsEntryService,
@@ -36,6 +34,7 @@ public class RatingsEntryServiceWrapper implements RatingsEntryService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _ratingsEntryService.getBeanIdentifier();
 	}
@@ -45,16 +44,19 @@ public class RatingsEntryServiceWrapper implements RatingsEntryService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_ratingsEntryService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public void deleteEntry(java.lang.String className, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_ratingsEntryService.deleteEntry(className, classPK);
 	}
 
+	@Override
 	public com.liferay.portlet.ratings.model.RatingsEntry updateEntry(
 		java.lang.String className, long classPK, double score)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -63,24 +65,26 @@ public class RatingsEntryServiceWrapper implements RatingsEntryService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public RatingsEntryService getWrappedRatingsEntryService() {
 		return _ratingsEntryService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedRatingsEntryService(
 		RatingsEntryService ratingsEntryService) {
 		_ratingsEntryService = ratingsEntryService;
 	}
 
+	@Override
 	public RatingsEntryService getWrappedService() {
 		return _ratingsEntryService;
 	}
 
+	@Override
 	public void setWrappedService(RatingsEntryService ratingsEntryService) {
 		_ratingsEntryService = ratingsEntryService;
 	}

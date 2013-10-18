@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,6 +40,12 @@ else {
 }
 
 String keywords = ParamUtil.getString(request, "keywords");
+
+if (searchFolderId > 0) {
+	BookmarksUtil.addPortletBreadcrumbEntries(searchFolderId, request, renderResponse);
+}
+
+PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "search") + ": " + keywords, currentURL);
 %>
 
 <liferay-portlet:renderURL varImpl="searchURL">
@@ -86,11 +92,12 @@ String keywords = ParamUtil.getString(request, "keywords");
 		searchContext.setStart(searchContainer.getStart());
 
 		Hits hits = indexer.search(searchContext);
+
+		searchContainer.setTotal(hits.getLength());
 		%>
 
 		<liferay-ui:search-container-results
 			results="<%= BookmarksUtil.getEntries(hits) %>"
-			total="<%= hits.getLength() %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -140,9 +147,11 @@ String keywords = ParamUtil.getString(request, "keywords");
 						value="<%= folder.getName() %>"
 					/>
 
-					<liferay-ui:search-container-column-jsp
-						path="/html/portlet/bookmarks/entry_action.jsp"
-					/>
+					<c:if test='<%= ArrayUtil.contains(entryColumns, "action") %>'>
+						<liferay-ui:search-container-column-jsp
+							path="/html/portlet/bookmarks/entry_action.jsp"
+						/>
+					</c:if>
 				</c:when>
 				<c:when test="<%= obj instanceof BookmarksFolder %>">
 
@@ -184,36 +193,19 @@ String keywords = ParamUtil.getString(request, "keywords");
 						value='<%= (parentFolder != null) ? parentFolder.getName() : LanguageUtil.get(locale, "home") %>'
 					/>
 
-					<liferay-ui:search-container-column-jsp
-						path="/html/portlet/bookmarks/folder_action.jsp"
-					/>
-
+					<c:if test='<%= ArrayUtil.contains(folderColumns, "action") %>'>
+						<liferay-ui:search-container-column-jsp
+							path="/html/portlet/bookmarks/folder_action.jsp"
+						/>
+					</c:if>
 				</c:when>
 			</c:choose>
 		</liferay-ui:search-container-row>
 
-		<span class="aui-search-bar">
-			<aui:input inlineField="<%= true %>" label="" name="keywords" size="30" title="search-bookmarks" type="text" value="<%= keywords %>" />
-
-			<aui:button type="submit" value="search" />
-		</span>
-
-		<br /><br />
+		<div class="form-search">
+			<liferay-ui:input-search autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" id="keywords" placeholder='<%= LanguageUtil.get(locale, "keywords") %>' title='<%= LanguageUtil.get(locale, "search-categories") %>' />
+		</div>
 
 		<liferay-ui:search-iterator type="more" />
 	</liferay-ui:search-container>
 </aui:form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />keywords);
-	</aui:script>
-</c:if>
-
-<%
-if (searchFolderId > 0) {
-	BookmarksUtil.addPortletBreadcrumbEntries(searchFolderId, request, renderResponse);
-}
-
-PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "search") + ": " + keywords, currentURL);
-%>

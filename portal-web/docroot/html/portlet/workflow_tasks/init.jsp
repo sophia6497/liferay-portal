@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,8 +33,7 @@ page import="com.liferay.portlet.asset.model.AssetEntry" %><%@
 page import="com.liferay.portlet.asset.model.AssetRenderer" %><%@
 page import="com.liferay.portlet.asset.model.AssetRendererFactory" %><%@
 page import="com.liferay.portlet.workflowtasks.search.WorkflowTaskDisplayTerms" %><%@
-page import="com.liferay.portlet.workflowtasks.search.WorkflowTaskSearch" %><%@
-page import="com.liferay.portlet.workflowtasks.search.WorkflowTaskSearchTerms" %>
+page import="com.liferay.portlet.workflowtasks.search.WorkflowTaskSearch" %>
 
 <%
 Format dateFormatDate = FastDateFormatFactoryUtil.getDate(locale, timeZone);

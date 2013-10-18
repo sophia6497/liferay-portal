@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,8 +32,6 @@ import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.model.AssetRenderer;
 import com.liferay.portlet.asset.model.AssetRendererFactory;
-import com.liferay.portlet.asset.service.AssetEntryServiceUtil;
-import com.liferay.portlet.asset.service.persistence.AssetEntryQuery;
 import com.liferay.portlet.assetpublisher.util.AssetPublisherUtil;
 import com.liferay.util.RSSUtil;
 
@@ -68,6 +66,9 @@ public class RSSAction extends com.liferay.portal.struts.RSSAction {
 			String displayStyle, String linkBehavior,
 			List<AssetEntry> assetEntries)
 		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
 		SyndFeed syndFeed = new SyndFeedImpl();
 
@@ -132,6 +133,13 @@ public class RSSAction extends com.liferay.portal.struts.RSSAction {
 
 		selfSyndLink.setRel("self");
 
+		SyndLink alternateSyndLink = new SyndLinkImpl();
+
+		syndLinks.add(alternateSyndLink);
+
+		alternateSyndLink.setHref(PortalUtil.getLayoutFullURL(themeDisplay));
+		alternateSyndLink.setRel("alternate");
+
 		syndFeed.setPublishedDate(new Date());
 		syndFeed.setTitle(name);
 		syndFeed.setUri(feedURL);
@@ -140,84 +148,19 @@ public class RSSAction extends com.liferay.portal.struts.RSSAction {
 	}
 
 	protected List<AssetEntry> getAssetEntries(
-			PortletRequest portletRequest, PortletPreferences preferences)
+			PortletRequest portletRequest,
+			PortletPreferences portletPreferences)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		AssetEntryQuery assetEntryQuery = AssetPublisherUtil.getAssetEntryQuery(
-			preferences, new long[] {themeDisplay.getScopeGroupId()});
-
-		boolean anyAssetType = GetterUtil.getBoolean(
-			preferences.getValue("anyAssetType", null), true);
-
-		if (!anyAssetType) {
-			long[] availableClassNameIds =
-				AssetRendererFactoryRegistryUtil.getClassNameIds();
-
-			long[] classNameIds = AssetPublisherUtil.getClassNameIds(
-				preferences, availableClassNameIds);
-
-			assetEntryQuery.setClassNameIds(classNameIds);
-		}
-
-		long[] classTypeIds = GetterUtil.getLongValues(
-			preferences.getValues("classTypeIds", null));
-
-		assetEntryQuery.setClassTypeIds(classTypeIds);
-
-		boolean enablePermissions = GetterUtil.getBoolean(
-			preferences.getValue("enablePermissions", null));
-
-		assetEntryQuery.setEnablePermissions(enablePermissions);
-
 		int rssDelta = GetterUtil.getInteger(
-			preferences.getValue("rssDelta", "20"));
+			portletPreferences.getValue("rssDelta", "20"));
 
-		assetEntryQuery.setEnd(rssDelta);
-
-		boolean excludeZeroViewCount = GetterUtil.getBoolean(
-			preferences.getValue("excludeZeroViewCount", null));
-
-		assetEntryQuery.setExcludeZeroViewCount(excludeZeroViewCount);
-
-		long[] groupIds = AssetPublisherUtil.getGroupIds(
-			preferences, themeDisplay.getScopeGroupId(),
-			themeDisplay.getLayout());
-
-		assetEntryQuery.setGroupIds(groupIds);
-
-		boolean showOnlyLayoutAssets = GetterUtil.getBoolean(
-			preferences.getValue("showOnlyLayoutAssets", null));
-
-		if (showOnlyLayoutAssets) {
-			assetEntryQuery.setLayout(themeDisplay.getLayout());
-		}
-
-		String orderByColumn1 = GetterUtil.getString(
-			preferences.getValue("orderByColumn1", "modifiedDate"));
-
-		assetEntryQuery.setOrderByCol1(orderByColumn1);
-
-		String orderByColumn2 = GetterUtil.getString(
-			preferences.getValue("orderByColumn2", "title"));
-
-		assetEntryQuery.setOrderByCol2(orderByColumn2);
-
-		String orderByType1 = GetterUtil.getString(
-			preferences.getValue("orderByType1", "DESC"));
-
-		assetEntryQuery.setOrderByType1(orderByType1);
-
-		String orderByType2 = GetterUtil.getString(
-			preferences.getValue("orderByType2", "ASC"));
-
-		assetEntryQuery.setOrderByType2(orderByType2);
-
-		assetEntryQuery.setStart(0);
-
-		return AssetEntryServiceUtil.getEntries(assetEntryQuery);
+		return AssetPublisherUtil.getAssetEntries(
+			portletPreferences, themeDisplay.getLayout(),
+			themeDisplay.getScopeGroupId(), rssDelta, true);
 	}
 
 	protected String getAssetPublisherURL(PortletRequest portletRequest)
@@ -327,22 +270,22 @@ public class RSSAction extends com.liferay.portal.struts.RSSAction {
 			ResourceRequest portletRequest, ResourceResponse portletResponse)
 		throws Exception {
 
-		PortletPreferences preferences = portletRequest.getPreferences();
+		PortletPreferences portletPreferences = portletRequest.getPreferences();
 
-		String selectionStyle = preferences.getValue(
+		String selectionStyle = portletPreferences.getValue(
 			"selectionStyle", "dynamic");
 
 		if (!selectionStyle.equals("dynamic")) {
 			return new byte[0];
 		}
 
-		String assetLinkBehavior = preferences.getValue(
+		String assetLinkBehavior = portletPreferences.getValue(
 			"assetLinkBehavior", "showFullContent");
-		String rssDisplayStyle = preferences.getValue(
+		String rssDisplayStyle = portletPreferences.getValue(
 			"rssDisplayStyle", RSSUtil.DISPLAY_STYLE_ABSTRACT);
-		String rssFeedType = preferences.getValue(
+		String rssFeedType = portletPreferences.getValue(
 			"rssFeedType", RSSUtil.FEED_TYPE_DEFAULT);
-		String rssName = preferences.getValue("rssName", null);
+		String rssName = portletPreferences.getValue("rssName", null);
 
 		String format = RSSUtil.getFeedTypeFormat(rssFeedType);
 		double version = RSSUtil.getFeedTypeVersion(rssFeedType);
@@ -350,7 +293,7 @@ public class RSSAction extends com.liferay.portal.struts.RSSAction {
 		String rss = exportToRSS(
 			portletRequest, portletResponse, rssName, null, format, version,
 			rssDisplayStyle, assetLinkBehavior,
-			getAssetEntries(portletRequest, preferences));
+			getAssetEntries(portletRequest, portletPreferences));
 
 		return rss.getBytes(StringPool.UTF8);
 	}

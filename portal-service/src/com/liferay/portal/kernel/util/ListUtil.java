@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -87,7 +87,7 @@ public class ListUtil {
 	}
 
 	public static <E> List<E> fromArray(E[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<E>();
 		}
 
@@ -180,8 +180,12 @@ public class ListUtil {
 		return fromArray(StringUtil.splitLines(s));
 	}
 
+	public static List<String> fromString(String s, String delimiter) {
+		return fromArray(StringUtil.split(s, delimiter));
+	}
+
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public static <E> boolean remove(List<E> list, E element) {
 		Iterator<E> itr = list.iterator();
@@ -197,6 +201,22 @@ public class ListUtil {
 		}
 
 		return false;
+	}
+
+	public static <E> List<E> remove(List<E> list, List<E> remove) {
+		if ((list == null) || list.isEmpty() ||
+			(remove == null)|| remove.isEmpty()) {
+
+			return list;
+		}
+
+		list = copy(list);
+
+		for (E element : remove) {
+			list.remove(element);
+		}
+
+		return list;
 	}
 
 	public static <E> List<E> sort(List<E> list) {
@@ -216,25 +236,23 @@ public class ListUtil {
 	}
 
 	public static <E> List<E> subList(List<E> list, int start, int end) {
-		List<E> newList = new ArrayList<E>();
-
-		int normalizedSize = list.size() - 1;
-
-		if ((start < 0) || (start > normalizedSize) || (end < 0) ||
-			(start > end)) {
-
-			return newList;
+		if (start < 0) {
+			start = 0;
 		}
 
-		for (int i = start; (i < end) && (i <= normalizedSize); i++) {
-			newList.add(list.get(i));
+		if ((end < 0) || (end > list.size())) {
+			end = list.size();
 		}
 
-		return newList;
+		if (start < end) {
+			return list.subList(start, end);
+		}
+
+		return Collections.emptyList();
 	}
 
 	public static List<Boolean> toList(boolean[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<Boolean>();
 		}
 
@@ -247,8 +265,22 @@ public class ListUtil {
 		return list;
 	}
 
+	public static List<Character> toList(char[] array) {
+		if (ArrayUtil.isEmpty(array)) {
+			return new ArrayList<Character>();
+		}
+
+		List<Character> list = new ArrayList<Character>(array.length);
+
+		for (char value : array) {
+			list.add(value);
+		}
+
+		return list;
+	}
+
 	public static List<Double> toList(double[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<Double>();
 		}
 
@@ -262,7 +294,7 @@ public class ListUtil {
 	}
 
 	public static <E> List<E> toList(E[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<E>();
 		}
 
@@ -270,7 +302,7 @@ public class ListUtil {
 	}
 
 	public static List<Float> toList(float[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<Float>();
 		}
 
@@ -284,7 +316,7 @@ public class ListUtil {
 	}
 
 	public static List<Integer> toList(int[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<Integer>();
 		}
 
@@ -298,7 +330,7 @@ public class ListUtil {
 	}
 
 	public static List<Long> toList(long[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<Long>();
 		}
 
@@ -312,7 +344,7 @@ public class ListUtil {
 	}
 
 	public static List<Short> toList(short[] array) {
-		if ((array == null) || (array.length == 0)) {
+		if (ArrayUtil.isEmpty(array)) {
 			return new ArrayList<Short>();
 		}
 
@@ -347,7 +379,14 @@ public class ListUtil {
 		for (int i = 0; i < list.size(); i++) {
 			Object bean = list.get(i);
 
-			Object value = BeanPropertiesUtil.getObject(bean, param);
+			Object value = null;
+
+			if (Validator.isNull(param)) {
+				value = String.valueOf(bean);
+			}
+			else {
+				value = BeanPropertiesUtil.getObject(bean, param);
+			}
 
 			if (value != null) {
 				sb.append(value);

@@ -1,0 +1,19 @@
+<definition>
+	<command name="select">
+		<execute selenium="waitForVisible" />
+
+		<execute selenium="select" />
+	</command>
+
+	<command name="pauseSelect">
+		<execute selenium="pause" argument1="5000" />
+
+		<execute function="Select#select" />
+	</command>
+
+	<command name="selectAndWait">
+		<execute selenium="waitForVisible" />
+
+		<execute selenium="selectAndWait" />
+	</command>
+</definition>

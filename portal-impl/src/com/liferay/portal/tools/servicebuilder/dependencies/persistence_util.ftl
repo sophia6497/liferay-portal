@@ -50,7 +50,7 @@ public class ${entity.name}Util {
 	/**
 	 * @see com.liferay.portal.service.persistence.BasePersistence#countWithDynamicQuery(DynamicQuery)
 	 */
-	public long countWithDynamicQuery(DynamicQuery dynamicQuery) throws SystemException {
+	public static long countWithDynamicQuery(DynamicQuery dynamicQuery) throws SystemException {
 		return getPersistence().countWithDynamicQuery(dynamicQuery);
 	}
 
@@ -151,7 +151,7 @@ public class ${entity.name}Util {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public void setPersistence(${entity.name}Persistence persistence) {
 	}

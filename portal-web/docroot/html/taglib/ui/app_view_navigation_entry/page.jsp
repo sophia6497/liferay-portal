@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,29 +19,29 @@
 <%
 String actionJsp = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:actionJsp");
 boolean browseUp = GetterUtil.getBoolean(request.getAttribute("liferay-ui:app-view-navigation-entry:browseUp"));
-String cssClassName = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:cssClassName");
+String cssClass = GetterUtil.getString((String)request.getAttribute("liferay-ui:app-view-navigation-entry:cssClass"));
 Map<String, Object> dataExpand = (Map<String, Object>)request.getAttribute("liferay-ui:app-view-navigation-entry:dataExpand");
 Map<String, Object> dataView = (Map<String, Object>)request.getAttribute("liferay-ui:app-view-navigation-entry:dataView");
 String entryTitle = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:entryTitle");
 String expandURL = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:expandURL");
 String iconImage = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:iconImage");
-String iconSrc = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:iconSrc");
 boolean selected = GetterUtil.getBoolean(request.getAttribute("liferay-ui:app-view-navigation-entry:selected"));
 boolean showExpand = GetterUtil.getBoolean(request.getAttribute("liferay-ui:app-view-navigation-entry:showExpand"));
 String viewURL = (String)request.getAttribute("liferay-ui:app-view-navigation-entry:viewURL");
 
-String dataDirection = StringPool.BLANK;
-String dataExpandFolder = "data-expand-folder=\"" + Boolean.TRUE.toString() + "\"";
-String dataViewFolders = "data-view-folders=\"" + Boolean.FALSE.toString() + "\"";
+Map<String, Object> data = new HashMap<String, Object>();
+
+data.putAll(dataView);
 
 if (browseUp) {
-	dataDirection = "data-direction-right=\"" + Boolean.TRUE.toString() + "\"";
-	dataExpandFolder = StringPool.BLANK;
-	dataViewFolders = StringPool.BLANK;
+	data.put("direction-right", Boolean.TRUE);
+}
+else if (!data.containsKey("view-folders")) {
+	data.put("view-folders", Boolean.FALSE);
 }
 %>
 
-<li class="app-view-navigation-entry <%= selected ? cssClassName + " selected" : cssClassName %>">
+<aui:nav-item anchorCssClass='<%= "browse-" + cssClass %>' anchorData="<%= data %>" cssClass='<%= "app-view-navigation-entry " + cssClass %>' href="<%= viewURL.toString() %>" iconClass="<%= iconImage %>" label="<%= entryTitle %>" selected="<%= selected %>">
 
 	<%
 	request.removeAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
@@ -52,23 +52,10 @@ if (browseUp) {
 	</c:if>
 
 	<c:if test="<%= showExpand %>">
-		<a class="<%= "expand-" + cssClassName %>" <%= dataDirection %> <%= dataExpandFolder %> data-view-entries="<%= Boolean.FALSE.toString() %>" <%= AUIUtil.buildData(dataExpand) %> href="<%= expandURL.toString() %>">
-			<liferay-ui:icon cssClass='<%= "expand-" + cssClassName + "-arrow" %>' image='<%= browseUp ? "../aui/carat-1-l" : "../aui/carat-1-r" %>' message="expand" />
-		</a>
-	</c:if>
-
-	<a class="<%= "browse-" + cssClassName %>" <%= dataDirection %> <%= dataViewFolders %> <%= AUIUtil.buildData(dataView) %> href="<%= viewURL.toString() %>">
-		<c:choose>
-			<c:when test="<%= Validator.isNotNull(iconImage) %>">
-				<liferay-ui:icon image="<%= iconImage %>" />
-			</c:when>
-			<c:otherwise>
-				<liferay-ui:icon src="<%= iconSrc %>" />
-			</c:otherwise>
-		</c:choose>
-
-		<span class="entry-title">
-			<%= entryTitle %>
+		<span class="expand-folder-container">
+			<a class="<%= "expand-" + cssClass %>" data-view-entries="<%= Boolean.FALSE.toString() %>" <%= AUIUtil.buildData(dataExpand) %> href="<%= expandURL.toString() %>">
+				<liferay-ui:icon cssClass='<%= "expand-" + cssClass + "-arrow" %>' image='<%= browseUp ? "../aui/carat-1-l" : "../aui/carat-1-r" %>' message="expand" />
+			</a>
 		</span>
-	</a>
-</li>
+	</c:if>
+</aui:nav-item>

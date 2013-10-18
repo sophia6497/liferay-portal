@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +22,7 @@ import com.liferay.portal.kernel.dao.orm.SessionFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PreloadClassLoader;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.sql.Connection;
@@ -44,6 +44,7 @@ public class SessionFactoryImpl implements SessionFactory {
 		return portletSessionFactories;
 	}
 
+	@Override
 	public void closeSession(Session session) throws ORMException {
 		if ((session != null) &&
 			!PropsValues.SPRING_HIBERNATE_SESSION_DELEGATED) {
@@ -57,10 +58,12 @@ public class SessionFactoryImpl implements SessionFactory {
 		portletSessionFactories.clear();
 	}
 
+	@Override
 	public Session getCurrentSession() throws ORMException {
 		return wrapSession(_sessionFactoryImplementor.getCurrentSession());
 	}
 
+	@Override
 	public Dialect getDialect() throws ORMException {
 		return new DialectImpl(_sessionFactoryImplementor.getDialect());
 	}
@@ -73,10 +76,12 @@ public class SessionFactoryImpl implements SessionFactory {
 		return _sessionFactoryImplementor;
 	}
 
+	@Override
 	public Session openNewSession(Connection connection) throws ORMException {
 		return wrapSession(_sessionFactoryImplementor.openSession(connection));
 	}
 
+	@Override
 	public Session openSession() throws ORMException {
 		org.hibernate.Session session = null;
 
@@ -102,8 +107,7 @@ public class SessionFactoryImpl implements SessionFactory {
 	public void setSessionFactoryClassLoader(
 		ClassLoader sessionFactoryClassLoader) {
 
-		ClassLoader portalClassLoader =
-			PACLClassLoaderUtil.getPortalClassLoader();
+		ClassLoader portalClassLoader = ClassLoaderUtil.getPortalClassLoader();
 
 		if (sessionFactoryClassLoader == portalClassLoader) {
 			_sessionFactoryClassLoader = sessionFactoryClassLoader;
@@ -126,7 +130,7 @@ public class SessionFactoryImpl implements SessionFactory {
 
 			for (String className : _PRELOAD_CLASS_NAMES) {
 				ClassLoader portalClassLoader =
-					PACLClassLoaderUtil.getPortalClassLoader();
+					ClassLoaderUtil.getPortalClassLoader();
 
 				Class<?> clazz = portalClassLoader.loadClass(className);
 
@@ -154,15 +158,15 @@ public class SessionFactoryImpl implements SessionFactory {
 		return liferaySession;
 	}
 
+	protected static final List<PortletSessionFactoryImpl>
+		portletSessionFactories =
+			new CopyOnWriteArrayList<PortletSessionFactoryImpl>();
+
 	private static final String[] _PRELOAD_CLASS_NAMES =
 		PropsValues.
 			SPRING_HIBERNATE_SESSION_FACTORY_PRELOAD_CLASSLOADER_CLASSES;
 
 	private static Log _log = LogFactoryUtil.getLog(SessionFactoryImpl.class);
-
-	protected static final List<PortletSessionFactoryImpl>
-		portletSessionFactories =
-			new CopyOnWriteArrayList<PortletSessionFactoryImpl>();
 
 	private ClassLoader _sessionFactoryClassLoader;
 	private SessionFactoryImplementor _sessionFactoryImplementor;

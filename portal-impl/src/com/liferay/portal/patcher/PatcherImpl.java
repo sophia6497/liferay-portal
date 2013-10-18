@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.patcher;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.patcher.Patcher;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringPool;
@@ -33,8 +34,10 @@ import java.util.Properties;
  * @author Zsolt Balogh
  * @author Brian Wing Shun Chan
  */
+@DoPrivileged
 public class PatcherImpl implements Patcher {
 
+	@Override
 	public boolean applyPatch(File patchFile) {
 		File patchDirectory = getPatchDirectory();
 
@@ -59,6 +62,7 @@ public class PatcherImpl implements Patcher {
 		}
 	}
 
+	@Override
 	public String[] getFixedIssues() {
 		if (_fixedIssueKeys != null) {
 			return _fixedIssueKeys;
@@ -72,6 +76,7 @@ public class PatcherImpl implements Patcher {
 		return _fixedIssueKeys;
 	}
 
+	@Override
 	public String[] getInstalledPatches() {
 		if (_installedPatchNames != null) {
 			return _installedPatchNames;
@@ -85,6 +90,7 @@ public class PatcherImpl implements Patcher {
 		return _installedPatchNames;
 	}
 
+	@Override
 	public File getPatchDirectory() {
 		if (_patchDirectory != null) {
 			return _patchDirectory;
@@ -109,6 +115,21 @@ public class PatcherImpl implements Patcher {
 		return _patchDirectory;
 	}
 
+	@Override
+	public String[] getPatchLevels() {
+		if (_patchLevels != null) {
+			return _patchLevels;
+		}
+
+		Properties properties = getProperties();
+
+		_patchLevels = StringUtil.split(
+			properties.getProperty(PROPERTY_PATCH_LEVELS));
+
+		return _patchLevels;
+	}
+
+	@Override
 	public Properties getProperties() {
 		if (_properties != null) {
 			return _properties;
@@ -147,6 +168,7 @@ public class PatcherImpl implements Patcher {
 		return _properties;
 	}
 
+	@Override
 	public boolean isConfigured() {
 		return _configured;
 	}
@@ -157,6 +179,7 @@ public class PatcherImpl implements Patcher {
 	private static String[] _fixedIssueKeys;
 	private static String[] _installedPatchNames;
 	private static File _patchDirectory;
+	private static String[] _patchLevels;
 	private static Properties _properties;
 
 }

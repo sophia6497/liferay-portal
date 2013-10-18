@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -142,7 +142,16 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 		append("<div class=\"toc\">");
 		append("<div class=\"collapsebox\">");
-		append("<h4>Table of Contents");
+		append("<h4>");
+
+		String title = tableOfContentsNode.getTitle();
+
+		if (title == null) {
+			title = "Table of Contents";
+		}
+
+		append(title);
+
 		append(StringPool.NBSP);
 		append("<a class=\"toc-trigger\" href=\"javascript:;\">[-]</a></h4>");
 		append("<div class=\"toc-index\">");
@@ -182,32 +191,36 @@ public class XhtmlTranslator extends XhtmlTranslationVisitor {
 
 		List<TreeNode<HeadingNode>> treeNodes = tableOfContents.getChildNodes();
 
-		if (treeNodes != null) {
-			for (TreeNode<HeadingNode> treeNode : treeNodes) {
-				append("<li class=\"toc-level-");
-				append(depth);
-				append("\">");
+		if (treeNodes == null) {
+			append("</ol>");
 
-				HeadingNode headingNode = treeNode.getValue();
+			return;
+		}
 
-				String content = getUnformattedHeadingText(headingNode);
+		for (TreeNode<HeadingNode> treeNode : treeNodes) {
+			append("<li class=\"toc-level-");
+			append(depth);
+			append("\">");
 
-				append("<a class=\"wikipage\" href=\"");
+			HeadingNode headingNode = treeNode.getValue();
 
-				if (_viewPageURL != null) {
-					append(_viewPageURL.toString());
-				}
+			String content = getUnformattedHeadingText(headingNode);
 
-				append(StringPool.POUND);
-				append(getHeadingMarkup(_page.getTitle(), content));
-				append("\">");
-				append(content);
-				append("</a>");
+			append("<a class=\"wikipage\" href=\"");
 
-				appendTableOfContents(treeNode, depth + 1);
-
-				append("</li>");
+			if (_viewPageURL != null) {
+				append(_viewPageURL.toString());
 			}
+
+			append(StringPool.POUND);
+			append(getHeadingMarkup(_page.getTitle(), content));
+			append("\">");
+			append(content);
+			append("</a>");
+
+			appendTableOfContents(treeNode, depth + 1);
+
+			append("</li>");
 		}
 
 		append("</ol>");

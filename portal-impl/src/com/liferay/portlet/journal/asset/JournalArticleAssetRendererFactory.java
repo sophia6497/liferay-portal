@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,7 +19,10 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
@@ -49,6 +52,8 @@ import java.util.Map;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
+import javax.portlet.WindowState;
+import javax.portlet.WindowStateException;
 
 /**
  * @author Julio Camarero
@@ -59,10 +64,9 @@ import javax.portlet.PortletURL;
 public class JournalArticleAssetRendererFactory
 	extends BaseAssetRendererFactory {
 
-	public static final String CLASS_NAME = JournalArticle.class.getName();
-
 	public static final String TYPE = "content";
 
+	@Override
 	public AssetRenderer getAssetRenderer(long classPK, int type)
 		throws PortalException, SystemException {
 
@@ -97,7 +101,12 @@ public class JournalArticleAssetRendererFactory
 			}
 		}
 
-		return new JournalArticleAssetRenderer(article);
+		JournalArticleAssetRenderer journalArticleAssetRenderer =
+			new JournalArticleAssetRenderer(article);
+
+		journalArticleAssetRenderer.setAssetRendererType(type);
+
+		return journalArticleAssetRenderer;
 	}
 
 	@Override
@@ -111,8 +120,36 @@ public class JournalArticleAssetRendererFactory
 		return new JournalArticleAssetRenderer(article);
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return JournalArticle.class.getName();
+	}
+
+	@Override
+	public List<Tuple> getClassTypeFieldNames(
+			long classTypeId, Locale locale, int start, int end)
+		throws Exception {
+
+		DDMStructure ddmStructure =
+			DDMStructureLocalServiceUtil.getDDMStructure(classTypeId);
+
+		List<Tuple> fieldNames = getDDMStructureFieldNames(
+			ddmStructure, locale);
+
+		return ListUtil.subList(fieldNames, start, end);
+	}
+
+	@Override
+	public int getClassTypeFieldNamesCount(long classTypeId, Locale locale)
+		throws Exception {
+
+		DDMStructure ddmStructure =
+			DDMStructureLocalServiceUtil.getDDMStructure(classTypeId);
+
+		List<Tuple> fieldNames = getDDMStructureFieldNames(
+			ddmStructure, locale);
+
+		return fieldNames.size();
 	}
 
 	@Override
@@ -137,6 +174,7 @@ public class JournalArticleAssetRendererFactory
 		return classTypes;
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}
@@ -186,6 +224,24 @@ public class JournalArticleAssetRendererFactory
 		portletURL.setParameter("struts_action", "/journal/edit_article");
 
 		return portletURL;
+	}
+
+	@Override
+	public PortletURL getURLView(
+		LiferayPortletResponse liferayPortletResponse,
+		WindowState windowState) {
+
+		LiferayPortletURL liferayPortletURL =
+			liferayPortletResponse.createLiferayPortletURL(
+				PortletKeys.JOURNAL, PortletRequest.RENDER_PHASE);
+
+		try {
+			liferayPortletURL.setWindowState(windowState);
+		}
+		catch (WindowStateException wse) {
+		}
+
+		return liferayPortletURL;
 	}
 
 	@Override

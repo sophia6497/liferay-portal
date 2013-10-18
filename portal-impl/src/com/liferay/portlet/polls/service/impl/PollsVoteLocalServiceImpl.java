@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portlet.polls.service.impl;
 
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.User;
@@ -36,6 +35,7 @@ import java.util.List;
  */
 public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 
+	@Override
 	public PollsVote addVote(
 			long userId, long questionId, long choiceId,
 			ServiceContext serviceContext)
@@ -74,12 +74,12 @@ public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 		else {
 			String userName = null;
 
-			try {
-				User user = userPersistence.findByPrimaryKey(userId);
+			User user = userPersistence.fetchByPrimaryKey(userId);
 
+			if (user != null) {
 				userName = user.getFullName();
 			}
-			catch (NoSuchUserException nsue) {
+			else {
 				userName = serviceContext.translate("anonymous");
 			}
 
@@ -87,6 +87,8 @@ public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 
 			vote = pollsVotePersistence.create(voteId);
 
+			vote.setUuid(serviceContext.getUuid());
+			vote.setGroupId(serviceContext.getScopeGroupId());
 			vote.setCompanyId(serviceContext.getCompanyId());
 			vote.setUserId(userId);
 			vote.setUserName(userName);
@@ -102,26 +104,31 @@ public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 		return vote;
 	}
 
+	@Override
 	public List<PollsVote> getChoiceVotes(long choiceId, int start, int end)
 		throws SystemException {
 
 		return pollsVotePersistence.findByChoiceId(choiceId, start, end);
 	}
 
+	@Override
 	public int getChoiceVotesCount(long choiceId) throws SystemException {
 		return pollsVotePersistence.countByChoiceId(choiceId);
 	}
 
+	@Override
 	public List<PollsVote> getQuestionVotes(long questionId, int start, int end)
 		throws SystemException {
 
 		return pollsVotePersistence.findByQuestionId(questionId, start, end);
 	}
 
+	@Override
 	public int getQuestionVotesCount(long questionId) throws SystemException {
 		return pollsVotePersistence.countByQuestionId(questionId);
 	}
 
+	@Override
 	public PollsVote getVote(long questionId, long userId)
 		throws PortalException, SystemException {
 

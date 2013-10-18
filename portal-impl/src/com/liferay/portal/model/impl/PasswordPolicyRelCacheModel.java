@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -49,6 +49,7 @@ public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel
 		return sb.toString();
 	}
 
+	@Override
 	public PasswordPolicyRel toEntityModel() {
 		PasswordPolicyRelImpl passwordPolicyRelImpl = new PasswordPolicyRelImpl();
 
@@ -62,6 +63,7 @@ public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel
 		return passwordPolicyRelImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		passwordPolicyRelId = objectInput.readLong();
 		passwordPolicyId = objectInput.readLong();
@@ -69,6 +71,7 @@ public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel
 		classPK = objectInput.readLong();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(passwordPolicyRelId);

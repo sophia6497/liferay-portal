@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,7 +21,7 @@
 <%
 LinkedHashMap<String, Object> userParams = new LinkedHashMap<String, Object>();
 
-userParams.put("inherit", true);
+userParams.put("inherit", Boolean.TRUE);
 userParams.put("usersGroups", new Long(groupId));
 
 int usersCount = UserLocalServiceUtil.searchCount(company.getCompanyId(), null, WorkflowConstants.STATUS_APPROVED, userParams);
@@ -103,7 +103,7 @@ if (group.getType() == GroupConstants.TYPE_SITE_RESTRICTED) {
 				<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
 			</portlet:renderURL>
 
-			<dt class="aui-helper-hidden-accessible">
+			<dt class="hide-accessible">
 				<liferay-ui:message key="request-pending" />
 			</dt>
 

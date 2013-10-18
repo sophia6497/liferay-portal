@@ -1,53 +1,25 @@
-<#setting number_format = "0">
+<#assign groupIds = dataFactory.getNewUserGroupIds(groupModel.groupId)>
+<#assign roleIds = [dataFactory.administratorRoleModel.roleId, dataFactory.powerUserRoleModel.roleId, dataFactory.userRoleModel.roleId]>
 
-<#assign groupIds = dataFactory.addUserToGroupIds(group.groupId)>
-<#assign organizationIds = []>
-<#assign roleIds = [dataFactory.administratorRole.roleId, dataFactory.powerUserRole.roleId, dataFactory.userRole.roleId]>
+<#assign userModels = dataFactory.newUserModels()>
 
-<#assign firstNames = dataFactory.userNames?first>
-<#assign lastNames = dataFactory.userNames?last>
+<#list userModels as userModel>
+	<#assign userGroupModel = dataFactory.newGroupModel(userModel)>
 
-<#assign userCounter = dataFactory.newInteger()>
+	<#assign layoutModel = dataFactory.newLayoutModel(userGroupModel.groupId, "home", "", "33,")>
 
-<#list lastNames as lastName>
-	<#list firstNames as firstName>
-		<#assign userCounterIncrement = userCounter.increment()>
+	<@insertLayout
+		_layoutModel = layoutModel
+	/>
 
-		<#assign contact = dataFactory.addContact(firstName, lastName)>
-		<#assign user = dataFactory.addUser(false, "test" + userScreenNameIncrementer.get())>
+	<@insertGroup
+		_groupModel = userGroupModel
+		_publicPageCount = 1
+	/>
 
-		<#assign userGroup = dataFactory.addGroup(counter.get(), dataFactory.userClassNameId, user.userId, stringUtil.valueOf(user.userId), "/" + user.screenName, false)>
-
-		${sampleSQLBuilder.insertGroup(userGroup, [], [dataFactory.addLayout(1, "Home", "/home", "", "33,")])}
-
-		${sampleSQLBuilder.insertUser(contact, groupIds, organizationIds, roleIds, user)}
-
-		<#assign blogsStatsUser = dataFactory.addBlogsStatsUser(groupId, user.userId)>
-
-		insert into BlogsStatsUser (statsUserId, groupId, companyId, userId) values (${counter.get()}, ${blogsStatsUser.groupId}, ${companyId}, ${blogsStatsUser.userId});
-
-		<#assign mbStatsUser = dataFactory.addMBStatsUser(groupId, user.userId)>
-
-		insert into MBStatsUser (statsUserId, groupId, userId) values (${counter.get()}, ${mbStatsUser.groupId}, ${mbStatsUser.userId});
-
-		${writerUserCSV.write(user.getScreenName() + "," + userGroup.groupId + ",")}
-
-		<#if (userCounter.value < maxUserCount)>
-			${writerUserCSV.write("\n")}
-		</#if>
-
-		<#if (lastName_index = 0) && (firstName_index = 0)>
-			<#assign firstUserId = user.userId>
-		</#if>
-
-		<#if (userCounter.value >= maxUserCount)>
-			${writerUserCSV.write("\n")}
-
-			<#break>
-		</#if>
-	</#list>
-
-	<#if (userCounter.value >= maxUserCount)>
-		<#break>
-	</#if>
+	<@insertUser
+		_groupIds = groupIds
+		_roleIds = roleIds
+		_userModel = userModel
+	/>
 </#list>

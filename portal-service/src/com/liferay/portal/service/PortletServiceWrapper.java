@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,10 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link PortletService}.
- * </p>
+ * Provides a wrapper for {@link PortletService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       PortletService
+ * @author Brian Wing Shun Chan
+ * @see PortletService
  * @generated
  */
 public class PortletServiceWrapper implements PortletService,
@@ -34,6 +32,7 @@ public class PortletServiceWrapper implements PortletService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _portletService.getBeanIdentifier();
 	}
@@ -43,14 +42,17 @@ public class PortletServiceWrapper implements PortletService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_portletService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portal.kernel.json.JSONArray getWARPortlets() {
 		return _portletService.getWARPortlets();
 	}
 
+	@Override
 	public com.liferay.portal.model.Portlet updatePortlet(long companyId,
 		java.lang.String portletId, java.lang.String roles, boolean active)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -59,23 +61,25 @@ public class PortletServiceWrapper implements PortletService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public PortletService getWrappedPortletService() {
 		return _portletService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedPortletService(PortletService portletService) {
 		_portletService = portletService;
 	}
 
+	@Override
 	public PortletService getWrappedService() {
 		return _portletService;
 	}
 
+	@Override
 	public void setWrappedService(PortletService portletService) {
 		_portletService = portletService;
 	}

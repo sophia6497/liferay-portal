@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -60,6 +60,7 @@ public class UserTrackerCacheModel implements CacheModel<UserTracker>,
 		return sb.toString();
 	}
 
+	@Override
 	public UserTracker toEntityModel() {
 		UserTrackerImpl userTrackerImpl = new UserTrackerImpl();
 
@@ -107,6 +108,7 @@ public class UserTrackerCacheModel implements CacheModel<UserTracker>,
 		return userTrackerImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		userTrackerId = objectInput.readLong();
 		companyId = objectInput.readLong();
@@ -118,6 +120,7 @@ public class UserTrackerCacheModel implements CacheModel<UserTracker>,
 		userAgent = objectInput.readUTF();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(userTrackerId);

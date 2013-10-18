@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -205,11 +205,10 @@ public class Table {
 		if (!empty) {
 			return tempFileName;
 		}
-		else {
-			FileUtil.delete(tempFileName);
 
-			return null;
-		}
+		FileUtil.delete(tempFileName);
+
+		return null;
 	}
 
 	public Object[][] getColumns() {
@@ -277,7 +276,7 @@ public class Table {
 		String createSQL = getCreateSQL();
 
 		if (Validator.isNotNull(createSQL)) {
-			String createSQLLowerCase = createSQL.toLowerCase();
+			String createSQLLowerCase = StringUtil.toLowerCase(createSQL);
 
 			int x = createSQLLowerCase.indexOf("create table ");
 

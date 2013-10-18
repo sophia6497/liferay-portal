@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,9 +16,6 @@ package com.liferay.portlet.asset.service.persistence;
 
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.CacheRegistryUtil;
-import com.liferay.portal.kernel.dao.jdbc.MappingSqlQuery;
-import com.liferay.portal.kernel.dao.jdbc.MappingSqlQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.jdbc.RowMapper;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
@@ -47,6 +44,8 @@ import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ModelListener;
 import com.liferay.portal.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.service.persistence.impl.TableMapper;
+import com.liferay.portal.service.persistence.impl.TableMapperFactory;
 
 import com.liferay.portlet.asset.NoSuchCategoryException;
 import com.liferay.portlet.asset.model.AssetCategory;
@@ -123,6 +122,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByUuid(String uuid)
 		throws SystemException {
 		return findByUuid(uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
@@ -141,6 +141,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByUuid(String uuid, int start, int end)
 		throws SystemException {
 		return findByUuid(uuid, start, end, null);
@@ -160,6 +161,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByUuid(String uuid, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -280,6 +282,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByUuid_First(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -309,6 +312,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByUuid_First(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByUuid(uuid, 0, 1, orderByComparator);
@@ -329,6 +333,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByUuid_Last(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -358,9 +363,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByUuid_Last(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid(uuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByUuid(uuid, count - 1, count,
 				orderByComparator);
@@ -382,6 +392,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByUuid_PrevAndNext(long categoryId, String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -537,6 +548,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param uuid the uuid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid(String uuid) throws SystemException {
 		for (AssetCategory assetCategory : findByUuid(uuid, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null)) {
@@ -551,6 +563,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid(String uuid) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID;
 
@@ -633,6 +646,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByUUID_G(String uuid, long groupId)
 		throws NoSuchCategoryException, SystemException {
 		AssetCategory assetCategory = fetchByUUID_G(uuid, groupId);
@@ -668,6 +682,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByUUID_G(String uuid, long groupId)
 		throws SystemException {
 		return fetchByUUID_G(uuid, groupId, true);
@@ -682,6 +697,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByUUID_G(String uuid, long groupId,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { uuid, groupId };
@@ -788,6 +804,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the asset category that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory removeByUUID_G(String uuid, long groupId)
 		throws NoSuchCategoryException, SystemException {
 		AssetCategory assetCategory = findByUUID_G(uuid, groupId);
@@ -803,6 +820,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUUID_G(String uuid, long groupId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_G;
@@ -903,6 +921,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		return findByUuid_C(uuid, companyId, QueryUtil.ALL_POS,
@@ -923,6 +942,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByUuid_C(String uuid, long companyId,
 		int start, int end) throws SystemException {
 		return findByUuid_C(uuid, companyId, start, end, null);
@@ -943,6 +963,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByUuid_C(String uuid, long companyId,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -1074,6 +1095,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -1108,6 +1130,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByUuid_C(uuid, companyId, 0, 1,
@@ -1130,6 +1153,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -1164,9 +1188,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid_C(uuid, companyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByUuid_C(uuid, companyId, count - 1,
 				count, orderByComparator);
@@ -1189,6 +1218,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByUuid_C_PrevAndNext(long categoryId,
 		String uuid, long companyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -1349,6 +1379,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param companyId the company ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByUuid_C(uuid, companyId,
@@ -1365,6 +1396,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_C;
@@ -1462,6 +1494,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByGroupId(long groupId)
 		throws SystemException {
 		return findByGroupId(groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
@@ -1480,6 +1513,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByGroupId(long groupId, int start, int end)
 		throws SystemException {
 		return findByGroupId(groupId, start, end, null);
@@ -1499,6 +1533,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByGroupId(long groupId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -1605,6 +1640,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByGroupId_First(long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -1635,6 +1671,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByGroupId_First(long groupId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByGroupId(groupId, 0, 1,
@@ -1656,6 +1693,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByGroupId_Last(long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -1686,9 +1724,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByGroupId_Last(long groupId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByGroupId(groupId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByGroupId(groupId, count - 1, count,
 				orderByComparator);
@@ -1710,6 +1753,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByGroupId_PrevAndNext(long categoryId,
 		long groupId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -1852,6 +1896,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByGroupId(long groupId)
 		throws SystemException {
 		return filterFindByGroupId(groupId, QueryUtil.ALL_POS,
@@ -1871,6 +1916,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByGroupId(long groupId, int start,
 		int end) throws SystemException {
 		return filterFindByGroupId(groupId, start, end, null);
@@ -1890,6 +1936,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByGroupId(long groupId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -1922,11 +1969,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -1981,6 +2028,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] filterFindByGroupId_PrevAndNext(long categoryId,
 		long groupId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -2162,6 +2210,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param groupId the group ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByGroupId(long groupId) throws SystemException {
 		for (AssetCategory assetCategory : findByGroupId(groupId,
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
@@ -2176,6 +2225,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByGroupId(long groupId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_GROUPID;
 
@@ -2228,6 +2278,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByGroupId(long groupId) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByGroupId(groupId);
@@ -2300,6 +2351,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByParentCategoryId(long parentCategoryId)
 		throws SystemException {
 		return findByParentCategoryId(parentCategoryId, QueryUtil.ALL_POS,
@@ -2319,6 +2371,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByParentCategoryId(long parentCategoryId,
 		int start, int end) throws SystemException {
 		return findByParentCategoryId(parentCategoryId, start, end, null);
@@ -2338,6 +2391,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByParentCategoryId(long parentCategoryId,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -2449,6 +2503,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByParentCategoryId_First(long parentCategoryId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -2479,6 +2534,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByParentCategoryId_First(long parentCategoryId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByParentCategoryId(parentCategoryId, 0,
@@ -2500,6 +2556,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByParentCategoryId_Last(long parentCategoryId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -2530,9 +2587,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByParentCategoryId_Last(long parentCategoryId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByParentCategoryId(parentCategoryId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByParentCategoryId(parentCategoryId,
 				count - 1, count, orderByComparator);
@@ -2554,6 +2616,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByParentCategoryId_PrevAndNext(long categoryId,
 		long parentCategoryId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -2695,6 +2758,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param parentCategoryId the parent category ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByParentCategoryId(long parentCategoryId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByParentCategoryId(
@@ -2710,6 +2774,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByParentCategoryId(long parentCategoryId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_PARENTCATEGORYID;
@@ -2788,6 +2853,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByVocabularyId(long vocabularyId)
 		throws SystemException {
 		return findByVocabularyId(vocabularyId, QueryUtil.ALL_POS,
@@ -2807,6 +2873,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByVocabularyId(long vocabularyId, int start,
 		int end) throws SystemException {
 		return findByVocabularyId(vocabularyId, start, end, null);
@@ -2826,6 +2893,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByVocabularyId(long vocabularyId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -2936,6 +3004,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByVocabularyId_First(long vocabularyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -2966,6 +3035,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByVocabularyId_First(long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByVocabularyId(vocabularyId, 0, 1,
@@ -2987,6 +3057,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByVocabularyId_Last(long vocabularyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -3017,9 +3088,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByVocabularyId_Last(long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByVocabularyId(vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByVocabularyId(vocabularyId, count - 1,
 				count, orderByComparator);
@@ -3041,6 +3117,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByVocabularyId_PrevAndNext(long categoryId,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -3182,6 +3259,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param vocabularyId the vocabulary ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByVocabularyId(long vocabularyId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByVocabularyId(vocabularyId,
@@ -3197,6 +3275,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByVocabularyId(long vocabularyId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_VOCABULARYID;
 
@@ -3278,6 +3357,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_V(long groupId, long vocabularyId)
 		throws SystemException {
 		return findByG_V(groupId, vocabularyId, QueryUtil.ALL_POS,
@@ -3298,6 +3378,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_V(long groupId, long vocabularyId,
 		int start, int end) throws SystemException {
 		return findByG_V(groupId, vocabularyId, start, end, null);
@@ -3318,6 +3399,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_V(long groupId, long vocabularyId,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -3435,6 +3517,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByG_V_First(long groupId, long vocabularyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -3469,6 +3552,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByG_V_First(long groupId, long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByG_V(groupId, vocabularyId, 0, 1,
@@ -3491,6 +3575,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByG_V_Last(long groupId, long vocabularyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -3525,9 +3610,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByG_V_Last(long groupId, long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_V(groupId, vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByG_V(groupId, vocabularyId, count - 1,
 				count, orderByComparator);
@@ -3550,6 +3640,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByG_V_PrevAndNext(long categoryId, long groupId,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -3697,6 +3788,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_V(long groupId, long vocabularyId)
 		throws SystemException {
 		return filterFindByG_V(groupId, vocabularyId, QueryUtil.ALL_POS,
@@ -3717,6 +3809,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_V(long groupId, long vocabularyId,
 		int start, int end) throws SystemException {
 		return filterFindByG_V(groupId, vocabularyId, start, end, null);
@@ -3737,6 +3830,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_V(long groupId, long vocabularyId,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -3773,11 +3867,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -3835,6 +3929,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] filterFindByG_V_PrevAndNext(long categoryId,
 		long groupId, long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -4022,6 +4117,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_V(long groupId,
 		long[] vocabularyIds) throws SystemException {
 		return filterFindByG_V(groupId, vocabularyIds, QueryUtil.ALL_POS,
@@ -4042,6 +4138,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_V(long groupId,
 		long[] vocabularyIds, int start, int end) throws SystemException {
 		return filterFindByG_V(groupId, vocabularyIds, start, end, null);
@@ -4062,6 +4159,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_V(long groupId,
 		long[] vocabularyIds, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -4116,11 +4214,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -4181,6 +4279,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_V(long groupId, long[] vocabularyIds)
 		throws SystemException {
 		return findByG_V(groupId, vocabularyIds, QueryUtil.ALL_POS,
@@ -4201,6 +4300,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_V(long groupId, long[] vocabularyIds,
 		int start, int end) throws SystemException {
 		return findByG_V(groupId, vocabularyIds, start, end, null);
@@ -4221,6 +4321,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_V(long groupId, long[] vocabularyIds,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -4360,6 +4461,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param vocabularyId the vocabulary ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_V(long groupId, long vocabularyId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByG_V(groupId, vocabularyId,
@@ -4376,6 +4478,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_V(long groupId, long vocabularyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_V;
@@ -4434,6 +4537,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_V(long groupId, long[] vocabularyIds)
 		throws SystemException {
 		Object[] finderArgs = new Object[] {
@@ -4522,6 +4626,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_V(long groupId, long vocabularyId)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -4576,6 +4681,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_V(long groupId, long[] vocabularyIds)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -4686,6 +4792,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByP_N(long parentCategoryId, String name)
 		throws SystemException {
 		return findByP_N(parentCategoryId, name, QueryUtil.ALL_POS,
@@ -4706,6 +4813,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByP_N(long parentCategoryId, String name,
 		int start, int end) throws SystemException {
 		return findByP_N(parentCategoryId, name, start, end, null);
@@ -4726,6 +4834,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByP_N(long parentCategoryId, String name,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -4857,6 +4966,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByP_N_First(long parentCategoryId, String name,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -4891,6 +5001,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByP_N_First(long parentCategoryId, String name,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByP_N(parentCategoryId, name, 0, 1,
@@ -4913,6 +5024,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByP_N_Last(long parentCategoryId, String name,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -4947,9 +5059,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByP_N_Last(long parentCategoryId, String name,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByP_N(parentCategoryId, name);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByP_N(parentCategoryId, name, count - 1,
 				count, orderByComparator);
@@ -4972,6 +5089,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByP_N_PrevAndNext(long categoryId,
 		long parentCategoryId, String name, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -5132,6 +5250,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param name the name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByP_N(long parentCategoryId, String name)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByP_N(parentCategoryId, name,
@@ -5148,6 +5267,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByP_N(long parentCategoryId, String name)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_P_N;
@@ -5247,6 +5367,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByP_V(long parentCategoryId,
 		long vocabularyId) throws SystemException {
 		return findByP_V(parentCategoryId, vocabularyId, QueryUtil.ALL_POS,
@@ -5267,6 +5388,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByP_V(long parentCategoryId,
 		long vocabularyId, int start, int end) throws SystemException {
 		return findByP_V(parentCategoryId, vocabularyId, start, end, null);
@@ -5287,6 +5409,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByP_V(long parentCategoryId,
 		long vocabularyId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -5404,6 +5527,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByP_V_First(long parentCategoryId,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -5438,6 +5562,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByP_V_First(long parentCategoryId,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -5461,6 +5586,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByP_V_Last(long parentCategoryId,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -5495,10 +5621,15 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByP_V_Last(long parentCategoryId,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByP_V(parentCategoryId, vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByP_V(parentCategoryId, vocabularyId,
 				count - 1, count, orderByComparator);
@@ -5521,6 +5652,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByP_V_PrevAndNext(long categoryId,
 		long parentCategoryId, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -5668,6 +5800,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param vocabularyId the vocabulary ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByP_V(long parentCategoryId, long vocabularyId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByP_V(parentCategoryId,
@@ -5684,6 +5817,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByP_V(long parentCategoryId, long vocabularyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_P_V;
@@ -5766,6 +5900,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByN_V(String name, long vocabularyId)
 		throws SystemException {
 		return findByN_V(name, vocabularyId, QueryUtil.ALL_POS,
@@ -5786,6 +5921,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByN_V(String name, long vocabularyId,
 		int start, int end) throws SystemException {
 		return findByN_V(name, vocabularyId, start, end, null);
@@ -5806,6 +5942,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByN_V(String name, long vocabularyId,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -5937,6 +6074,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByN_V_First(String name, long vocabularyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -5971,6 +6109,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByN_V_First(String name, long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<AssetCategory> list = findByN_V(name, vocabularyId, 0, 1,
@@ -5993,6 +6132,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByN_V_Last(String name, long vocabularyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -6027,9 +6167,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByN_V_Last(String name, long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByN_V(name, vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByN_V(name, vocabularyId, count - 1,
 				count, orderByComparator);
@@ -6052,6 +6197,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByN_V_PrevAndNext(long categoryId, String name,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -6212,6 +6358,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param vocabularyId the vocabulary ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByN_V(String name, long vocabularyId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByN_V(name, vocabularyId,
@@ -6228,6 +6375,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByN_V(String name, long vocabularyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_N_V;
@@ -6296,6 +6444,985 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	private static final String _FINDER_COLUMN_N_V_NAME_2 = "assetCategory.name = ? AND ";
 	private static final String _FINDER_COLUMN_N_V_NAME_3 = "(assetCategory.name IS NULL OR assetCategory.name = '') AND ";
 	private static final String _FINDER_COLUMN_N_V_VOCABULARYID_2 = "assetCategory.vocabularyId = ?";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_G_P_V = new FinderPath(AssetCategoryModelImpl.ENTITY_CACHE_ENABLED,
+			AssetCategoryModelImpl.FINDER_CACHE_ENABLED,
+			AssetCategoryImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+			"findByG_P_V",
+			new String[] {
+				Long.class.getName(), Long.class.getName(), Long.class.getName(),
+				
+			Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_G_P_V = new FinderPath(AssetCategoryModelImpl.ENTITY_CACHE_ENABLED,
+			AssetCategoryModelImpl.FINDER_CACHE_ENABLED,
+			AssetCategoryImpl.class, FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+			"findByG_P_V",
+			new String[] {
+				Long.class.getName(), Long.class.getName(), Long.class.getName()
+			},
+			AssetCategoryModelImpl.GROUPID_COLUMN_BITMASK |
+			AssetCategoryModelImpl.PARENTCATEGORYID_COLUMN_BITMASK |
+			AssetCategoryModelImpl.VOCABULARYID_COLUMN_BITMASK |
+			AssetCategoryModelImpl.NAME_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_G_P_V = new FinderPath(AssetCategoryModelImpl.ENTITY_CACHE_ENABLED,
+			AssetCategoryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_V",
+			new String[] {
+				Long.class.getName(), Long.class.getName(), Long.class.getName()
+			});
+
+	/**
+	 * Returns all the asset categories where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @return the matching asset categories
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<AssetCategory> findByG_P_V(long groupId, long parentCategoryId,
+		long vocabularyId) throws SystemException {
+		return findByG_P_V(groupId, parentCategoryId, vocabularyId,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the asset categories where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetCategoryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param start the lower bound of the range of asset categories
+	 * @param end the upper bound of the range of asset categories (not inclusive)
+	 * @return the range of matching asset categories
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<AssetCategory> findByG_P_V(long groupId, long parentCategoryId,
+		long vocabularyId, int start, int end) throws SystemException {
+		return findByG_P_V(groupId, parentCategoryId, vocabularyId, start, end,
+			null);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset categories where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetCategoryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param start the lower bound of the range of asset categories
+	 * @param end the upper bound of the range of asset categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset categories
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<AssetCategory> findByG_P_V(long groupId, long parentCategoryId,
+		long vocabularyId, int start, int end,
+		OrderByComparator orderByComparator) throws SystemException {
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_G_P_V;
+			finderArgs = new Object[] { groupId, parentCategoryId, vocabularyId };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_G_P_V;
+			finderArgs = new Object[] {
+					groupId, parentCategoryId, vocabularyId,
+					
+					start, end, orderByComparator
+				};
+		}
+
+		List<AssetCategory> list = (List<AssetCategory>)FinderCacheUtil.getResult(finderPath,
+				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (AssetCategory assetCategory : list) {
+				if ((groupId != assetCategory.getGroupId()) ||
+						(parentCategoryId != assetCategory.getParentCategoryId()) ||
+						(vocabularyId != assetCategory.getVocabularyId())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
+
+		if (list == null) {
+			StringBundler query = null;
+
+			if (orderByComparator != null) {
+				query = new StringBundler(5 +
+						(orderByComparator.getOrderByFields().length * 3));
+			}
+			else {
+				query = new StringBundler(5);
+			}
+
+			query.append(_SQL_SELECT_ASSETCATEGORY_WHERE);
+
+			query.append(_FINDER_COLUMN_G_P_V_GROUPID_2);
+
+			query.append(_FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2);
+
+			query.append(_FINDER_COLUMN_G_P_V_VOCABULARYID_2);
+
+			if (orderByComparator != null) {
+				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
+					orderByComparator);
+			}
+			else
+			 if (pagination) {
+				query.append(AssetCategoryModelImpl.ORDER_BY_JPQL);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(groupId);
+
+				qPos.add(parentCategoryId);
+
+				qPos.add(vocabularyId);
+
+				if (!pagination) {
+					list = (List<AssetCategory>)QueryUtil.list(q, getDialect(),
+							start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<AssetCategory>(list);
+				}
+				else {
+					list = (List<AssetCategory>)QueryUtil.list(q, getDialect(),
+							start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return list;
+	}
+
+	/**
+	 * Returns the first asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset category
+	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AssetCategory findByG_P_V_First(long groupId, long parentCategoryId,
+		long vocabularyId, OrderByComparator orderByComparator)
+		throws NoSuchCategoryException, SystemException {
+		AssetCategory assetCategory = fetchByG_P_V_First(groupId,
+				parentCategoryId, vocabularyId, orderByComparator);
+
+		if (assetCategory != null) {
+			return assetCategory;
+		}
+
+		StringBundler msg = new StringBundler(8);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("groupId=");
+		msg.append(groupId);
+
+		msg.append(", parentCategoryId=");
+		msg.append(parentCategoryId);
+
+		msg.append(", vocabularyId=");
+		msg.append(vocabularyId);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchCategoryException(msg.toString());
+	}
+
+	/**
+	 * Returns the first asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AssetCategory fetchByG_P_V_First(long groupId,
+		long parentCategoryId, long vocabularyId,
+		OrderByComparator orderByComparator) throws SystemException {
+		List<AssetCategory> list = findByG_P_V(groupId, parentCategoryId,
+				vocabularyId, 0, 1, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the last asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset category
+	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AssetCategory findByG_P_V_Last(long groupId, long parentCategoryId,
+		long vocabularyId, OrderByComparator orderByComparator)
+		throws NoSuchCategoryException, SystemException {
+		AssetCategory assetCategory = fetchByG_P_V_Last(groupId,
+				parentCategoryId, vocabularyId, orderByComparator);
+
+		if (assetCategory != null) {
+			return assetCategory;
+		}
+
+		StringBundler msg = new StringBundler(8);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("groupId=");
+		msg.append(groupId);
+
+		msg.append(", parentCategoryId=");
+		msg.append(parentCategoryId);
+
+		msg.append(", vocabularyId=");
+		msg.append(vocabularyId);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchCategoryException(msg.toString());
+	}
+
+	/**
+	 * Returns the last asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AssetCategory fetchByG_P_V_Last(long groupId, long parentCategoryId,
+		long vocabularyId, OrderByComparator orderByComparator)
+		throws SystemException {
+		int count = countByG_P_V(groupId, parentCategoryId, vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
+
+		List<AssetCategory> list = findByG_P_V(groupId, parentCategoryId,
+				vocabularyId, count - 1, count, orderByComparator);
+
+		if (!list.isEmpty()) {
+			return list.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns the asset categories before and after the current asset category in the ordered set where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param categoryId the primary key of the current asset category
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset category
+	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AssetCategory[] findByG_P_V_PrevAndNext(long categoryId,
+		long groupId, long parentCategoryId, long vocabularyId,
+		OrderByComparator orderByComparator)
+		throws NoSuchCategoryException, SystemException {
+		AssetCategory assetCategory = findByPrimaryKey(categoryId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AssetCategory[] array = new AssetCategoryImpl[3];
+
+			array[0] = getByG_P_V_PrevAndNext(session, assetCategory, groupId,
+					parentCategoryId, vocabularyId, orderByComparator, true);
+
+			array[1] = assetCategory;
+
+			array[2] = getByG_P_V_PrevAndNext(session, assetCategory, groupId,
+					parentCategoryId, vocabularyId, orderByComparator, false);
+
+			return array;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected AssetCategory getByG_P_V_PrevAndNext(Session session,
+		AssetCategory assetCategory, long groupId, long parentCategoryId,
+		long vocabularyId, OrderByComparator orderByComparator, boolean previous) {
+		StringBundler query = null;
+
+		if (orderByComparator != null) {
+			query = new StringBundler(6 +
+					(orderByComparator.getOrderByFields().length * 6));
+		}
+		else {
+			query = new StringBundler(3);
+		}
+
+		query.append(_SQL_SELECT_ASSETCATEGORY_WHERE);
+
+		query.append(_FINDER_COLUMN_G_P_V_GROUPID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_VOCABULARYID_2);
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				query.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				query.append(_ORDER_BY_ENTITY_ALIAS);
+				query.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(WHERE_GREATER_THAN);
+					}
+					else {
+						query.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				query.append(_ORDER_BY_ENTITY_ALIAS);
+				query.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						query.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(ORDER_BY_ASC);
+					}
+					else {
+						query.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			query.append(AssetCategoryModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = query.toString();
+
+		Query q = session.createQuery(sql);
+
+		q.setFirstResult(0);
+		q.setMaxResults(2);
+
+		QueryPos qPos = QueryPos.getInstance(q);
+
+		qPos.add(groupId);
+
+		qPos.add(parentCategoryId);
+
+		qPos.add(vocabularyId);
+
+		if (orderByComparator != null) {
+			Object[] values = orderByComparator.getOrderByConditionValues(assetCategory);
+
+			for (Object value : values) {
+				qPos.add(value);
+			}
+		}
+
+		List<AssetCategory> list = q.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Returns all the asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @return the matching asset categories that the user has permission to view
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<AssetCategory> filterFindByG_P_V(long groupId,
+		long parentCategoryId, long vocabularyId) throws SystemException {
+		return filterFindByG_P_V(groupId, parentCategoryId, vocabularyId,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetCategoryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param start the lower bound of the range of asset categories
+	 * @param end the upper bound of the range of asset categories (not inclusive)
+	 * @return the range of matching asset categories that the user has permission to view
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<AssetCategory> filterFindByG_P_V(long groupId,
+		long parentCategoryId, long vocabularyId, int start, int end)
+		throws SystemException {
+		return filterFindByG_P_V(groupId, parentCategoryId, vocabularyId,
+			start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the asset categories that the user has permissions to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetCategoryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param start the lower bound of the range of asset categories
+	 * @param end the upper bound of the range of asset categories (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching asset categories that the user has permission to view
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<AssetCategory> filterFindByG_P_V(long groupId,
+		long parentCategoryId, long vocabularyId, int start, int end,
+		OrderByComparator orderByComparator) throws SystemException {
+		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
+			return findByG_P_V(groupId, parentCategoryId, vocabularyId, start,
+				end, orderByComparator);
+		}
+
+		StringBundler query = null;
+
+		if (orderByComparator != null) {
+			query = new StringBundler(5 +
+					(orderByComparator.getOrderByFields().length * 3));
+		}
+		else {
+			query = new StringBundler(5);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			query.append(_FILTER_SQL_SELECT_ASSETCATEGORY_WHERE);
+		}
+		else {
+			query.append(_FILTER_SQL_SELECT_ASSETCATEGORY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		query.append(_FINDER_COLUMN_G_P_V_GROUPID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_VOCABULARYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			query.append(_FILTER_SQL_SELECT_ASSETCATEGORY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			if (getDB().isSupportsInlineDistinct()) {
+				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
+					orderByComparator, true);
+			}
+			else {
+				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
+					orderByComparator, true);
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				query.append(AssetCategoryModelImpl.ORDER_BY_JPQL);
+			}
+			else {
+				query.append(AssetCategoryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(query.toString(),
+				AssetCategory.class.getName(),
+				_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			if (getDB().isSupportsInlineDistinct()) {
+				q.addEntity(_FILTER_ENTITY_ALIAS, AssetCategoryImpl.class);
+			}
+			else {
+				q.addEntity(_FILTER_ENTITY_TABLE, AssetCategoryImpl.class);
+			}
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(groupId);
+
+			qPos.add(parentCategoryId);
+
+			qPos.add(vocabularyId);
+
+			return (List<AssetCategory>)QueryUtil.list(q, getDialect(), start,
+				end);
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	/**
+	 * Returns the asset categories before and after the current asset category in the ordered set of asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param categoryId the primary key of the current asset category
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next asset category
+	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AssetCategory[] filterFindByG_P_V_PrevAndNext(long categoryId,
+		long groupId, long parentCategoryId, long vocabularyId,
+		OrderByComparator orderByComparator)
+		throws NoSuchCategoryException, SystemException {
+		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
+			return findByG_P_V_PrevAndNext(categoryId, groupId,
+				parentCategoryId, vocabularyId, orderByComparator);
+		}
+
+		AssetCategory assetCategory = findByPrimaryKey(categoryId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AssetCategory[] array = new AssetCategoryImpl[3];
+
+			array[0] = filterGetByG_P_V_PrevAndNext(session, assetCategory,
+					groupId, parentCategoryId, vocabularyId, orderByComparator,
+					true);
+
+			array[1] = assetCategory;
+
+			array[2] = filterGetByG_P_V_PrevAndNext(session, assetCategory,
+					groupId, parentCategoryId, vocabularyId, orderByComparator,
+					false);
+
+			return array;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected AssetCategory filterGetByG_P_V_PrevAndNext(Session session,
+		AssetCategory assetCategory, long groupId, long parentCategoryId,
+		long vocabularyId, OrderByComparator orderByComparator, boolean previous) {
+		StringBundler query = null;
+
+		if (orderByComparator != null) {
+			query = new StringBundler(6 +
+					(orderByComparator.getOrderByFields().length * 6));
+		}
+		else {
+			query = new StringBundler(3);
+		}
+
+		if (getDB().isSupportsInlineDistinct()) {
+			query.append(_FILTER_SQL_SELECT_ASSETCATEGORY_WHERE);
+		}
+		else {
+			query.append(_FILTER_SQL_SELECT_ASSETCATEGORY_NO_INLINE_DISTINCT_WHERE_1);
+		}
+
+		query.append(_FINDER_COLUMN_G_P_V_GROUPID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_VOCABULARYID_2);
+
+		if (!getDB().isSupportsInlineDistinct()) {
+			query.append(_FILTER_SQL_SELECT_ASSETCATEGORY_NO_INLINE_DISTINCT_WHERE_2);
+		}
+
+		if (orderByComparator != null) {
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
+
+			if (orderByConditionFields.length > 0) {
+				query.append(WHERE_AND);
+			}
+
+			for (int i = 0; i < orderByConditionFields.length; i++) {
+				if (getDB().isSupportsInlineDistinct()) {
+					query.append(_ORDER_BY_ENTITY_ALIAS);
+				}
+				else {
+					query.append(_ORDER_BY_ENTITY_TABLE);
+				}
+
+				query.append(orderByConditionFields[i]);
+
+				if ((i + 1) < orderByConditionFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(WHERE_GREATER_THAN_HAS_NEXT);
+					}
+					else {
+						query.append(WHERE_LESSER_THAN_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(WHERE_GREATER_THAN);
+					}
+					else {
+						query.append(WHERE_LESSER_THAN);
+					}
+				}
+			}
+
+			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
+
+			for (int i = 0; i < orderByFields.length; i++) {
+				if (getDB().isSupportsInlineDistinct()) {
+					query.append(_ORDER_BY_ENTITY_ALIAS);
+				}
+				else {
+					query.append(_ORDER_BY_ENTITY_TABLE);
+				}
+
+				query.append(orderByFields[i]);
+
+				if ((i + 1) < orderByFields.length) {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(ORDER_BY_ASC_HAS_NEXT);
+					}
+					else {
+						query.append(ORDER_BY_DESC_HAS_NEXT);
+					}
+				}
+				else {
+					if (orderByComparator.isAscending() ^ previous) {
+						query.append(ORDER_BY_ASC);
+					}
+					else {
+						query.append(ORDER_BY_DESC);
+					}
+				}
+			}
+		}
+		else {
+			if (getDB().isSupportsInlineDistinct()) {
+				query.append(AssetCategoryModelImpl.ORDER_BY_JPQL);
+			}
+			else {
+				query.append(AssetCategoryModelImpl.ORDER_BY_SQL);
+			}
+		}
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(query.toString(),
+				AssetCategory.class.getName(),
+				_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
+
+		SQLQuery q = session.createSQLQuery(sql);
+
+		q.setFirstResult(0);
+		q.setMaxResults(2);
+
+		if (getDB().isSupportsInlineDistinct()) {
+			q.addEntity(_FILTER_ENTITY_ALIAS, AssetCategoryImpl.class);
+		}
+		else {
+			q.addEntity(_FILTER_ENTITY_TABLE, AssetCategoryImpl.class);
+		}
+
+		QueryPos qPos = QueryPos.getInstance(q);
+
+		qPos.add(groupId);
+
+		qPos.add(parentCategoryId);
+
+		qPos.add(vocabularyId);
+
+		if (orderByComparator != null) {
+			Object[] values = orderByComparator.getOrderByConditionValues(assetCategory);
+
+			for (Object value : values) {
+				qPos.add(value);
+			}
+		}
+
+		List<AssetCategory> list = q.list();
+
+		if (list.size() == 2) {
+			return list.get(1);
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all the asset categories where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63; from the database.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public void removeByG_P_V(long groupId, long parentCategoryId,
+		long vocabularyId) throws SystemException {
+		for (AssetCategory assetCategory : findByG_P_V(groupId,
+				parentCategoryId, vocabularyId, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null)) {
+			remove(assetCategory);
+		}
+	}
+
+	/**
+	 * Returns the number of asset categories where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @return the number of matching asset categories
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByG_P_V(long groupId, long parentCategoryId,
+		long vocabularyId) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_V;
+
+		Object[] finderArgs = new Object[] {
+				groupId, parentCategoryId, vocabularyId
+			};
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(4);
+
+			query.append(_SQL_COUNT_ASSETCATEGORY_WHERE);
+
+			query.append(_FINDER_COLUMN_G_P_V_GROUPID_2);
+
+			query.append(_FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2);
+
+			query.append(_FINDER_COLUMN_G_P_V_VOCABULARYID_2);
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(groupId);
+
+				qPos.add(parentCategoryId);
+
+				qPos.add(vocabularyId);
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	/**
+	 * Returns the number of asset categories that the user has permission to view where groupId = &#63; and parentCategoryId = &#63; and vocabularyId = &#63;.
+	 *
+	 * @param groupId the group ID
+	 * @param parentCategoryId the parent category ID
+	 * @param vocabularyId the vocabulary ID
+	 * @return the number of matching asset categories that the user has permission to view
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int filterCountByG_P_V(long groupId, long parentCategoryId,
+		long vocabularyId) throws SystemException {
+		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
+			return countByG_P_V(groupId, parentCategoryId, vocabularyId);
+		}
+
+		StringBundler query = new StringBundler(4);
+
+		query.append(_FILTER_SQL_COUNT_ASSETCATEGORY_WHERE);
+
+		query.append(_FINDER_COLUMN_G_P_V_GROUPID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2);
+
+		query.append(_FINDER_COLUMN_G_P_V_VOCABULARYID_2);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(query.toString(),
+				AssetCategory.class.getName(),
+				_FILTER_ENTITY_TABLE_FILTER_PK_COLUMN, groupId);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addScalar(COUNT_COLUMN_NAME,
+				com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(groupId);
+
+			qPos.add(parentCategoryId);
+
+			qPos.add(vocabularyId);
+
+			Long count = (Long)q.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_G_P_V_GROUPID_2 = "assetCategory.groupId = ? AND ";
+	private static final String _FINDER_COLUMN_G_P_V_PARENTCATEGORYID_2 = "assetCategory.parentCategoryId = ? AND ";
+	private static final String _FINDER_COLUMN_G_P_V_VOCABULARYID_2 = "assetCategory.vocabularyId = ?";
 	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_G_LIKEN_V =
 		new FinderPath(AssetCategoryModelImpl.ENTITY_CACHE_ENABLED,
 			AssetCategoryModelImpl.FINDER_CACHE_ENABLED,
@@ -6326,6 +7453,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_LikeN_V(long groupId, String name,
 		long vocabularyId) throws SystemException {
 		return findByG_LikeN_V(groupId, name, vocabularyId, QueryUtil.ALL_POS,
@@ -6347,6 +7475,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_LikeN_V(long groupId, String name,
 		long vocabularyId, int start, int end) throws SystemException {
 		return findByG_LikeN_V(groupId, name, vocabularyId, start, end, null);
@@ -6368,6 +7497,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_LikeN_V(long groupId, String name,
 		long vocabularyId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -6451,7 +7581,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 				qPos.add(groupId);
 
 				if (bindName) {
-					qPos.add(name);
+					qPos.add(name.toLowerCase());
 				}
 
 				qPos.add(vocabularyId);
@@ -6497,6 +7627,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByG_LikeN_V_First(long groupId, String name,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -6535,6 +7666,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByG_LikeN_V_First(long groupId, String name,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -6559,6 +7691,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByG_LikeN_V_Last(long groupId, String name,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws NoSuchCategoryException, SystemException {
@@ -6597,10 +7730,15 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByG_LikeN_V_Last(long groupId, String name,
 		long vocabularyId, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_LikeN_V(groupId, name, vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByG_LikeN_V(groupId, name, vocabularyId,
 				count - 1, count, orderByComparator);
@@ -6624,6 +7762,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByG_LikeN_V_PrevAndNext(long categoryId,
 		long groupId, String name, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -6759,7 +7898,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		qPos.add(groupId);
 
 		if (bindName) {
-			qPos.add(name);
+			qPos.add(name.toLowerCase());
 		}
 
 		qPos.add(vocabularyId);
@@ -6791,6 +7930,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_LikeN_V(long groupId, String name,
 		long vocabularyId) throws SystemException {
 		return filterFindByG_LikeN_V(groupId, name, vocabularyId,
@@ -6812,6 +7952,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_LikeN_V(long groupId, String name,
 		long vocabularyId, int start, int end) throws SystemException {
 		return filterFindByG_LikeN_V(groupId, name, vocabularyId, start, end,
@@ -6834,6 +7975,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_LikeN_V(long groupId, String name,
 		long vocabularyId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -6884,11 +8026,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -6923,7 +8065,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 			qPos.add(groupId);
 
 			if (bindName) {
-				qPos.add(name);
+				qPos.add(name.toLowerCase());
 			}
 
 			qPos.add(vocabularyId);
@@ -6951,6 +8093,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] filterFindByG_LikeN_V_PrevAndNext(long categoryId,
 		long groupId, String name, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -7126,7 +8269,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		qPos.add(groupId);
 
 		if (bindName) {
-			qPos.add(name);
+			qPos.add(name.toLowerCase());
 		}
 
 		qPos.add(vocabularyId);
@@ -7158,6 +8301,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds) throws SystemException {
 		return filterFindByG_LikeN_V(groupId, name, vocabularyIds,
@@ -7179,6 +8323,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds, int start, int end) throws SystemException {
 		return filterFindByG_LikeN_V(groupId, name, vocabularyIds, start, end,
@@ -7201,6 +8346,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -7271,11 +8417,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -7341,6 +8487,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds) throws SystemException {
 		return findByG_LikeN_V(groupId, name, vocabularyIds, QueryUtil.ALL_POS,
@@ -7362,6 +8509,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds, int start, int end) throws SystemException {
 		return findByG_LikeN_V(groupId, name, vocabularyIds, start, end, null);
@@ -7383,6 +8531,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -7546,6 +8695,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param vocabularyId the vocabulary ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_LikeN_V(long groupId, String name, long vocabularyId)
 		throws SystemException {
 		for (AssetCategory assetCategory : findByG_LikeN_V(groupId, name,
@@ -7563,6 +8713,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_LikeN_V(long groupId, String name, long vocabularyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_LIKEN_V;
@@ -7609,7 +8760,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 				qPos.add(groupId);
 
 				if (bindName) {
-					qPos.add(name);
+					qPos.add(name.toLowerCase());
 				}
 
 				qPos.add(vocabularyId);
@@ -7640,6 +8791,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_LikeN_V(long groupId, String name, long[] vocabularyIds)
 		throws SystemException {
 		Object[] finderArgs = new Object[] {
@@ -7749,6 +8901,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_LikeN_V(long groupId, String name,
 		long vocabularyId) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -7796,7 +8949,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 			qPos.add(groupId);
 
 			if (bindName) {
-				qPos.add(name);
+				qPos.add(name.toLowerCase());
 			}
 
 			qPos.add(vocabularyId);
@@ -7822,6 +8975,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_LikeN_V(long groupId, String name,
 		long[] vocabularyIds) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -7920,7 +9074,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	private static final String _FINDER_COLUMN_G_LIKEN_V_GROUPID_5 = "(" +
 		removeConjunction(_FINDER_COLUMN_G_LIKEN_V_GROUPID_2) + ")";
 	private static final String _FINDER_COLUMN_G_LIKEN_V_NAME_1 = "assetCategory.name LIKE NULL AND ";
-	private static final String _FINDER_COLUMN_G_LIKEN_V_NAME_2 = "assetCategory.name LIKE ? AND ";
+	private static final String _FINDER_COLUMN_G_LIKEN_V_NAME_2 = "lower(assetCategory.name) LIKE ? AND ";
 	private static final String _FINDER_COLUMN_G_LIKEN_V_NAME_3 = "(assetCategory.name IS NULL OR assetCategory.name LIKE '') AND ";
 	private static final String _FINDER_COLUMN_G_LIKEN_V_NAME_4 = "(" +
 		removeConjunction(_FINDER_COLUMN_G_LIKEN_V_NAME_1) + ")";
@@ -7959,6 +9113,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByP_N_V(long parentCategoryId, String name,
 		long vocabularyId) throws NoSuchCategoryException, SystemException {
 		AssetCategory assetCategory = fetchByP_N_V(parentCategoryId, name,
@@ -7999,6 +9154,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByP_N_V(long parentCategoryId, String name,
 		long vocabularyId) throws SystemException {
 		return fetchByP_N_V(parentCategoryId, name, vocabularyId, true);
@@ -8014,6 +9170,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByP_N_V(long parentCategoryId, String name,
 		long vocabularyId, boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { parentCategoryId, name, vocabularyId };
@@ -8127,6 +9284,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the asset category that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory removeByP_N_V(long parentCategoryId, String name,
 		long vocabularyId) throws NoSuchCategoryException, SystemException {
 		AssetCategory assetCategory = findByP_N_V(parentCategoryId, name,
@@ -8144,6 +9302,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByP_N_V(long parentCategoryId, String name,
 		long vocabularyId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_P_N_V;
@@ -8259,6 +9418,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_P_N_V(long groupId,
 		long parentCategoryId, String name, long vocabularyId)
 		throws SystemException {
@@ -8282,6 +9442,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_P_N_V(long groupId,
 		long parentCategoryId, String name, long vocabularyId, int start,
 		int end) throws SystemException {
@@ -8306,6 +9467,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findByG_P_N_V(long groupId,
 		long parentCategoryId, String name, long vocabularyId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
@@ -8451,6 +9613,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByG_P_N_V_First(long groupId,
 		long parentCategoryId, String name, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -8494,6 +9657,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the first matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByG_P_N_V_First(long groupId,
 		long parentCategoryId, String name, long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -8519,6 +9683,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByG_P_N_V_Last(long groupId,
 		long parentCategoryId, String name, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -8562,10 +9727,15 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the last matching asset category, or <code>null</code> if a matching asset category could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByG_P_N_V_Last(long groupId,
 		long parentCategoryId, String name, long vocabularyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_P_N_V(groupId, parentCategoryId, name, vocabularyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AssetCategory> list = findByG_P_N_V(groupId, parentCategoryId,
 				name, vocabularyId, count - 1, count, orderByComparator);
@@ -8590,6 +9760,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] findByG_P_N_V_PrevAndNext(long categoryId,
 		long groupId, long parentCategoryId, String name, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -8765,6 +9936,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_P_N_V(long groupId,
 		long parentCategoryId, String name, long vocabularyId)
 		throws SystemException {
@@ -8788,6 +9960,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_P_N_V(long groupId,
 		long parentCategoryId, String name, long vocabularyId, int start,
 		int end) throws SystemException {
@@ -8812,6 +9985,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> filterFindByG_P_N_V(long groupId,
 		long parentCategoryId, String name, long vocabularyId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
@@ -8864,11 +10038,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -8934,6 +10108,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory[] filterFindByG_P_N_V_PrevAndNext(long categoryId,
 		long groupId, long parentCategoryId, String name, long vocabularyId,
 		OrderByComparator orderByComparator)
@@ -9148,6 +10323,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param vocabularyId the vocabulary ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_P_N_V(long groupId, long parentCategoryId,
 		String name, long vocabularyId) throws SystemException {
 		for (AssetCategory assetCategory : findByG_P_N_V(groupId,
@@ -9167,6 +10343,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P_N_V(long groupId, long parentCategoryId, String name,
 		long vocabularyId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_N_V;
@@ -9251,6 +10428,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of matching asset categories that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_P_N_V(long groupId, long parentCategoryId,
 		String name, long vocabularyId) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -9326,11 +10504,16 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	private static final String _FINDER_COLUMN_G_P_N_V_NAME_3 = "(assetCategory.name IS NULL OR assetCategory.name = '') AND ";
 	private static final String _FINDER_COLUMN_G_P_N_V_VOCABULARYID_2 = "assetCategory.vocabularyId = ?";
 
+	public AssetCategoryPersistenceImpl() {
+		setModelClass(AssetCategory.class);
+	}
+
 	/**
 	 * Caches the asset category in the entity cache if it is enabled.
 	 *
 	 * @param assetCategory the asset category
 	 */
+	@Override
 	public void cacheResult(AssetCategory assetCategory) {
 		EntityCacheUtil.putResult(AssetCategoryModelImpl.ENTITY_CACHE_ENABLED,
 			AssetCategoryImpl.class, assetCategory.getPrimaryKey(),
@@ -9354,6 +10537,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 *
 	 * @param assetCategories the asset categories
 	 */
+	@Override
 	public void cacheResult(List<AssetCategory> assetCategories) {
 		for (AssetCategory assetCategory : assetCategories) {
 			if (EntityCacheUtil.getResult(
@@ -9517,6 +10701,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param categoryId the primary key for the new asset category
 	 * @return the new asset category
 	 */
+	@Override
 	public AssetCategory create(long categoryId) {
 		AssetCategory assetCategory = new AssetCategoryImpl();
 
@@ -9538,6 +10723,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory remove(long categoryId)
 		throws NoSuchCategoryException, SystemException {
 		return remove((Serializable)categoryId);
@@ -9589,15 +10775,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		throws SystemException {
 		assetCategory = toUnwrappedModel(assetCategory);
 
-		try {
-			clearAssetEntries.clear(assetCategory.getPrimaryKey());
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
-		}
+		assetCategoryToAssetEntryTableMapper.deleteLeftPrimaryKeyTableMappings(assetCategory.getPrimaryKey());
 
 		shrinkTree(assetCategory);
 
@@ -9863,6 +11041,29 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 			}
 
 			if ((assetCategoryModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_G_P_V.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						assetCategoryModelImpl.getOriginalGroupId(),
+						assetCategoryModelImpl.getOriginalParentCategoryId(),
+						assetCategoryModelImpl.getOriginalVocabularyId()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_G_P_V, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_G_P_V,
+					args);
+
+				args = new Object[] {
+						assetCategoryModelImpl.getGroupId(),
+						assetCategoryModelImpl.getParentCategoryId(),
+						assetCategoryModelImpl.getVocabularyId()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_G_P_V, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_G_P_V,
+					args);
+			}
+
+			if ((assetCategoryModelImpl.getColumnBitmask() &
 					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_G_P_N_V.getColumnBitmask()) != 0) {
 				Object[] args = new Object[] {
 						assetCategoryModelImpl.getOriginalGroupId(),
@@ -9960,6 +11161,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @throws com.liferay.portlet.asset.NoSuchCategoryException if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory findByPrimaryKey(long categoryId)
 		throws NoSuchCategoryException, SystemException {
 		return findByPrimaryKey((Serializable)categoryId);
@@ -10020,6 +11222,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the asset category, or <code>null</code> if a asset category with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AssetCategory fetchByPrimaryKey(long categoryId)
 		throws SystemException {
 		return fetchByPrimaryKey((Serializable)categoryId);
@@ -10031,6 +11234,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -10047,6 +11251,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findAll(int start, int end)
 		throws SystemException {
 		return findAll(start, end, null);
@@ -10065,6 +11270,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AssetCategory> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -10150,6 +11356,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (AssetCategory assetCategory : findAll()) {
 			remove(assetCategory);
@@ -10162,6 +11369,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of asset categories
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
 				FINDER_ARGS_EMPTY, this);
@@ -10200,6 +11408,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the asset entries associated with the asset category
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<com.liferay.portlet.asset.model.AssetEntry> getAssetEntries(
 		long pk) throws SystemException {
 		return getAssetEntries(pk, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
@@ -10218,23 +11427,10 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the range of asset entries associated with the asset category
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<com.liferay.portlet.asset.model.AssetEntry> getAssetEntries(
 		long pk, int start, int end) throws SystemException {
 		return getAssetEntries(pk, start, end, null);
-	}
-
-	public static final FinderPath FINDER_PATH_GET_ASSETENTRIES = new FinderPath(com.liferay.portlet.asset.model.impl.AssetEntryModelImpl.ENTITY_CACHE_ENABLED,
-			AssetCategoryModelImpl.FINDER_CACHE_ENABLED_ASSETENTRIES_ASSETCATEGORIES,
-			com.liferay.portlet.asset.model.impl.AssetEntryImpl.class,
-			AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME,
-			"getAssetEntries",
-			new String[] {
-				Long.class.getName(), Integer.class.getName(),
-				Integer.class.getName(), OrderByComparator.class.getName()
-			});
-
-	static {
-		FINDER_PATH_GET_ASSETENTRIES.setCacheKeyGeneratorCacheName(null);
 	}
 
 	/**
@@ -10251,93 +11447,12 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the ordered range of asset entries associated with the asset category
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<com.liferay.portlet.asset.model.AssetEntry> getAssetEntries(
 		long pk, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
-		boolean pagination = true;
-		Object[] finderArgs = null;
-
-		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
-				(orderByComparator == null)) {
-			pagination = false;
-			finderArgs = new Object[] { pk };
-		}
-		else {
-			finderArgs = new Object[] { pk, start, end, orderByComparator };
-		}
-
-		List<com.liferay.portlet.asset.model.AssetEntry> list = (List<com.liferay.portlet.asset.model.AssetEntry>)FinderCacheUtil.getResult(FINDER_PATH_GET_ASSETENTRIES,
-				finderArgs, this);
-
-		if (list == null) {
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				String sql = null;
-
-				if (orderByComparator != null) {
-					sql = _SQL_GETASSETENTRIES.concat(ORDER_BY_CLAUSE)
-											  .concat(orderByComparator.getOrderBy());
-				}
-				else {
-					sql = _SQL_GETASSETENTRIES;
-
-					if (pagination) {
-						sql = sql.concat(com.liferay.portlet.asset.model.impl.AssetEntryModelImpl.ORDER_BY_SQL);
-					}
-				}
-
-				SQLQuery q = session.createSQLQuery(sql);
-
-				q.addEntity("AssetEntry",
-					com.liferay.portlet.asset.model.impl.AssetEntryImpl.class);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(pk);
-
-				if (!pagination) {
-					list = (List<com.liferay.portlet.asset.model.AssetEntry>)QueryUtil.list(q,
-							getDialect(), start, end, false);
-
-					Collections.sort(list);
-
-					list = new UnmodifiableList<com.liferay.portlet.asset.model.AssetEntry>(list);
-				}
-				else {
-					list = (List<com.liferay.portlet.asset.model.AssetEntry>)QueryUtil.list(q,
-							getDialect(), start, end);
-				}
-
-				assetEntryPersistence.cacheResult(list);
-
-				FinderCacheUtil.putResult(FINDER_PATH_GET_ASSETENTRIES,
-					finderArgs, list);
-			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(FINDER_PATH_GET_ASSETENTRIES,
-					finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return list;
-	}
-
-	public static final FinderPath FINDER_PATH_GET_ASSETENTRIES_SIZE = new FinderPath(com.liferay.portlet.asset.model.impl.AssetEntryModelImpl.ENTITY_CACHE_ENABLED,
-			AssetCategoryModelImpl.FINDER_CACHE_ENABLED_ASSETENTRIES_ASSETCATEGORIES,
-			Long.class,
-			AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME,
-			"getAssetEntriesSize", new String[] { Long.class.getName() });
-
-	static {
-		FINDER_PATH_GET_ASSETENTRIES_SIZE.setCacheKeyGeneratorCacheName(null);
+		return assetCategoryToAssetEntryTableMapper.getRightBaseModels(pk,
+			start, end, orderByComparator);
 	}
 
 	/**
@@ -10347,52 +11462,12 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return the number of asset entries associated with the asset category
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getAssetEntriesSize(long pk) throws SystemException {
-		Object[] finderArgs = new Object[] { pk };
+		long[] pks = assetCategoryToAssetEntryTableMapper.getRightPrimaryKeys(pk);
 
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_GET_ASSETENTRIES_SIZE,
-				finderArgs, this);
-
-		if (count == null) {
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				SQLQuery q = session.createSQLQuery(_SQL_GETASSETENTRIESSIZE);
-
-				q.addScalar(COUNT_COLUMN_NAME,
-					com.liferay.portal.kernel.dao.orm.Type.LONG);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(pk);
-
-				count = (Long)q.uniqueResult();
-
-				FinderCacheUtil.putResult(FINDER_PATH_GET_ASSETENTRIES_SIZE,
-					finderArgs, count);
-			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(FINDER_PATH_GET_ASSETENTRIES_SIZE,
-					finderArgs);
-
-				throw processException(e);
-			}
-			finally {
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
+		return pks.length;
 	}
-
-	public static final FinderPath FINDER_PATH_CONTAINS_ASSETENTRY = new FinderPath(com.liferay.portlet.asset.model.impl.AssetEntryModelImpl.ENTITY_CACHE_ENABLED,
-			AssetCategoryModelImpl.FINDER_CACHE_ENABLED_ASSETENTRIES_ASSETCATEGORIES,
-			Boolean.class,
-			AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME,
-			"containsAssetEntry",
-			new String[] { Long.class.getName(), Long.class.getName() });
 
 	/**
 	 * Returns <code>true</code> if the asset entry is associated with the asset category.
@@ -10402,30 +11477,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return <code>true</code> if the asset entry is associated with the asset category; <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean containsAssetEntry(long pk, long assetEntryPK)
 		throws SystemException {
-		Object[] finderArgs = new Object[] { pk, assetEntryPK };
-
-		Boolean value = (Boolean)FinderCacheUtil.getResult(FINDER_PATH_CONTAINS_ASSETENTRY,
-				finderArgs, this);
-
-		if (value == null) {
-			try {
-				value = Boolean.valueOf(containsAssetEntry.contains(pk,
-							assetEntryPK));
-
-				FinderCacheUtil.putResult(FINDER_PATH_CONTAINS_ASSETENTRY,
-					finderArgs, value);
-			}
-			catch (Exception e) {
-				FinderCacheUtil.removeResult(FINDER_PATH_CONTAINS_ASSETENTRY,
-					finderArgs);
-
-				throw processException(e);
-			}
-		}
-
-		return value.booleanValue();
+		return assetCategoryToAssetEntryTableMapper.containsTableMapping(pk,
+			assetEntryPK);
 	}
 
 	/**
@@ -10435,6 +11491,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @return <code>true</code> if the asset category has any asset entries associated with it; <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean containsAssetEntries(long pk) throws SystemException {
 		if (getAssetEntriesSize(pk) > 0) {
 			return true;
@@ -10451,17 +11508,10 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntryPK the primary key of the asset entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addAssetEntry(long pk, long assetEntryPK)
 		throws SystemException {
-		try {
-			addAssetEntry.add(pk, assetEntryPK);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
-		}
+		assetCategoryToAssetEntryTableMapper.addTableMapping(pk, assetEntryPK);
 	}
 
 	/**
@@ -10471,18 +11521,12 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntry the asset entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addAssetEntry(long pk,
 		com.liferay.portlet.asset.model.AssetEntry assetEntry)
 		throws SystemException {
-		try {
-			addAssetEntry.add(pk, assetEntry.getPrimaryKey());
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
-		}
+		assetCategoryToAssetEntryTableMapper.addTableMapping(pk,
+			assetEntry.getPrimaryKey());
 	}
 
 	/**
@@ -10492,18 +11536,12 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntryPKs the primary keys of the asset entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addAssetEntries(long pk, long[] assetEntryPKs)
 		throws SystemException {
-		try {
-			for (long assetEntryPK : assetEntryPKs) {
-				addAssetEntry.add(pk, assetEntryPK);
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
+		for (long assetEntryPK : assetEntryPKs) {
+			assetCategoryToAssetEntryTableMapper.addTableMapping(pk,
+				assetEntryPK);
 		}
 	}
 
@@ -10514,19 +11552,13 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntries the asset entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addAssetEntries(long pk,
 		List<com.liferay.portlet.asset.model.AssetEntry> assetEntries)
 		throws SystemException {
-		try {
-			for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
-				addAssetEntry.add(pk, assetEntry.getPrimaryKey());
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
+		for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
+			assetCategoryToAssetEntryTableMapper.addTableMapping(pk,
+				assetEntry.getPrimaryKey());
 		}
 	}
 
@@ -10536,16 +11568,9 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param pk the primary key of the asset category to clear the associated asset entries from
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void clearAssetEntries(long pk) throws SystemException {
-		try {
-			clearAssetEntries.clear(pk);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
-		}
+		assetCategoryToAssetEntryTableMapper.deleteLeftPrimaryKeyTableMappings(pk);
 	}
 
 	/**
@@ -10555,17 +11580,10 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntryPK the primary key of the asset entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAssetEntry(long pk, long assetEntryPK)
 		throws SystemException {
-		try {
-			removeAssetEntry.remove(pk, assetEntryPK);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
-		}
+		assetCategoryToAssetEntryTableMapper.deleteTableMapping(pk, assetEntryPK);
 	}
 
 	/**
@@ -10575,18 +11593,12 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntry the asset entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAssetEntry(long pk,
 		com.liferay.portlet.asset.model.AssetEntry assetEntry)
 		throws SystemException {
-		try {
-			removeAssetEntry.remove(pk, assetEntry.getPrimaryKey());
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
-		}
+		assetCategoryToAssetEntryTableMapper.deleteTableMapping(pk,
+			assetEntry.getPrimaryKey());
 	}
 
 	/**
@@ -10596,18 +11608,12 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntryPKs the primary keys of the asset entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAssetEntries(long pk, long[] assetEntryPKs)
 		throws SystemException {
-		try {
-			for (long assetEntryPK : assetEntryPKs) {
-				removeAssetEntry.remove(pk, assetEntryPK);
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
+		for (long assetEntryPK : assetEntryPKs) {
+			assetCategoryToAssetEntryTableMapper.deleteTableMapping(pk,
+				assetEntryPK);
 		}
 	}
 
@@ -10618,19 +11624,13 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntries the asset entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAssetEntries(long pk,
 		List<com.liferay.portlet.asset.model.AssetEntry> assetEntries)
 		throws SystemException {
-		try {
-			for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
-				removeAssetEntry.remove(pk, assetEntry.getPrimaryKey());
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
+		for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
+			assetCategoryToAssetEntryTableMapper.deleteTableMapping(pk,
+				assetEntry.getPrimaryKey());
 		}
 	}
 
@@ -10641,28 +11641,14 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntryPKs the primary keys of the asset entries to be associated with the asset category
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void setAssetEntries(long pk, long[] assetEntryPKs)
 		throws SystemException {
-		try {
-			Set<Long> assetEntryPKSet = SetUtil.fromArray(assetEntryPKs);
+		assetCategoryToAssetEntryTableMapper.deleteLeftPrimaryKeyTableMappings(pk);
 
-			List<com.liferay.portlet.asset.model.AssetEntry> assetEntries = getAssetEntries(pk);
-
-			for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
-				if (!assetEntryPKSet.remove(assetEntry.getPrimaryKey())) {
-					removeAssetEntry.remove(pk, assetEntry.getPrimaryKey());
-				}
-			}
-
-			for (Long assetEntryPK : assetEntryPKSet) {
-				addAssetEntry.add(pk, assetEntryPK);
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(AssetCategoryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETCATEGORIES_NAME);
+		for (Long assetEntryPK : assetEntryPKs) {
+			assetCategoryToAssetEntryTableMapper.addTableMapping(pk,
+				assetEntryPK);
 		}
 	}
 
@@ -10673,6 +11659,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param assetEntries the asset entries to be associated with the asset category
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void setAssetEntries(long pk,
 		List<com.liferay.portlet.asset.model.AssetEntry> assetEntries)
 		throws SystemException {
@@ -10695,6 +11682,11 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		}
 	}
 
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
+	}
+
 	/**
 	 * Rebuilds the asset categories tree for the scope using the modified pre-order tree traversal algorithm.
 	 *
@@ -10705,6 +11697,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	 * @param groupId the ID of the scope
 	 * @param force whether to force the rebuild even if the tree is not stale
 	 */
+	@Override
 	public void rebuildTree(long groupId, boolean force)
 		throws SystemException {
 		if (!rebuildTreeEnabled) {
@@ -10714,13 +11707,17 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		if (force || (countOrphanTreeNodes(groupId) > 0)) {
 			rebuildTree(groupId, 0, 1);
 
-			CacheRegistryUtil.clear(AssetCategoryImpl.class.getName());
+			if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+				CacheRegistryUtil.clear(AssetCategoryImpl.class.getName());
+			}
+
 			EntityCacheUtil.clearCache(AssetCategoryImpl.class.getName());
 			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
 			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 		}
 	}
 
+	@Override
 	public void setRebuildTreeEnabled(boolean rebuildTreeEnabled) {
 		this.rebuildTreeEnabled = rebuildTreeEnabled;
 	}
@@ -10819,7 +11816,10 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 				expandTreeRightCategoryId.expand(groupId, lastRightCategoryId);
 			}
 
-			CacheRegistryUtil.clear(AssetCategoryImpl.class.getName());
+			if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+				CacheRegistryUtil.clear(AssetCategoryImpl.class.getName());
+			}
+
 			EntityCacheUtil.clearCache(AssetCategoryImpl.class.getName());
 			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
 			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
@@ -10962,7 +11962,10 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		shrinkTreeLeftCategoryId.shrink(groupId, rightCategoryId, delta);
 		shrinkTreeRightCategoryId.shrink(groupId, rightCategoryId, delta);
 
-		CacheRegistryUtil.clear(AssetCategoryImpl.class.getName());
+		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+			CacheRegistryUtil.clear(AssetCategoryImpl.class.getName());
+		}
+
 		EntityCacheUtil.clearCache(AssetCategoryImpl.class.getName());
 		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
 		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
@@ -10997,7 +12000,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<AssetCategory>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -11007,11 +12010,8 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 			}
 		}
 
-		containsAssetEntry = new ContainsAssetEntry();
-
-		addAssetEntry = new AddAssetEntry();
-		clearAssetEntries = new ClearAssetEntries();
-		removeAssetEntry = new RemoveAssetEntry();
+		assetCategoryToAssetEntryTableMapper = TableMapperFactory.getTableMapper("AssetEntries_AssetCategories",
+				"categoryId", "entryId", this, assetEntryPersistence);
 
 		expandTreeLeftCategoryId = new ExpandTreeLeftCategoryId();
 		expandTreeRightCategoryId = new ExpandTreeRightCategoryId();
@@ -11029,177 +12029,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 
 	@BeanReference(type = AssetEntryPersistence.class)
 	protected AssetEntryPersistence assetEntryPersistence;
-	protected ContainsAssetEntry containsAssetEntry;
-	protected AddAssetEntry addAssetEntry;
-	protected ClearAssetEntries clearAssetEntries;
-	protected RemoveAssetEntry removeAssetEntry;
-
-	protected class ContainsAssetEntry {
-		protected ContainsAssetEntry() {
-			_mappingSqlQuery = MappingSqlQueryFactoryUtil.getMappingSqlQuery(getDataSource(),
-					_SQL_CONTAINSASSETENTRY,
-					new int[] { java.sql.Types.BIGINT, java.sql.Types.BIGINT },
-					RowMapper.COUNT);
-		}
-
-		protected boolean contains(long categoryId, long entryId) {
-			List<Integer> results = _mappingSqlQuery.execute(new Object[] {
-						new Long(categoryId), new Long(entryId)
-					});
-
-			if (results.size() > 0) {
-				Integer count = results.get(0);
-
-				if (count.intValue() > 0) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		private MappingSqlQuery<Integer> _mappingSqlQuery;
-	}
-
-	protected class AddAssetEntry {
-		protected AddAssetEntry() {
-			_sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(getDataSource(),
-					"INSERT INTO AssetEntries_AssetCategories (categoryId, entryId) VALUES (?, ?)",
-					new int[] { java.sql.Types.BIGINT, java.sql.Types.BIGINT });
-		}
-
-		protected void add(long categoryId, long entryId)
-			throws SystemException {
-			if (!containsAssetEntry.contains(categoryId, entryId)) {
-				ModelListener<com.liferay.portlet.asset.model.AssetEntry>[] assetEntryListeners =
-					assetEntryPersistence.getListeners();
-
-				for (ModelListener<AssetCategory> listener : listeners) {
-					listener.onBeforeAddAssociation(categoryId,
-						com.liferay.portlet.asset.model.AssetEntry.class.getName(),
-						entryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.asset.model.AssetEntry> listener : assetEntryListeners) {
-					listener.onBeforeAddAssociation(entryId,
-						AssetCategory.class.getName(), categoryId);
-				}
-
-				_sqlUpdate.update(new Object[] {
-						new Long(categoryId), new Long(entryId)
-					});
-
-				for (ModelListener<AssetCategory> listener : listeners) {
-					listener.onAfterAddAssociation(categoryId,
-						com.liferay.portlet.asset.model.AssetEntry.class.getName(),
-						entryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.asset.model.AssetEntry> listener : assetEntryListeners) {
-					listener.onAfterAddAssociation(entryId,
-						AssetCategory.class.getName(), categoryId);
-				}
-			}
-		}
-
-		private SqlUpdate _sqlUpdate;
-	}
-
-	protected class ClearAssetEntries {
-		protected ClearAssetEntries() {
-			_sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(getDataSource(),
-					"DELETE FROM AssetEntries_AssetCategories WHERE categoryId = ?",
-					new int[] { java.sql.Types.BIGINT });
-		}
-
-		protected void clear(long categoryId) throws SystemException {
-			ModelListener<com.liferay.portlet.asset.model.AssetEntry>[] assetEntryListeners =
-				assetEntryPersistence.getListeners();
-
-			List<com.liferay.portlet.asset.model.AssetEntry> assetEntries = null;
-
-			if ((listeners.length > 0) || (assetEntryListeners.length > 0)) {
-				assetEntries = getAssetEntries(categoryId);
-
-				for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
-					for (ModelListener<AssetCategory> listener : listeners) {
-						listener.onBeforeRemoveAssociation(categoryId,
-							com.liferay.portlet.asset.model.AssetEntry.class.getName(),
-							assetEntry.getPrimaryKey());
-					}
-
-					for (ModelListener<com.liferay.portlet.asset.model.AssetEntry> listener : assetEntryListeners) {
-						listener.onBeforeRemoveAssociation(assetEntry.getPrimaryKey(),
-							AssetCategory.class.getName(), categoryId);
-					}
-				}
-			}
-
-			_sqlUpdate.update(new Object[] { new Long(categoryId) });
-
-			if ((listeners.length > 0) || (assetEntryListeners.length > 0)) {
-				for (com.liferay.portlet.asset.model.AssetEntry assetEntry : assetEntries) {
-					for (ModelListener<AssetCategory> listener : listeners) {
-						listener.onAfterRemoveAssociation(categoryId,
-							com.liferay.portlet.asset.model.AssetEntry.class.getName(),
-							assetEntry.getPrimaryKey());
-					}
-
-					for (ModelListener<com.liferay.portlet.asset.model.AssetEntry> listener : assetEntryListeners) {
-						listener.onAfterRemoveAssociation(assetEntry.getPrimaryKey(),
-							AssetCategory.class.getName(), categoryId);
-					}
-				}
-			}
-		}
-
-		private SqlUpdate _sqlUpdate;
-	}
-
-	protected class RemoveAssetEntry {
-		protected RemoveAssetEntry() {
-			_sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(getDataSource(),
-					"DELETE FROM AssetEntries_AssetCategories WHERE categoryId = ? AND entryId = ?",
-					new int[] { java.sql.Types.BIGINT, java.sql.Types.BIGINT });
-		}
-
-		protected void remove(long categoryId, long entryId)
-			throws SystemException {
-			if (containsAssetEntry.contains(categoryId, entryId)) {
-				ModelListener<com.liferay.portlet.asset.model.AssetEntry>[] assetEntryListeners =
-					assetEntryPersistence.getListeners();
-
-				for (ModelListener<AssetCategory> listener : listeners) {
-					listener.onBeforeRemoveAssociation(categoryId,
-						com.liferay.portlet.asset.model.AssetEntry.class.getName(),
-						entryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.asset.model.AssetEntry> listener : assetEntryListeners) {
-					listener.onBeforeRemoveAssociation(entryId,
-						AssetCategory.class.getName(), categoryId);
-				}
-
-				_sqlUpdate.update(new Object[] {
-						new Long(categoryId), new Long(entryId)
-					});
-
-				for (ModelListener<AssetCategory> listener : listeners) {
-					listener.onAfterRemoveAssociation(categoryId,
-						com.liferay.portlet.asset.model.AssetEntry.class.getName(),
-						entryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.asset.model.AssetEntry> listener : assetEntryListeners) {
-					listener.onAfterRemoveAssociation(entryId,
-						AssetCategory.class.getName(), categoryId);
-				}
-			}
-		}
-
-		private SqlUpdate _sqlUpdate;
-	}
-
+	protected TableMapper<AssetCategory, com.liferay.portlet.asset.model.AssetEntry> assetCategoryToAssetEntryTableMapper;
 	protected boolean rebuildTreeEnabled = true;
 	protected ExpandTreeLeftCategoryId expandTreeLeftCategoryId;
 	protected ExpandTreeRightCategoryId expandTreeRightCategoryId;
@@ -11293,9 +12123,6 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	private static final String _SQL_SELECT_ASSETCATEGORY_WHERE = "SELECT assetCategory FROM AssetCategory assetCategory WHERE ";
 	private static final String _SQL_COUNT_ASSETCATEGORY = "SELECT COUNT(assetCategory) FROM AssetCategory assetCategory";
 	private static final String _SQL_COUNT_ASSETCATEGORY_WHERE = "SELECT COUNT(assetCategory) FROM AssetCategory assetCategory WHERE ";
-	private static final String _SQL_GETASSETENTRIES = "SELECT {AssetEntry.*} FROM AssetEntry INNER JOIN AssetEntries_AssetCategories ON (AssetEntries_AssetCategories.entryId = AssetEntry.entryId) WHERE (AssetEntries_AssetCategories.categoryId = ?)";
-	private static final String _SQL_GETASSETENTRIESSIZE = "SELECT COUNT(*) AS COUNT_VALUE FROM AssetEntries_AssetCategories WHERE categoryId = ?";
-	private static final String _SQL_CONTAINSASSETENTRY = "SELECT COUNT(*) AS COUNT_VALUE FROM AssetEntries_AssetCategories WHERE categoryId = ? AND entryId = ?";
 	private static final String _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN = "assetCategory.categoryId";
 	private static final String _FILTER_SQL_SELECT_ASSETCATEGORY_WHERE = "SELECT DISTINCT {assetCategory.*} FROM AssetCategory assetCategory WHERE ";
 	private static final String _FILTER_SQL_SELECT_ASSETCATEGORY_NO_INLINE_DISTINCT_WHERE_1 =
@@ -11311,6 +12138,9 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No AssetCategory exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(AssetCategoryPersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"uuid"
+			});
 	private static AssetCategory _nullAssetCategory = new AssetCategoryImpl() {
 			@Override
 			public Object clone() {
@@ -11324,6 +12154,7 @@ public class AssetCategoryPersistenceImpl extends BasePersistenceImpl<AssetCateg
 		};
 
 	private static CacheModel<AssetCategory> _nullAssetCategoryCacheModel = new CacheModel<AssetCategory>() {
+			@Override
 			public AssetCategory toEntityModel() {
 				return _nullAssetCategory;
 			}

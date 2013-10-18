@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,12 +31,19 @@ import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.PortletDisplay;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
+import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
+import com.liferay.portlet.assetpublisher.util.AssetPublisherUtil;
+import com.liferay.portlet.trash.util.TrashUtil;
 
+import java.util.Date;
 import java.util.Locale;
 
 import javax.portlet.PortletMode;
+import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
+import javax.portlet.PortletResponse;
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
@@ -48,6 +55,11 @@ import javax.portlet.WindowState;
  */
 public abstract class BaseAssetRenderer implements AssetRenderer {
 
+	@Override
+	public String getAddToPagePortletId() throws Exception {
+		return PortletKeys.ASSET_PUBLISHER;
+	}
+
 	public AssetRendererFactory getAssetRendererFactory() {
 		if (_assetRendererFactory != null) {
 			return _assetRendererFactory;
@@ -55,19 +67,40 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 
 		_assetRendererFactory =
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
-				getAssetRendererFactoryClassName());
+				getClassName());
 
 		return _assetRendererFactory;
 	}
 
-	public String[] getAvailableLocales() {
-		return _AVAILABLE_LOCALES;
+	@Override
+	public int getAssetRendererType() {
+		return _assetRendererType;
 	}
 
+	@Override
+	public String[] getAvailableLanguageIds() {
+		return _AVAILABLE_LANGUAGE_IDS;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getAvailableLanguageIds}
+	 */
+	@Override
+	public String[] getAvailableLocales() {
+		return getAvailableLanguageIds();
+	}
+
+	@Override
 	public String getDiscussionPath() {
 		return null;
 	}
 
+	@Override
+	public Date getDisplayDate() {
+		return null;
+	}
+
+	@Override
 	public String getIconPath(PortletRequest portletRequest) {
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -75,14 +108,41 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return getIconPath(themeDisplay);
 	}
 
+	@Override
+	public String getNewName(String oldName, String token) {
+		return TrashUtil.getNewName(oldName, token);
+	}
+
+	@Override
+	public String getPreviewPath(
+			PortletRequest portletRequest, PortletResponse PortletResponse)
+		throws Exception {
+
+		return "/html/portlet/asset_publisher/display/preview.jsp";
+	}
+
+	@Override
 	public String getSearchSummary(Locale locale) {
 		return getSummary(locale);
 	}
 
+	@Override
+	public String getThumbnailPath(PortletRequest portletRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		return themeDisplay.getPathThemeImages() +
+			"/file_system/large/default.png";
+	}
+
+	@Override
 	public String getURLDownload(ThemeDisplay themeDisplay) {
 		return null;
 	}
 
+	@Override
 	public PortletURL getURLEdit(
 			LiferayPortletRequest liferayPortletRequest,
 			LiferayPortletResponse liferayPortletResponse)
@@ -91,6 +151,7 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return null;
 	}
 
+	@Override
 	public PortletURL getURLEdit(
 			LiferayPortletRequest liferayPortletRequest,
 			LiferayPortletResponse liferayPortletResponse,
@@ -146,6 +207,7 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return editPortletURL;
 	}
 
+	@Override
 	public PortletURL getURLExport(
 			LiferayPortletRequest liferayPortletRequest,
 			LiferayPortletResponse liferayPortletResponse)
@@ -154,10 +216,19 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return null;
 	}
 
+	@Override
+	public String getURLImagePreview(PortletRequest portletRequest)
+		throws Exception {
+
+		return getThumbnailPath(portletRequest);
+	}
+
+	@Override
 	public String getUrlTitle() {
 		return null;
 	}
 
+	@Override
 	public PortletURL getURLView(
 			LiferayPortletResponse liferayPortletResponse,
 			WindowState windowState)
@@ -166,6 +237,7 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return null;
 	}
 
+	@Override
 	public String getURLViewInContext(
 			LiferayPortletRequest liferayPortletRequest,
 			LiferayPortletResponse liferayPortletResponse,
@@ -175,10 +247,12 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return null;
 	}
 
+	@Override
 	public String getViewInContextMessage() {
 		return "view-in-context";
 	}
 
+	@Override
 	@SuppressWarnings("unused")
 	public boolean hasEditPermission(PermissionChecker permissionChecker)
 		throws PortalException, SystemException {
@@ -186,6 +260,7 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return false;
 	}
 
+	@Override
 	@SuppressWarnings("unused")
 	public boolean hasViewPermission(PermissionChecker permissionChecker)
 		throws PortalException, SystemException {
@@ -193,22 +268,27 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return true;
 	}
 
+	@Override
 	public boolean isConvertible() {
 		return false;
 	}
 
+	@Override
 	public boolean isDisplayable() {
 		return true;
 	}
 
+	@Override
 	public boolean isLocalizable() {
 		return false;
 	}
 
+	@Override
 	public boolean isPreviewInContext() {
 		return false;
 	}
 
+	@Override
 	public boolean isPrintable() {
 		return false;
 	}
@@ -218,6 +298,30 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		throws Exception {
 
 		return null;
+	}
+
+	@Override
+	public void setAddToPagePreferences(
+			PortletPreferences preferences, String portletId,
+			ThemeDisplay themeDisplay)
+		throws Exception {
+
+		preferences.setValue("displayStyle", "full-content");
+		preferences.setValue(
+			"emailAssetEntryAddedEnabled", Boolean.FALSE.toString());
+		preferences.setValue("selectionStyle", "manual");
+		preferences.setValue("showAddContentButton", Boolean.FALSE.toString());
+
+		AssetEntry entry = AssetEntryLocalServiceUtil.getEntry(
+			getClassName(), getClassPK());
+
+		AssetPublisherUtil.addSelection(
+			themeDisplay, preferences, portletId, entry.getEntryId(), -1,
+			entry.getClassName());
+	}
+
+	public void setAssetRendererType(int assetRendererType) {
+		_assetRendererType = assetRendererType;
 	}
 
 	protected long getControlPanelPlid(
@@ -263,8 +367,9 @@ public abstract class BaseAssetRenderer implements AssetRenderer {
 		return sb.toString();
 	}
 
-	private static final String[] _AVAILABLE_LOCALES = new String[0];
+	private static final String[] _AVAILABLE_LANGUAGE_IDS = new String[0];
 
 	private AssetRendererFactory _assetRendererFactory;
+	private int _assetRendererType = AssetRendererFactory.TYPE_LATEST_APPROVED;
 
 }

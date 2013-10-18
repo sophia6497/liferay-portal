@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -40,7 +41,7 @@ import jodd.bean.BeanUtil;
 
 import jodd.typeconverter.TypeConverterManager;
 
-import jodd.util.KeyValue;
+import jodd.util.NameValue;
 import jodd.util.ReflectUtil;
 
 /**
@@ -56,10 +57,12 @@ public class JSONWebServiceActionImpl implements JSONWebServiceAction {
 		_jsonWebServiceActionParameters = jsonWebServiceActionParameters;
 	}
 
+	@Override
 	public JSONWebServiceActionMapping getJSONWebServiceActionMapping() {
 		return _jsonWebServiceActionConfig;
 	}
 
+	@Override
 	public Object invoke() throws Exception {
 		JSONRPCRequest jsonRPCRequest =
 			_jsonWebServiceActionParameters.getJSONRPCRequest();
@@ -140,7 +143,7 @@ public class JSONWebServiceActionImpl implements JSONWebServiceAction {
 
 			return calendar;
 		}
-		else if (parameterType.equals(List.class)) {
+		else if (Collection.class.isAssignableFrom(parameterType)) {
 			List<?> list = null;
 
 			if (value instanceof List) {
@@ -186,14 +189,13 @@ public class JSONWebServiceActionImpl implements JSONWebServiceAction {
 				parameterValue = TypeConverterManager.convertType(
 					value, parameterType);
 			}
-			catch (ClassCastException cce) {
+			catch (Exception e) {
 				String stringValue = value.toString();
 
 				stringValue = stringValue.trim();
 
 				if (!stringValue.startsWith(StringPool.OPEN_CURLY_BRACE)) {
-
-					throw cce;
+					throw new ClassCastException(e.getMessage());
 				}
 
 				parameterValue = JSONFactoryUtil.looseDeserializeSafe(
@@ -280,24 +282,24 @@ public class JSONWebServiceActionImpl implements JSONWebServiceAction {
 			return;
 		}
 
-		List<KeyValue<String, Object>> innerParameters =
+		List<NameValue<String, Object>> innerParameters =
 			_jsonWebServiceActionParameters.getInnerParameters(parameterName);
 
 		if (innerParameters == null) {
 			return;
 		}
 
-		for (KeyValue<String, Object> innerParameter : innerParameters) {
+		for (NameValue<String, Object> innerParameter : innerParameters) {
 			try {
 				BeanUtil.setProperty(
-					parameterValue, innerParameter.getKey(),
+					parameterValue, innerParameter.getName(),
 					innerParameter.getValue());
 			}
 			catch (Exception e) {
 				if (_log.isDebugEnabled()) {
 					_log.debug(
 						"Unable to set inner parameter " + parameterName + "." +
-							innerParameter.getKey(),
+							innerParameter.getName(),
 						e);
 				}
 			}
@@ -305,13 +307,15 @@ public class JSONWebServiceActionImpl implements JSONWebServiceAction {
 	}
 
 	private Object _invokeActionMethod() throws Exception {
+		Object actionObject = _jsonWebServiceActionConfig.getActionObject();
+
 		Method actionMethod = _jsonWebServiceActionConfig.getActionMethod();
 
 		Class<?> actionClass = _jsonWebServiceActionConfig.getActionClass();
 
 		Object[] parameters = _prepareParameters(actionClass);
 
-		return actionMethod.invoke(actionClass, parameters);
+		return actionMethod.invoke(actionObject, parameters);
 	}
 
 	private Object[] _prepareParameters(Class<?> actionClass) throws Exception {
@@ -361,6 +365,23 @@ public class JSONWebServiceActionImpl implements JSONWebServiceAction {
 					parameterValue = _convertValueToParameterValue(
 						value, parameterType,
 						methodParameters[i].getGenericTypes());
+
+					ServiceContext serviceContext =
+						_jsonWebServiceActionParameters.getServiceContext();
+
+					if ((serviceContext != null) &&
+						parameterName.equals("serviceContext")) {
+
+						if ((parameterValue != null) &&
+							ServiceContext.class.isAssignableFrom(
+								parameterValue.getClass())) {
+
+							serviceContext.merge(
+								(ServiceContext)parameterValue);
+						}
+
+						parameterValue = serviceContext;
+					}
 				}
 			}
 

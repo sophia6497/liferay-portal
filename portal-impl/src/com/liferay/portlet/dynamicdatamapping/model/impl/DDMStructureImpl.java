@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,12 +20,13 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -36,6 +37,9 @@ import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.XPath;
 import com.liferay.portal.model.CacheField;
+import com.liferay.portal.model.Group;
+import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.dynamicdatamapping.StructureFieldException;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
@@ -58,7 +62,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DDMStructureImpl extends DDMStructureBaseImpl {
 
-	public List<String> getAvailableLanguageIds() {
+	@Override
+	public String[] getAvailableLanguageIds() {
 		Document document = getDocument();
 
 		Element rootElement = document.getRootElement();
@@ -66,9 +71,10 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		String availableLocales = rootElement.attributeValue(
 			"available-locales");
 
-		return ListUtil.fromArray(StringUtil.split(availableLocales));
+		return StringUtil.split(availableLocales);
 	}
 
+	@Override
 	public List<String> getChildrenFieldNames(String fieldName)
 		throws PortalException, SystemException {
 
@@ -89,6 +95,7 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return fieldNames;
 	}
 
+	@Override
 	public String getCompleteXsd() throws PortalException, SystemException {
 		if (getParentStructureId() == 0) {
 			return getXsd();
@@ -100,11 +107,12 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return _mergeXsds(getXsd(), parentStructure.getCompleteXsd());
 	}
 
+	@Override
 	public String getDefaultLanguageId() {
 		Document document = getDocument();
 
 		if (document == null) {
-			Locale locale = LocaleUtil.getDefault();
+			Locale locale = LocaleUtil.getSiteDefault();
 
 			return locale.toString();
 		}
@@ -138,18 +146,21 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return _document;
 	}
 
+	@Override
 	public String getFieldDataType(String fieldName)
 		throws PortalException, SystemException {
 
 		return getFieldProperty(fieldName, "dataType");
 	}
 
+	@Override
 	public String getFieldLabel(String fieldName, Locale locale)
 		throws PortalException, SystemException {
 
 		return getFieldLabel(fieldName, LocaleUtil.toLanguageId(locale));
 	}
 
+	@Override
 	public String getFieldLabel(String fieldName, String locale)
 		throws PortalException, SystemException {
 
@@ -157,18 +168,21 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 			getFieldProperty(fieldName, "label", locale), fieldName);
 	}
 
+	@Override
 	public Set<String> getFieldNames() throws PortalException, SystemException {
 		Map<String, Map<String, String>> fieldsMap = getFieldsMap();
 
 		return fieldsMap.keySet();
 	}
 
+	@Override
 	public String getFieldProperty(String fieldName, String property)
 		throws PortalException, SystemException {
 
 		return getFieldProperty(fieldName, property, getDefaultLanguageId());
 	}
 
+	@Override
 	public String getFieldProperty(
 			String fieldName, String property, String locale)
 		throws PortalException, SystemException {
@@ -184,12 +198,21 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return field.get(property);
 	}
 
+	@Override
+	public boolean getFieldRepeatable(String fieldName)
+		throws PortalException, SystemException {
+
+		return GetterUtil.getBoolean(getFieldProperty(fieldName, "repeatable"));
+	}
+
+	@Override
 	public boolean getFieldRequired(String fieldName)
 		throws PortalException, SystemException {
 
 		return GetterUtil.getBoolean(getFieldProperty(fieldName, "required"));
 	}
 
+	@Override
 	public Map<String, String> getFields(
 		String fieldName, String attributeName, String attributeValue) {
 
@@ -197,6 +220,7 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 			fieldName, attributeName, attributeValue, getDefaultLanguageId());
 	}
 
+	@Override
 	public Map<String, String> getFields(
 		String fieldName, String attributeName, String attributeValue,
 		String locale) {
@@ -229,12 +253,14 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return null;
 	}
 
+	@Override
 	public Map<String, Map<String, String>> getFieldsMap()
 		throws PortalException, SystemException {
 
 		return getFieldsMap(getDefaultLanguageId());
 	}
 
+	@Override
 	public Map<String, Map<String, String>> getFieldsMap(String locale)
 		throws PortalException, SystemException {
 
@@ -246,6 +272,22 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return fieldsMap;
 	}
 
+	@Override
+	public String getFieldTip(String fieldName, Locale locale)
+		throws PortalException, SystemException {
+
+		return getFieldTip(fieldName, LocaleUtil.toLanguageId(locale));
+	}
+
+	@Override
+	public String getFieldTip(String fieldName, String locale)
+		throws PortalException, SystemException {
+
+		return GetterUtil.getString(
+			getFieldProperty(fieldName, "tip", locale), fieldName);
+	}
+
+	@Override
 	public String getFieldType(String fieldName)
 		throws PortalException, SystemException {
 
@@ -266,6 +308,7 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return _localizedTransientFieldsMap;
 	}
 
+	@Override
 	public List<String> getRootFieldNames()
 		throws PortalException, SystemException {
 
@@ -288,10 +331,12 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return fieldNames;
 	}
 
+	@Override
 	public List<DDMTemplate> getTemplates() throws SystemException {
 		return DDMTemplateLocalServiceUtil.getTemplates(getStructureId());
 	}
 
+	@Override
 	public Map<String, Map<String, String>> getTransientFieldsMap(String locale)
 		throws PortalException, SystemException {
 
@@ -303,6 +348,51 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return fieldsMap;
 	}
 
+	/**
+	 * Returns the WebDAV URL to access the structure.
+	 *
+	 * @param  themeDisplay the theme display needed to build the URL. It can
+	 *         set HTTPS access, the server name, the server port, the path
+	 *         context, and the scope group.
+	 * @param  webDAVToken the WebDAV token for the URL
+	 * @return the WebDAV URL
+	 */
+	@Override
+	public String getWebDavURL(ThemeDisplay themeDisplay, String webDAVToken) {
+		StringBundler sb = new StringBundler(11);
+
+		boolean secure = false;
+
+		if (themeDisplay.isSecure() ||
+			PropsValues.WEBDAV_SERVLET_HTTPS_REQUIRED) {
+
+			secure = true;
+		}
+
+		String portalURL = PortalUtil.getPortalURL(
+			themeDisplay.getServerName(), themeDisplay.getServerPort(), secure);
+
+		sb.append(portalURL);
+
+		sb.append(themeDisplay.getPathContext());
+		sb.append(StringPool.SLASH);
+		sb.append("webdav");
+
+		Group group = themeDisplay.getScopeGroup();
+
+		sb.append(group.getFriendlyURL());
+
+		sb.append(StringPool.SLASH);
+		sb.append(webDAVToken);
+		sb.append(StringPool.SLASH);
+		sb.append("Structures");
+		sb.append(StringPool.SLASH);
+		sb.append(getStructureId());
+
+		return sb.toString();
+	}
+
+	@Override
 	public boolean hasField(String fieldName)
 		throws PortalException, SystemException {
 
@@ -321,12 +411,14 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 		return hasField;
 	}
 
+	@Override
 	public boolean isFieldPrivate(String fieldName)
 		throws PortalException, SystemException {
 
 		return GetterUtil.getBoolean(getFieldProperty(fieldName, "private"));
 	}
 
+	@Override
 	public boolean isFieldRepeatable(String fieldName)
 		throws PortalException, SystemException {
 
@@ -348,7 +440,7 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 					getXsd(), ddmStructureDefaultLocale, defaultImportLocale));
 		}
 		catch (Exception e) {
-			throw new LocaleException(e);
+			throw new LocaleException(LocaleException.TYPE_EXPORT_IMPORT, e);
 		}
 	}
 
@@ -384,9 +476,11 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 	private Map<String, String> _getField(Element element, String locale) {
 		Map<String, String> field = new HashMap<String, String>();
 
-		List<String> availableLocales = getAvailableLanguageIds();
+		String[] availableLanguageIds = getAvailableLanguageIds();
 
-		if ((locale != null) && !availableLocales.contains(locale)) {
+		if ((locale != null) &&
+			!ArrayUtil.contains(availableLanguageIds, locale)) {
+
 			locale = getDefaultLanguageId();
 		}
 
@@ -443,6 +537,7 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 
 		privateField.put("dataType", dataType);
 
+		privateField.put("name", privateFieldName);
 		privateField.put("private", Boolean.TRUE.toString());
 
 		String repeatable = PropsUtil.get(

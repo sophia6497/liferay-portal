@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -77,6 +77,7 @@ public class SCProductEntryCacheModel implements CacheModel<SCProductEntry>,
 		return sb.toString();
 	}
 
+	@Override
 	public SCProductEntry toEntityModel() {
 		SCProductEntryImpl scProductEntryImpl = new SCProductEntryImpl();
 
@@ -174,6 +175,7 @@ public class SCProductEntryCacheModel implements CacheModel<SCProductEntry>,
 		return scProductEntryImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		productEntryId = objectInput.readLong();
 		groupId = objectInput.readLong();
@@ -193,6 +195,7 @@ public class SCProductEntryCacheModel implements CacheModel<SCProductEntry>,
 		repoArtifactId = objectInput.readUTF();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(productEntryId);

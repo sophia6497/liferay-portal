@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,6 +30,7 @@ import org.xml.sax.InputSource;
  */
 public class EntityResolver implements org.xml.sax.EntityResolver {
 
+	@Override
 	public InputSource resolveEntity(String publicId, String systemId) {
 		ClassLoader classLoader = getClass().getClassLoader();
 
@@ -690,6 +691,11 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		),
 
 		new KeyValuePair(
+			"http://www.liferay.com/dtd/liferay-ddm-structure_6_2_0.xsd",
+			"liferay-ddm-structure_6_2_0.xsd"
+		),
+
+		new KeyValuePair(
 			"http://www.liferay.com/dtd/liferay-workflow-definition_6_0_0.xsd",
 			"liferay-workflow-definition_6_0_0.xsd"
 		),
@@ -697,6 +703,11 @@ public class EntityResolver implements org.xml.sax.EntityResolver {
 		new KeyValuePair(
 			"http://www.liferay.com/dtd/liferay-workflow-definition_6_1_0.xsd",
 			"liferay-workflow-definition_6_1_0.xsd"
+		),
+
+		new KeyValuePair(
+			"http://www.liferay.com/dtd/liferay-workflow-definition_6_2_0.xsd",
+			"liferay-workflow-definition_6_2_0.xsd"
 		),
 
 		new KeyValuePair(

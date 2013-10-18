@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -81,7 +81,7 @@ public class ShoppingCategoryPermission {
 
 		if (actionId.equals(ActionKeys.VIEW)) {
 			while (categoryId !=
-					ShoppingCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
+						ShoppingCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
 
 				category = ShoppingCategoryLocalServiceUtil.getCategory(
 					categoryId);
@@ -107,38 +107,34 @@ public class ShoppingCategoryPermission {
 
 			return true;
 		}
-		else {
-			while (categoryId !=
+
+		while (categoryId !=
 					ShoppingCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
 
-				category = ShoppingCategoryLocalServiceUtil.getCategory(
-					categoryId);
+			category = ShoppingCategoryLocalServiceUtil.getCategory(categoryId);
 
-				categoryId = category.getParentCategoryId();
+			categoryId = category.getParentCategoryId();
 
-				if (permissionChecker.hasOwnerPermission(
-						category.getCompanyId(),
-						ShoppingCategory.class.getName(),
-						category.getCategoryId(), category.getUserId(),
-						actionId)) {
+			if (permissionChecker.hasOwnerPermission(
+					category.getCompanyId(), ShoppingCategory.class.getName(),
+					category.getCategoryId(), category.getUserId(), actionId)) {
 
-					return true;
-				}
-
-				if (permissionChecker.hasPermission(
-						category.getGroupId(), ShoppingCategory.class.getName(),
-						category.getCategoryId(), actionId)) {
-
-					return true;
-				}
-
-				if (actionId.equals(ActionKeys.VIEW)) {
-					break;
-				}
+				return true;
 			}
 
-			return false;
+			if (permissionChecker.hasPermission(
+					category.getGroupId(), ShoppingCategory.class.getName(),
+					category.getCategoryId(), actionId)) {
+
+				return true;
+			}
+
+			if (actionId.equals(ActionKeys.VIEW)) {
+				break;
+			}
 		}
+
+		return false;
 	}
 
 }

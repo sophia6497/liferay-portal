@@ -1,0 +1,7 @@
+<definition>
+	<execute test-suite="CPRolesPGBlogsAcceptance" />
+
+	<execute test-suite="CPUsergroupsAcceptance" />
+
+	<execute test-suite="CPUsersandorganizationsAcceptance" />
+</definition>

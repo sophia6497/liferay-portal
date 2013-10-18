@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -97,13 +97,9 @@ serverURL.setParameter("tabs3", tabs3);
 						</aui:button-row>
 					</c:when>
 					<c:otherwise>
-						<span class="aui-search-bar">
-							<aui:input inlineField="<%= true %>" label="" name="keywords" title="search-categories" type="text" value="<%= keywords %>" />
-
-							<aui:button type="submit" value="search" />
-						</span>
-
-						<br /><br />
+						<div class="form-search">
+							<liferay-ui:input-search id="keywords" placeholder='<%= LanguageUtil.get(locale, "keywords") %>' title='<%= LanguageUtil.get(locale, "search-categories") %>' />
+						</div>
 
 						<%
 						List<String> headerNames = new ArrayList<String>();
@@ -200,8 +196,6 @@ serverURL.setParameter("tabs3", tabs3);
 
 						<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
 
-						<br />
-
 						<aui:button-row>
 
 							<%
@@ -220,19 +214,19 @@ serverURL.setParameter("tabs3", tabs3);
 					portletURL="<%= serverURL %>"
 				/>
 
-				<span class="aui-search-bar">
-					<aui:input inlineField="<%= true %>" label="" name="keywords" title="search-properties" type="text" value="<%= keywords %>" />
-
-					<aui:button type="submit" value="search" />
-				</span>
-
-				<br /><br />
+				<div class="form-search">
+					<liferay-ui:input-search id="keywords" placeholder='<%= LanguageUtil.get(locale, "keywords") %>' />
+				</div>
 
 				<%
 				List<String> headerNames = new ArrayList<String>();
 
 				headerNames.add("property");
 				headerNames.add("value");
+
+				if (tabs3.equals("portal-properties")) {
+					headerNames.add("source");
+				}
 
 				String emptyResultsMessage = null;
 
@@ -275,21 +269,101 @@ serverURL.setParameter("tabs3", tabs3);
 
 				List resultRows = searchContainer.getResultRows();
 
+				PortletPreferences serverPortletPreferences = PrefsPropsUtil.getPreferences();
+
+				Map<String, String[]> serverPortletPreferencesMap = serverPortletPreferences.getMap();
+
+				PortletPreferences companyPortletPreferences = PrefsPropsUtil.getPreferences(company.getCompanyId());
+
+				Map<String, String[]> companyPortletPreferencesMap = companyPortletPreferences.getMap();
+
 				for (int i = 0; i < results.size(); i++) {
 					Map.Entry entry = (Map.Entry)results.get(i);
 
 					String property = (String)entry.getKey();
 					String value = (String)entry.getValue();
 
+					boolean overriddenPropertyValue = false;
+
+					if (tabs3.equals("portal-properties")) {
+						if (serverPortletPreferencesMap.containsKey(property)) {
+							value = serverPortletPreferences.getValue(property, StringPool.BLANK);
+
+							overriddenPropertyValue = true;
+						}
+
+						if (companyPortletPreferencesMap.containsKey(property)) {
+							value = companyPortletPreferences.getValue(property, StringPool.BLANK);
+
+							overriddenPropertyValue = true;
+						}
+					}
+
 					ResultRow row = new ResultRow(entry, property, i);
 
 					// Property
 
-					row.addText(StringUtil.shorten(property, 80));
+					row.addText(HtmlUtil.escape(StringUtil.shorten(property, 80)));
 
 					// Value
 
-					row.addText(StringUtil.shorten(value, 80));
+					if (Validator.isNotNull(value)) {
+						if (value.length() > 80) {
+							StringBundler sb = new StringBundler(5);
+
+							sb.append("<span onmouseover=\"Liferay.Portal.ToolTip.show(this, '");
+							sb.append(HtmlUtil.escape(value));
+							sb.append("')\">");
+							sb.append(HtmlUtil.escape(StringUtil.shorten(value, 80)));
+							sb.append("</span>");
+
+							row.addText(sb.toString());
+						}
+						else {
+							row.addText(HtmlUtil.escape(StringUtil.shorten(value, 80)));
+						}
+					}
+					else {
+						row.addText(StringPool.BLANK);
+					}
+
+					// Source
+
+					if (tabs3.equals("portal-properties")) {
+						StringBundler sb = new StringBundler(5);
+
+						sb.append("<span onmouseover=\"Liferay.Portal.ToolTip.show(this, '");
+
+						if (overriddenPropertyValue) {
+							sb.append(LanguageUtil.get(pageContext, "the-value-of-this-property-was-overridden-using-the-control-panel-and-is-stored-in-the-database"));
+						}
+						else {
+							sb.append(LanguageUtil.get(pageContext, "the-value-of-this-property-is-read-from-a-portal.properties-file-or-one-of-its-extension-files"));
+						}
+
+						sb.append("')\"><img alt=\"");
+
+						if (overriddenPropertyValue) {
+							sb.append(LanguageUtil.get(pageContext, "the-value-of-this-property-was-overridden-using-the-control-panel-and-is-stored-in-the-database"));
+						}
+						else {
+							sb.append(LanguageUtil.get(pageContext, "the-value-of-this-property-is-read-from-a-portal.properties-file-or-one-of-its-extension-files"));
+						}
+
+						sb.append("\" src=\"");
+						sb.append(themeDisplay.getPathThemeImages());
+
+						if (overriddenPropertyValue) {
+							sb.append("/common/saved_in_database.png");
+						}
+						else {
+							sb.append("/common/page.png");
+						}
+
+						sb.append("\" /></span>");
+
+						row.addText(sb.toString());
+					}
 
 					// Add result row
 
@@ -336,7 +410,7 @@ serverURL.setParameter("tabs3", tabs3);
 
 				<c:choose>
 					<c:when test="<%= convertProcesses.isEmpty() %>">
-						<div class="portlet-msg-info">
+						<div class="alert alert-info">
 							<liferay-ui:message key="no-data-migration-processes-are-available" />
 						</div>
 					</c:when>
@@ -435,6 +509,8 @@ serverURL.setParameter("tabs3", tabs3);
 					<liferay-ui:panel-container extended="<%= true %>" id="adminDocumentLibraryPanelContainer" persistState="<%= true %>">
 						<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="adminDocumentLibraryPanel" persistState="<%= true %>" title="documents-and-media">
 							<aui:input cssClass="lfr-input-text-container" label="maximum-file-size" name="dlFileMaxSize" type="text" value="<%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) %>" />
+
+							<aui:input cssClass="lfr-input-text-container" helpMessage="maximum-previewable-file-size-help" label="maximum-previewable-file-size" name="dlFileEntryPreviewableProcessorMaxSize" type="text" value="<%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_ENTRY_PREVIEWABLE_PROCESSOR_MAX_SIZE) %>" />
 
 							<aui:input cssClass="lfr-input-text-container" label="maximum-thumbnail-height" name="dlFileEntryThumbnailMaxHeight" type="text" value="<%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_ENTRY_THUMBNAIL_MAX_HEIGHT) %>" />
 
@@ -563,7 +639,7 @@ serverURL.setParameter("tabs3", tabs3);
 						<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="adminXugglerPanel" persistState="<%= true %>" title="enabling-xuggler-provides-video-conversion-functionality">
 							<c:choose>
 								<c:when test="<%= XugglerUtil.isNativeLibraryInstalled() %>">
-									<div class="portlet-msg-info">
+									<div class="alert alert-info">
 										<liferay-ui:message key="xuggler-installed" />
 									</div>
 
@@ -609,7 +685,7 @@ serverURL.setParameter("tabs3", tabs3);
 									}
 									%>
 
-									<div class="portlet-msg-info">
+									<div class="alert alert-info">
 										<liferay-ui:message key="<%= xugglerHelp %>" />
 									</div>
 
@@ -696,15 +772,13 @@ serverURL.setParameter("tabs3", tabs3);
 
 					</aui:select>
 
-					<aui:input cssClass="lfr-textarea-container" name="script" type="textarea" value="<%= script %>" />
+					<aui:input cssClass="lfr-textarea-container" name="script" resizable="<%= true %>" type="textarea" value="<%= script %>" />
 				</aui:fieldset>
 
 				<c:if test="<%= Validator.isNotNull(scriptOutput) %>">
 					<b><liferay-ui:message key="output" /></b>
 
 					<pre><%= scriptOutput %></pre>
-
-					<br /><br />
 				</c:if>
 
 				<aui:button-row>
@@ -717,27 +791,28 @@ serverURL.setParameter("tabs3", tabs3);
 				</aui:button-row>
 			</c:when>
 			<c:when test='<%= tabs2.equals("shutdown") %>'>
-				<aui:fieldset>
-					<aui:input label="number-of-minutes" name="minutes" size="3" type="text" />
-
-					<aui:input cssClass="lfr-textarea-container" label="custom-message" name='<%= "message" + GetterUtil.getString(ShutdownUtil.getMessage()) %>' type="textarea" />
-				</aui:fieldset>
+				<liferay-ui:error key="shutdownMinutes" message="please-enter-the-number-of-minutes" />
 
 				<aui:button-row>
+
+					<%
+					String taglibShutdown = renderResponse.getNamespace() + "saveServer('shutdown');";
+					%>
+
 					<c:choose>
 						<c:when test="<%= ShutdownUtil.isInProcess() %>">
-
-							<%
-							String taglibCancelShutdown = "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "minutes.value = 0;" + renderResponse.getNamespace() + "saveServer('shutdown');";
-							%>
-
-							<aui:button onClick="<%= taglibCancelShutdown %>" value="cancel-shutdown" />
+							<aui:button onClick="<%= taglibShutdown %>" value="cancel-shutdown" />
 						</c:when>
 						<c:otherwise>
+							<aui:fieldset>
+								<aui:input label="number-of-minutes" name="minutes" size="3" type="text">
+									<aui:validator name="digits" />
+									<aui:validator name="min">1</aui:validator>
+									<aui:validator name="required" />
+								</aui:input>
 
-							<%
-							String taglibShutdown = renderResponse.getNamespace() + "saveServer('shutdown');";
-							%>
+								<aui:input cssClass="lfr-textarea-container" label="custom-message" name='<%= "message" + GetterUtil.getString(ShutdownUtil.getMessage()) %>' type="textarea" />
+							</aui:fieldset>
 
 							<aui:button onClick="<%= taglibShutdown %>" value="shutdown" />
 						</c:otherwise>
@@ -808,13 +883,18 @@ serverURL.setParameter("tabs3", tabs3);
 
 				<liferay-ui:panel-container extended="<%= true %>" id="adminServerAdministrationActionsPanelContainer" persistState="<%= true %>">
 					<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="adminServerAdministrationActionsPanel" persistState="<%= true %>" title="actions">
-						<table class="lfr-table">
+						<table class="table table-condensed table-hover">
 						<tr>
 							<td>
 								<liferay-ui:message key="run-the-garbage-collector-to-free-up-memory" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('gc');" />
+
+								<%
+								String taglibGC = renderResponse.getNamespace() + "saveServer('gc');";
+								%>
+
+								<aui:button onClick="<%= taglibGC %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -822,7 +902,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="clear-content-cached-by-this-vm" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('cacheSingle');" />
+
+								<%
+								String taglibCacheSingle = renderResponse.getNamespace() + "saveServer('cacheSingle');";
+								%>
+
+								<aui:button onClick="<%= taglibCacheSingle %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -830,7 +915,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="clear-content-cached-across-the-cluster" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('cacheMulti');" />
+
+								<%
+								String taglibCacheMulti = renderResponse.getNamespace() + "saveServer('cacheMulti');";
+								%>
+
+								<aui:button onClick="<%= taglibCacheMulti %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -838,7 +928,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="clear-the-database-cache" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('cacheDb');" />
+
+								<%
+								String taglibCacheDb = renderResponse.getNamespace() + "saveServer('cacheDb');";
+								%>
+
+								<aui:button onClick="<%= taglibCacheDb %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -846,7 +941,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="clear-the-direct-servlet-cache" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('cacheServlet');" />
+
+								<%
+								String taglibCacheServlet = renderResponse.getNamespace() + "saveServer('cacheServlet');";
+								%>
+
+								<aui:button onClick="<%= taglibCacheServlet %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -854,7 +954,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="reindex-all-search-indexes" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('reindex');" />
+
+								<%
+								String taglibReindex = renderResponse.getNamespace() + "saveServer('reindex');";
+								%>
+
+								<aui:button onClick="<%= taglibReindex %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -862,7 +967,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="reindex-all-spell-check-indexes" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('reindexDictionaries');" />
+
+								<%
+								String taglibReindexDictionaries = renderResponse.getNamespace() + "saveServer('reindexDictionaries');";
+								%>
+
+								<aui:button onClick="<%= taglibReindexDictionaries %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -870,7 +980,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="reset-preview-and-thumbnail-files-for-documents-and-media-portlet" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('dlPreviews');" />
+
+								<%
+								String taglibDLPreviews = renderResponse.getNamespace() + "saveServer('dlPreviews');";
+								%>
+
+								<aui:button onClick="<%= taglibDLPreviews %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -878,7 +993,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="generate-thread-dump" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('threadDump');" />
+
+								<%
+								String taglibThreadDump = renderResponse.getNamespace() + "saveServer('threadDump');";
+								%>
+
+								<aui:button onClick="<%= taglibThreadDump %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -886,7 +1006,25 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="verify-database-tables-of-all-plugins" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('verifyPluginTables');" />
+
+								<%
+								String taglibVerifyPluginTables = renderResponse.getNamespace() + "saveServer('verifyPluginTables');";
+								%>
+
+								<aui:button onClick="<%= taglibVerifyPluginTables %>" value="execute" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<liferay-ui:message key="verify-membership-policies" />
+							</td>
+							<td>
+
+								<%
+								String taglibVerifyMembershipPolicies = renderResponse.getNamespace() + "saveServer('verifyMembershipPolicies');";
+								%>
+
+								<aui:button onClick="<%= taglibVerifyMembershipPolicies %>" value="execute" />
 							</td>
 						</tr>
 						<tr>
@@ -894,7 +1032,12 @@ serverURL.setParameter("tabs3", tabs3);
 								<liferay-ui:message key="clean-up-permissions" /> <liferay-ui:icon-help message="clean-up-permissions-help" />
 							</td>
 							<td>
-								<input type="button" value="<liferay-ui:message key="execute" />" onClick="<portlet:namespace />saveServer('cleanUpPermissions');" />
+
+								<%
+								String taglibCleanUpPermissions = renderResponse.getNamespace() + "saveServer('cleanUpPermissions');";
+								%>
+
+								<aui:button onClick="<%= taglibCleanUpPermissions %>" value="execute" />
 							</td>
 						</tr>
 						</table>

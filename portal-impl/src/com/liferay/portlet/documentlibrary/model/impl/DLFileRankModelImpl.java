@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -96,26 +96,32 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 	public DLFileRankModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _fileRankId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setFileRankId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
 		return _fileRankId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return DLFileRank.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return DLFileRank.class.getName();
 	}
@@ -180,18 +186,22 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		}
 	}
 
+	@Override
 	public long getFileRankId() {
 		return _fileRankId;
 	}
 
+	@Override
 	public void setFileRankId(long fileRankId) {
 		_fileRankId = fileRankId;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
 		_columnBitmask |= GROUPID_COLUMN_BITMASK;
 
@@ -208,10 +218,12 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		return _originalGroupId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
 
@@ -228,10 +240,12 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		return _originalCompanyId;
 	}
 
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_columnBitmask |= USERID_COLUMN_BITMASK;
 
@@ -244,10 +258,12 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
@@ -256,20 +272,24 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		return _originalUserId;
 	}
 
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_columnBitmask = -1L;
 
 		_createDate = createDate;
 	}
 
+	@Override
 	public long getFileEntryId() {
 		return _fileEntryId;
 	}
 
+	@Override
 	public void setFileEntryId(long fileEntryId) {
 		_columnBitmask |= FILEENTRYID_COLUMN_BITMASK;
 
@@ -286,14 +306,17 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		return _originalFileEntryId;
 	}
 
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
 		_columnBitmask |= ACTIVE_COLUMN_BITMASK;
 
@@ -354,6 +377,7 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		return dlFileRankImpl;
 	}
 
+	@Override
 	public int compareTo(DLFileRank dlFileRank) {
 		int value = 0;
 
@@ -370,18 +394,15 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof DLFileRank)) {
 			return false;
 		}
 
-		DLFileRank dlFileRank = null;
-
-		try {
-			dlFileRank = (DLFileRank)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		DLFileRank dlFileRank = (DLFileRank)obj;
 
 		long primaryKey = dlFileRank.getPrimaryKey();
 
@@ -476,6 +497,7 @@ public class DLFileRankModelImpl extends BaseModelImpl<DLFileRank>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(25);
 

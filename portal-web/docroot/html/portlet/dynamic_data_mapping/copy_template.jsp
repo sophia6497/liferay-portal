@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,11 +41,13 @@ long templateId = BeanParamUtil.getLong(template, request, "templateId");
 
 	<aui:fieldset>
 		<aui:input name="name" />
+
+		<aui:input name="description" />
 	</aui:fieldset>
 
 	<aui:button-row>
 		<aui:button type="submit" value="copy" />
 
-		<aui:button onClick="Liferay.Util.getWindow().close();" value="close" />
+		<aui:button onClick="Liferay.Util.getWindow().hide();" value="close" />
 	</aui:button-row>
 </aui:form>

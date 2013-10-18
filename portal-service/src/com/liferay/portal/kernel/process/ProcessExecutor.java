@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -426,9 +426,12 @@ public class ProcessExecutor {
 			_message = message;
 		}
 
+		@Override
 		public String call() {
 			return _message;
 		}
+
+		private static final long serialVersionUID = 1L;
 
 		private final String _message;
 
@@ -444,6 +447,7 @@ public class ProcessExecutor {
 			_process = process;
 		}
 
+		@Override
 		public boolean cancel(boolean mayInterruptIfRunning) {
 			if (_future.isCancelled() || _future.isDone()) {
 				return false;
@@ -455,20 +459,24 @@ public class ProcessExecutor {
 			return true;
 		}
 
+		@Override
 		public boolean isCancelled() {
 			return _future.isCancelled();
 		}
 
+		@Override
 		public boolean isDone() {
 			return _future.isDone();
 		}
 
+		@Override
 		public T get() throws ExecutionException, InterruptedException {
 			ProcessCallable<?> processCallable = _future.get();
 
 			return get(processCallable);
 		}
 
+		@Override
 		public T get(long timeout, TimeUnit timeUnit)
 			throws ExecutionException, InterruptedException, TimeoutException {
 
@@ -484,12 +492,11 @@ public class ProcessExecutor {
 				if (processCallable instanceof ReturnProcessCallable<?>) {
 					return (T)processCallable.call();
 				}
-				else {
-					ExceptionProcessCallable exceptionProcessCallable =
-						(ExceptionProcessCallable)processCallable;
 
-					throw exceptionProcessCallable.call();
-				}
+				ExceptionProcessCallable exceptionProcessCallable =
+					(ExceptionProcessCallable)processCallable;
+
+				throw exceptionProcessCallable.call();
 			}
 			catch (ProcessException pe) {
 				throw new ExecutionException(pe);
@@ -508,6 +515,7 @@ public class ProcessExecutor {
 			_process = process;
 		}
 
+		@Override
 		public ProcessCallable<? extends Serializable> call() throws Exception {
 			ProcessCallable<?> resultProcessCallable = null;
 

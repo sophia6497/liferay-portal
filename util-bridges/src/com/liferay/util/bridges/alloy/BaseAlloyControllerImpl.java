@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.util.bridges.alloy;
 
 import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
+import com.liferay.portal.kernel.bean.ConstantsBeanFactoryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -36,6 +37,7 @@ import com.liferay.portal.kernel.scheduler.CronTrigger;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
 import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.scheduler.Trigger;
+import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
@@ -47,6 +49,7 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -105,6 +108,10 @@ import javax.servlet.jsp.PageContext;
  */
 public abstract class BaseAlloyControllerImpl implements AlloyController {
 
+	public static final String TOUCH =
+		BaseAlloyControllerImpl.class.getName() + "#TOUCH#";
+
+	@Override
 	public void afterPropertiesSet() {
 		initClass();
 		initServletVariables();
@@ -113,10 +120,21 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		initMethods();
 		initPaths();
 		initIndexer();
-		initScheduler();
+		initMessageListeners();
 	}
 
+	@Override
 	public void execute() throws Exception {
+		if (permissioned &&
+			!AlloyPermission.contains(
+				themeDisplay.getPermissionChecker(),
+				themeDisplay.getScopeGroupId(), portlet.getRootPortletId(),
+				controllerPath, actionPath)) {
+
+			renderError(
+				"you-do-not-have-permission-to-access-the-requested-resource");
+		}
+
 		Method method = getMethod(actionPath);
 
 		if (method == null) {
@@ -143,18 +161,32 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		}
 	}
 
+	@Override
+	public Portlet getPortlet() {
+		return portlet;
+	}
+
+	@Override
+	public HttpServletRequest getRequest() {
+		return request;
+	}
+
+	@Override
 	public ThemeDisplay getThemeDisplay() {
 		return themeDisplay;
 	}
 
+	@Override
 	public long increment() throws Exception {
 		return CounterLocalServiceUtil.increment();
 	}
 
+	@Override
 	public void setPageContext(PageContext pageContext) {
 		this.pageContext = pageContext;
 	}
 
+	@Override
 	public void updateModel(BaseModel<?> baseModel) throws Exception {
 		BeanPropertiesUtil.setProperties(baseModel, request);
 
@@ -177,6 +209,14 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 
 			indexer.reindex(baseModel);
 		}
+		else {
+			Indexer baseModelIndexer = IndexerRegistryUtil.getIndexer(
+				baseModel.getModelClass());
+
+			if (baseModelIndexer != null) {
+				baseModelIndexer.reindex(baseModel);
+			}
+		}
 	}
 
 	protected void addSuccessMessage() {
@@ -184,6 +224,10 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 			portletRequest, "successMessage");
 
 		SessionMessages.add(portletRequest, "requestProcessed", successMessage);
+	}
+
+	protected MessageListener buildControllerMessageListener() {
+		return null;
 	}
 
 	protected String buildIncludePath(String viewPath) {
@@ -260,12 +304,54 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		else {
 			portletRequestDispatcher.include(portletRequest, portletResponse);
 		}
+
+		Boolean touch = (Boolean)portletContext.getAttribute(
+			TOUCH + portlet.getRootPortletId());
+
+		if (touch != null) {
+			return;
+		}
+
+		String touchPath =
+			"/WEB-INF/jsp/" + portlet.getFriendlyURLMapping() +
+				"/views/touch.jsp";
+
+		if (log.isDebugEnabled()) {
+			log.debug(
+				"Touch " + portlet.getRootPortletId() + " by including " +
+					touchPath);
+		}
+
+		portletContext.setAttribute(
+			TOUCH + portlet.getRootPortletId(), Boolean.FALSE);
+
+		portletRequestDispatcher = portletContext.getRequestDispatcher(
+			touchPath);
+
+		if (portletRequestDispatcher != null) {
+			portletRequestDispatcher.include(portletRequest, portletResponse);
+		}
 	}
 
 	protected void executeResource(Method method) throws Exception {
 		if (method != null) {
 			method.invoke(this);
 		}
+	}
+
+	protected Object getConstantsBean(Class<?> clazz) {
+		return ConstantsBeanFactoryUtil.getConstantsBean(clazz);
+	}
+
+	protected String getControllerDestinationName() {
+		return "liferay/alloy/controller/".concat(
+			getMessageListenerGroupName());
+	}
+
+	protected String getMessageListenerGroupName() {
+		String rootPortletId = portlet.getRootPortletId();
+
+		return rootPortletId.concat(StringPool.SLASH).concat(controllerPath);
 	}
 
 	protected Method getMethod(String methodName, Class<?>... parameterTypes) {
@@ -291,17 +377,11 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	}
 
 	protected String getSchedulerDestinationName() {
-		return "liferay/alloy/".concat(getSchedulerGroupName());
-	}
-
-	protected String getSchedulerGroupName() {
-		String rootPortletId = portlet.getRootPortletId();
-
-		return rootPortletId.concat(StringPool.SLASH).concat(controllerPath);
+		return "liferay/alloy/scheduler/".concat(getMessageListenerGroupName());
 	}
 
 	protected String getSchedulerJobName() {
-		return getSchedulerGroupName();
+		return getMessageListenerGroupName();
 	}
 
 	protected Trigger getSchedulerTrigger() {
@@ -309,7 +389,7 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 			CalendarFactoryUtil.getCalendar(), CronText.DAILY_FREQUENCY, 1);
 
 		return new CronTrigger(
-			getSchedulerJobName(), getSchedulerGroupName(),
+			getSchedulerJobName(), getMessageListenerGroupName(),
 			cronText.toString());
 	}
 
@@ -384,6 +464,107 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		IndexerRegistryUtil.register(indexer);
 
 		indexerInstances.add(indexer);
+	}
+
+	protected void initMessageListener(
+		String destinationName, MessageListener messageListener,
+		boolean enableScheduler) {
+
+		MessageBus messageBus = MessageBusUtil.getMessageBus();
+
+		Destination destination = messageBus.getDestination(destinationName);
+
+		if (destination != null) {
+			Set<MessageListener> messageListeners =
+				destination.getMessageListeners();
+
+			for (MessageListener curMessageListener : messageListeners) {
+				if (!(curMessageListener instanceof InvokerMessageListener)) {
+					continue;
+				}
+
+				InvokerMessageListener invokerMessageListener =
+					(InvokerMessageListener)curMessageListener;
+
+				curMessageListener =
+					invokerMessageListener.getMessageListener();
+
+				if (messageListener == curMessageListener) {
+					return;
+				}
+
+				Class<?> messageListenerClass = messageListener.getClass();
+
+				String messageListenerClassName =
+					messageListenerClass.getName();
+
+				Class<?> curMessageListenerClass =
+					curMessageListener.getClass();
+
+				if (!messageListenerClassName.equals(
+						curMessageListenerClass.getName())) {
+
+					continue;
+				}
+
+				try {
+					if (enableScheduler) {
+						SchedulerEngineHelperUtil.unschedule(
+							getSchedulerJobName(),
+							getMessageListenerGroupName(),
+							StorageType.MEMORY_CLUSTERED);
+					}
+
+					MessageBusUtil.unregisterMessageListener(
+						destinationName, curMessageListener);
+				}
+				catch (Exception e) {
+					log.error(e, e);
+				}
+
+				break;
+			}
+		}
+		else {
+			SerialDestination serialDestination = new SerialDestination();
+
+			serialDestination.setName(destinationName);
+
+			serialDestination.open();
+
+			MessageBusUtil.addDestination(serialDestination);
+		}
+
+		try {
+			MessageBusUtil.registerMessageListener(
+				destinationName, messageListener);
+
+			if (enableScheduler) {
+				SchedulerEngineHelperUtil.schedule(
+					getSchedulerTrigger(), StorageType.MEMORY_CLUSTERED, null,
+					destinationName, null, 0);
+			}
+		}
+		catch (Exception e) {
+			log.error(e, e);
+		}
+	}
+
+	protected void initMessageListeners() {
+		controllerMessageListener = buildControllerMessageListener();
+
+		if (controllerMessageListener != null) {
+			initMessageListener(
+				getControllerDestinationName(), controllerMessageListener,
+				false);
+		}
+
+		schedulerMessageListener = buildSchedulerMessageListener();
+
+		if (schedulerMessageListener != null) {
+			initMessageListener(
+				getSchedulerDestinationName(), schedulerMessageListener, true);
+		}
 	}
 
 	protected void initMethods() {
@@ -495,88 +676,6 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		}
 	}
 
-	protected void initScheduler() {
-		schedulerMessageListener = buildSchedulerMessageListener();
-
-		if (schedulerMessageListener == null) {
-			return;
-		}
-
-		MessageBus messageBus = MessageBusUtil.getMessageBus();
-
-		Destination destination = messageBus.getDestination(
-			getSchedulerDestinationName());
-
-		if (destination != null) {
-			Set<MessageListener> messageListeners =
-				destination.getMessageListeners();
-
-			for (MessageListener messageListener : messageListeners) {
-				if (!(messageListener instanceof InvokerMessageListener)) {
-					continue;
-				}
-
-				InvokerMessageListener invokerMessageListener =
-					(InvokerMessageListener)messageListener;
-
-				messageListener = invokerMessageListener.getMessageListener();
-
-				if (schedulerMessageListener == messageListener) {
-					return;
-				}
-
-				Class<?> schedulerMessageListenerClass =
-					schedulerMessageListener.getClass();
-
-				String schedulerMessageListenerClassName =
-					schedulerMessageListenerClass.getName();
-
-				Class<?> messageListenerClass = messageListener.getClass();
-
-				if (!schedulerMessageListenerClassName.equals(
-						messageListenerClass.getName())) {
-
-					continue;
-				}
-
-				try {
-					SchedulerEngineHelperUtil.unschedule(
-						getSchedulerJobName(), getSchedulerGroupName(),
-						StorageType.MEMORY_CLUSTERED);
-
-					MessageBusUtil.unregisterMessageListener(
-						getSchedulerDestinationName(), messageListener);
-				}
-				catch (Exception e) {
-					log.error(e, e);
-				}
-
-				break;
-			}
-		}
-		else {
-			SerialDestination serialDestination = new SerialDestination();
-
-			serialDestination.setName(getSchedulerDestinationName());
-
-			serialDestination.open();
-
-			MessageBusUtil.addDestination(serialDestination);
-		}
-
-		try {
-			MessageBusUtil.registerMessageListener(
-				getSchedulerDestinationName(), schedulerMessageListener);
-
-			SchedulerEngineHelperUtil.schedule(
-				getSchedulerTrigger(), StorageType.MEMORY_CLUSTERED, null,
-				getSchedulerDestinationName(), null, 0);
-		}
-		catch (Exception e) {
-			log.error(e, e);
-		}
-	}
-
 	protected void initServletVariables() {
 		servletConfig = pageContext.getServletConfig();
 		servletContext = pageContext.getServletContext();
@@ -658,11 +757,20 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 
 		searchContext.setEnd(searchContainer.getEnd());
 
+		Class<?> indexerClass = Class.forName(indexerClassName);
+
+		try {
+			indexerClass.getField(Field.GROUP_ID);
+		}
+		catch (Exception e) {
+			searchContext.setGroupIds(null);
+		}
+
 		if (Validator.isNotNull(keywords)) {
 			searchContext.setKeywords(keywords);
 		}
 
-		if ((sorts != null) && (sorts.length > 0)) {
+		if (ArrayUtil.isNotEmpty(sorts)) {
 			searchContext.setSorts(sorts);
 		}
 
@@ -693,6 +801,14 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		throws Exception {
 
 		return search(null, keywords, sorts);
+	}
+
+	protected void setAlloyServiceInvokerClass(Class<?> clazz) {
+		alloyServiceInvoker = new AlloyServiceInvoker(clazz.getName());
+	}
+
+	protected void setPermissioned(boolean permissioned) {
+		this.permissioned = permissioned;
 	}
 
 	protected String translate(String pattern, Object... arguments) {
@@ -761,21 +877,22 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 			HttpServletResponse response = PortalUtil.getHttpServletResponse(
 				actionResponse);
 
-			response.setContentType(ContentTypes.TEXT_JAVASCRIPT);
+			response.setContentType(ContentTypes.APPLICATION_JSON);
 
 			ServletResponseUtil.write(response, json.toString());
 		}
 		else if (mimeResponse != null) {
-			mimeResponse.setContentType(ContentTypes.TEXT_JAVASCRIPT);
+			mimeResponse.setContentType(ContentTypes.APPLICATION_JSON);
 
 			PortletResponseUtil.write(mimeResponse, json.toString());
 		}
 	}
 
 	protected static final String CALLED_PROCESS_ACTION =
-		"CALLED_PROCESS_ACTION";
+		BaseAlloyControllerImpl.class.getName() + "#CALLED_PROCESS_ACTION";
 
-	protected static final String VIEW_PATH = "VIEW_PATH";
+	protected static final String VIEW_PATH =
+		BaseAlloyControllerImpl.class.getName() + "#VIEW_PATH";
 
 	protected static Log log = LogFactoryUtil.getLog(
 		BaseAlloyControllerImpl.class);
@@ -788,6 +905,7 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	protected ClassLoader classLoader;
 	protected Class<?> clazz;
 	protected Company company;
+	protected MessageListener controllerMessageListener;
 	protected String controllerPath;
 	protected EventRequest eventRequest;
 	protected EventResponse eventResponse;
@@ -800,6 +918,7 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	protected Map<String, Method> methodsMap;
 	protected MimeResponse mimeResponse;
 	protected PageContext pageContext;
+	protected boolean permissioned;
 	protected Portlet portlet;
 	protected PortletContext portletContext;
 	protected PortletRequest portletRequest;

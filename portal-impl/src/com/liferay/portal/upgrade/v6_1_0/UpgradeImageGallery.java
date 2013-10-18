@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.image.DLHook;
 import com.liferay.portal.image.DatabaseHook;
 import com.liferay.portal.image.FileSystemHook;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.dao.shard.ShardUtil;
 import com.liferay.portal.kernel.image.Hook;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -30,8 +31,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Image;
-import com.liferay.portal.security.pacl.PACLClassLoaderUtil;
 import com.liferay.portal.service.ImageLocalServiceUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -62,7 +63,7 @@ import java.util.Map;
 public class UpgradeImageGallery extends UpgradeProcess {
 
 	public UpgradeImageGallery() throws Exception {
-		ClassLoader classLoader = PACLClassLoaderUtil.getPortalClassLoader();
+		ClassLoader classLoader = ClassLoaderUtil.getPortalClassLoader();
 
 		_sourceHookClassName = FileSystemHook.class.getName();
 
@@ -70,8 +71,9 @@ public class UpgradeImageGallery extends UpgradeProcess {
 			_sourceHookClassName = PropsValues.IMAGE_HOOK_IMPL;
 		}
 
-		_sourceHook = (Hook)classLoader.loadClass(
-			_sourceHookClassName).newInstance();
+		Class<?> clazz = classLoader.loadClass(_sourceHookClassName);
+
+		_sourceHook = (Hook)clazz.newInstance();
 	}
 
 	protected void addDLFileEntry(
@@ -424,7 +426,12 @@ public class UpgradeImageGallery extends UpgradeProcess {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
+		String currentShardName = null;
+
 		try {
+			currentShardName = ShardUtil.setTargetSource(
+				PropsValues.SHARD_DEFAULT_NAME);
+
 			con = DataAccess.getUpgradeOptimizedConnection();
 
 			ps = con.prepareStatement(
@@ -447,6 +454,10 @@ public class UpgradeImageGallery extends UpgradeProcess {
 			return bitwiseValues;
 		}
 		finally {
+			if (Validator.isNotNull(currentShardName)) {
+				ShardUtil.setTargetSource(currentShardName);
+			}
+
 			DataAccess.cleanUp(con, ps, rs);
 		}
 	}
@@ -719,27 +730,29 @@ public class UpgradeImageGallery extends UpgradeProcess {
 			DataAccess.cleanUp(con, ps, rs);
 		}
 
-		if (!_sourceHookClassName.equals(DLHook.class.getName())) {
-			try {
-				con = DataAccess.getUpgradeOptimizedConnection();
+		if (_sourceHookClassName.equals(DLHook.class.getName())) {
+			return;
+		}
 
-				ps = con.prepareStatement("select imageId from Image");
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
 
-				rs = ps.executeQuery();
+			ps = con.prepareStatement("select imageId from Image");
 
-				while (rs.next()) {
-					long imageId = rs.getLong("imageId");
+			rs = ps.executeQuery();
 
-					migrateImage(imageId);
-				}
+			while (rs.next()) {
+				long imageId = rs.getLong("imageId");
+
+				migrateImage(imageId);
 			}
-			finally {
-				DataAccess.cleanUp(con, ps, rs);
-			}
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
 
-			if (_sourceHookClassName.equals(DatabaseHook.class.getName())) {
-				runSQL("update Image set text_ = ''");
-			}
+		if (_sourceHookClassName.equals(DatabaseHook.class.getName())) {
+			runSQL("update Image set text_ = ''");
 		}
 	}
 
@@ -888,8 +901,8 @@ public class UpgradeImageGallery extends UpgradeProcess {
 
 				String extension = (String)image[0];
 
-				String mimeType = MimeTypesUtil.getContentType(
-					"A." + extension);
+				String mimeType = MimeTypesUtil.getExtensionContentType(
+					extension);
 
 				String name = String.valueOf(
 					increment(DLFileEntry.class.getName()));

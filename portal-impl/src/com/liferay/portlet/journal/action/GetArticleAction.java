@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
 import com.liferay.portlet.dynamicdatamapping.service.DDMTemplateLocalServiceUtil;
 import com.liferay.portlet.dynamicdatamapping.util.DDMXMLUtil;
@@ -55,8 +56,8 @@ public class GetArticleAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		try {
@@ -144,34 +145,35 @@ public class GetArticleAction extends Action {
 
 		String templateId = article.getTemplateId();
 
-		if (Validator.isNotNull(templateId)) {
-			DDMTemplate ddmTemplate = null;
+		if (Validator.isNull(templateId)) {
+			return;
+		}
 
-			try {
-				ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
-					article.getGroupId(), templateId);
+		try {
+			DDMTemplate ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(
+				article.getGroupId(),
+				PortalUtil.getClassNameId(DDMStructure.class), templateId,
+				true);
 
-				if (Validator.equals(
-						ddmTemplate.getLanguage(),
-						TemplateConstants.LANG_TYPE_XSL)) {
+			if (Validator.equals(
+					ddmTemplate.getLanguage(),
+					TemplateConstants.LANG_TYPE_XSL)) {
 
-					url =
-						themeDisplay.getPathMain() +
-							"/journal/get_template?groupId=" +
-								article.getGroupId() + "&templateId=" +
-									templateId;
+				url =
+					themeDisplay.getPathMain() +
+						"/journal/get_template?groupId=" +
+							article.getGroupId() + "&templateId=" + templateId;
 
-					arguments.clear();
+				arguments.clear();
 
-					arguments.put("type", "text/xsl");
-					arguments.put("href", url);
-					arguments.put("title", "xsl");
+				arguments.put("type", "text/xsl");
+				arguments.put("href", url);
+				arguments.put("title", "xsl");
 
-					addStyleSheet(doc, url, arguments);
-				}
+				addStyleSheet(doc, url, arguments);
 			}
-			catch (Exception e) {
-			}
+		}
+		catch (Exception e) {
 		}
 	}
 

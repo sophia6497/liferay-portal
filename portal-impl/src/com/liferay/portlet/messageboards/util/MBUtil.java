@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,7 @@
 
 package com.liferay.portlet.messageboards.util;
 
-import com.liferay.portal.kernel.concurrent.PortalCallable;
+import com.liferay.portal.kernel.dao.shard.ShardCallable;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackRegistryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -62,13 +63,11 @@ import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.messageboards.model.MBBan;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBCategoryConstants;
-import com.liferay.portlet.messageboards.model.MBMailingList;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.model.MBMessageConstants;
 import com.liferay.portlet.messageboards.model.MBStatsUser;
 import com.liferay.portlet.messageboards.model.MBThread;
 import com.liferay.portlet.messageboards.service.MBCategoryLocalServiceUtil;
-import com.liferay.portlet.messageboards.service.MBMailingListLocalServiceUtil;
 import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
 import com.liferay.portlet.messageboards.service.MBThreadLocalServiceUtil;
 import com.liferay.portlet.messageboards.service.permission.MBMessagePermission;
@@ -144,10 +143,9 @@ public class MBUtil {
 			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
-
 			portletURL.setParameter(
 				"struts_action", "/message_boards/select_category");
+			portletURL.setWindowState(LiferayWindowState.POP_UP);
 
 			PortalUtil.addPortletBreadcrumbEntry(
 				request, themeDisplay.translate("categories"),
@@ -222,10 +220,11 @@ public class MBUtil {
 
 		Object partContent = part.getContent();
 
-		String contentType = part.getContentType().toLowerCase();
+		String contentType = StringUtil.toLowerCase(part.getContentType());
 
 		if ((part.getDisposition() != null) &&
-			part.getDisposition().equalsIgnoreCase(MimeMessage.ATTACHMENT)) {
+			StringUtil.equalsIgnoreCase(
+				part.getDisposition(), MimeMessage.ATTACHMENT)) {
 
 			if (_log.isDebugEnabled()) {
 				_log.debug("Processing attachment");
@@ -420,18 +419,18 @@ public class MBUtil {
 		}
 	}
 
-	public static String getEmailMessageAddedSubjectPrefix(
+	public static String getEmailMessageAddedSubject(
 		PortletPreferences preferences) {
 
-		String emailMessageAddedSubjectPrefix = preferences.getValue(
-			"emailMessageAddedSubjectPrefix", StringPool.BLANK);
+		String emailMessageAddedSubject = preferences.getValue(
+			"emailMessageAddedSubject", StringPool.BLANK);
 
-		if (Validator.isNotNull(emailMessageAddedSubjectPrefix)) {
-			return emailMessageAddedSubjectPrefix;
+		if (Validator.isNotNull(emailMessageAddedSubject)) {
+			return emailMessageAddedSubject;
 		}
 		else {
 			return ContentUtil.get(
-				PropsValues.MESSAGE_BOARDS_EMAIL_MESSAGE_ADDED_SUBJECT_PREFIX);
+				PropsValues.MESSAGE_BOARDS_EMAIL_MESSAGE_ADDED_SUBJECT);
 		}
 	}
 
@@ -479,19 +478,18 @@ public class MBUtil {
 		}
 	}
 
-	public static String getEmailMessageUpdatedSubjectPrefix(
+	public static String getEmailMessageUpdatedSubject(
 		PortletPreferences preferences) {
 
 		String emailMessageUpdatedSubject = preferences.getValue(
-			"emailMessageUpdatedSubjectPrefix", StringPool.BLANK);
+			"emailMessageUpdatedSubject", StringPool.BLANK);
 
 		if (Validator.isNotNull(emailMessageUpdatedSubject)) {
 			return emailMessageUpdatedSubject;
 		}
 		else {
 			return ContentUtil.get(
-				PropsValues.
-					MESSAGE_BOARDS_EMAIL_MESSAGE_UPDATED_SUBJECT_PREFIX);
+				PropsValues.MESSAGE_BOARDS_EMAIL_MESSAGE_UPDATED_SUBJECT);
 		}
 	}
 
@@ -567,56 +565,15 @@ public class MBUtil {
 		return entries;
 	}
 
-	public static String getMailingListAddress(
-		long groupId, long categoryId, long messageId, String mx,
-		String defaultMailingListAddress) {
-
-		if (PropsValues.POP_SERVER_SUBDOMAIN.length() <= 0) {
-			String mailingListAddress = defaultMailingListAddress;
-
-			try {
-				MBMailingList mailingList =
-					MBMailingListLocalServiceUtil.getCategoryMailingList(
-						groupId, categoryId);
-
-				if (mailingList.isActive()) {
-					mailingListAddress = mailingList.getEmailAddress();
-				}
-			}
-			catch (Exception e) {
-			}
-
-			return mailingListAddress;
-		}
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append(MESSAGE_POP_PORTLET_PREFIX);
-		sb.append(categoryId);
-		sb.append(StringPool.PERIOD);
-		sb.append(messageId);
-		sb.append(StringPool.AT);
-		sb.append(PropsValues.POP_SERVER_SUBDOMAIN);
-		sb.append(StringPool.PERIOD);
-		sb.append(mx);
-
-		return sb.toString();
-	}
-
 	public static String getMessageFormat(PortletPreferences preferences) {
 		String messageFormat = preferences.getValue(
 			"messageFormat", MBMessageConstants.DEFAULT_FORMAT);
 
-		String editorImpl = PropsUtil.get(BB_CODE_EDITOR_WYSIWYG_IMPL_KEY);
-
-		if (messageFormat.equals("bbcode") &&
-			!(editorImpl.equals("bbcode") ||
-			  editorImpl.equals("ckeditor_bbcode"))) {
-
-			messageFormat = "html";
+		if (isValidMessageFormat(messageFormat)) {
+			return messageFormat;
 		}
 
-		return messageFormat;
+		return "html";
 	}
 
 	public static long getMessageId(String mailId) {
@@ -670,7 +627,7 @@ public class MBUtil {
 
 		String[] references = message.getHeader("References");
 
-		if ((references != null) && (references.length > 0)) {
+		if (ArrayUtil.isNotEmpty(references)) {
 			String reference = references[0];
 
 			int x = reference.lastIndexOf("<mb.");
@@ -685,7 +642,7 @@ public class MBUtil {
 		if (parentHeader == null) {
 			String[] inReplyToHeaders = message.getHeader("In-Reply-To");
 
-			if ((inReplyToHeaders != null) && (inReplyToHeaders.length > 0)) {
+			if (ArrayUtil.isNotEmpty(inReplyToHeaders)) {
 				parentHeader = inReplyToHeaders[0];
 			}
 		}
@@ -697,6 +654,28 @@ public class MBUtil {
 		}
 
 		return parentHeader;
+	}
+
+	public static String getReplyToAddress(
+		long categoryId, long messageId, String mx,
+		String defaultMailingListAddress) {
+
+		if (PropsValues.POP_SERVER_SUBDOMAIN.length() <= 0) {
+			return defaultMailingListAddress;
+		}
+
+		StringBundler sb = new StringBundler(8);
+
+		sb.append(MESSAGE_POP_PORTLET_PREFIX);
+		sb.append(categoryId);
+		sb.append(StringPool.PERIOD);
+		sb.append(messageId);
+		sb.append(StringPool.AT);
+		sb.append(PropsValues.POP_SERVER_SUBDOMAIN);
+		sb.append(StringPool.PERIOD);
+		sb.append(mx);
+
+		return sb.toString();
 	}
 
 	public static String getSubjectWithoutMessageId(Message message)
@@ -730,7 +709,7 @@ public class MBUtil {
 
 		if (priorityPair == null) {
 			String defaultLanguageId = LocaleUtil.toLanguageId(
-				LocaleUtil.getDefault());
+				LocaleUtil.getSiteDefault());
 
 			priorities = LocalizationUtil.getPreferencesValues(
 				preferences, "priorities", defaultLanguageId);
@@ -829,7 +808,6 @@ public class MBUtil {
 					rank[0] = curRank;
 					maxPosts = posts;
 				}
-
 			}
 			else {
 				String entityType = curRankValueKvp[0];
@@ -879,6 +857,19 @@ public class MBUtil {
 		return GetterUtil.getBoolean(
 			preferences.getValue("allowAnonymousPosting", null),
 			PropsValues.MESSAGE_BOARDS_ANONYMOUS_POSTING_ENABLED);
+	}
+
+	public static boolean isValidMessageFormat(String messageFormat) {
+		String editorImpl = PropsUtil.get(BB_CODE_EDITOR_WYSIWYG_IMPL_KEY);
+
+		if (messageFormat.equals("bbcode") &&
+			!(editorImpl.equals("bbcode") ||
+			  editorImpl.equals("ckeditor_bbcode"))) {
+
+			return false;
+		}
+
+		return true;
 	}
 
 	public static boolean isViewableMessage(
@@ -934,16 +925,21 @@ public class MBUtil {
 			});
 	}
 
-	public static void updateCategoryMessageCount(final MBCategory category) {
-		Callable<Void> callable = new PortalCallable<Void>(
-			category.getCompanyId()) {
+	public static void updateCategoryMessageCount(
+		long companyId, final long categoryId) {
+
+		Callable<Void> callable = new ShardCallable<Void>(companyId) {
 
 			@Override
 			protected Void doCall() throws Exception {
-				int messageCount =
-					MBMessageLocalServiceUtil.getCategoryMessagesCount(
-						category.getGroupId(), category.getCategoryId(),
-						WorkflowConstants.STATUS_APPROVED);
+				MBCategory category =
+					MBCategoryLocalServiceUtil.fetchMBCategory(categoryId);
+
+				if (category == null) {
+					return null;
+				}
+
+				int messageCount = _getMessageCount(category);
 
 				category.setMessageCount(messageCount);
 
@@ -951,21 +947,27 @@ public class MBUtil {
 
 				return null;
 			}
+
 		};
 
 		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
 	}
 
-	public static void updateCategoryStatistics(final MBCategory category) {
-		Callable<Void> callable = new PortalCallable<Void>(
-			category.getCompanyId()) {
+	public static void updateCategoryStatistics(
+		long companyId, final long categoryId) {
+
+		Callable<Void> callable = new ShardCallable<Void>(companyId) {
 
 			@Override
 			protected Void doCall() throws Exception {
-				int messageCount =
-					MBMessageLocalServiceUtil.getCategoryMessagesCount(
-						category.getGroupId(), category.getCategoryId(),
-						WorkflowConstants.STATUS_APPROVED);
+				MBCategory category =
+					MBCategoryLocalServiceUtil.fetchMBCategory(categoryId);
+
+				if (category == null) {
+					return null;
+				}
+
+				int messageCount = _getMessageCount(category);
 
 				int threadCount =
 					MBThreadLocalServiceUtil.getCategoryThreadsCount(
@@ -979,17 +981,26 @@ public class MBUtil {
 
 				return null;
 			}
+
 		};
 
 		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
 	}
 
-	public static void updateCategoryThreadCount(final MBCategory category) {
-		Callable<Void> callable = new PortalCallable<Void>(
-			category.getCompanyId()) {
+	public static void updateCategoryThreadCount(
+		long companyId, final long categoryId) {
+
+		Callable<Void> callable = new ShardCallable<Void>(companyId) {
 
 			@Override
 			protected Void doCall() throws Exception {
+				MBCategory category =
+					MBCategoryLocalServiceUtil.fetchMBCategory(categoryId);
+
+				if (category == null) {
+					return null;
+				}
+
 				int threadCount =
 					MBThreadLocalServiceUtil.getCategoryThreadsCount(
 						category.getGroupId(), category.getCategoryId(),
@@ -1001,21 +1012,29 @@ public class MBUtil {
 
 				return null;
 			}
+
 		};
 
 		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
 	}
 
-	public static void updateThreadMessageCount(final MBThread thread) {
-		Callable<Void> callable = new PortalCallable<Void>(
-			thread.getCompanyId()) {
+	public static void updateThreadMessageCount(
+		long companyId, final long threadId) {
+
+		Callable<Void> callable = new ShardCallable<Void>(companyId) {
 
 			@Override
 			protected Void doCall() throws Exception {
+				MBThread thread = MBThreadLocalServiceUtil.fetchThread(
+					threadId);
+
+				if (thread == null) {
+					return null;
+				}
+
 				int messageCount =
 					MBMessageLocalServiceUtil.getThreadMessagesCount(
-						thread.getThreadId(),
-						WorkflowConstants.STATUS_APPROVED);
+						threadId, WorkflowConstants.STATUS_APPROVED);
 
 				thread.setMessageCount(messageCount);
 
@@ -1023,6 +1042,7 @@ public class MBUtil {
 
 				return null;
 			}
+
 		};
 
 		TransactionCommitCallbackRegistryUtil.registerCallback(callable);
@@ -1054,6 +1074,14 @@ public class MBUtil {
 		}
 
 		return null;
+	}
+
+	private static int _getMessageCount(MBCategory category)
+		throws SystemException {
+
+		return MBMessageLocalServiceUtil.getCategoryMessagesCount(
+			category.getGroupId(), category.getCategoryId(),
+			WorkflowConstants.STATUS_APPROVED);
 	}
 
 	private static String _getParentMessageIdFromSubject(Message message)

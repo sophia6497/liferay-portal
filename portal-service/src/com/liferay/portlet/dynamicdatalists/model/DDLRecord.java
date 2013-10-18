@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,6 +46,14 @@ public interface DDLRecord extends DDLRecordModel, PersistedModel {
 		throws java.lang.Exception;
 
 	public java.io.Serializable getFieldValue(java.lang.String fieldName)
+		throws com.liferay.portal.kernel.exception.PortalException;
+
+	public java.io.Serializable getFieldValue(java.lang.String fieldName,
+		java.util.Locale locale)
+		throws com.liferay.portal.kernel.exception.PortalException;
+
+	public java.util.List<java.io.Serializable> getFieldValues(
+		java.lang.String fieldName, java.util.Locale locale)
 		throws com.liferay.portal.kernel.exception.PortalException;
 
 	public com.liferay.portlet.dynamicdatalists.model.DDLRecordVersion getLatestRecordVersion()

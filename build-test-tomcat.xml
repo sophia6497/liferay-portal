@@ -11,7 +11,7 @@
 
 		<copy
 			file="${hudson.portal.dependencies.dir}${lp.version}/lpe2005-ee5207-hook-5.2.7.1.war"
-			todir="${user.home}/liferay/deploy"
+			todir="${liferay.home}/deploy"
 		/>
 	</target>
 
@@ -143,21 +143,27 @@ web.server.display.node=true</echo>
 		<if>
 			<not>
 				<uptodate
-					srcfile="${hudson.portal.dependencies.dir}/${file.dir}/${file.name}"
-					targetfile="${app.server.parent.dir}/${file.name}"
+					srcfile="${hudson.portal.dependencies.dir}/${file.dir}/${bundled.file.name}"
+					targetfile="${app.server.parent.dir}/${bundled.file.name}"
 				/>
 			</not>
 			<then>
 				<copy
-					file="${hudson.portal.dependencies.dir}/${file.dir}/${file.name}"
+					file="${hudson.portal.dependencies.dir}/${file.dir}/${bundled.file.name}"
 					todir="${app.server.parent.dir}"
 				/>
 			</then>
 		</if>
 
-		<unzip src="${app.server.parent.dir}/${file.name}" dest="${app.server.parent.dir}" />
+		<unzip src="${app.server.parent.dir}/${bundled.file.name}" dest="${app.server.parent.dir}" />
 
-		<echo file="app.server.${user.name}.properties">app.server.tomcat.dir=${app.server.parent.dir}/${tomcat.folder.dir}</echo>
+		<chmod perm="a+x">
+			<fileset dir="${app.server.parent.dir}">
+				<include name="**/*.sh" />
+			</fileset>
+		</chmod>
+
+		<echo file="app.server.${user.name}.properties">app.server.tomcat.dir=${app.server.parent.dir}/${bundled.dir.name}</echo>
 
 		<antcall target="revert-test-properties" />
 
@@ -187,7 +193,9 @@ web.server.display.node=true</echo>
 
 		<antcall target="deploy-properties" inheritAll="false" />
 
-		<delete dir="${user.home}/liferay" />
+		<delete dir="${liferay.home}/data" />
+		<delete dir="${liferay.home}/deploy" />
+		<delete dir="${liferay.home}/logs" />
 
 		<if>
 			<or>
@@ -198,7 +206,7 @@ web.server.display.node=true</echo>
 			<then>
 				<copy
 					file="${hudson.license.dependencies.dir}/${lp.version}/license"
-					todir="${user.home}/liferay/ee"
+					todir="${liferay.home}/ee"
 				/>
 			</then>
 			<elseif>
@@ -211,11 +219,10 @@ web.server.display.node=true</echo>
 					<equals arg1="${lp.version}" arg2="6.1.20" />
 				</or>
 				<then>
-					<copy
-						todir="${user.home}/liferay/deploy">
-							<fileset
-								dir="${hudson.license.dependencies.dir}/${lp.version}"
-								includes="license-portal-*.xml"
+					<copy todir="${liferay.home}/deploy">
+						<fileset
+							dir="${hudson.license.dependencies.dir}/${lp.version}"
+							includes="license-portal-*.xml"
 						/>
 					</copy>
 				</then>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Organization;
+import com.liferay.portal.model.OrganizationConstants;
 import com.liferay.portal.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.service.persistence.OrganizationActionableDynamicQuery;
 import com.liferay.portal.util.PortletKeys;
@@ -60,10 +61,12 @@ public class OrganizationIndexer extends BaseIndexer {
 		setStagingAware(false);
 	}
 
+	@Override
 	public String[] getClassNames() {
 		return CLASS_NAMES;
 	}
 
+	@Override
 	public String getPortletId() {
 		return PORTLET_ID;
 	}
@@ -80,6 +83,23 @@ public class OrganizationIndexer extends BaseIndexer {
 			return;
 		}
 
+		List<Long> excludedOrganizationIds = (List<Long>)params.get(
+			"excludedOrganizationIds");
+
+		if ((excludedOrganizationIds != null) &&
+			!excludedOrganizationIds.isEmpty()) {
+
+			BooleanQuery booleanQuery = BooleanQueryFactoryUtil.create(
+				searchContext);
+
+			for (long excludedOrganizationId : excludedOrganizationIds) {
+				booleanQuery.addTerm(
+					"organizationId", String.valueOf(excludedOrganizationId));
+			}
+
+			contextQuery.add(booleanQuery, BooleanClauseOccur.MUST_NOT);
+		}
+
 		List<Organization> organizationsTree = (List<Organization>)params.get(
 			"organizationsTree");
 
@@ -90,10 +110,21 @@ public class OrganizationIndexer extends BaseIndexer {
 			for (Organization organization : organizationsTree) {
 				String treePath = organization.buildTreePath();
 
-				booleanQuery.addTerm("treePath", treePath, true);
+				booleanQuery.addTerm(Field.TREE_PATH, treePath, true);
 			}
 
 			contextQuery.add(booleanQuery, BooleanClauseOccur.MUST);
+		}
+		else {
+			long parentOrganizationId = GetterUtil.getLong(
+				searchContext.getAttribute("parentOrganizationId"));
+
+			if (parentOrganizationId !=
+					OrganizationConstants.ANY_PARENT_ORGANIZATION_ID) {
+
+				contextQuery.addRequiredTerm(
+					"parentOrganizationId", parentOrganizationId);
+			}
 		}
 	}
 
@@ -105,8 +136,6 @@ public class OrganizationIndexer extends BaseIndexer {
 		addSearchTerm(searchQuery, searchContext, "city", false);
 		addSearchTerm(searchQuery, searchContext, "country", false);
 		addSearchTerm(searchQuery, searchContext, "name", false);
-		addSearchTerm(
-			searchQuery, searchContext, "parentOrganizationId", false);
 		addSearchTerm(searchQuery, searchContext, "region", false);
 		addSearchTerm(searchQuery, searchContext, "street", false);
 		addSearchTerm(searchQuery, searchContext, "type", false);
@@ -142,14 +171,11 @@ public class OrganizationIndexer extends BaseIndexer {
 		document.addText(Field.NAME, organization.getName());
 		document.addKeyword(
 			Field.ORGANIZATION_ID, organization.getOrganizationId());
+		document.addKeyword(Field.TREE_PATH, organization.buildTreePath());
 		document.addKeyword(Field.TYPE, organization.getType());
 
 		document.addKeyword(
 			"parentOrganizationId", organization.getParentOrganizationId());
-
-		String treePath = organization.buildTreePath();
-
-		document.addKeyword("treePath", treePath);
 
 		populateAddresses(
 			document, organization.getAddresses(), organization.getRegionId(),
@@ -277,8 +303,6 @@ public class OrganizationIndexer extends BaseIndexer {
 	}
 
 	protected void reindexOrganizations(long companyId) throws Exception {
-		final Collection<Document> documents = new ArrayList<Document>();
-
 		ActionableDynamicQuery actionableDynamicQuery =
 			new OrganizationActionableDynamicQuery() {
 
@@ -288,17 +312,15 @@ public class OrganizationIndexer extends BaseIndexer {
 
 				Document document = getDocument(organization);
 
-				documents.add(document);
+				addDocument(document);
 			}
 
 		};
 
 		actionableDynamicQuery.setCompanyId(companyId);
+		actionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		actionableDynamicQuery.performActions();
-
-		SearchEngineUtil.updateDocuments(
-			getSearchEngineId(), companyId, documents);
 	}
 
 }

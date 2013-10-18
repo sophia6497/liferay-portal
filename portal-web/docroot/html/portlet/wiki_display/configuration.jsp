@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,7 +21,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 nodeId = ParamUtil.getLong(request, "nodeId", nodeId);
 
-List<WikiNode> nodes = WikiNodeLocalServiceUtil.getNodes(scopeGroupId);
+List<WikiNode> nodes = WikiNodeServiceUtil.getNodes(scopeGroupId);
 
 boolean nodeInGroup = false;
 %>
@@ -58,7 +58,7 @@ boolean nodeInGroup = false;
 				</aui:select>
 			</c:when>
 			<c:otherwise>
-				<div class="portlet-msg-info">
+				<div class="alert alert-info">
 					<liferay-ui:message key="there-are-no-available-nodes-for-selection" />
 				</div>
 			</c:otherwise>

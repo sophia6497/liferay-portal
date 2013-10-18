@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.PasswordPolicy;
 import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.PasswordPolicyServiceBaseImpl;
 import com.liferay.portal.service.permission.PasswordPolicyPermissionUtil;
 import com.liferay.portal.service.permission.PortalPermissionUtil;
@@ -28,8 +29,12 @@ import com.liferay.portal.service.permission.PortalPermissionUtil;
 public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0, replaced by {@link #addPasswordPolicy(String,
+	 *             String, boolean, boolean, long, boolean, boolean, int, int,
+	 *             int, int, int, int, String, boolean, int, boolean, long,
+	 *             long, int, boolean, int, long, long, long, ServiceContext)}
 	 */
+	@Override
 	public PasswordPolicy addPasswordPolicy(
 			String name, String description, boolean changeable,
 			boolean changeRequired, long minAge, boolean checkSyntax,
@@ -53,6 +58,7 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 			resetTicketMaxAge);
 	}
 
+	@Override
 	public PasswordPolicy addPasswordPolicy(
 			String name, String description, boolean changeable,
 			boolean changeRequired, long minAge, boolean checkSyntax,
@@ -61,7 +67,7 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 			String regex, boolean history, int historyCount, boolean expireable,
 			long maxAge, long warningTime, int graceLimit, boolean lockout,
 			int maxFailure, long lockoutDuration, long resetFailureCount,
-			long resetTicketMaxAge)
+			long resetTicketMaxAge, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		PortalPermissionUtil.check(
@@ -73,9 +79,10 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 			minLength, minLowerCase, minNumbers, minSymbols, minUpperCase,
 			regex, history, historyCount, expireable, maxAge, warningTime,
 			graceLimit, lockout, maxFailure, lockoutDuration, resetFailureCount,
-			resetTicketMaxAge);
+			resetTicketMaxAge, serviceContext);
 	}
 
+	@Override
 	public void deletePasswordPolicy(long passwordPolicyId)
 		throws PortalException, SystemException {
 
@@ -86,8 +93,13 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0, replaced by {@link #updatePasswordPolicy(long,
+	 *             String, String, boolean, boolean, long, boolean, boolean,
+	 *             int, int, int, int, int, int, String, boolean, int, boolean,
+	 *             long, long, int, boolean, int, long, long, long,
+	 *             ServiceContext)}
 	 */
+	@Override
 	public PasswordPolicy updatePasswordPolicy(
 			long passwordPolicyId, String name, String description,
 			boolean changeable, boolean changeRequired, long minAge,
@@ -112,6 +124,7 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 			resetTicketMaxAge);
 	}
 
+	@Override
 	public PasswordPolicy updatePasswordPolicy(
 			long passwordPolicyId, String name, String description,
 			boolean changeable, boolean changeRequired, long minAge,
@@ -121,7 +134,7 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 			boolean history, int historyCount, boolean expireable, long maxAge,
 			long warningTime, int graceLimit, boolean lockout, int maxFailure,
 			long lockoutDuration, long resetFailureCount,
-			long resetTicketMaxAge)
+			long resetTicketMaxAge, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		PasswordPolicyPermissionUtil.check(
@@ -133,7 +146,7 @@ public class PasswordPolicyServiceImpl extends PasswordPolicyServiceBaseImpl {
 			minLength, minLowerCase, minNumbers, minSymbols, minUpperCase,
 			regex, history, historyCount, expireable, maxAge, warningTime,
 			graceLimit, lockout, maxFailure, lockoutDuration, resetFailureCount,
-			resetTicketMaxAge);
+			resetTicketMaxAge, serviceContext);
 	}
 
 }

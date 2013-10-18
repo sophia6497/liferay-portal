@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -58,6 +58,7 @@ public class SchedulerEventMessageListenerWrapper implements MessageListener {
 		return _messageListenerUUID;
 	}
 
+	@Override
 	public void receive(Message message) throws MessageListenerException {
 		String destinationName = GetterUtil.getString(
 			message.getString(SchedulerEngine.DESTINATION_NAME));
@@ -114,7 +115,7 @@ public class SchedulerEventMessageListenerWrapper implements MessageListener {
 	}
 
 	/**
-	 * @deprecated {@link #setGroupName(String)}
+	 * @deprecated As of 6.2.0, replaced by {@link #setGroupName(String)}
 	 */
 	public void setClassName(String className) {
 		_groupName = className;

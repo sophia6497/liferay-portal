@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,24 +14,19 @@
 
 package com.liferay.portlet.dynamicdatalists.lar;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.lar.BasePortletDataHandler;
 import com.liferay.portal.kernel.lar.PortletDataContext;
-import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.xml.Document;
+import com.liferay.portal.kernel.lar.PortletDataHandlerBoolean;
+import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.portal.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.dynamicdatalists.model.DDLRecordSet;
 import com.liferay.portlet.dynamicdatalists.service.DDLRecordSetLocalServiceUtil;
-import com.liferay.portlet.dynamicdatalists.service.persistence.DDLRecordSetUtil;
-import com.liferay.portlet.dynamicdatamapping.lar.DDMPortletDataHandler;
-import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
-import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
+import com.liferay.portlet.dynamicdatalists.service.permission.DDLPermission;
+import com.liferay.portlet.dynamicdatalists.service.persistence.DDLRecordSetExportActionableDynamicQuery;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.portlet.PortletPreferences;
 
@@ -40,121 +35,17 @@ import javax.portlet.PortletPreferences;
  */
 public class DDLPortletDataHandler extends BasePortletDataHandler {
 
-	public static final String NAMESPACE = "ddl";
+	public static final String NAMESPACE = "dynamic_data_lists";
 
 	public DDLPortletDataHandler() {
-		setAlwaysExportable(true);
 		setDataLocalized(true);
-	}
-
-	public void exportRecordSet(
-			PortletDataContext portletDataContext, Element recordSetsElement,
-			DDLRecordSet recordSet)
-		throws Exception {
-
-		String path = getRecordSetPath(portletDataContext, recordSet);
-
-		if (!portletDataContext.isPathNotProcessed(path)) {
-			return;
-		}
-
-		Element recordSetElement = recordSetsElement.addElement("record-set");
-
-		portletDataContext.addClassedModel(
-			recordSetElement, path, recordSet, NAMESPACE);
-
-		Element ddmStructuresElement = recordSetElement.addElement(
-			"ddm-structures");
-
-		DDMStructure ddmStructure = recordSet.getDDMStructure();
-
-		DDMPortletDataHandler.exportStructure(
-			portletDataContext, ddmStructuresElement, ddmStructure);
-
-		Element ddmTemplatesElement = recordSetElement.addElement(
-			"ddm-templates");
-
-		List<DDMTemplate> ddmTemplates = ddmStructure.getTemplates();
-
-		for (DDMTemplate ddmTemplate : ddmTemplates) {
-			DDMPortletDataHandler.exportTemplate(
-				portletDataContext, ddmTemplatesElement, ddmTemplate);
-		}
-	}
-
-	public void importRecordSet(
-			PortletDataContext portletDataContext, Element recordSetElement)
-		throws Exception {
-
-		Element ddmStructuresElement = recordSetElement.element(
-			"ddm-structures");
-
-		if (ddmStructuresElement != null) {
-			importDDMStructures(portletDataContext, ddmStructuresElement);
-		}
-
-		Element ddmTemplatesElement = recordSetElement.element("ddm-templates");
-
-		if (ddmTemplatesElement != null) {
-			importDDMTemplates(portletDataContext, ddmTemplatesElement);
-		}
-
-		String path = recordSetElement.attributeValue("path");
-
-		if (!portletDataContext.isPathNotProcessed(path)) {
-			return;
-		}
-
-		DDLRecordSet recordSet =
-			(DDLRecordSet)portletDataContext.getZipEntryAsObject(path);
-
-		long userId = portletDataContext.getUserId(recordSet.getUserUuid());
-
-		Map<Long, Long> structureIds =
-			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-				DDMStructure.class);
-
-		long structureId = MapUtil.getLong(
-			structureIds, recordSet.getDDMStructureId(),
-			recordSet.getDDMStructureId());
-
-		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			recordSetElement, recordSet, NAMESPACE);
-
-		DDLRecordSet importedRecordSet = null;
-
-		if (portletDataContext.isDataStrategyMirror()) {
-			DDLRecordSet existingRecordSet = DDLRecordSetUtil.fetchByUUID_G(
-				recordSet.getUuid(), portletDataContext.getScopeGroupId());
-
-			if (existingRecordSet == null) {
-				serviceContext.setUuid(recordSet.getUuid());
-
-				importedRecordSet = DDLRecordSetLocalServiceUtil.addRecordSet(
-					userId, portletDataContext.getScopeGroupId(), structureId,
-					recordSet.getRecordSetKey(), recordSet.getNameMap(),
-					recordSet.getDescriptionMap(),
-					recordSet.getMinDisplayRows(), recordSet.getScope(),
-					serviceContext);
-			}
-			else {
-				importedRecordSet =
-					DDLRecordSetLocalServiceUtil.updateRecordSet(
-						existingRecordSet.getRecordSetId(), structureId,
-						recordSet.getNameMap(), recordSet.getDescriptionMap(),
-						recordSet.getMinDisplayRows(), serviceContext);
-			}
-		}
-		else {
-			importedRecordSet = DDLRecordSetLocalServiceUtil.addRecordSet(
-				userId, portletDataContext.getScopeGroupId(), structureId,
-				recordSet.getRecordSetKey(), recordSet.getNameMap(),
-				recordSet.getDescriptionMap(), recordSet.getMinDisplayRows(),
-				recordSet.getScope(), serviceContext);
-		}
-
-		portletDataContext.importClassedModel(
-			recordSet, importedRecordSet, NAMESPACE);
+		setDeletionSystemEventStagedModelTypes(
+			new StagedModelType(DDLRecordSet.class));
+		setExportControls(
+			new PortletDataHandlerBoolean(
+				NAMESPACE, "record-sets", true, false, null,
+				DDLRecordSet.class.getName()));
+		setImportControls(getExportControls());
 	}
 
 	@Override
@@ -163,46 +54,38 @@ public class DDLPortletDataHandler extends BasePortletDataHandler {
 			PortletPreferences portletPreferences)
 		throws Exception {
 
-		if (!portletDataContext.addPrimaryKey(
+		if (portletDataContext.addPrimaryKey(
 				DDLPortletDataHandler.class, "deleteData")) {
 
-			DDLRecordSetLocalServiceUtil.deleteRecordSets(
-				portletDataContext.getScopeGroupId());
+			return portletPreferences;
 		}
+
+		DDLRecordSetLocalServiceUtil.deleteRecordSets(
+			portletDataContext.getScopeGroupId());
 
 		return portletPreferences;
 	}
 
 	@Override
 	protected String doExportData(
-			PortletDataContext portletDataContext, String portletId,
+			final PortletDataContext portletDataContext, String portletId,
 			PortletPreferences portletPreferences)
 		throws Exception {
 
-		portletDataContext.addPermissions(
-			"com.liferay.portlet.dynamicdatalist",
-			portletDataContext.getScopeGroupId());
+		Element rootElement = addExportDataRootElement(portletDataContext);
 
-		Document document = SAXReaderUtil.createDocument();
-
-		Element rootElement = document.addElement("ddl-data");
-
-		Element recordSetsElement = rootElement.addElement("record-sets");
-
-		List<DDLRecordSet> recordSets =
-			DDLRecordSetLocalServiceUtil.getRecordSets(
-				portletDataContext.getScopeGroupId());
-
-		for (DDLRecordSet recordSet : recordSets) {
-			if (portletDataContext.isWithinDateRange(
-					recordSet.getModifiedDate())) {
-
-				exportRecordSet(
-					portletDataContext, recordSetsElement, recordSet);
-			}
+		if (!portletDataContext.getBooleanParameter(NAMESPACE, "record-sets")) {
+			return getExportDataRootElementString(rootElement);
 		}
 
-		return document.formattedString();
+		portletDataContext.addPortletPermissions(DDLPermission.RESOURCE_NAME);
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			new DDLRecordSetExportActionableDynamicQuery(portletDataContext);
+
+		actionableDynamicQuery.performActions();
+
+		return getExportDataRootElementString(rootElement);
 	}
 
 	@Override
@@ -211,67 +94,36 @@ public class DDLPortletDataHandler extends BasePortletDataHandler {
 			PortletPreferences portletPreferences, String data)
 		throws Exception {
 
-		portletDataContext.importPermissions(
-			"com.liferay.portlet.dynamicdatalist",
-			portletDataContext.getSourceGroupId(),
-			portletDataContext.getScopeGroupId());
+		if (!portletDataContext.getBooleanParameter(NAMESPACE, "record-sets")) {
+			return null;
+		}
 
-		Document document = SAXReaderUtil.read(data);
+		portletDataContext.importPortletPermissions(
+			DDLPermission.RESOURCE_NAME);
 
-		Element rootElement = document.getRootElement();
+		Element recordSetsElement =
+			portletDataContext.getImportDataGroupElement(DDLRecordSet.class);
 
-		Element recordSetsElement = rootElement.element("record-sets");
-
-		List<Element> recordSetElements = recordSetsElement.elements(
-			"record-set");
+		List<Element> recordSetElements = recordSetsElement.elements();
 
 		for (Element recordSetElement : recordSetElements) {
-			importRecordSet(portletDataContext, recordSetElement);
+			StagedModelDataHandlerUtil.importStagedModel(
+				portletDataContext, recordSetElement);
 		}
 
 		return portletPreferences;
 	}
 
-	protected String getRecordSetPath(
-		PortletDataContext portletDataContext, DDLRecordSet recordSet) {
-
-		StringBundler sb = new StringBundler(4);
-
-		sb.append(
-			portletDataContext.getPortletPath(PortletKeys.DYNAMIC_DATA_LISTS));
-		sb.append("/record-sets/");
-		sb.append(recordSet.getRecordSetId());
-		sb.append(".xml");
-
-		return sb.toString();
-	}
-
-	protected void importDDMStructures(
+	@Override
+	protected void doPrepareManifestSummary(
 			PortletDataContext portletDataContext,
-			Element ddmStructureReferencesElement)
+			PortletPreferences portletPreferences)
 		throws Exception {
 
-		List<Element> ddmStructureElements =
-			ddmStructureReferencesElement.elements("structure");
+		ActionableDynamicQuery actionableDynamicQuery =
+			new DDLRecordSetExportActionableDynamicQuery(portletDataContext);
 
-		for (Element ddmStructureElement : ddmStructureElements) {
-			DDMPortletDataHandler.importStructure(
-				portletDataContext, ddmStructureElement);
-		}
-	}
-
-	protected void importDDMTemplates(
-			PortletDataContext portletDataContext,
-			Element ddmTemplateReferencesElement)
-		throws Exception {
-
-		List<Element> ddmTemplateElements =
-			ddmTemplateReferencesElement.elements("template");
-
-		for (Element ddmTemplateElement : ddmTemplateElements) {
-			DDMPortletDataHandler.importTemplate(
-				portletDataContext, ddmTemplateElement);
-		}
+		actionableDynamicQuery.performCount();
 	}
 
 }

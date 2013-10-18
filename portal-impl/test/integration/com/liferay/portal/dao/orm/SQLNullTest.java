@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.service.persistence.PersistenceExecutionTestListener;
 import com.liferay.portal.test.LiferayPersistenceIntegrationJUnitTestRunner;
+import com.liferay.portal.test.MainServletExecutionTestListener;
 
 import java.util.List;
 
@@ -33,9 +34,414 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
+ * This test shows the SQL <code>Null</code> comparison differences across all
+ * databases supported by Liferay Portal.
+ *
+ * <p>
+ * This class tests three different values: <code>''</code> (blank string),
+ * <code>null</code> (<code>NULL</code> value), and <code>0</code> (number zero)
+ * in comparison to <code>NULL</code> with six comparators: =, !=, IS, IS NOT,
+ * LIKE, and NOT LIKE. The comparisons can yield three different results:
+ * <code>TRUE</code>, <code>FALSE</code>, or <code>NULL</code>. The results are
+ * displayed in the following table:
+ * </p>
+ *
+ * <table border="1">
+ *
+ * 	<tr>
+ * 		<th>
+ * 		</th>
+ * 		<th>
+ * 			MySQL/DB2/SQL Server 2005/2008
+ * 		</th>
+ * 		<th>
+ * 			PostgreSQL
+ * 		</th>
+ * 		<th>
+ * 			Oracle 10G/11G
+ * 		</th>
+ * 		<th>
+ * 			Sybase
+ * 		</th>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td colspan="5" align="center">
+ * 			<code>''</code> comparison with <code>NULL</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>''</code> = <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>''</code> != <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>''</code> IS <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>''</code> IS NOT <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>''</code> LIKE <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>''</code> NOT LIKE <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td colspan="5" align="center">
+ * 			<code>NULL</code> comparison with <code>NULL</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>NULL</code> = <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>NULL</code> != <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>NULL</code> IS <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>NULL</code> IS NOT <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>NULL</code> LIKE <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 		<code>FALSE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>NULL</code> NOT LIKE <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td colspan="5" align="center">
+ * 			<code>0</code> comparison with <code>NULL</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>0</code> = <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>0</code> != <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>0</code> IS <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>0</code> IS NOT <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>0</code> LIKE <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code><sup>*</sup>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>FALSE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * 	<tr>
+ * 		<td>
+ * 			<code>0</code> NOT LIKE <code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code><sup>*</sup>
+ * 		</td>
+ * 		<td>
+ * 			<code>NULL</code>
+ * 		</td>
+ * 		<td>
+ * 			<code>TRUE</code><sup>*</sup>
+ * 		</td>
+ * 	</tr>
+ *
+ * </table>
+ *
+ * <caption>
+ * <sup>*</sup> <i>denotes where specific databases cannot handle certain
+ * comparisons directly. In these cases, a <code>CAST</code> or
+ * <code>CONVERT</code> is required.</i>
+ * </caption>
+ *
+ * <p>
+ * Based on the results table, there are only four comparisons that behave the
+ * same across all databases:
+ * </p>
+ *
+ * <ul>
+ * <li>
+ * (<code>NULL</code> IS <code>NULL</code>) = <code>TRUE</code>
+ * </li>
+ * <li>
+ * (<code>NULL</code> IS NOT <code>NULL</code>) = <code>FALSE</code>
+ * </li>
+ * <li>
+ * (<code>0</code> IS <code>NULL</code>) = <code>FALSE</code>
+ * </li>
+ * <li>
+ * (<code>0</code> IS NOT <code>NULL</code>) = <code>TRUE</code>
+ * </li>
+ * </ul>
+ *
  * @author Shuyang Zhou
  */
-@ExecutionTestListeners(listeners = {PersistenceExecutionTestListener.class})
+@ExecutionTestListeners(
+	listeners = {
+		MainServletExecutionTestListener.class,
+		PersistenceExecutionTestListener.class
+	})
 @RunWith(LiferayPersistenceIntegrationJUnitTestRunner.class)
 public class SQLNullTest {
 

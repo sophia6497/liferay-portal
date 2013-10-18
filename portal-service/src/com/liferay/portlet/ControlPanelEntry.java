@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,7 +29,7 @@ public interface ControlPanelEntry {
 		throws Exception;
 
 	/**
-	 * @deprecated As of 6.2, with no direct replacement.<p>This method was
+	 * @deprecated As of 6.2.0, with no direct replacement.<p>This method was
 	 *             originally defined to determine if a portlet should be
 	 *             displayed in the Control Panel. In this version, this method
 	 *             should always return <code>false</code> and remains only to
@@ -44,7 +44,7 @@ public interface ControlPanelEntry {
 		throws Exception;
 
 	/**
-	 * @deprecated As of 6.2, with no direct replacement.<p>This method was
+	 * @deprecated As of 6.2.0, with no direct replacement.<p>This method was
 	 *             originally defined to determine if a portlet should be
 	 *             displayed in the Control Panel. In this version, this method
 	 *             should always return <code>false</code> and remains only to

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,8 +41,7 @@ import java.io.InputStream;
 
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 /**
  * @author Brian Wing Shun Chan
@@ -108,7 +107,7 @@ public class LangBuilder {
 			new File(_langDir + "/" + _langFile + ".properties"));
 
 		// Locales that are not invoked by _createProperties should still be
-		// rewritten to use the rignt line separator
+		// rewritten to use the right line separator
 
 		_orderProperties(
 			new File(_langDir + "/" + _langFile + "_en_AU.properties"));
@@ -275,7 +274,7 @@ public class LangBuilder {
 							baseKey);
 
 						if (Validator.isNotNull(translatedBaseKey)) {
-							translatedText = translatedBaseKey + AUTOMATIC_COPY;
+							translatedText = translatedBaseKey;
 						}
 						else {
 							translatedText = value + AUTOMATIC_COPY;
@@ -297,6 +296,11 @@ public class LangBuilder {
 						translatedText = "";
 					}
 					else if (languageId.equals("es") && key.equals("am")) {
+						translatedText = "";
+					}
+					else if (languageId.equals("fi") &&
+							 (key.equals("on") || key.equals("the"))) {
+
 						translatedText = "";
 					}
 					else if (languageId.equals("it") && key.equals("am")) {
@@ -483,7 +487,7 @@ public class LangBuilder {
 		UnsyncBufferedWriter unsyncBufferedWriter = new UnsyncBufferedWriter(
 			new FileWriter(propertiesFile));
 
-		Set<String> messages = new TreeSet<String>(
+		Map<String, String> messages = new TreeMap<String, String>(
 			new NumericalStringComparator(true, true));
 
 		boolean begin = false;
@@ -497,27 +501,31 @@ public class LangBuilder {
 			if (pos != -1) {
 				String key = line.substring(0, pos);
 
-				String value = _fixTranslation(line.substring(pos + 1));
+				String value = line.substring(pos + 1);
 
-				value = _fixEnglishTranslation(key, value);
+				if (Validator.isNotNull(value)) {
+					value = _fixTranslation(line.substring(pos + 1));
 
-				if (_portalLanguageProperties != null) {
-					String portalValue = String.valueOf(
-						_portalLanguageProperties.get(key));
+					value = _fixEnglishTranslation(key, value);
 
-					if (value.equals(portalValue)) {
-						System.out.println("Duplicate key " + key);
+					if (_portalLanguageProperties != null) {
+						String portalValue = String.valueOf(
+							_portalLanguageProperties.get(key));
+
+						if (value.equals(portalValue)) {
+							System.out.println("Duplicate key " + key);
+						}
 					}
-				}
 
-				messages.add(key + "=" + value);
+					messages.put(key, value);
+				}
 			}
 			else {
-				if (begin && line.equals("")) {
+				if (begin && line.equals(StringPool.BLANK)) {
 					_sortAndWrite(unsyncBufferedWriter, messages, firstLine);
 				}
 
-				if (line.equals("")) {
+				if (line.equals(StringPool.BLANK)) {
 					begin = !begin;
 				}
 
@@ -545,18 +553,20 @@ public class LangBuilder {
 	}
 
 	private void _sortAndWrite(
-			UnsyncBufferedWriter unsyncBufferedWriter, Set<String> messages,
-			boolean firstLine)
+			UnsyncBufferedWriter unsyncBufferedWriter,
+			Map<String, String> messages, boolean firstLine)
 		throws IOException {
 
-		String[] messagesArray = messages.toArray(new String[messages.size()]);
+		boolean firstEntry = true;
 
-		for (int i = 0; i < messagesArray.length; i++) {
-			if (!firstLine || (i != 0)) {
+		for (Map.Entry<String, String> entry : messages.entrySet()) {
+			if (!firstLine || !firstEntry) {
 				unsyncBufferedWriter.newLine();
 			}
 
-			unsyncBufferedWriter.write(messagesArray[i]);
+			firstEntry = false;
+
+			unsyncBufferedWriter.write(entry.getKey() + "=" + entry.getValue());
 		}
 
 		messages.clear();
@@ -603,9 +613,9 @@ public class LangBuilder {
 
 			// Automatic translator does not support Arabic, Basque, Bulgarian,
 			// Catalan, Croatian, Czech, Danish, Estonian, Finnish, Galician,
-			// German, Hebrew, Hindi, Hungarian, Indonesian, Lao,
-			// Norwegian Bokmål, Persian, Polish, Romanian, Russian, Serbian,
-			// Slovak, Slovene, Swedish, Turkish, Ukrainian, or Vietnamese
+			// German, Hebrew, Hindi, Hungarian, Indonesian, Lao, Norwegian
+			// Bokmål, Persian, Polish, Romanian, Russian, Serbian, Slovak,
+			// Slovene, Swedish, Turkish, Ukrainian, or Vietnamese
 
 			return null;
 		}

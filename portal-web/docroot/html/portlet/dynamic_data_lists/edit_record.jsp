@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,6 @@
 
 <%
 String redirect = ParamUtil.getString(request, "redirect");
-String backURL = ParamUtil.getString(request, "backURL");
 
 DDLRecord record = (DDLRecord)request.getAttribute(WebKeys.DYNAMIC_DATA_LISTS_RECORD);
 
@@ -34,9 +33,9 @@ if (record != null) {
 	recordVersion = record.getLatestRecordVersion();
 }
 
-DDLRecordSet recordSet = DDLRecordSetLocalServiceUtil.getRecordSet(recordSetId);
+DDLRecordSet recordSet = DDLRecordSetServiceUtil.getRecordSet(recordSetId);
 
-DDMStructure ddmStructure = recordSet.getDDMStructure(formDDMTemplateId);
+DDMStructure ddmStructure = recordSet.getDDMStructure();
 
 Fields fields = null;
 
@@ -76,9 +75,9 @@ if (translating) {
 %>
 
 <liferay-ui:header
-	backURL="<%= backURL %>"
+	backURL="<%= redirect %>"
 	showBackURL="<%= !translating %>"
-	title='<%= (record != null) ? "edit-record" : "new-record" %>'
+	title='<%= (record != null) ? LanguageUtil.format(pageContext, "edit-x", ddmStructure.getName(locale)) : LanguageUtil.format(pageContext, "new-x", ddmStructure.getName(locale)) %>'
 />
 
 <portlet:actionURL var="editRecordURL">
@@ -88,7 +87,6 @@ if (translating) {
 <aui:form action="<%= editRecordURL %>" cssClass="lfr-dynamic-form" enctype="multipart/form-data" method="post" name="fm" onSubmit='<%= "event.preventDefault(); submitForm(event.target);" %>'>
 	<aui:input name="<%= Constants.CMD %>" type="hidden" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
-	<aui:input name="backURL" type="hidden" value="<%= backURL %>" />
 	<aui:input name="recordSetId" type="hidden" value="<%= recordSetId %>" />
 	<aui:input name="recordId" type="hidden" value="<%= recordId %>" />
 	<aui:input name="defaultLanguageId" type="hidden" value="<%= defaultLanguageId %>" />
@@ -122,12 +120,10 @@ if (translating) {
 
 			<liferay-portlet:renderURL copyCurrentRenderParameters="<%= true %>" var="updateDefaultLanguageURL">
 				<portlet:param name="struts_action" value="/dynamic_data_lists/edit_record" />
-				<portlet:param name="defaultLanguageId" value="{defaultLanguageId}" />
 			</liferay-portlet:renderURL>
 
 			<liferay-portlet:renderURL copyCurrentRenderParameters="<%= true %>" var="translateRecordURL" windowState="pop_up">
 				<portlet:param name="struts_action" value="/dynamic_data_lists/edit_record" />
-				<portlet:param name="languageId" value="{languageId}" />
 			</liferay-portlet:renderURL>
 
 			<aui:script use="liferay-translation-manager">
@@ -145,14 +141,9 @@ if (translating) {
 				translationManager.after(
 					{
 						defaultLocaleChange: function(event) {
-							var url = A.Lang.sub(
-								decodeURIComponent('<%= updateDefaultLanguageURL %>'),
-								{
-									defaultLanguageId: event.newVal
-								}
-							);
+							var url = '<%= updateDefaultLanguageURL %>' + '&<portlet:namespace />defaultLanguageId=' + event.newVal;
 
-							location.href = url;
+							window.location.href = url;
 						},
 						deleteAvailableLocale: function(event) {
 							var locale = event.locale;
@@ -177,22 +168,12 @@ if (translating) {
 							var defaultLocale = translationManager.get('defaultLocale');
 
 							if (editingLocale !== defaultLocale) {
-								var uri = A.Lang.sub(
-									decodeURIComponent('<%= translateRecordURL %>'),
-									{
-										languageId: editingLocale
-									}
-								);
-
 								Liferay.Util.openWindow(
 									{
 										cache: false,
-										dialog: {
-											modal: true
-										},
 										id: event.newVal,
 										title: '<%= UnicodeLanguageUtil.get(pageContext, "web-content-translation") %>',
-										uri: uri
+										uri: '<%= translateRecordURL %>' + '&<portlet:namespace />languageId=' + editingLocale
 									},
 									function(translationWindow) {
 										translationWindow.once(
@@ -212,10 +193,23 @@ if (translating) {
 			</aui:script>
 		</c:if>
 
+		<%
+		long classNameId = PortalUtil.getClassNameId(DDMStructure.class);
+
+		long classPK = recordSet.getDDMStructureId();
+
+		if (formDDMTemplateId > 0) {
+			classNameId = PortalUtil.getClassNameId(DDMTemplate.class);
+
+			classPK = formDDMTemplateId;
+		}
+		%>
+
 		<liferay-ddm:html
-			classNameId="<%= PortalUtil.getClassNameId(DDMStructure.class) %>"
-			classPK="<%= ddmStructure.getStructureId() %>"
+			classNameId="<%= classNameId %>"
+			classPK="<%= classPK %>"
 			fields="<%= fields %>"
+			repeatable="<%= translating ? false : true %>"
 			requestedLocale="<%= LocaleUtil.fromLanguageId(languageId) %>"
 		/>
 
@@ -228,7 +222,7 @@ if (translating) {
 		%>
 
 		<c:if test="<%= pending %>">
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="there-is-a-publication-workflow-in-process" />
 			</div>
 		</c:if>
@@ -256,7 +250,7 @@ if (translating) {
 					}
 					%>
 
-					<aui:button name="saveButton" onClick='<%= renderResponse.getNamespace() + "setWorkflowAction(true);" %>' type="submit" value="<%= saveButtonLabel %>" />
+					<aui:button name="saveButton" onClick='<%= renderResponse.getNamespace() + "setWorkflowAction(true);" %>' primary="<%= false %>" type="submit" value="<%= saveButtonLabel %>" />
 
 					<aui:button disabled="<%= pending %>" name="publishButton" onClick='<%= renderResponse.getNamespace() + "setWorkflowAction(false);" %>' type="submit" value="<%= publishButtonLabel %>" />
 
@@ -289,9 +283,9 @@ portletURL.setParameter("recordSetId", String.valueOf(recordSetId));
 PortalUtil.addPortletBreadcrumbEntry(request, recordSet.getName(locale), portletURL.toString());
 
 if (record != null) {
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "edit-record"), currentURL);
+	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.format(pageContext, "edit-x", ddmStructure.getName(locale)), currentURL);
 }
 else {
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "add-record"), currentURL);
+	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.format(pageContext, "add-x", ddmStructure.getName(locale)), currentURL);
 }
 %>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,10 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link LayoutRevisionService}.
- * </p>
+ * Provides a wrapper for {@link LayoutRevisionService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       LayoutRevisionService
+ * @author Brian Wing Shun Chan
+ * @see LayoutRevisionService
  * @generated
  */
 public class LayoutRevisionServiceWrapper implements LayoutRevisionService,
@@ -35,6 +33,7 @@ public class LayoutRevisionServiceWrapper implements LayoutRevisionService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _layoutRevisionService.getBeanIdentifier();
 	}
@@ -44,10 +43,12 @@ public class LayoutRevisionServiceWrapper implements LayoutRevisionService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_layoutRevisionService.setBeanIdentifier(beanIdentifier);
 	}
 
+	@Override
 	public com.liferay.portal.model.LayoutRevision addLayoutRevision(
 		long userId, long layoutSetBranchId, long layoutBranchId,
 		long parentLayoutRevisionId, boolean head, long plid,
@@ -70,24 +71,26 @@ public class LayoutRevisionServiceWrapper implements LayoutRevisionService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public LayoutRevisionService getWrappedLayoutRevisionService() {
 		return _layoutRevisionService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedLayoutRevisionService(
 		LayoutRevisionService layoutRevisionService) {
 		_layoutRevisionService = layoutRevisionService;
 	}
 
+	@Override
 	public LayoutRevisionService getWrappedService() {
 		return _layoutRevisionService;
 	}
 
+	@Override
 	public void setWrappedService(LayoutRevisionService layoutRevisionService) {
 		_layoutRevisionService = layoutRevisionService;
 	}

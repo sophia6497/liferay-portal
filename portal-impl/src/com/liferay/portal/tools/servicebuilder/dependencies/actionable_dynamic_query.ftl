@@ -24,7 +24,21 @@ public abstract class ${entity.name}ActionableDynamicQuery
 			setClassLoader(PortalClassLoaderUtil.getClassLoader());
 		</#if>
 
-		setPrimaryKeyPropertyName("${entity.PKVarName}");
+		<#if entity.hasPrimitivePK()>
+			setPrimaryKeyPropertyName("${entity.PKVarName}");
+		<#else>
+			<#assign pkList = entity.getPKList()>
+
+			<#assign pkColumn = pkList?first>
+
+			setPrimaryKeyPropertyName("primaryKey.${pkColumn.name}");
+
+			<#list entity.getPKList() as pkColumn>
+				<#if pkColumn.name == "groupId">
+					setGroupIdPropertyName("primaryKey.groupId");
+				</#if>
+			</#list>
+		</#if>
 	}
 
 }

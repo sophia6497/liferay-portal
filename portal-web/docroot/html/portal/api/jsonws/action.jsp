@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -58,22 +58,55 @@ String signature = ParamUtil.getString(request, "signature");
 
 			<div class="lfr-api-param">
 				<span class="lfr-api-param-name">
-					<%= actionClassName.substring(0, pos) %>.<span class="class-name"><%= actionClassName.substring(pos + 1) %></span>#<span class="method-name"><%= actionMethod.getName() %></span>
+					<%= actionClassName.substring(0, pos) %>.<span class="class-name"><%= actionClassName.substring(pos + 1) %></span>
 				</span>
 
 				<%
-				JavadocMethod javadocMethod = JavadocManagerUtil.lookupJavadocMethod(jsonWebServiceActionMapping.getActionMethod());
+				Class<?> serviceClass = actionClass;
 
-				String comment = null;
+				if (actionClassName.contains(".service.") && actionClassName.endsWith("ServiceUtil")) {
+					String implClassName = StringUtil.replace(actionClassName, new String[] {".service.", "ServiceUtil"}, new String[] {".service.impl.", "ServiceImpl"});
 
-				if (javadocMethod != null) {
-					comment = javadocMethod.getComment();
+					try {
+						serviceClass = JavadocUtil.loadClass(actionClass.getClassLoader(), implClassName);
+					}
+					catch (Exception e) {
+					}
+				}
+
+				JavadocClass javadocClass = JavadocManagerUtil.lookupJavadocClass(serviceClass);
+
+				String javadocClassComment = null;
+
+				if (javadocClass != null) {
+					javadocClassComment = javadocClass.getComment();
 				}
 				%>
 
-				<c:if test="<%= Validator.isNotNull(comment) %>">
+				<c:if test="<%= Validator.isNotNull(javadocClassComment) %>">
 					<p class="lfr-api-param-comment">
-						<%= comment %>
+						<%= javadocClassComment %>
+					</p>
+				</c:if>
+			</div>
+			<div class="lfr-api-param">
+				<span class="lfr-api-param-name">
+					<span class="method-name"><%= actionMethod.getName() %></span>
+				</span>
+
+				<%
+				JavadocMethod javadocMethod = JavadocManagerUtil.lookupJavadocMethod(actionMethod);
+
+				String javadocMethodComment = null;
+
+				if (javadocMethod != null) {
+					javadocMethodComment = javadocMethod.getComment();
+				}
+				%>
+
+				<c:if test="<%= Validator.isNotNull(javadocMethodComment) %>">
+					<p class="lfr-api-param-comment">
+						<%= javadocMethodComment %>
 					</p>
 				</c:if>
 			</div>
@@ -157,10 +190,20 @@ String signature = ParamUtil.getString(request, "signature");
 
 				<%
 				Class<?> returnTypeClass = actionMethod.getReturnType();
+
+				String returnTypeName = StringPool.BLANK;
+
+				while (returnTypeClass.isArray()) {
+					returnTypeClass = returnTypeClass.getComponentType();
+
+					returnTypeName += "[]";
+				}
+
+				returnTypeName = returnTypeClass.getName() + returnTypeName;
 				%>
 
 				<span class="lfr-api-param-name">
-					<%= returnTypeClass.getName() %>
+					<%= returnTypeName %>
 				</span>
 
 				<%
@@ -232,7 +275,7 @@ String signature = ParamUtil.getString(request, "signature");
 			}
 			%>
 
-			<div class="aui-helper-hidden lfr-api-results" id="serviceResults">
+			<div class="hide lfr-api-results" id="serviceResults">
 				<liferay-ui:tabs
 					names="result,javascript-example,curl-example,url-example"
 					refresh="<%= false %>"
@@ -294,7 +337,7 @@ String signature = ParamUtil.getString(request, "signature");
 					if (methodParameterTypeClass.equals(File.class)) {
 				%>
 
-						<aui:input id='<%= "field" + i %>' label="<%= methodParameterName %>" name="<%= methodParameterName %>"  suffix="<%= methodParameterTypeClassName %>" type="file" />
+						<aui:input id='<%= "field" + i %>' label="<%= methodParameterName %>" name="<%= methodParameterName %>" suffix="<%= methodParameterTypeClassName %>" type="file" />
 
 					<%
 					}
@@ -306,7 +349,7 @@ String signature = ParamUtil.getString(request, "signature");
 
 							<aui:input id='<%= "fieldFalse" + i %>' inlineField="<%= true %>" label="false" name="<%= methodParameterName %>" type="radio" value="<%= false %>" />
 
-							<span class="aui-suffix"><%= methodParameterTypeClassName %></span>
+							<span class="suffix"><%= methodParameterTypeClassName %></span>
 						</aui:field-wrapper>
 
 					<%
@@ -349,7 +392,7 @@ String signature = ParamUtil.getString(request, "signature");
 			</aui:form>
 		</div>
 
-		<aui:script use="aui-io,aui-template,querystring-parse">
+		<aui:script use="aui-io,aui-template-deprecated,querystring-parse">
 			var REGEX_QUERY_STRING = new RegExp('([^?=&]+)(?:=([^&]*))?', 'g');
 
 			var form = A.one('#execute');
@@ -385,7 +428,9 @@ String signature = ParamUtil.getString(request, "signature");
 			scriptTpl.formatDataType = A.rbind(formatDataType, scriptTpl, true);
 
 			urlTpl.toURIParam = function(value) {
-				return A.Lang.String.uncamelize(value, '-').toLowerCase();
+				value = A.Lang.String.uncamelize(value, '-');
+
+				return value.toLowerCase();
 			};
 
 			var curlExample = A.one('#curlExample');
@@ -505,7 +550,7 @@ String signature = ParamUtil.getString(request, "signature");
 			);
 		</aui:script>
 
-<textarea class="aui-helper-hidden" id="scriptTpl">
+<textarea class="hide" id="scriptTpl">
 Liferay.Service(
   '<%= invocationPath %>',
   <tpl if="data.length">{
@@ -518,19 +563,19 @@ Liferay.Service(
 );
 </textarea>
 
-<textarea class="aui-helper-hidden" id="curlTpl">
+<textarea class="hide" id="curlTpl">
 curl <%= themeDisplay.getPortalURL() + jsonWSPath + invocationPath %> \\
   -u test@liferay.com:test <tpl if="data.length">\\
   <tpl for="data">-d {key}={[this.formatDataType(values.key, values.value)]} <tpl if="!$last">\\
   </tpl></tpl></tpl>
 </textarea>
 
-<textarea class="aui-helper-hidden" id="urlTpl">
+<textarea class="hide" id="urlTpl">
 <%= themeDisplay.getPortalURL() + jsonWSPath + invocationPath %><tpl if="data.length">/<tpl for="data">{key:this.toURIParam}<tpl if="value.length">/{value}</tpl><tpl if="!$last">/</tpl></tpl></tpl><tpl if="extraData.length">?<tpl for="extraData">{key:this.toURIParam}={value}<tpl if="!$last">&amp;</tpl></tpl></tpl>
 </textarea>
 	</c:when>
 	<c:otherwise>
-		<div class="portlet-msg-info">
+		<div class="alert alert-info">
 			<liferay-ui:message key="please-select-a-method-on-the-left" />
 		</div>
 	</c:otherwise>

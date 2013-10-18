@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,11 +18,12 @@ import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the role remote service. This utility wraps {@link com.liferay.portal.service.impl.RoleServiceImpl} and is the primary access point for service operations in application layer code running on a remote server.
- *
- * <p>
- * This is a remote service. Methods of this service are expected to have security checks based on the propagated JAAS credentials because this service can be accessed remotely.
- * </p>
+ * Provides the remote service utility for Role. This utility wraps
+ * {@link com.liferay.portal.service.impl.RoleServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on a remote server. Methods of this service are expected to have security
+ * checks based on the propagated JAAS credentials because this service can be
+ * accessed remotely.
  *
  * @author Brian Wing Shun Chan
  * @see RoleService
@@ -67,7 +68,10 @@ public class RoleServiceUtil {
 	* @param descriptionMap the role's localized descriptions (optionally
 	<code>null</code>)
 	* @param type the role's type (optionally <code>0</code>)
-	* @param subType the role's subtype (optionally <code>null</code>)
+	* @param subtype the role's subtype (optionally <code>null</code>)
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set the expando bridge attributes for the
+	role.
 	* @return the role
 	* @throws PortalException if a user with the primary key could not be
 	found, if the user did not have permission to add roles, if the
@@ -79,12 +83,13 @@ public class RoleServiceUtil {
 		java.lang.String className, long classPK, java.lang.String name,
 		java.util.Map<java.util.Locale, java.lang.String> titleMap,
 		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
-		int type, java.lang.String subType)
+		int type, java.lang.String subtype,
+		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .addRole(className, classPK, name, titleMap, descriptionMap,
-			type, subType);
+			type, subtype, serviceContext);
 	}
 
 	/**
@@ -102,7 +107,8 @@ public class RoleServiceUtil {
 	the class name or the role name were invalid, or if the role
 	is a duplicate
 	* @throws SystemException if a system exception occurred
-	* @deprecated {@link #addRole(String, long, String, Map, Map, int, String)}
+	* @deprecated As of 6.2.0, replaced by {@link #addRole(String, long,
+	String, Map, Map, int, String, ServiceContext)}
 	*/
 	public static com.liferay.portal.model.Role addRole(java.lang.String name,
 		java.util.Map<java.util.Locale, java.lang.String> titleMap,
@@ -334,6 +340,9 @@ public class RoleServiceUtil {
 	* @param descriptionMap the new localized descriptions (optionally
 	<code>null</code>) to replace those existing for the role
 	* @param subtype the role's new subtype (optionally <code>null</code>)
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set the expando bridge attributes for the
+	role.
 	* @return the role with the primary key
 	* @throws PortalException if the user did not have permission to update the
 	role, if a role with the primary could not be found, or if the
@@ -344,11 +353,13 @@ public class RoleServiceUtil {
 		java.lang.String name,
 		java.util.Map<java.util.Locale, java.lang.String> titleMap,
 		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
-		java.lang.String subtype)
+		java.lang.String subtype,
+		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
-				   .updateRole(roleId, name, titleMap, descriptionMap, subtype);
+				   .updateRole(roleId, name, titleMap, descriptionMap, subtype,
+			serviceContext);
 	}
 
 	public static RoleService getService() {
@@ -363,7 +374,7 @@ public class RoleServiceUtil {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.2.0
 	 */
 	public void setService(RoleService service) {
 	}

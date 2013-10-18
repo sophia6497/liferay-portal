@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.kernel.util;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
+import com.liferay.portal.kernel.xml.Document;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +27,8 @@ import java.util.Map;
 
 import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Alexander Chow
@@ -41,8 +44,20 @@ public class LocalizationUtil {
 		return getLocalization().deserialize(jsonObject);
 	}
 
+	public static String[] getAvailableLanguageIds(Document document) {
+		return getLocalization().getAvailableLanguageIds(document);
+	}
+
+	public static String[] getAvailableLanguageIds(String xml) {
+		return getLocalization().getAvailableLanguageIds(xml);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #getAvailableLanguageIds(String)}
+	 */
 	public static String[] getAvailableLocales(String xml) {
-		return getLocalization().getAvailableLocales(xml);
+		return getAvailableLanguageIds(xml);
 	}
 
 	public static Locale getDefaultImportLocale(
@@ -53,8 +68,20 @@ public class LocalizationUtil {
 			className, classPK, contentDefaultLocale, contentAvailableLocales);
 	}
 
+	public static String getDefaultLanguageId(Document document) {
+		return getLocalization().getDefaultLanguageId(document);
+	}
+
+	public static String getDefaultLanguageId(String xml) {
+		return getLocalization().getDefaultLanguageId(xml);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #getDefaultLanguageId(String)}
+	 */
 	public static String getDefaultLocale(String xml) {
-		return getLocalization().getDefaultLocale(xml);
+		return getDefaultLanguageId(xml);
 	}
 
 	public static Localization getLocalization() {
@@ -77,6 +104,12 @@ public class LocalizationUtil {
 	}
 
 	public static Map<Locale, String> getLocalizationMap(
+		HttpServletRequest request, String parameter) {
+
+		return getLocalization().getLocalizationMap(request, parameter);
+	}
+
+	public static Map<Locale, String> getLocalizationMap(
 		PortletPreferences preferences, String parameter) {
 
 		return getLocalization().getLocalizationMap(preferences, parameter);
@@ -90,6 +123,12 @@ public class LocalizationUtil {
 
 	public static Map<Locale, String> getLocalizationMap(String xml) {
 		return getLocalization().getLocalizationMap(xml);
+	}
+
+	public static Map<Locale, String> getLocalizationMap(
+		String xml, boolean useDefault) {
+
+		return getLocalization().getLocalizationMap(xml, useDefault);
 	}
 
 	public static Map<Locale, String> getLocalizationMap(
@@ -115,7 +154,7 @@ public class LocalizationUtil {
 	}
 
 	/**
-	 * @deprecated Use <code>getLocalizationMap</code>.
+	 * @deprecated As of 6.2.0, replaced by {@link #getLocalizationMap}
 	 */
 	public static Map<Locale, String> getLocalizedParameter(
 		PortletRequest portletRequest, String parameter) {

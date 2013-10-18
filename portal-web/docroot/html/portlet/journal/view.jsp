@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -45,12 +45,8 @@ if (!ArrayUtil.contains(displayViews, displayStyle)) {
 int entryStart = ParamUtil.getInteger(request, "entryStart");
 int entryEnd = ParamUtil.getInteger(request, "entryEnd", SearchContainer.DEFAULT_DELTA);
 
-int entryRowsPerPage = entryEnd - entryStart;
-
 int folderStart = ParamUtil.getInteger(request, "folderStart");
 int folderEnd = ParamUtil.getInteger(request, "folderEnd", SearchContainer.DEFAULT_DELTA);
-
-int folderRowsPerPage = folderEnd - folderStart;
 
 request.setAttribute("view.jsp-folder", folder);
 
@@ -65,20 +61,18 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 <liferay-ui:trash-undo portletURL="<%= undoTrashURL %>" />
 
 <div id="<portlet:namespace />journalContainer">
-	<aui:layout cssClass="lfr-app-column-view">
-		<aui:column columnWidth="<%= 20 %>" cssClass="navigation-pane" first="<%= true %>">
+	<aui:row cssClass="lfr-app-column-view">
+		<aui:col cssClass="navigation-pane" width="<%= 20 %>">
 			<liferay-util:include page="/html/portlet/journal/view_folders.jsp" />
 
-			<div class="folder-paginator"></div>
-		</aui:column>
+			<div class="folder-pagination"></div>
+		</aui:col>
 
-		<aui:column columnWidth="80" cssClass="context-pane" last="<%= true %>">
+		<aui:col cssClass="context-pane" last="<%= true %>" width="<%= 80 %>">
 			<liferay-ui:app-view-toolbar
 				includeDisplayStyle="<%= true %>"
 				includeSelectAll="<%= true %>"
-				searchJsp="/html/portlet/journal/article_toolbar_search.jsp"
 			>
-
 				<liferay-util:include page="/html/portlet/journal/toolbar.jsp" />
 			</liferay-ui:app-view-toolbar>
 
@@ -93,10 +87,6 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 			portletURL.setParameter("folderId", String.valueOf(folderId));
 			%>
 
-			<div id="<portlet:namespace />advancedSearchContainer">
-				<liferay-util:include page="/html/portlet/journal/article_search.jsp" />
-			</div>
-
 			<aui:form action="<%= portletURL.toString() %>" method="get" name="fm">
 				<aui:input name="<%= Constants.CMD %>" type="hidden" />
 				<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
@@ -108,20 +98,22 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 					<liferay-util:include page="/html/portlet/journal/view_entries.jsp" />
 				</div>
 
-				<div class="article-entries-paginator"></div>
+				<div class="article-entries-pagination"></div>
 			</aui:form>
-		</aui:column>
-	</aui:layout>
+		</aui:col>
+	</aui:row>
 </div>
 
 <%
 int entriesTotal = GetterUtil.getInteger((String)request.getAttribute("view.jsp-total"));
 int foldersTotal = GetterUtil.getInteger((String)request.getAttribute("view_folders.jsp-total"));
-%>
 
-<span id="<portlet:namespace />displayStyleButtonsContainer">
-	<liferay-util:include page="/html/portlet/journal/display_style_buttons.jsp" />
-</span>
+entryEnd = GetterUtil.getInteger(request.getAttribute("view_entries.jsp-entryEnd"), entryEnd);
+entryStart = GetterUtil.getInteger(request.getAttribute("view_entries.jsp-entryStart"), entryStart);
+
+folderEnd = GetterUtil.getInteger(request.getAttribute("view_folders.jsp-folderEnd"), folderEnd);
+folderStart = GetterUtil.getInteger(request.getAttribute("view_folders.jsp-folderStart"), folderStart);
+%>
 
 <aui:script>
 	Liferay.provide(
@@ -157,6 +149,7 @@ int foldersTotal = GetterUtil.getInteger((String)request.getAttribute("view_fold
 					p_p_lifecycle: 0
 				},
 				defaultParentFolderId: '<%= JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID %>',
+				'listViewConfig.useTransition': false,
 				mainUrl: '<%= mainURL %>',
 				strutsAction: '/journal/view'
 			},
@@ -170,17 +163,18 @@ int foldersTotal = GetterUtil.getInteger((String)request.getAttribute("view_fold
 					node: A.one(document.<portlet:namespace />fm)
 				},
 				moveEntryRenderUrl: '<portlet:renderURL><portlet:param name="struts_action" value="/journal/move_entry" /></portlet:renderURL>',
+				trashLinkId: '<%= TrashUtil.isTrashEnabled(scopeGroupId) ? "_" + PortletKeys.CONTROL_PANEL_MENU + "_portlet_" + PortletKeys.TRASH : StringPool.BLANK %>',
 				updateable: true
 			},
 			paginator: {
 				entriesTotal: <%= entriesTotal %>,
 				entryEnd: <%= entryEnd %>,
-				entryRowsPerPage: <%= entryRowsPerPage %>,
+				entryRowsPerPage: <%= entryEnd - entryStart %>,
 				entryRowsPerPageOptions: [<%= StringUtil.merge(PropsValues.SEARCH_CONTAINER_PAGE_DELTA_VALUES) %>],
 				entryStart: <%= entryStart %>,
 				folderEnd: <%= folderEnd %>,
 				folderId: <%= folderId %>,
-				folderRowsPerPage: <%= folderRowsPerPage %>,
+				folderRowsPerPage: <%= folderEnd - folderStart %>,
 				folderRowsPerPageOptions: [<%= StringUtil.merge(PropsValues.SEARCH_CONTAINER_PAGE_DELTA_VALUES) %>],
 				folderStart: <%= folderStart %>,
 				foldersTotal: <%= foldersTotal %>

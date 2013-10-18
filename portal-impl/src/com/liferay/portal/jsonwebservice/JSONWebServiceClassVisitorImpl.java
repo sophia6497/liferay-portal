@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,16 +21,19 @@ import com.liferay.portal.kernel.util.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 
-import jodd.asm.EmptyClassVisitor;
-
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * @author Igor Spasic
  * @author Raymond Augé
  */
 public class JSONWebServiceClassVisitorImpl
-	extends EmptyClassVisitor implements JSONWebServiceClassVisitor {
+	implements ClassVisitor, JSONWebServiceClassVisitor {
 
 	public JSONWebServiceClassVisitorImpl(InputStream inputStream)
 		throws IOException {
@@ -38,10 +41,12 @@ public class JSONWebServiceClassVisitorImpl
 		_classReader = new ClassReader(inputStream);
 	}
 
+	@Override
 	public void accept() throws Exception {
 		_classReader.accept(this, 0);
 	}
 
+	@Override
 	public String getClassName() {
 		return _className;
 	}
@@ -52,6 +57,50 @@ public class JSONWebServiceClassVisitorImpl
 		String superName, String[] interfaces) {
 
 		_className = StringUtil.replace(name, CharPool.SLASH, CharPool.PERIOD);
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotation(
+		String description, boolean visible) {
+
+		return null;
+	}
+
+	@Override
+	public void visitAttribute(Attribute attribute) {
+	}
+
+	@Override
+	public void visitEnd() {
+	}
+
+	@Override
+	public FieldVisitor visitField(
+		int access, String name, String description, String signature,
+		Object value) {
+
+		return null;
+	}
+
+	@Override
+	public void visitInnerClass(
+		String name, String outerName, String innerName, int access) {
+	}
+
+	@Override
+	public MethodVisitor visitMethod(
+		int access, String name, String description, String signature,
+		String[] exceptions) {
+
+		return null;
+	}
+
+	@Override
+	public void visitOuterClass(String owner, String name, String desc) {
+	}
+
+	@Override
+	public void visitSource(String source, String debug) {
 	}
 
 	private String _className;

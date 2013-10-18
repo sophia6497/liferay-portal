@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,15 +21,15 @@
 		<label class="lfr-translation-manager-default-locale-label" for="<portlet:namespace />defaultLanguageId"><liferay-ui:message key="web-content-default-language" />:</label>
 
 		<span class="lfr-translation-manager-default-locale-text lfr-translation-manager-translation lfr-translation-manager-translation-editing">
-			<img src="<%= themeDisplay.getPathThemeImages() %>/language/<%= defaultLanguageId %>.png" />
+			<img src='<%= HtmlUtil.escapeAttribute(themeDisplay.getPathThemeImages() + "/language/" + defaultLanguageId + ".png") %>' />
 
 			<%= LocaleUtil.fromLanguageId(defaultLanguageId).getDisplayName(locale) %>
 		</span>
 
-		<select class="aui-helper-hidden lfr-translation-manager-default-locale">
+		<select class="hide lfr-translation-manager-default-locale">
 
 			<%
-			Locale[] locales = LanguageUtil.getAvailableLocales();
+			Locale[] locales = LanguageUtil.getAvailableLocales(themeDisplay.getSiteGroupId());
 
 			for (int i = 0; i < locales.length; i++) {
 			%>
@@ -134,8 +134,8 @@
 						{
 							availableLocales: <%= availableLocalesJSONArray.toString() %>,
 							boundingBox: '#<%= namespace + id %>',
-							defaultLocale: '<%= defaultLanguageId %>',
-							editingLocale: '<%= editingLanguageId %>',
+							defaultLocale: '<%= HtmlUtil.escapeJS(defaultLanguageId) %>',
+							editingLocale: '<%= HtmlUtil.escapeJS(editingLanguageId) %>',
 							localesMap: <%= localesMapJSONObject.toString() %>,
 							readOnly: <%= readOnly %>,
 							srcNode: '#<%= namespace + id %> .lfr-translation-manager-content'

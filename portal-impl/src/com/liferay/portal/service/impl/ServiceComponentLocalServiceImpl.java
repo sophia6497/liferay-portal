@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,9 +37,6 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.model.ModelHintsUtil;
 import com.liferay.portal.model.ServiceComponent;
-import com.liferay.portal.security.lang.PortalSecurityManagerThreadLocal;
-import com.liferay.portal.security.pacl.PACLPolicy;
-import com.liferay.portal.security.pacl.PACLPolicyManager;
 import com.liferay.portal.service.base.ServiceComponentLocalServiceBaseImpl;
 import com.liferay.portal.tools.servicebuilder.Entity;
 
@@ -47,6 +44,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.lang.reflect.Field;
+
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +61,7 @@ import javax.servlet.ServletContext;
 public class ServiceComponentLocalServiceImpl
 	extends ServiceComponentLocalServiceBaseImpl {
 
+	@Override
 	public void destroyServiceComponent(
 			ServletContext servletContext, ClassLoader classLoader)
 		throws SystemException {
@@ -71,6 +74,7 @@ public class ServiceComponentLocalServiceImpl
 		}
 	}
 
+	@Override
 	public ServiceComponent initServiceComponent(
 			ServletContext servletContext, ClassLoader classLoader,
 			String buildNamespace, long buildNumber, long buildDate,
@@ -182,42 +186,40 @@ public class ServiceComponentLocalServiceImpl
 		}
 	}
 
+	@Override
 	public void upgradeDB(
-			ClassLoader classLoader, String buildNamespace, long buildNumber,
-			boolean buildAutoUpgrade, ServiceComponent previousServiceComponent,
-			String tablesSQL, String sequencesSQL, String indexesSQL)
+			final ClassLoader classLoader, final String buildNamespace,
+			final long buildNumber, final boolean buildAutoUpgrade,
+			final ServiceComponent previousServiceComponent,
+			final String tablesSQL, final String sequencesSQL,
+			final String indexesSQL)
 		throws Exception {
 
-		PACLPolicy previousPACLPolicy =
-			PortalSecurityManagerThreadLocal.getPACLPolicy();
+		ProtectionDomain protectionDomain = new ProtectionDomain(
+			null, null, classLoader, null);
 
-		boolean checkGetClassLoader =
-			PortalSecurityManagerThreadLocal.isCheckGetClassLoader();
-		boolean checkReadFile =
-			PortalSecurityManagerThreadLocal.isCheckReadFile();
+		AccessControlContext accessControlContext = new AccessControlContext(
+			new ProtectionDomain[] {protectionDomain});
 
-		try {
-			PACLPolicy paclPolicy = PACLPolicyManager.getPACLPolicy(
-				classLoader);
+		AccessController.doPrivileged(
+			new PrivilegedExceptionAction<Void>() {
 
-			PortalSecurityManagerThreadLocal.setPACLPolicy(paclPolicy);
+				@Override
+				public Void run() throws Exception {
+					doUpgradeDB(
+						classLoader, buildNamespace, buildNumber,
+						buildAutoUpgrade, previousServiceComponent, tablesSQL,
+						sequencesSQL, indexesSQL);
 
-			PortalSecurityManagerThreadLocal.setCheckGetClassLoader(false);
-			PortalSecurityManagerThreadLocal.setCheckReadFile(false);
+					return null;
+				}
 
-			doUpgradeDB(
-				classLoader, buildNamespace, buildNumber, buildAutoUpgrade,
-				previousServiceComponent, tablesSQL, sequencesSQL, indexesSQL);
-		}
-		finally {
-			PortalSecurityManagerThreadLocal.setPACLPolicy(previousPACLPolicy);
-
-			PortalSecurityManagerThreadLocal.setCheckGetClassLoader(
-				checkGetClassLoader);
-			PortalSecurityManagerThreadLocal.setCheckReadFile(checkReadFile);
-		}
+			},
+			accessControlContext
+		);
 	}
 
+	@Override
 	public void verifyDB() throws SystemException {
 		List<ServiceComponent> serviceComponents =
 			serviceComponentPersistence.findAll();
@@ -311,7 +313,9 @@ public class ServiceComponentLocalServiceImpl
 				db.runSQLTemplateString(sequencesSQL, true, false);
 			}
 
-			if (!indexesSQL.equals(previousServiceComponent.getIndexesSQL())) {
+			if (!indexesSQL.equals(previousServiceComponent.getIndexesSQL()) ||
+				!tablesSQL.equals(previousServiceComponent.getTablesSQL())) {
+
 				if (_log.isInfoEnabled()) {
 					_log.info("Upgrading database with indexes.sql");
 				}

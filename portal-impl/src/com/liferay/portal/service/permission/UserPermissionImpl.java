@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,9 +37,10 @@ import com.liferay.portal.util.PortalUtil;
 public class UserPermissionImpl implements UserPermission {
 
 	/**
-	 * @deprecated Replaced by {@link #check(PermissionChecker, long, long[],
-	 *             String)}
+	 * @deprecated As of 6.2.0, replaced by {@link #check(PermissionChecker,
+	 *             long, long[], String)}
 	 */
+	@Override
 	public void check(
 			PermissionChecker permissionChecker, long userId,
 			long organizationId, long locationId, String actionId)
@@ -50,6 +51,7 @@ public class UserPermissionImpl implements UserPermission {
 			actionId);
 	}
 
+	@Override
 	public void check(
 			PermissionChecker permissionChecker, long userId,
 			long[] organizationIds, String actionId)
@@ -60,6 +62,7 @@ public class UserPermissionImpl implements UserPermission {
 		}
 	}
 
+	@Override
 	public void check(
 			PermissionChecker permissionChecker, long userId, String actionId)
 		throws PrincipalException {
@@ -70,9 +73,10 @@ public class UserPermissionImpl implements UserPermission {
 	}
 
 	/**
-	 * @deprecated Replaced by {@link #contains(PermissionChecker, long, long[],
-	 *             String)}
+	 * @deprecated As of 6.2.0, replaced by {@link #contains(PermissionChecker,
+	 *             long, long[], String)}
 	 */
+	@Override
 	public boolean contains(
 		PermissionChecker permissionChecker, long userId, long organizationId,
 		long locationId, String actionId) {
@@ -82,6 +86,7 @@ public class UserPermissionImpl implements UserPermission {
 			actionId);
 	}
 
+	@Override
 	public boolean contains(
 		PermissionChecker permissionChecker, long userId,
 		long[] organizationIds, String actionId) {
@@ -142,9 +147,8 @@ public class UserPermissionImpl implements UserPermission {
 
 					Group organizationGroup = organization.getGroup();
 
-					// Organization administrators can only manage normal
-					// users. Owners can only manage normal users and
-					// administrators.
+					// Organization administrators can only manage normal users.
+					// Owners can only manage normal users and administrators.
 
 					if (UserGroupRoleLocalServiceUtil.hasUserGroupRole(
 							user.getUserId(), organizationGroup.getGroupId(),
@@ -176,6 +180,7 @@ public class UserPermissionImpl implements UserPermission {
 		return false;
 	}
 
+	@Override
 	public boolean contains(
 		PermissionChecker permissionChecker, long userId, String actionId) {
 

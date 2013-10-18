@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,9 @@ package com.liferay.portal.kernel.staging;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.lar.MissingReference;
 import com.liferay.portal.kernel.lar.PortletDataContext;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.xml.Element;
@@ -26,10 +29,14 @@ import com.liferay.portal.model.Portlet;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 
+import java.io.Serializable;
+
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +49,12 @@ public interface Staging {
 	public String buildRemoteURL(
 		String remoteAddress, int remotePort, String remotePathContext,
 		boolean secureConnection, long remoteGroupId, boolean privateLayout);
+
+	public void checkDefaultLayoutSetBranches(
+			long userId, Group liveGroup, boolean branchingPublic,
+			boolean branchingPrivate, boolean remote,
+			ServiceContext serviceContext)
+		throws Exception;
 
 	public void copyFromLive(PortletRequest PortletRequest) throws Exception;
 
@@ -74,7 +87,8 @@ public interface Staging {
 		throws SystemException;
 
 	/**
-	 * @deprecated {@link #disableStaging(Group, ServiceContext)}
+	 * @deprecated As of 6.2.0, replaced by {@link #disableStaging(Group,
+	 *             ServiceContext)}
 	 */
 	public void disableStaging(
 			Group scopeGroup, Group liveGroup, ServiceContext serviceContext)
@@ -84,8 +98,8 @@ public interface Staging {
 		throws Exception;
 
 	/**
-	 * @deprecated {@link #disableStaging(PortletRequest, Group,
-	 *             ServiceContext)}
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #disableStaging(PortletRequest, Group, ServiceContext)}
 	 */
 	public void disableStaging(
 			PortletRequest portletRequest, Group scopeGroup, Group liveGroup,
@@ -110,6 +124,13 @@ public interface Staging {
 			boolean secureConnection, long remoteGroupId,
 			ServiceContext serviceContext)
 		throws Exception;
+
+	public JSONArray getErrorMessagesJSONArray(
+		Locale locale, Map<String, MissingReference> missingReferences,
+		Map<String, Serializable> contextMap);
+
+	public JSONObject getExceptionMessagesJSONObject(
+		Locale locale, Exception e, Map<String, Serializable> contextMap);
 
 	public Group getLiveGroup(long groupId)
 		throws PortalException, SystemException;
@@ -136,10 +157,16 @@ public interface Staging {
 
 	public String getSchedulerGroupName(String destinationName, long groupId);
 
+	public String getStagedPortletId(String portletId);
+
 	public Map<String, String[]> getStagingParameters();
 
 	public Map<String, String[]> getStagingParameters(
 		PortletRequest PortletRequest);
+
+	public JSONArray getWarningMessagesJSONArray(
+		Locale locale, Map<String, MissingReference> missingReferences,
+		Map<String, Serializable> contextMap);
 
 	public WorkflowTask getWorkflowTask(
 			long userId, LayoutRevision layoutRevision)
@@ -149,6 +176,8 @@ public interface Staging {
 		throws PortalException, SystemException;
 
 	public boolean isIncomplete(Layout layout, long layoutSetBranchId);
+
+	public void lockGroup(long userId, long groupId) throws Exception;
 
 	public void publishLayout(
 			long userId, long plid, long liveGroupId, boolean includeChildren)
@@ -213,6 +242,8 @@ public interface Staging {
 			User user, long layoutSetId, long layoutSetBranchId)
 		throws SystemException;
 
+	public void unlockGroup(long groupId) throws SystemException;
+
 	public void unscheduleCopyFromLive(PortletRequest PortletRequest)
 		throws Exception;
 
@@ -225,6 +256,15 @@ public interface Staging {
 	public void updateLastImportSettings(
 			Element layoutElement, Layout layout,
 			PortletDataContext portletDataContext)
+		throws Exception;
+
+	public void updateLastPublishDate(
+			long sourceGroupId, boolean privateLayout, Date lastPublishDate)
+		throws Exception;
+
+	public void updateLastPublishDate(
+			String portletId, PortletPreferences portletPreferences,
+			Date lastPublishDate)
 		throws Exception;
 
 	public void updateStaging(PortletRequest PortletRequest, Group liveGroup)

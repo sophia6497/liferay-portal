@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -58,24 +58,7 @@ public class RowChecker {
 	}
 
 	public String getAllRowsCheckBox() {
-		if (Validator.isNull(_allRowIds)) {
-			return StringPool.BLANK;
-		}
-		else {
-			StringBuilder sb = new StringBuilder();
-
-			sb.append("<input name=\"");
-			sb.append(_allRowIds);
-			sb.append("\" type=\"checkbox\" ");
-			sb.append("onClick=\"Liferay.Util.checkAll(");
-			sb.append("AUI().one(this).ancestor('");
-			sb.append("table.taglib-search-iterator'), '");
-			sb.append(_rowIds);
-			sb.append("', this, '.results-row'");
-			sb.append(");\">");
-
-			return sb.toString();
-		}
+		return getAllRowsCheckbox(_allRowIds, StringUtil.quote(_rowIds));
 	}
 
 	public String getAllRowsId() {
@@ -92,6 +75,17 @@ public class RowChecker {
 
 	public String getFormName() {
 		return _formName;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by  {@link
+	 *             #getRowCheckBox(HttpServletRequest, boolean, boolean,
+	 *             String)}
+	 */
+	public String getRowCheckBox(
+		boolean checked, boolean disabled, String primaryKey) {
+
+		return getRowCheckBox(null, checked, disabled, primaryKey);
 	}
 
 	public String getRowCheckBox(
@@ -151,17 +145,36 @@ public class RowChecker {
 		_valign = valign;
 	}
 
+	protected String getAllRowsCheckbox(String name, String checkBoxRowIds) {
+		if (Validator.isNull(name)) {
+			return StringPool.BLANK;
+		}
+
+		StringBuilder sb = new StringBuilder(9);
+
+		sb.append("<input name=\"");
+		sb.append(name);
+		sb.append("\" type=\"checkbox\" ");
+		sb.append("onClick=\"Liferay.Util.checkAll(");
+		sb.append("AUI().one(this).ancestor('");
+		sb.append(".table'), ");
+		sb.append(checkBoxRowIds);
+		sb.append(", this, 'tr:not(.lfr-template)'");
+		sb.append(");\">");
+
+		return sb.toString();
+	}
+
 	protected String getNamespacedValue(String value) {
 		if (Validator.isNull(value)) {
 			return StringPool.BLANK;
 		}
-		else {
-			if (!value.startsWith(_portletResponse.getNamespace())) {
-				value = _portletResponse.getNamespace() + value;
-			}
 
-			return value;
+		if (!value.startsWith(_portletResponse.getNamespace())) {
+			value = _portletResponse.getNamespace() + value;
 		}
+
+		return value;
 	}
 
 	protected String getRowCheckBox(
@@ -190,13 +203,13 @@ public class RowChecker {
 		if (Validator.isNotNull(_allRowIds)) {
 			sb.append("onClick=\"Liferay.Util.checkAllBox(");
 			sb.append("AUI().one(this).ancestor('");
-			sb.append("table.taglib-search-iterator'), ");
+			sb.append(".table'), ");
 			sb.append(checkBoxRowIds);
 			sb.append(", ");
 			sb.append(checkBoxAllRowIds);
 			sb.append(");");
-			sb.append("AUI().one(this).ancestor('.results-row').toggleClass('");
-			sb.append("selected');");
+			sb.append("AUI().one(this).ancestor('tr:not(.lfr-template)').");
+			sb.append("toggleClass('info');");
 
 			if (Validator.isNotNull(checkBoxPostOnClick)) {
 				sb.append(checkBoxPostOnClick);

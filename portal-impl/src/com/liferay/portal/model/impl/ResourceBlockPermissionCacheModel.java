@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -49,6 +49,7 @@ public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlo
 		return sb.toString();
 	}
 
+	@Override
 	public ResourceBlockPermission toEntityModel() {
 		ResourceBlockPermissionImpl resourceBlockPermissionImpl = new ResourceBlockPermissionImpl();
 
@@ -62,6 +63,7 @@ public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlo
 		return resourceBlockPermissionImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		resourceBlockPermissionId = objectInput.readLong();
 		resourceBlockId = objectInput.readLong();
@@ -69,6 +71,7 @@ public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlo
 		actionIds = objectInput.readLong();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(resourceBlockPermissionId);

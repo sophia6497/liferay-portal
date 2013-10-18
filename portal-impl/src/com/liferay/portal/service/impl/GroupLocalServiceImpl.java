@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,16 +17,20 @@ package com.liferay.portal.service.impl;
 import com.liferay.portal.DuplicateGroupException;
 import com.liferay.portal.GroupFriendlyURLException;
 import com.liferay.portal.GroupNameException;
+import com.liferay.portal.GroupParentException;
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.NoSuchGroupException;
 import com.liferay.portal.NoSuchLayoutSetException;
-import com.liferay.portal.NoSuchUserException;
+import com.liferay.portal.PendingBackgroundTaskException;
 import com.liferay.portal.RequiredGroupException;
+import com.liferay.portal.kernel.backgroundtask.BackgroundTaskConstants;
 import com.liferay.portal.kernel.cache.ThreadLocalCachable;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.lar.PortletDataContext;
+import com.liferay.portal.kernel.lar.PortletDataContextFactoryUtil;
 import com.liferay.portal.kernel.lar.PortletDataHandler;
 import com.liferay.portal.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.portal.kernel.log.Log;
@@ -35,21 +39,32 @@ import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
 import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.spring.aop.Skip;
+import com.liferay.portal.kernel.staging.StagingConstants;
 import com.liferay.portal.kernel.staging.StagingUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.GroupThreadLocal;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UniqueList;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.lar.PortletDataContextImpl;
+import com.liferay.portal.kernel.workflow.WorkflowHandler;
+import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
+import com.liferay.portal.kernel.zip.ZipWriter;
 import com.liferay.portal.model.Account;
+import com.liferay.portal.model.BackgroundTask;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
@@ -58,19 +73,23 @@ import com.liferay.portal.model.LayoutConstants;
 import com.liferay.portal.model.LayoutPrototype;
 import com.liferay.portal.model.LayoutSet;
 import com.liferay.portal.model.LayoutSetPrototype;
+import com.liferay.portal.model.LayoutTemplate;
 import com.liferay.portal.model.LayoutTypePortlet;
 import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.Portlet;
+import com.liferay.portal.model.ResourceAction;
 import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.ResourcePermission;
+import com.liferay.portal.model.ResourceTypePermission;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroup;
+import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.model.UserPersonalSite;
+import com.liferay.portal.model.WorkflowDefinitionLink;
 import com.liferay.portal.model.impl.LayoutImpl;
-import com.liferay.portal.security.auth.MembershipPolicy;
-import com.liferay.portal.security.auth.MembershipPolicyFactory;
+import com.liferay.portal.security.auth.CompanyThreadLocal;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
@@ -86,28 +105,29 @@ import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.comparator.GroupNameComparator;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.journal.model.JournalArticle;
+import com.liferay.util.dao.orm.CustomSQLUtil;
 
 import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * The group local service is responsible for accessing, creating, modifying and
- * deleting groups.
- *
- * <p>
- * Groups are mostly used in Liferay as a resource container for permissioning
- * and content scoping purposes as described in {@link
- * com.liferay.portal.model.impl.GroupImpl}.
- * </p>
+ * Provides the local service for accessing, adding, deleting, and updating
+ * groups. Groups are mostly used in Liferay as a resource container for
+ * permissioning and content scoping purposes.
  *
  * <p>
  * Groups are also the entity to which LayoutSets are generally associated.
@@ -176,6 +196,7 @@ import java.util.Set;
  * @author Alexander Chow
  * @author Bruno Farache
  * @author Wesley Gong
+ * @see    com.liferay.portal.model.impl.GroupImpl
  */
 public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
@@ -214,9 +235,11 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         valid friendly URL could not be created for the group
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group addGroup(
 			long userId, long parentGroupId, String className, long classPK,
 			long liveGroupId, String name, String description, int type,
+			boolean manualMembership, int membershipRestriction,
 			String friendlyURL, boolean site, boolean active,
 			ServiceContext serviceContext)
 		throws PortalException, SystemException {
@@ -245,7 +268,9 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		long groupClassNameId = PortalUtil.getClassNameId(Group.class);
 
-		if ((classNameId <= 0) || className.equals(Group.class.getName())) {
+		if (((classNameId <= 0) || className.equals(Group.class.getName())) ||
+			(className.equals(Company.class.getName()) && staging)) {
+
 			className = Group.class.getName();
 			classNameId = groupClassNameId;
 			classPK = groupId;
@@ -273,7 +298,12 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		if (staging) {
 			name = name.concat(" (Staging)");
-			friendlyURL = friendlyURL.concat("-staging");
+			friendlyURL = getFriendlyURL(friendlyURL.concat("-staging"));
+		}
+
+		if (parentGroupId == GroupConstants.DEFAULT_PARENT_GROUP_ID) {
+			membershipRestriction =
+				GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION;
 		}
 
 		if (className.equals(Group.class.getName())) {
@@ -283,7 +313,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				throw new IllegalArgumentException();
 			}
 		}
-		else if (!className.equals(Organization.class.getName()) &&
+		else if (!className.equals(Company.class.getName()) &&
+				 !className.equals(Organization.class.getName()) &&
 				 className.startsWith("com.liferay.portal.model.")) {
 
 			if (site) {
@@ -298,7 +329,13 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		validateFriendlyURL(
 			user.getCompanyId(), groupId, classNameId, classPK, friendlyURL);
 
+		validateParentGroup(groupId, parentGroupId);
+
 		Group group = groupPersistence.create(groupId);
+
+		if (serviceContext != null) {
+			group.setUuid(serviceContext.getUuid());
+		}
 
 		group.setCompanyId(user.getCompanyId());
 		group.setCreatorUserId(userId);
@@ -310,6 +347,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		group.setName(name);
 		group.setDescription(description);
 		group.setType(type);
+		group.setManualMembership(manualMembership);
+		group.setMembershipRestriction(membershipRestriction);
 		group.setFriendlyURL(friendlyURL);
 		group.setSite(site);
 		group.setActive(active);
@@ -394,9 +433,11 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *             found, or if a valid friendly URL could not be created for
 	 *             the group
 	 * @throws     SystemException if a system exception occurred
-	 * @deprecated {@link #addGroup(long, long, String, long, long, String,
-	 *             String, int, String, boolean, boolean, ServiceContext)}
+	 * @deprecated As of 6.2.0, replaced by {@link #addGroup(long, long, String,
+	 *             long, long, String, String, int, boolean, int, String,
+	 *             boolean, boolean, ServiceContext)}
 	 */
+	@Override
 	public Group addGroup(
 			long userId, long parentGroupId, String className, long classPK,
 			String name, String description, int type, String friendlyURL,
@@ -405,8 +446,93 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		return addGroup(
 			userId, parentGroupId, className, classPK,
-			GroupConstants.DEFAULT_LIVE_GROUP_ID, name, description, type,
-			friendlyURL, site, active, serviceContext);
+			GroupConstants.DEFAULT_LIVE_GROUP_ID, name, description, type, true,
+			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, friendlyURL, site,
+			active, serviceContext);
+	}
+
+	/**
+	 * Adds a group.
+	 *
+	 * @param      userId the primary key of the group's creator/owner
+	 * @param      className the entity's class name
+	 * @param      classPK the primary key of the entity's instance
+	 * @param      liveGroupId the primary key of the live group
+	 * @param      name the entity's name
+	 * @param      description the group's description (optionally
+	 *             <code>null</code>)
+	 * @param      type the group's type. For more information see {@link
+	 *             com.liferay.portal.model.GroupConstants}
+	 * @param      friendlyURL the group's friendlyURL (optionally
+	 *             <code>null</code>)
+	 * @param      site whether the group is to be associated with a main site
+	 * @param      active whether the group is active
+	 * @param      serviceContext the service context to be applied (optionally
+	 *             <code>null</code>). Can set asset category IDs and asset tag
+	 *             names for the group, and whether the group is for staging.
+	 * @return     the group
+	 * @throws     PortalException if a creator could not be found, if the
+	 *             group's information was invalid, if a layout could not be
+	 *             found, or if a valid friendly URL could not be created for
+	 *             the group
+	 * @throws     SystemException if a system exception occurred
+	 * @deprecated As of 6.2.0, replaced by {@link #addGroup(long, long, String,
+	 *             long, long, String, String, int, boolean, int, String,
+	 *             boolean, boolean, ServiceContext)}
+	 */
+	@Override
+	public Group addGroup(
+			long userId, String className, long classPK, long liveGroupId,
+			String name, String description, int type, String friendlyURL,
+			boolean site, boolean active, ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		return addGroup(
+			userId, GroupConstants.DEFAULT_PARENT_GROUP_ID, className, classPK,
+			liveGroupId, name, description, type, true,
+			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, friendlyURL, site,
+			active, serviceContext);
+	}
+
+	/**
+	 * Adds the group using the default live group.
+	 *
+	 * @param      userId the primary key of the group's creator/owner
+	 * @param      className the entity's class name
+	 * @param      classPK the primary key of the entity's instance
+	 * @param      name the entity's name
+	 * @param      description the group's description (optionally
+	 *             <code>null</code>)
+	 * @param      type the group's type. For more information see {@link
+	 *             com.liferay.portal.model.GroupConstants}
+	 * @param      friendlyURL the group's friendlyURL
+	 * @param      site whether the group is to be associated with a main site
+	 * @param      active whether the group is active
+	 * @param      serviceContext the service context to be applied (optionally
+	 *             <code>null</code>). Can set asset category IDs and asset tag
+	 *             names for the group, and whether the group is for staging.
+	 * @return     the group
+	 * @throws     PortalException if a creator could not be found, if the
+	 *             group's information was invalid, if a layout could not be
+	 *             found, or if a valid friendly URL could not be created for
+	 *             the group
+	 * @throws     SystemException if a system exception occurred
+	 * @deprecated As of 6.2.0, replaced by {@link #addGroup(long, long, String,
+	 *             long, long, String, String, int, boolean, int, String,
+	 *             boolean, boolean, ServiceContext)}
+	 */
+	@Override
+	public Group addGroup(
+			long userId, String className, long classPK, String name,
+			String description, int type, String friendlyURL, boolean site,
+			boolean active, ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		return addGroup(
+			userId, GroupConstants.DEFAULT_PARENT_GROUP_ID, className, classPK,
+			GroupConstants.DEFAULT_LIVE_GROUP_ID, name, description, type, true,
+			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, friendlyURL, site,
+			active, serviceContext);
 	}
 
 	/**
@@ -416,6 +542,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @param  groupIds the primary keys of the groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addRoleGroups(long roleId, long[] groupIds)
 		throws SystemException {
 
@@ -431,6 +558,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @param  groupIds the primary keys of the groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addUserGroups(long userId, long[] groupIds)
 		throws SystemException {
 
@@ -450,6 +578,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         the group
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public void checkCompanyGroup(long companyId)
 		throws PortalException, SystemException {
@@ -466,39 +595,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				defaultUserId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
 				Company.class.getName(), companyId,
 				GroupConstants.DEFAULT_LIVE_GROUP_ID, GroupConstants.GLOBAL,
-				null, 0, GroupConstants.GLOBAL_FRIENDLY_URL, false, true, null);
-		}
-	}
-
-	public void checkMembershipPolicy(User user) throws SystemException {
-		MembershipPolicy membershipPolicy =
-			MembershipPolicyFactory.getInstance();
-
-		LinkedHashMap<String, Object> groupParams =
-			new LinkedHashMap<String, Object>();
-
-		groupParams.put("inherit", Boolean.FALSE);
-		groupParams.put("site", Boolean.TRUE);
-		groupParams.put("usersGroups", user.getUserId());
-
-		List<Group> groups = search(
-			user.getCompanyId(), groupParams, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS);
-
-		for (Group group : groups) {
-			if (!membershipPolicy.isMembershipAllowed(group, user)) {
-				unsetUserGroups(
-					user.getUserId(), new long[] {group.getGroupId()});
-			}
-		}
-
-		Set<Group> mandatoryGroups = membershipPolicy.getMandatoryGroups(user);
-
-		for (Group group : mandatoryGroups) {
-			if (!hasUserGroup(user.getUserId(), group.getGroupId(), false)) {
-				addUserGroups(
-					user.getUserId(), new long[] {group.getGroupId()});
-			}
+				null, 0, true, GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION,
+				GroupConstants.GLOBAL_FRIENDLY_URL, true, true, null);
 		}
 	}
 
@@ -511,6 +609,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a new system group could not be created
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public void checkSystemGroups(long companyId)
 		throws PortalException, SystemException {
@@ -562,7 +661,9 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				group = groupLocalService.addGroup(
 					defaultUserId, GroupConstants.DEFAULT_PARENT_GROUP_ID,
 					className, classPK, GroupConstants.DEFAULT_LIVE_GROUP_ID,
-					name, null, type, friendlyURL, site, true, null);
+					name, null, type, true,
+					GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, friendlyURL,
+					site, true, null);
 
 				if (name.equals(GroupConstants.USER_PERSONAL_SITE)) {
 					initUserPersonalSitePermissions(group);
@@ -596,8 +697,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *
 	 * <p>
 	 * The group is unstaged and its assets and resources including layouts,
-	 * membership requests, subscriptions, teams, blogs, bookmarks, calendar
-	 * events, image gallery, journals, message boards, polls, shopping related
+	 * membership requests, subscriptions, teams, blogs, bookmarks, events,
+	 * image gallery, journals, message boards, polls, shopping related
 	 * entities, software catalog, and wikis are also deleted.
 	 * </p>
 	 *
@@ -612,170 +713,242 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	public Group deleteGroup(Group group)
 		throws PortalException, SystemException {
 
-		if (PortalUtil.isSystemGroup(group.getName())) {
-			throw new RequiredGroupException(
-				String.valueOf(group.getGroupId()),
-				RequiredGroupException.SYSTEM_GROUP);
-		}
-
-		if (groupPersistence.countByC_P_S(
-				group.getCompanyId(), group.getGroupId(), true) > 0) {
-
-			throw new RequiredGroupException(
-				String.valueOf(group.getGroupId()),
-				RequiredGroupException.PARENT_GROUP);
-		}
-
-		// Layout set branches
-
-		layoutSetBranchLocalService.deleteLayoutSetBranches(
-			group.getGroupId(), true, true);
-
-		layoutSetBranchLocalService.deleteLayoutSetBranches(
-			group.getGroupId(), false, true);
-
-		// Layout sets
-
-		ServiceContext serviceContext = new ServiceContext();
+		boolean deleteInProcess = GroupThreadLocal.isDeleteInProcess();
 
 		try {
-			layoutSetLocalService.deleteLayoutSet(
-				group.getGroupId(), true, serviceContext);
-		}
-		catch (NoSuchLayoutSetException nslse) {
-		}
+			GroupThreadLocal.setDeleteInProcess(true);
 
-		try {
-			layoutSetLocalService.deleteLayoutSet(
-				group.getGroupId(), false, serviceContext);
-		}
-		catch (NoSuchLayoutSetException nslse) {
-		}
+			if (((group.isCompany() && !group.isCompanyStagingGroup()) ||
+				 PortalUtil.isSystemGroup(group.getName())) &&
+				!CompanyThreadLocal.isDeleteInProcess()) {
 
-		// Group roles
+				throw new RequiredGroupException(
+					String.valueOf(group.getGroupId()),
+					RequiredGroupException.SYSTEM_GROUP);
+			}
 
-		userGroupRoleLocalService.deleteUserGroupRolesByGroupId(
-			group.getGroupId());
+			if (groupPersistence.countByC_P_S(
+					group.getCompanyId(), group.getGroupId(), true) > 0) {
 
-		// User group roles
+				throw new RequiredGroupException(
+					String.valueOf(group.getGroupId()),
+					RequiredGroupException.PARENT_GROUP);
+			}
 
-		userGroupGroupRoleLocalService.deleteUserGroupGroupRolesByGroupId(
-			group.getGroupId());
+			List<BackgroundTask> backgroundTasks =
+				backgroundTaskLocalService.getBackgroundTasks(
+					group.getGroupId(),
+					BackgroundTaskConstants.STATUS_IN_PROGRESS);
 
-		// Membership requests
+			if (!backgroundTasks.isEmpty()) {
+				throw new PendingBackgroundTaskException(
+					"Unable to delete group with pending background tasks");
+			}
 
-		membershipRequestLocalService.deleteMembershipRequests(
-			group.getGroupId());
+			// Background tasks
 
-		// Subscriptions
+			backgroundTaskLocalService.deleteGroupBackgroundTasks(
+				group.getGroupId());
 
-		subscriptionLocalService.deleteSubscriptions(
-			group.getCompanyId(), BlogsEntry.class.getName(),
-			group.getGroupId());
-		subscriptionLocalService.deleteSubscriptions(
-			group.getCompanyId(), JournalArticle.class.getName(),
-			group.getGroupId());
+			// Layout set branches
 
-		// Teams
+			layoutSetBranchLocalService.deleteLayoutSetBranches(
+				group.getGroupId(), true, true);
 
-		teamLocalService.deleteTeams(group.getGroupId());
+			layoutSetBranchLocalService.deleteLayoutSetBranches(
+				group.getGroupId(), false, true);
 
-		// Staging
+			// Layout sets
 
-		unscheduleStaging(group);
+			ServiceContext serviceContext = new ServiceContext();
 
-		if (group.hasStagingGroup()) {
 			try {
-				StagingUtil.disableStaging(group, serviceContext);
+				layoutSetLocalService.deleteLayoutSet(
+					group.getGroupId(), true, serviceContext);
 			}
-			catch (Exception e) {
-				_log.error(
-					"Unable to disable staging for group " +
-						group.getGroupId());
+			catch (NoSuchLayoutSetException nslse) {
 			}
+
+			try {
+				layoutSetLocalService.deleteLayoutSet(
+					group.getGroupId(), false, serviceContext);
+			}
+			catch (NoSuchLayoutSetException nslse) {
+			}
+
+			// Group roles
+
+			userGroupRoleLocalService.deleteUserGroupRolesByGroupId(
+				group.getGroupId());
+
+			// User group roles
+
+			userGroupGroupRoleLocalService.deleteUserGroupGroupRolesByGroupId(
+				group.getGroupId());
+
+			// Membership requests
+
+			membershipRequestLocalService.deleteMembershipRequests(
+				group.getGroupId());
+
+			// Portlet preferences
+
+			portletPreferencesLocalService.deletePortletPreferences(
+				group.getGroupId(), PortletKeys.PREFS_OWNER_TYPE_GROUP,
+				PortletKeys.PREFS_PLID_SHARED);
+
+			// Repositories
+
+			repositoryLocalService.deleteRepositories(group.getGroupId());
+
+			// Subscriptions
+
+			subscriptionLocalService.deleteSubscriptions(
+				group.getCompanyId(), BlogsEntry.class.getName(),
+				group.getGroupId());
+			subscriptionLocalService.deleteSubscriptions(
+				group.getCompanyId(), JournalArticle.class.getName(),
+				group.getGroupId());
+
+			// Teams
+
+			teamLocalService.deleteTeams(group.getGroupId());
+
+			// Staging
+
+			unscheduleStaging(group);
+
+			if (group.hasStagingGroup()) {
+				try {
+					StagingUtil.disableStaging(group, serviceContext);
+				}
+				catch (Exception e) {
+					_log.error(
+						"Unable to disable staging for group " +
+							group.getGroupId());
+				}
+			}
+
+			// Themes
+
+			ThemeLoader themeLoader =
+				ThemeLoaderFactory.getDefaultThemeLoader();
+
+			if (themeLoader != null) {
+				String themePath =
+					themeLoader.getFileStorage() + StringPool.SLASH +
+						group.getGroupId();
+
+				FileUtil.deltree(themePath + "-private");
+				FileUtil.deltree(themePath + "-public");
+			}
+
+			// Portlet data
+
+			deletePortletData(group);
+
+			// Asset
+
+			if (group.isRegularSite()) {
+				assetEntryLocalService.deleteEntry(
+					Group.class.getName(), group.getGroupId());
+			}
+
+			assetTagLocalService.deleteGroupTags(group.getGroupId());
+
+			assetVocabularyLocalService.deleteVocabularies(group.getGroupId());
+
+			// Expando
+
+			expandoRowLocalService.deleteRows(group.getGroupId());
+
+			// Shopping
+
+			shoppingCartLocalService.deleteGroupCarts(group.getGroupId());
+			shoppingCategoryLocalService.deleteCategories(group.getGroupId());
+			shoppingCouponLocalService.deleteCoupons(group.getGroupId());
+			shoppingOrderLocalService.deleteOrders(group.getGroupId());
+
+			// Social
+
+			socialActivityLocalService.deleteActivities(group.getGroupId());
+			socialActivitySettingLocalService.deleteActivitySettings(
+				group.getGroupId());
+
+			// Software catalog
+
+			scFrameworkVersionLocalService.deleteFrameworkVersions(
+				group.getGroupId());
+			scProductEntryLocalService.deleteProductEntries(group.getGroupId());
+
+			// Resources
+
+			List<ResourcePermission> resourcePermissions =
+				resourcePermissionPersistence.findByC_LikeP(
+					group.getCompanyId(), String.valueOf(group.getGroupId()));
+
+			for (ResourcePermission resourcePermission : resourcePermissions) {
+				resourcePermissionLocalService.deleteResourcePermission(
+					resourcePermission);
+			}
+
+			if (!group.isStagingGroup() &&
+				(group.isOrganization() || group.isRegularSite())) {
+
+				resourceLocalService.deleteResource(
+					group.getCompanyId(), Group.class.getName(),
+					ResourceConstants.SCOPE_INDIVIDUAL, group.getGroupId());
+			}
+
+			// Workflow
+
+			List<WorkflowHandler> scopeableWorkflowHandlers =
+				WorkflowHandlerRegistryUtil.getScopeableWorkflowHandlers();
+
+			for (WorkflowHandler scopeableWorkflowHandler :
+					scopeableWorkflowHandlers) {
+
+				if (!scopeableWorkflowHandler.isVisible()) {
+					continue;
+				}
+
+				WorkflowDefinitionLink workflowDefinitionLink =
+					workflowDefinitionLinkLocalService.
+						fetchWorkflowDefinitionLink(
+							group.getCompanyId(), group.getGroupId(),
+							scopeableWorkflowHandler.getClassName(), 0, 0,
+							true);
+
+				if (workflowDefinitionLink == null) {
+					continue;
+				}
+
+				workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
+					workflowDefinitionLink);
+			}
+
+			// Group
+
+			if (!group.isStagingGroup() && group.isOrganization() &&
+				group.isSite()) {
+
+				group.setSite(false);
+
+				groupPersistence.update(group);
+			}
+			else {
+				groupPersistence.remove(group);
+			}
+
+			// Permission cache
+
+			PermissionCacheUtil.clearCache();
+
+			return group;
 		}
-
-		// Themes
-
-		ThemeLoader themeLoader = ThemeLoaderFactory.getDefaultThemeLoader();
-
-		if (themeLoader != null) {
-			String themePath =
-				themeLoader.getFileStorage() + StringPool.SLASH +
-					group.getGroupId();
-
-			FileUtil.deltree(themePath + "-private");
-			FileUtil.deltree(themePath + "-public");
+		finally {
+			GroupThreadLocal.setDeleteInProcess(deleteInProcess);
 		}
-
-		// Portlet data
-
-		deletePortletData(group);
-
-		// Asset
-
-		if (group.isRegularSite()) {
-			assetEntryLocalService.deleteEntry(
-				Group.class.getName(), group.getGroupId());
-		}
-
-		assetVocabularyLocalService.deleteVocabularies(group.getGroupId());
-
-		// Shopping
-
-		shoppingCartLocalService.deleteGroupCarts(group.getGroupId());
-		shoppingCategoryLocalService.deleteCategories(group.getGroupId());
-		shoppingCouponLocalService.deleteCoupons(group.getGroupId());
-		shoppingOrderLocalService.deleteOrders(group.getGroupId());
-
-		// Social
-
-		socialActivitySettingLocalService.deleteActivitySettings(
-			group.getGroupId());
-
-		// Software catalog
-
-		scFrameworkVersionLocalService.deleteFrameworkVersions(
-			group.getGroupId());
-		scProductEntryLocalService.deleteProductEntries(group.getGroupId());
-
-		// Resources
-
-		List<ResourcePermission> resourcePermissions =
-			resourcePermissionPersistence.findByC_LikeP(
-				group.getCompanyId(), String.valueOf(group.getGroupId()));
-
-		for (ResourcePermission resourcePermission : resourcePermissions) {
-			resourcePermissionLocalService.deleteResourcePermission(
-				resourcePermission);
-		}
-
-		if (!group.isStagingGroup() &&
-			(group.isOrganization() || group.isRegularSite())) {
-
-			resourceLocalService.deleteResource(
-				group.getCompanyId(), Group.class.getName(),
-				ResourceConstants.SCOPE_INDIVIDUAL, group.getGroupId());
-		}
-
-		// Group
-
-		if (!group.isStagingGroup() && group.isOrganization() &&
-			group.isSite()) {
-
-			group.setSite(false);
-
-			groupPersistence.update(group);
-		}
-		else {
-			groupPersistence.remove(group);
-		}
-
-		// Permission cache
-
-		PermissionCacheUtil.clearCache();
-
-		return group;
 	}
 
 	/**
@@ -783,8 +956,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *
 	 * <p>
 	 * The group is unstaged and its assets and resources including layouts,
-	 * membership requests, subscriptions, teams, blogs, bookmarks, calendar
-	 * events, image gallery, journals, message boards, polls, shopping related
+	 * membership requests, subscriptions, teams, blogs, bookmarks, events,
+	 * image gallery, journals, message boards, polls, shopping related
 	 * entities, software catalog, and wikis are also deleted.
 	 * </p>
 	 *
@@ -804,6 +977,55 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		return deleteGroup(group);
 	}
 
+	@Override
+	public synchronized void disableStaging(long groupId)
+		throws PortalException, SystemException {
+
+		Group group = groupPersistence.findByPrimaryKey(groupId);
+
+		int stagingGroupCount = group.getRemoteStagingGroupCount();
+
+		if (stagingGroupCount > 0) {
+			stagingGroupCount = stagingGroupCount - 1;
+
+			group.setRemoteStagingGroupCount(stagingGroupCount);
+
+			if (stagingGroupCount == 0) {
+				UnicodeProperties typeSettingsProperties =
+					group.getTypeSettingsProperties();
+
+				List<String> keys = new ArrayList<String>();
+
+				for (String key : typeSettingsProperties.keySet()) {
+					if (key.startsWith(StagingConstants.STAGED_PORTLET)) {
+						keys.add(key);
+					}
+				}
+
+				for (String key : keys) {
+					typeSettingsProperties.remove(key);
+				}
+
+				group.setTypeSettingsProperties(typeSettingsProperties);
+			}
+
+			groupPersistence.update(group);
+		}
+	}
+
+	@Override
+	public synchronized void enableStaging(long groupId)
+		throws PortalException, SystemException {
+
+		Group group = groupPersistence.findByPrimaryKey(groupId);
+
+		int stagingGroupCount = group.getRemoteStagingGroupCount() + 1;
+
+		group.setRemoteStagingGroupCount(stagingGroupCount);
+
+		groupPersistence.update(group);
+	}
+
 	/**
 	 * Returns the group with the matching friendly URL.
 	 *
@@ -813,6 +1035,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group fetchFriendlyURLGroup(long companyId, String friendlyURL)
 		throws SystemException {
 
@@ -835,6 +1058,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         <code>null</code> if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Skip
 	public Group fetchGroup(long companyId, String name)
 		throws SystemException {
@@ -857,6 +1081,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getCompanyGroup(long companyId)
 		throws PortalException, SystemException {
 
@@ -885,6 +1110,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the range of groups associated with the company
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getCompanyGroups(long companyId, int start, int end)
 		throws SystemException {
 
@@ -898,6 +1124,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of groups associated with the company
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getCompanyGroupsCount(long companyId) throws SystemException {
 		return groupPersistence.countByCompanyId(companyId);
 	}
@@ -912,6 +1139,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         friendly URL was invalid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getFriendlyURLGroup(long companyId, String friendlyURL)
 		throws PortalException, SystemException {
 
@@ -950,6 +1178,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@Skip
 	public Group getGroup(long companyId, String name)
 		throws PortalException, SystemException {
@@ -964,12 +1193,13 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		return groupLocalService.loadGetGroup(companyId, name);
 	}
 
+	@Override
 	public String getGroupDescriptiveName(Group group, Locale locale)
 		throws PortalException, SystemException {
 
 		String name = group.getName();
 
-		if (group.isCompany()) {
+		if (group.isCompany() && !group.isCompanyStagingGroup()) {
 			name = LanguageUtil.get(locale, "global");
 		}
 		else if (group.isControlPanel()) {
@@ -1002,11 +1232,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 			name = organization.getName();
 
-			Group organizationGroup = organization.getGroup();
-
-			if (organizationGroup.isStaged() && group.isStagingGroup()) {
-				name = name + " (" + LanguageUtil.get(locale, "staging") + ")";
-			}
+			group = organization.getGroup();
 		}
 		else if (group.isUser()) {
 			long userId = group.getClassPK();
@@ -1035,9 +1261,18 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			name = account.getName();
 		}
 
+		if (group.isStaged() && !group.isStagedRemotely() &&
+			group.isStagingGroup()) {
+
+			Group liveGroup = group.getLiveGroup();
+
+			name = liveGroup.getDescriptiveName(locale);
+		}
+
 		return name;
 	}
 
+	@Override
 	public String getGroupDescriptiveName(long groupId, Locale locale)
 		throws PortalException, SystemException {
 
@@ -1047,7 +1282,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Returns all the sites that are children of the parent group.
+	 * Returns all the groups that are direct children of the parent group.
 	 *
 	 * @param  companyId the primary key of the company
 	 * @param  parentGroupId the primary key of the parent group
@@ -1056,6 +1291,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getGroups(
 			long companyId, long parentGroupId, boolean site)
 		throws SystemException {
@@ -1068,6 +1304,52 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	}
 
 	/**
+	 * Returns all the groups that are direct children of the parent group with
+	 * the matching className.
+	 *
+	 * @param  companyId the primary key of the company
+	 * @param  className the class name of the group
+	 * @param  parentGroupId the primary key of the parent group
+	 * @return the matching groups, or <code>null</code> if no matches were
+	 *         found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<Group> getGroups(
+			long companyId, String className, long parentGroupId)
+		throws SystemException {
+
+		long classNameId = PortalUtil.getClassNameId(className);
+
+		return groupPersistence.findByC_C_P(
+			companyId, classNameId, parentGroupId);
+	}
+
+	/**
+	 * Returns a range of all the groups that are direct children of the parent
+	 * group with the matching className.
+	 *
+	 * @param  companyId the primary key of the company
+	 * @param  className the class name of the group
+	 * @param  parentGroupId the primary key of the parent group
+	 * @param  start the lower bound of the range of results
+	 * @param  end the upper bound of the range of results (not inclusive)
+	 * @return the range of matching groups
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<Group> getGroups(
+			long companyId, String className, long parentGroupId, int start,
+			int end)
+		throws SystemException {
+
+		long classNameId = PortalUtil.getClassNameId(className);
+
+		return groupPersistence.findByC_C_P(
+			companyId, classNameId, parentGroupId, start, end);
+	}
+
+	/**
 	 * Returns the groups with the matching primary keys.
 	 *
 	 * @param  groupIds the primary keys of the groups
@@ -1075,6 +1357,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if any one of the groups could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getGroups(long[] groupIds)
 		throws PortalException, SystemException {
 
@@ -1090,6 +1373,48 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	}
 
 	/**
+	 * Returns the number of groups that are direct children of the parent
+	 * group.
+	 *
+	 * @param  companyId the primary key of the company
+	 * @param  parentGroupId the primary key of the parent group
+	 * @param  site whether the group is to be associated with a main site
+	 * @return the number of matching groups
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int getGroupsCount(long companyId, long parentGroupId, boolean site)
+		throws SystemException {
+
+		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
+			return groupPersistence.countByC_S(companyId, site);
+		}
+
+		return groupPersistence.countByC_P_S(companyId, parentGroupId, site);
+	}
+
+	/**
+	 * Returns the number of groups that are direct children of the parent group
+	 * with the matching className.
+	 *
+	 * @param  companyId the primary key of the company
+	 * @param  className the class name of the group
+	 * @param  parentGroupId the primary key of the parent group
+	 * @return the number of matching groups
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int getGroupsCount(
+			long companyId, String className, long parentGroupId)
+		throws SystemException {
+
+		long classNameId = PortalUtil.getClassNameId(className);
+
+		return groupPersistence.countByC_C_P(
+			companyId, classNameId, parentGroupId);
+	}
+
+	/**
 	 * Returns the group associated with the layout.
 	 *
 	 * @param  companyId the primary key of the company
@@ -1098,6 +1423,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getLayoutGroup(long companyId, long plid)
 		throws PortalException, SystemException {
 
@@ -1115,6 +1441,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getLayoutPrototypeGroup(long companyId, long layoutPrototypeId)
 		throws PortalException, SystemException {
 
@@ -1133,6 +1460,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getLayoutSetPrototypeGroup(
 			long companyId, long layoutSetPrototypeId)
 		throws PortalException, SystemException {
@@ -1166,6 +1494,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the range of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getLayoutsGroups(
 			long companyId, long parentGroupId, boolean site, int start,
 			int end)
@@ -1185,6 +1514,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getLayoutsGroupsCount(
 			long companyId, long parentGroupId, boolean site)
 		throws SystemException {
@@ -1198,6 +1528,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return all live groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getLiveGroups() throws SystemException {
 		return groupFinder.findByLiveGroups();
 	}
@@ -1225,6 +1556,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the range of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getNoLayoutsGroups(
 			String className, boolean privateLayout, int start, int end)
 		throws SystemException {
@@ -1243,6 +1575,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         URLs
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getNullFriendlyURLGroups() throws SystemException {
 		return groupFinder.findByNullFriendlyURL();
 	}
@@ -1256,6 +1589,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getOrganizationGroup(long companyId, long organizationId)
 		throws PortalException, SystemException {
 
@@ -1271,6 +1605,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @param  organizations the organizations
 	 * @return the groups associated with the organizations
 	 */
+	@Override
 	public List<Group> getOrganizationsGroups(
 		List<Organization> organizations) {
 
@@ -1294,6 +1629,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the groups related to the organizations
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getOrganizationsRelatedGroups(
 			List<Organization> organizations)
 		throws SystemException {
@@ -1313,14 +1649,27 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Returns all the groups associated with the role.
+	 * Returns the group followed by all its parent groups ordered by closest
+	 * ancestor.
 	 *
-	 * @param  roleId the primary key of the role
-	 * @return the groups associated with the role
+	 * @param  groupId the primary key of the group
+	 * @return the group followed by all its parent groups ordered by closest
+	 *         ancestor
+	 * @throws PortalException if a group with the primary key could not be
+	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
-	public List<Group> getRoleGroups(long roleId) throws SystemException {
-		return rolePersistence.getGroups(roleId);
+	@Override
+	public List<Group> getParentGroups(long groupId)
+		throws PortalException, SystemException {
+
+		if (groupId == GroupConstants.DEFAULT_PARENT_GROUP_ID) {
+			return new ArrayList<Group>();
+		}
+
+		Group group = groupPersistence.findByPrimaryKey(groupId);
+
+		return group.getAncestors();
 	}
 
 	/**
@@ -1331,6 +1680,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching staging group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getStagingGroup(long liveGroupId)
 		throws PortalException, SystemException {
 
@@ -1346,6 +1696,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getUserGroup(long companyId, long userId)
 		throws PortalException, SystemException {
 
@@ -1364,6 +1715,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group getUserGroupGroup(long companyId, long userGroupId)
 		throws PortalException, SystemException {
 
@@ -1371,21 +1723,6 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		return groupPersistence.findByC_C_C(
 			companyId, classNameId, userGroupId);
-	}
-
-	/**
-	 * Returns all the user's site groups and immediate organization groups.
-	 * System and staged groups are not included.
-	 *
-	 * @param  userId the primary key of the user
-	 * @return the user's groups and organization groups
-	 * @throws PortalException if a user with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<Group> getUserGroups(long userId)
-		throws PortalException, SystemException {
-
-		return getUserGroups(userId, false);
 	}
 
 	/**
@@ -1400,6 +1737,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getUserGroups(long userId, boolean inherit)
 		throws PortalException, SystemException {
 
@@ -1434,6 +1772,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getUserGroups(
 			long userId, boolean inherit, int start, int end)
 		throws PortalException, SystemException {
@@ -1455,35 +1794,6 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Returns an ordered range of all the user's site groups and immediate
-	 * organization groups. System and staged groups are not included.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end -
-	 * start</code> instances. <code>start</code> and <code>end</code> are not
-	 * primary keys, they are indexes in the result set. Thus, <code>0</code>
-	 * refers to the first result in the set. Setting both <code>start</code>
-	 * and <code>end</code> to {@link
-	 * com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	 * result set.
-	 * </p>
-	 *
-	 * @param  userId the primary key of the user
-	 * @param  start the lower bound of the range of groups to return
-	 * @param  end the upper bound of the range of groups to return (not
-	 *         inclusive)
-	 * @return the range of the user's groups and organization groups ordered by
-	 *         name
-	 * @throws PortalException if a user with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<Group> getUserGroups(long userId, int start, int end)
-		throws PortalException, SystemException {
-
-		return getUserGroups(userId, false, start, end);
-	}
-
-	/**
 	 * Returns the groups associated with the user groups.
 	 *
 	 * @param  userGroups the user groups
@@ -1492,6 +1802,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getUserGroupsGroups(List<UserGroup> userGroups)
 		throws PortalException, SystemException {
 
@@ -1515,6 +1826,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the groups related to the user groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getUserGroupsRelatedGroups(List<UserGroup> userGroups)
 		throws SystemException {
 
@@ -1558,6 +1870,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         or if another portal exception occurred
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> getUserOrganizationsGroups(
 			long userId, int start, int end)
 		throws PortalException, SystemException {
@@ -1582,19 +1895,66 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		return userOrgsGroups;
 	}
 
-	/**
-	 * Returns <code>true</code> if the group is associated with the role.
-	 *
-	 * @param  roleId the primary key of the role
-	 * @param  groupId the primary key of the group
-	 * @return <code>true</code> if the group is associated with the role;
-	 *         <code>false</code> otherwise
-	 * @throws SystemException if a system exception occurred
-	 */
-	public boolean hasRoleGroup(long roleId, long groupId)
-		throws SystemException {
+	@Override
+	public Group getUserPersonalSiteGroup(long companyId)
+		throws PortalException, SystemException {
 
-		return rolePersistence.containsGroup(roleId, groupId);
+		long classNameId = PortalUtil.getClassNameId(UserPersonalSite.class);
+		long defaultUserId = userLocalService.getDefaultUserId(companyId);
+
+		return groupPersistence.findByC_C_C(
+			companyId, classNameId, defaultUserId);
+	}
+
+	@Override
+	public List<Group> getUserSitesGroups(long userId)
+		throws PortalException, SystemException {
+
+		User user = userPersistence.findByPrimaryKey(userId);
+
+		LinkedHashMap<String, Object> groupParams =
+			new LinkedHashMap<String, Object>();
+
+		groupParams.put("inherit", Boolean.TRUE);
+		groupParams.put("site", Boolean.TRUE);
+		groupParams.put("usersGroups", userId);
+
+		return groupFinder.findByCompanyId(
+			user.getCompanyId(), groupParams, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, new GroupNameComparator(true));
+	}
+
+	@Override
+	public List<Group> getUserSitesGroups(
+			long userId, boolean includeAdministrative)
+		throws PortalException, SystemException {
+
+		if (!includeAdministrative) {
+			return getUserSitesGroups(userId);
+		}
+
+		Set<Group> sites = new HashSet<Group>();
+
+		List<UserGroupRole> userGroupRoles =
+			userGroupRoleLocalService.getUserGroupRoles(userId);
+
+		for (UserGroupRole userGroupRole : userGroupRoles) {
+			Role role = userGroupRole.getRole();
+
+			String roleName = role.getName();
+
+			if (roleName.equals(RoleConstants.SITE_ADMINISTRATOR) ||
+				roleName.equals(RoleConstants.SITE_OWNER)) {
+
+				Group group = userGroupRole.getGroup();
+
+				sites.add(group);
+			}
+		}
+
+		sites.addAll(getUserSitesGroups(userId));
+
+		return new ArrayList<Group>(sites);
 	}
 
 	/**
@@ -1605,6 +1965,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasStagingGroup(long liveGroupId) throws SystemException {
 		if (groupPersistence.fetchByLiveGroupId(liveGroupId) != null) {
 			return true;
@@ -1625,6 +1986,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasUserGroup(long userId, long groupId)
 		throws SystemException {
 
@@ -1644,6 +2006,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean hasUserGroup(long userId, long groupId, boolean inherit)
 		throws SystemException {
 
@@ -1665,6 +2028,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         <code>null</code> if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group loadFetchGroup(long companyId, String name)
 		throws SystemException {
 
@@ -1680,6 +2044,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a matching group could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group loadGetGroup(long companyId, String name)
 		throws PortalException, SystemException {
 
@@ -1700,17 +2065,52 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void rebuildTree(long companyId)
 		throws PortalException, SystemException {
 
-		List<Group> groups = groupPersistence.findByCompanyId(companyId);
+		Deque<Object[]> traces = new LinkedList<Object[]>();
 
-		for (Group group : groups) {
-			String treePath = group.buildTreePath();
+		traces.push(
+			new Object[] {
+				GroupConstants.DEFAULT_PARENT_GROUP_ID, StringPool.SLASH, 0L
+			});
 
-			group.setTreePath(treePath);
+		Object[] trace = null;
 
-			groupPersistence.update(group);
+		while ((trace = traces.poll()) != null) {
+			Long parentGroupId = (Long)trace[0];
+			String parentPath = (String)trace[1];
+			Long previousGroupId = (Long)trace[2];
+
+			List<Long> childGroupIds = groupFinder.findByC_P(
+				companyId, parentGroupId, previousGroupId,
+				PropsValues.MODEL_TREE_REBUILD_QUERY_RESULTS_BATCH_SIZE);
+
+			if (childGroupIds.isEmpty()) {
+				continue;
+			}
+
+			if (childGroupIds.size() ==
+					PropsValues.MODEL_TREE_REBUILD_QUERY_RESULTS_BATCH_SIZE) {
+
+				trace[2] = childGroupIds.get(childGroupIds.size() - 1);
+
+				traces.push(trace);
+			}
+
+			for (long childGroupId : childGroupIds) {
+				String path = parentPath.concat(
+					String.valueOf(childGroupId)).concat(StringPool.SLASH);
+
+				Group group = groupPersistence.findByPrimaryKey(childGroupId);
+
+				group.setTreePath(path);
+
+				groupPersistence.update(group);
+
+				traces.push(new Object[] {childGroupId, path, 0L});
+			}
 		}
 	}
 
@@ -1743,6 +2143,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, LinkedHashMap<String, Object> params, int start,
 			int end)
@@ -1784,13 +2185,15 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long parentGroupId, String keywords,
 			LinkedHashMap<String, Object> params, int start, int end)
 		throws SystemException {
 
 		return search(
-			companyId, parentGroupId, keywords, params, start, end, null);
+			companyId, getClassNameIds(), parentGroupId, keywords, params,
+			start, end, null);
 	}
 
 	/**
@@ -1827,24 +2230,15 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long parentGroupId, String keywords,
 			LinkedHashMap<String, Object> params, int start, int end,
 			OrderByComparator obc)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
-
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
-		}
-
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
-
-		return groupFinder.findByKeywords(
-			companyId, parentGroupId, parentGroupIdComparator, keywords, params,
+		return search(
+			companyId, getClassNameIds(), parentGroupId, keywords, params,
 			start, end, obc);
 	}
 
@@ -1883,6 +2277,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long parentGroupId, String name, String description,
 			LinkedHashMap<String, Object> params, boolean andOperator,
@@ -1890,8 +2285,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		throws SystemException {
 
 		return search(
-			companyId, parentGroupId, name, description, params, andOperator,
-			start, end, null);
+			companyId, getClassNameIds(), parentGroupId, name, description,
+			params, andOperator, start, end, null);
 	}
 
 	/**
@@ -1931,27 +2326,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long parentGroupId, String name, String description,
 			LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end, OrderByComparator obc)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
-
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
-		}
-
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
-
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.findByC_PG_N_D(
-			companyId, parentGroupId, parentGroupIdComparator, name, realName,
-			description, params, andOperator, start, end, obc);
+		return search(
+			companyId, getClassNameIds(), parentGroupId, name, description,
+			params, andOperator, start, end, obc);
 	}
 
 	/**
@@ -1971,8 +2355,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  parentGroupId the primary key of the parent group
 	 * @param  keywords the keywords (space separated), which may occur in the
 	 *         sites's name, or description (optionally <code>null</code>)
@@ -1989,6 +2373,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, long parentGroupId,
 			String keywords, LinkedHashMap<String, Object> params, int start,
@@ -2017,8 +2402,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the group's class name IDs (optionally
-	 *         <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  parentGroupId the primary key of the parent group
 	 * @param  keywords the keywords (space separated), which may occur in the
 	 *         sites's name, or description (optionally <code>null</code>)
@@ -2037,25 +2422,32 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, long parentGroupId,
 			String keywords, LinkedHashMap<String, Object> params, int start,
 			int end, OrderByComparator obc)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
+		String[] keywordsArray = getSearchNames(companyId, keywords);
 
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
+		boolean andOperator = false;
+
+		if (Validator.isNull(keywords)) {
+			andOperator = true;
 		}
 
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
+		if (isUseComplexSQL(classNameIds)) {
+			return groupFinder.findByC_C_PG_N_D(
+				companyId, classNameIds, parentGroupId, keywordsArray,
+				keywordsArray, params, andOperator, start, end, obc);
 		}
 
-		return groupFinder.findByKeywords(
-			companyId, classNameIds, parentGroupId, parentGroupIdComparator,
-			keywords, params, start, end, obc);
+		List<Group> groups = doSearch(
+			companyId, classNameIds, parentGroupId, keywordsArray,
+			keywordsArray, params, andOperator);
+
+		return sort(groups, start, end, obc);
 	}
 
 	/**
@@ -2075,8 +2467,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  parentGroupId the primary key of the parent group
 	 * @param  name the group's name (optionally <code>null</code>)
 	 * @param  description the group's description (optionally
@@ -2096,6 +2488,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, long parentGroupId,
 			String name, String description,
@@ -2125,8 +2518,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the group's class name IDs (optionally
-	 *         <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  parentGroupId the primary key of the parent group
 	 * @param  name the group's name (optionally <code>null</code>)
 	 * @param  description the group's description (optionally
@@ -2148,6 +2541,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, long parentGroupId,
 			String name, String description,
@@ -2155,21 +2549,20 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			int start, int end, OrderByComparator obc)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
+		String[] names = getSearchNames(companyId, name);
+		String[] descriptions = CustomSQLUtil.keywords(description);
 
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
+		if (isUseComplexSQL(classNameIds)) {
+			return groupFinder.findByC_C_PG_N_D(
+				companyId, classNameIds, parentGroupId, names, descriptions,
+				params, andOperator, start, end, obc);
 		}
 
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
+		List<Group> groups = doSearch(
+			companyId, classNameIds, parentGroupId, names, descriptions, params,
+			andOperator);
 
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.findByC_C_PG_N_D(
-			companyId, classNameIds, parentGroupId, parentGroupIdComparator,
-			name, realName, description, params, andOperator, start, end, obc);
+		return sort(groups, start, end, obc);
 	}
 
 	/**
@@ -2188,8 +2581,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  keywords the keywords (space separated), which may occur in the
 	 *         sites's name, or description (optionally <code>null</code>)
 	 * @param  params the finder params (optionally <code>null</code>). To
@@ -2205,13 +2598,15 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, String keywords,
 			LinkedHashMap<String, Object> params, int start, int end)
 		throws SystemException {
 
 		return search(
-			companyId, classNameIds, keywords, params, start, end, null);
+			companyId, classNameIds, GroupConstants.ANY_PARENT_GROUP_ID,
+			keywords, params, start, end, null);
 	}
 
 	/**
@@ -2230,8 +2625,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the group's class name IDs (optionally
-	 *         <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  keywords the keywords (space separated), which may occur in the
 	 *         sites's name, or description (optionally <code>null</code>)
 	 * @param  params the finder params (optionally <code>null</code>). To
@@ -2249,18 +2644,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, String keywords,
 			LinkedHashMap<String, Object> params, int start, int end,
 			OrderByComparator obc)
 		throws SystemException {
 
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
-
-		return groupFinder.findByKeywords(
-			companyId, classNameIds, keywords, params, start, end, obc);
+		return search(
+			companyId, classNameIds, GroupConstants.ANY_PARENT_GROUP_ID,
+			keywords, params, start, end, obc);
 	}
 
 	/**
@@ -2280,8 +2673,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  name the group's name (optionally <code>null</code>)
 	 * @param  description the group's description (optionally
 	 *         <code>null</code>)
@@ -2300,6 +2693,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, String name,
 			String description, LinkedHashMap<String, Object> params,
@@ -2307,8 +2701,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		throws SystemException {
 
 		return search(
-			companyId, classNameIds, name, description, params, andOperator,
-			start, end, null);
+			companyId, classNameIds, GroupConstants.ANY_PARENT_GROUP_ID, name,
+			description, params, andOperator, start, end, null);
 	}
 
 	/**
@@ -2328,8 +2722,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * </p>
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the group's class name IDs (optionally
-	 *         <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  name the group's name (optionally <code>null</code>)
 	 * @param  description the group's description (optionally
 	 *         <code>null</code>)
@@ -2350,21 +2744,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, long[] classNameIds, String name,
 			String description, LinkedHashMap<String, Object> params,
 			boolean andOperator, int start, int end, OrderByComparator obc)
 		throws SystemException {
 
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
-
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.findByC_C_N_D(
-			companyId, classNameIds, name, realName, description, params,
-			andOperator, start, end, obc);
+		return search(
+			companyId, classNameIds, GroupConstants.ANY_PARENT_GROUP_ID, name,
+			description, params, andOperator, start, end, obc);
 	}
 
 	/**
@@ -2397,12 +2786,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
+	@ThreadLocalCachable
 	public List<Group> search(
 			long companyId, String keywords,
 			LinkedHashMap<String, Object> params, int start, int end)
 		throws SystemException {
 
-		return search(companyId, keywords, params, start, end, null);
+		return search(
+			companyId, getClassNameIds(), GroupConstants.ANY_PARENT_GROUP_ID,
+			keywords, params, start, end, null);
 	}
 
 	/**
@@ -2437,18 +2830,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, String keywords,
 			LinkedHashMap<String, Object> params, int start, int end,
 			OrderByComparator obc)
 		throws SystemException {
 
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
-
-		return groupFinder.findByKeywords(
-			companyId, keywords, params, start, end, obc);
+		return search(
+			companyId, getClassNameIds(), GroupConstants.ANY_PARENT_GROUP_ID,
+			keywords, params, start, end, obc);
 	}
 
 	/**
@@ -2485,6 +2876,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by name
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, String name, String description,
 			LinkedHashMap<String, Object> params, boolean andOperator,
@@ -2492,8 +2884,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		throws SystemException {
 
 		return search(
-			companyId, name, description, params, andOperator, start, end,
-			null);
+			companyId, getClassNameIds(), GroupConstants.ANY_PARENT_GROUP_ID,
+			name, description, params, andOperator, start, end, null);
 	}
 
 	/**
@@ -2532,21 +2924,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the matching groups ordered by comparator <code>obc</code>
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Group> search(
 			long companyId, String name, String description,
 			LinkedHashMap<String, Object> params, boolean andOperator,
 			int start, int end, OrderByComparator obc)
 		throws SystemException {
 
-		if (obc == null) {
-			obc = new GroupNameComparator(true);
-		}
-
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.findByC_N_D(
-			companyId, name, realName, description, params, andOperator, start,
-			end, obc);
+		return search(
+			companyId, getClassNameIds(), GroupConstants.ANY_PARENT_GROUP_ID,
+			name, description, params, andOperator, start, end, obc);
 	}
 
 	/**
@@ -2567,21 +2954,15 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, long parentGroupId, String keywords,
 			LinkedHashMap<String, Object> params)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
-
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
-		}
-
-		return groupFinder.countByKeywords(
-			companyId, parentGroupId, parentGroupIdComparator, keywords,
-			params);
+		return searchCount(
+			companyId, getClassNameIds(), parentGroupId, keywords, params);
 	}
 
 	/**
@@ -2606,23 +2987,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, long parentGroupId, String name, String description,
 			LinkedHashMap<String, Object> params, boolean andOperator)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
-
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
-		}
-
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.countByC_PG_N_D(
-			companyId, parentGroupId, parentGroupIdComparator, name, realName,
-			description, params, andOperator);
+		return searchCount(
+			companyId, getClassNameIds(), parentGroupId, name, description,
+			params, andOperator);
 	}
 
 	/**
@@ -2632,8 +3006,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * included.
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  parentGroupId the primary key of the parent group
 	 * @param  keywords the keywords (space separated), which may occur in the
 	 *         sites's name, or description (optionally <code>null</code>)
@@ -2646,21 +3020,32 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, long[] classNameIds, long parentGroupId,
 			String keywords, LinkedHashMap<String, Object> params)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
+		String[] keywordsArray = getSearchNames(companyId, keywords);
 
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
+		boolean andOperator = false;
+
+		if (Validator.isNull(keywords)) {
+			andOperator = true;
 		}
 
-		return groupFinder.countByKeywords(
-			companyId, classNameIds, parentGroupId, parentGroupIdComparator,
-			keywords, params);
+		if (isUseComplexSQL(classNameIds)) {
+			return groupFinder.countByC_C_PG_N_D(
+				companyId, classNameIds, parentGroupId, keywordsArray,
+				keywordsArray, params, andOperator);
+		}
+
+		List<Group> groups = doSearch(
+			companyId, classNameIds, parentGroupId, keywordsArray,
+			keywordsArray, params, andOperator);
+
+		return groups.size();
 	}
 
 	/**
@@ -2670,8 +3055,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * are not included.
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  parentGroupId the primary key of the parent group
 	 * @param  name the group's name (optionally <code>null</code>)
 	 * @param  description the group's description (optionally
@@ -2687,6 +3072,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, long[] classNameIds, long parentGroupId,
@@ -2694,17 +3080,20 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			LinkedHashMap<String, Object> params, boolean andOperator)
 		throws SystemException {
 
-		String parentGroupIdComparator = StringPool.EQUAL;
+		String[] names = getSearchNames(companyId, name);
+		String[] descriptions = CustomSQLUtil.keywords(description);
 
-		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
-			parentGroupIdComparator = StringPool.NOT_EQUAL;
+		if (isUseComplexSQL(classNameIds)) {
+			return groupFinder.countByC_C_PG_N_D(
+				companyId, classNameIds, parentGroupId, names, descriptions,
+				params, andOperator);
 		}
 
-		String realName = getRealName(companyId, name);
+		List<Group> groups = doSearch(
+			companyId, classNameIds, parentGroupId, names, descriptions, params,
+			andOperator);
 
-		return groupFinder.countByC_C_PG_N_D(
-			companyId, classNameIds, parentGroupId, parentGroupIdComparator,
-			name, realName, description, params, andOperator);
+		return groups.size();
 	}
 
 	/**
@@ -2713,8 +3102,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * groups. System and staged groups are not included.
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  keywords the keywords (space separated), which may occur in the
 	 *         sites's name, or description (optionally <code>null</code>)
 	 * @param  params the finder params (optionally <code>null</code>). To
@@ -2726,14 +3115,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, long[] classNameIds, String keywords,
 			LinkedHashMap<String, Object> params)
 		throws SystemException {
 
-		return groupFinder.countByKeywords(
-			companyId, classNameIds, keywords, params);
+		return searchCount(
+			companyId, classNameIds, GroupConstants.ANY_PARENT_GROUP_ID,
+			keywords, params);
 	}
 
 	/**
@@ -2742,8 +3133,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * groups and user groups. System and staged groups are not included.
 	 *
 	 * @param  companyId the primary key of the company
-	 * @param  classNameIds the class names of entities to include in the search
-	 *         (optionally <code>null</code>)
+	 * @param  classNameIds the primary keys of the class names of the entities
+	 *         the groups are related to (optionally <code>null</code>)
 	 * @param  name the group's name (optionally <code>null</code>)
 	 * @param  description the group's description (optionally
 	 *         <code>null</code>)
@@ -2758,6 +3149,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, long[] classNameIds, String name,
@@ -2765,11 +3157,9 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			boolean andOperator)
 		throws SystemException {
 
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.countByC_C_N_D(
-			companyId, classNameIds, name, realName, description, params,
-			andOperator);
+		return searchCount(
+			companyId, classNameIds, GroupConstants.ANY_PARENT_GROUP_ID, name,
+			description, params, andOperator);
 	}
 
 	/**
@@ -2789,13 +3179,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, String keywords,
 			LinkedHashMap<String, Object> params)
 		throws SystemException {
 
-		return groupFinder.countByKeywords(companyId, keywords, params);
+		return searchCount(
+			companyId, getClassNameIds(), GroupConstants.ANY_PARENT_GROUP_ID,
+			keywords, params);
 	}
 
 	/**
@@ -2819,16 +3212,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @return the number of matching groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	@ThreadLocalCachable
 	public int searchCount(
 			long companyId, String name, String description,
 			LinkedHashMap<String, Object> params, boolean andOperator)
 		throws SystemException {
 
-		String realName = getRealName(companyId, name);
-
-		return groupFinder.countByC_N_D(
-			companyId, name, realName, description, params, andOperator);
+		return searchCount(
+			companyId, getClassNameIds(), GroupConstants.ANY_PARENT_GROUP_ID,
+			name, description, params, andOperator);
 	}
 
 	/**
@@ -2839,6 +3232,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @param  groupIds the primary keys of the groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void setRoleGroups(long roleId, long[] groupIds)
 		throws SystemException {
 
@@ -2854,6 +3248,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @param  groupIds the primary keys of the groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetRoleGroups(long roleId, long[] groupIds)
 		throws SystemException {
 
@@ -2869,6 +3264,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @param  groupIds the primary keys of the groups
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void unsetUserGroups(long userId, long[] groupIds)
 		throws SystemException {
 
@@ -2890,6 +3286,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 * @throws PortalException if a user with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void updateAsset(
 			long userId, Group group, long[] assetCategoryIds,
 			String[] assetTagNames)
@@ -2922,6 +3319,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         group
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group updateFriendlyURL(long groupId, String friendlyURL)
 		throws PortalException, SystemException {
 
@@ -2974,10 +3372,11 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         created
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group updateGroup(
 			long groupId, long parentGroupId, String name, String description,
-			int type, String friendlyURL, boolean active,
-			ServiceContext serviceContext)
+			int type, boolean manualMembership, int membershipRestriction,
+			String friendlyURL, boolean active, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		Group group = groupPersistence.findByPrimaryKey(groupId);
@@ -3015,11 +3414,15 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			group.getCompanyId(), group.getGroupId(), group.getClassNameId(),
 			group.getClassPK(), friendlyURL);
 
+		validateParentGroup(group.getGroupId(), parentGroupId);
+
 		group.setParentGroupId(parentGroupId);
 		group.setTreePath(group.buildTreePath());
 		group.setName(name);
 		group.setDescription(description);
 		group.setType(type);
+		group.setManualMembership(manualMembership);
+		group.setMembershipRestriction(membershipRestriction);
 		group.setFriendlyURL(friendlyURL);
 		group.setActive(active);
 
@@ -3031,29 +3434,26 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		// Asset
 
-		if ((serviceContext != null) && group.isSite()) {
-			User user = null;
-
-			try {
-				user = userPersistence.findByPrimaryKey(
-					group.getCreatorUserId());
-
-			}
-			catch (NoSuchUserException nsue1) {
-				try {
-					user = userPersistence.findByPrimaryKey(
-						serviceContext.getUserId());
-				}
-				catch (NoSuchUserException nsue2) {
-					user = userLocalService.getDefaultUser(
-						group.getCompanyId());
-				}
-			}
-
-			updateAsset(
-				user.getUserId(), group, serviceContext.getAssetCategoryIds(),
-				serviceContext.getAssetTagNames());
+		if ((serviceContext == null) || !group.isSite()) {
+			return group;
 		}
+
+		User user = null;
+
+		user = userPersistence.fetchByPrimaryKey(group.getCreatorUserId());
+
+		if (user == null) {
+			user = userPersistence.fetchByPrimaryKey(
+				serviceContext.getUserId());
+		}
+
+		if (user == null) {
+			user = userLocalService.getDefaultUser(group.getCompanyId());
+		}
+
+		updateAsset(
+			user.getUserId(), group, serviceContext.getAssetCategoryIds(),
+			serviceContext.getAssetTagNames());
 
 		return group;
 	}
@@ -3069,10 +3469,35 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group updateGroup(long groupId, String typeSettings)
 		throws PortalException, SystemException {
 
 		Group group = groupPersistence.findByPrimaryKey(groupId);
+
+		UnicodeProperties oldTypeSettingsProperties =
+			group.getTypeSettingsProperties();
+
+		UnicodeProperties typeSettingsProperties = new UnicodeProperties(true);
+
+		typeSettingsProperties.fastLoad(typeSettings);
+
+		String newLanguageIds = typeSettingsProperties.getProperty(
+			PropsKeys.LOCALES);
+
+		if (newLanguageIds != null) {
+			String oldLanguageIds = oldTypeSettingsProperties.getProperty(
+				PropsKeys.LOCALES, StringPool.BLANK);
+
+			String defaultLanguageId = typeSettingsProperties.getProperty(
+				"languageId", LocaleUtil.toLanguageId(LocaleUtil.getDefault()));
+
+			if (!Validator.equals(oldLanguageIds, newLanguageIds)) {
+				validateLanguageIds(defaultLanguageId, newLanguageIds);
+
+				LanguageUtil.resetAvailableGroupLocales(groupId);
+			}
+		}
 
 		group.setTypeSettings(typeSettings);
 
@@ -3091,6 +3516,7 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	 *         found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Group updateSite(long groupId, boolean site)
 		throws PortalException, SystemException {
 
@@ -3129,6 +3555,16 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 	protected void addDefaultGuestPublicLayoutByProperties(Group group)
 		throws PortalException, SystemException {
 
+		List<Portlet> portlets = portletLocalService.getPortlets(
+			group.getCompanyId());
+
+		if (portlets.isEmpty()) {
+
+			// LPS-38457
+
+			return;
+		}
+
 		long defaultUserId = userLocalService.getDefaultUserId(
 			group.getCompanyId());
 		String friendlyURL = getFriendlyURL(
@@ -3149,10 +3585,12 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		layoutTypePortlet.setLayoutTemplateId(
 			0, PropsValues.DEFAULT_GUEST_PUBLIC_LAYOUT_TEMPLATE_ID, false);
 
-		for (int i = 0; i < 10; i++) {
-			String columnId = "column-" + i;
-			String portletIds = PropsUtil.get(
-				PropsKeys.DEFAULT_GUEST_PUBLIC_LAYOUT_COLUMN + i);
+		LayoutTemplate layoutTemplate = layoutTypePortlet.getLayoutTemplate();
+
+		for (String columnId : layoutTemplate.getColumns()) {
+			String keyPrefix = PropsKeys.DEFAULT_GUEST_PUBLIC_LAYOUT_PREFIX;
+
+			String portletIds = PropsUtil.get(keyPrefix.concat(columnId));
 
 			layoutTypePortlet.addPortletIds(
 				0, StringUtil.split(portletIds), columnId, false);
@@ -3235,13 +3673,13 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			PortletDataHandlerKeys.PERMISSIONS,
 			new String[] {Boolean.TRUE.toString()});
 		parameterMap.put(
+			PortletDataHandlerKeys.PORTLET_CONFIGURATION,
+			new String[] {Boolean.TRUE.toString()});
+		parameterMap.put(
 			PortletDataHandlerKeys.PORTLET_DATA,
 			new String[] {Boolean.TRUE.toString()});
 		parameterMap.put(
 			PortletDataHandlerKeys.PORTLET_DATA_CONTROL_DEFAULT,
-			new String[] {Boolean.TRUE.toString()});
-		parameterMap.put(
-			PortletDataHandlerKeys.PORTLET_SETUP,
 			new String[] {Boolean.TRUE.toString()});
 
 		layoutLocalService.importLayouts(
@@ -3262,19 +3700,23 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 			PortletDataHandler portletDataHandler =
 				portlet.getPortletDataHandlerInstance();
 
-			if (portletDataHandler == null) {
+			if ((portletDataHandler == null) ||
+				portletDataHandler.isDataPortalLevel()) {
+
 				continue;
 			}
 
-			PortletDataContext portletDataContext = new PortletDataContextImpl(
-				group.getCompanyId(), group.getGroupId(), null,
-				new HashSet<String>(), null, null, null);
+			PortletDataContext portletDataContext =
+				PortletDataContextFactoryUtil.createExportPortletDataContext(
+					group.getCompanyId(), group.getGroupId(),
+					(Map<String, String[]>)null, (Date)null, (Date)null,
+					(ZipWriter)null);
 
 			// For now, we are going to throw an exception if one portlet data
-			// handler has an exception to ensure that the transaction is
-			// rolled back for data integrity. We may decide that this is not
-			// the best behavior in the future because a bad plugin could
-			// disallow deletion of groups.
+			// handler has an exception to ensure that the transaction is rolled
+			// back for data integrity. We may decide that this is not the best
+			// behavior in the future because a bad plugin could disallow
+			// deletion of groups.
 
 			//try {
 				portletDataHandler.deleteData(
@@ -3287,6 +3729,326 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 							group.getGroupId());
 			}*/
 		}
+	}
+
+	protected List<Group> doSearch(
+			long companyId, long[] classNameIds, long parentGroupId,
+			String[] names, String[] descriptions,
+			LinkedHashMap<String, Object> params, boolean andOperator)
+		throws SystemException {
+
+		boolean parentGroupIdEquals = true;
+
+		if (parentGroupId == GroupConstants.ANY_PARENT_GROUP_ID) {
+			parentGroupIdEquals = false;
+		}
+
+		params = new LinkedHashMap<String, Object>(params);
+
+		Boolean active = (Boolean)params.remove("active");
+		List<Long> excludedGroupIds = (List<Long>)params.remove(
+			"excludedGroupIds");
+		List<Group> groupsTree = (List<Group>)params.remove("groupsTree");
+		Boolean manualMembership = (Boolean)params.remove("manualMembership");
+		Integer membershipRestriction = (Integer)params.remove(
+			"membershipRestriction");
+		Boolean site = (Boolean)params.remove("site");
+		List<Integer> types = (List<Integer>)params.remove("types");
+
+		List<Group> groups = new ArrayList<Group>();
+
+		for (long classNameId : classNameIds) {
+			groups.addAll(groupPersistence.findByC_C(companyId, classNameId));
+		}
+
+		Iterator<Group> iterator = groups.iterator();
+
+		while (iterator.hasNext()) {
+			Group group = iterator.next();
+
+			// Filter by live group ID
+
+			long liveGroupId = group.getLiveGroupId();
+
+			if (liveGroupId != 0) {
+				iterator.remove();
+
+				continue;
+			}
+
+			// Filter by parent group ID
+
+			long groupParentGroupId = group.getParentGroupId();
+
+			if ((parentGroupIdEquals &&
+				 (groupParentGroupId != parentGroupId)) ||
+				(!parentGroupIdEquals &&
+				 (groupParentGroupId == parentGroupId))) {
+
+				iterator.remove();
+
+				continue;
+			}
+
+			// Filter by name and description
+
+			String name = group.getName();
+
+			if (name.equals(GroupConstants.CONTROL_PANEL)) {
+				iterator.remove();
+
+				continue;
+			}
+
+			boolean containsName = matches(name, names);
+			boolean containsDescription = matches(
+				group.getDescription(), descriptions);
+
+			if ((andOperator && (!containsName || !containsDescription)) ||
+				(!andOperator && (!containsName && !containsDescription))) {
+
+				iterator.remove();
+
+				continue;
+			}
+
+			// Filter by active
+
+			if (active != null) {
+				if (active != group.isActive()) {
+					iterator.remove();
+
+					continue;
+				}
+			}
+
+			// Filter by excluded group IDs
+
+			if ((excludedGroupIds != null) &&
+				excludedGroupIds.contains(group.getGroupId())) {
+
+				iterator.remove();
+
+				continue;
+			}
+
+			// Filter by groups tree
+
+			if (groupsTree != null) {
+				String treePath = group.getTreePath();
+
+				boolean matched = false;
+
+				for (Group groupTree : groupsTree) {
+					String groupTreePath = StringUtil.quote(
+						String.valueOf(groupTree.getGroupId()),
+						StringPool.SLASH);
+
+					if (treePath.contains(groupTreePath)) {
+						matched = true;
+
+						break;
+					}
+				}
+
+				if (!matched) {
+					iterator.remove();
+
+					continue;
+				}
+			}
+
+			// Filter by manual membership
+
+			if ((manualMembership != null) &&
+				(manualMembership != group.isManualMembership())) {
+
+				iterator.remove();
+
+				continue;
+			}
+
+			// Filter by membership restriction
+
+			if ((membershipRestriction != null) &&
+				(membershipRestriction != group.getMembershipRestriction())) {
+
+				iterator.remove();
+
+				continue;
+			}
+
+			// Filter by site
+
+			if (site != null) {
+				if (site != group.isSite()) {
+					iterator.remove();
+
+					continue;
+				}
+			}
+
+			// Filter by type and types
+
+			int type = group.getType();
+
+			if (type == 4) {
+				iterator.remove();
+
+				continue;
+			}
+
+			if ((types != null) && !types.contains(type)) {
+				iterator.remove();
+
+				continue;
+			}
+		}
+
+		// Join by role permissions
+
+		List<?> rolePermissions = (List<?>)params.remove("rolePermissions");
+
+		if (rolePermissions != null) {
+			String resourceName = (String)rolePermissions.get(0);
+			Integer resourceScope = (Integer)rolePermissions.get(1);
+			String resourceActionId = (String)rolePermissions.get(2);
+			Long resourceRoleId = (Long)rolePermissions.get(3);
+
+			ResourceAction resourceAction =
+				resourceActionLocalService.fetchResourceAction(
+					resourceName, resourceActionId);
+
+			if (resourceAction != null) {
+				long bitwiseValue = resourceAction.getBitwiseValue();
+
+				if (resourceBlockLocalService.isSupported(resourceName)) {
+					iterator = groups.iterator();
+
+					while (iterator.hasNext()) {
+						Group group = iterator.next();
+
+						ResourceTypePermission resourceTypePermission =
+							resourceTypePermissionPersistence.fetchByC_G_N_R(
+								companyId, group.getGroupId(), resourceName,
+								resourceRoleId);
+
+						if ((resourceTypePermission == null) ||
+							((resourceTypePermission.getActionIds() &
+							  bitwiseValue) == 0)) {
+
+							iterator.remove();
+						}
+					}
+				}
+				else {
+					iterator = groups.iterator();
+
+					while (iterator.hasNext()) {
+						Group group = iterator.next();
+
+						ResourcePermission resourcePermission =
+							resourcePermissionPersistence.fetchByC_N_S_P_R(
+								companyId, resourceName, resourceScope,
+									String.valueOf(group.getGroupId()),
+									resourceRoleId);
+
+						if ((resourcePermission == null) ||
+							((resourcePermission.getActionIds() &
+							  bitwiseValue) == 0)) {
+
+							iterator.remove();
+						}
+					}
+				}
+			}
+		}
+
+		// Join by Groups_Roles
+
+		Long userId = (Long)params.remove("usersGroups");
+
+		if (userId == null) {
+			return groups;
+		}
+
+		Set<Group> resultGroups = new HashSet<Group>(groups);
+
+		Long roleId = (Long)params.remove("groupsRoles");
+
+		if (roleId != null) {
+			resultGroups.retainAll(rolePersistence.getGroups(roleId));
+		}
+
+		// Join by Users_Groups
+
+		resultGroups.retainAll(userPersistence.getGroups(userId));
+
+		boolean inherit = GetterUtil.getBoolean(params.remove("inherit"), true);
+
+		if (inherit) {
+
+			// Join by Users_Orgs
+
+			List<Organization> organizations = userPersistence.getOrganizations(
+				userId);
+
+			for (Organization organization : organizations) {
+				long organizationId = organization.getOrganizationId();
+
+				for (Group group : groups) {
+					if (organizationId == group.getClassPK()) {
+						resultGroups.add(group);
+					}
+				}
+			}
+
+			// Join by Groups_Orgs and Users_Orgs
+
+			for (Organization organization : organizations) {
+				List<Group> tempGroups = new ArrayList<Group>(groups);
+
+				tempGroups.retainAll(
+					organizationPersistence.getGroups(
+						organization.getOrganizationId()));
+
+				if (!tempGroups.isEmpty()) {
+					resultGroups.addAll(tempGroups);
+				}
+			}
+
+			// Join by Groups_UserGroups and Users_UserGroups
+
+			List<UserGroup> userGroups = userPersistence.getUserGroups(userId);
+
+			for (UserGroup userGroup : userGroups) {
+				List<Group> tempGroups = new ArrayList<Group>(groups);
+
+				tempGroups.retainAll(
+					userGroupPersistence.getGroups(userGroup.getUserGroupId()));
+
+				if (!tempGroups.isEmpty()) {
+					resultGroups.addAll(tempGroups);
+				}
+			}
+		}
+
+		if (_log.isDebugEnabled() && !params.isEmpty()) {
+			_log.debug("Unprocessed parameters " + MapUtil.toString(params));
+		}
+
+		return new ArrayList<Group>(resultGroups);
+	}
+
+	protected long[] getClassNameIds() {
+		if (_classNameIds == null) {
+			_classNameIds = new long[] {
+				classNameLocalService.getClassNameId(Group.class),
+				classNameLocalService.getClassNameId(Organization.class)
+			};
+		}
+
+		return _classNameIds;
 	}
 
 	protected String getFriendlyURL(
@@ -3336,35 +4098,42 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		return name + ORGANIZATION_NAME_SUFFIX;
 	}
 
-	protected String getRealName(long companyId, String name)
+	protected String[] getSearchNames(long companyId, String name)
 		throws SystemException {
 
 		if (Validator.isNull(name)) {
-			return name;
+			return new String[] {null};
 		}
 
-		String realName = name;
+		Company company = companyPersistence.fetchByPrimaryKey(companyId);
 
-		try {
-			Company company = companyLocalService.getCompany(companyId);
-
-			Account account = company.getAccount();
-
-			String companyName = account.getName();
-
-			name = StringUtil.replace(
-				name, StringPool.PERCENT, StringPool.BLANK);
-
-			if (companyName.contains(name)) {
-				realName =
-					StringPool.PERCENT + GroupConstants.GUEST +
-						StringPool.PERCENT;
-			}
-		}
-		catch (PortalException pe) {
+		if (company == null) {
+			return CustomSQLUtil.keywords(name);
 		}
 
-		return realName;
+		Account account = accountPersistence.fetchByPrimaryKey(
+			company.getAccountId());
+
+		if (account == null) {
+			return CustomSQLUtil.keywords(name);
+		}
+
+		String companyName = account.getName();
+
+		if (StringUtil.wildcardMatches(
+				companyName, name, CharPool.UNDERLINE, CharPool.PERCENT,
+				CharPool.BACK_SLASH, false)) {
+
+			String[] searchNames = CustomSQLUtil.keywords(name);
+
+			String guestName = StringUtil.quote(
+				StringUtil.toLowerCase(GroupConstants.GUEST),
+				StringPool.PERCENT);
+
+			return ArrayUtil.append(searchNames, guestName);
+		}
+
+		return CustomSQLUtil.keywords(name);
 	}
 
 	protected void initImportLARFile() {
@@ -3399,10 +4168,6 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		Role role = roleLocalService.getRole(
 			group.getCompanyId(), RoleConstants.USER);
 
-		setCompanyPermissions(
-			role, PortletKeys.PORTAL,
-			new String[] {ActionKeys.VIEW_CONTROL_PANEL});
-
 		List<Portlet> portlets = portletLocalService.getPortlets(
 			group.getCompanyId(), false, false);
 
@@ -3422,12 +4187,6 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				ActionKeys.ADD_ENTRY, ActionKeys.PERMISSIONS,
 				ActionKeys.SUBSCRIBE});
 
-		setRolePermissions(
-			group, role, "com.liferay.portlet.calendar",
-			new String[] {
-				ActionKeys.ADD_EVENT, ActionKeys.EXPORT_ALL_EVENTS,
-				ActionKeys.PERMISSIONS});
-
 		// Power User role
 
 		role = roleLocalService.getRole(
@@ -3442,7 +4201,8 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				portlet.getControlPanelEntryCategory());
 
 			if (actions.contains(ActionKeys.ACCESS_IN_CONTROL_PANEL) &&
-				controlPanelEntryCategory.equals(PortletCategoryKeys.CONTENT)) {
+				controlPanelEntryCategory.startsWith(
+					PortletCategoryKeys.SITE_ADMINISTRATION)) {
 
 				setRolePermissions(
 					group, role, portlet.getPortletId(),
@@ -3452,12 +4212,13 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 
 		setRolePermissions(
 			group, role, Group.class.getName(),
-			new String[] {ActionKeys.MANAGE_LAYOUTS});
+			new String[] {
+				ActionKeys.MANAGE_LAYOUTS, ActionKeys.VIEW_SITE_ADMINISTRATION
+			});
 
 		setRolePermissions(group, role, "com.liferay.portlet.asset");
 		setRolePermissions(group, role, "com.liferay.portlet.blogs");
 		setRolePermissions(group, role, "com.liferay.portlet.bookmarks");
-		setRolePermissions(group, role, "com.liferay.portlet.calendar");
 		setRolePermissions(group, role, "com.liferay.portlet.documentlibrary");
 		setRolePermissions(group, role, "com.liferay.portlet.imagegallery");
 		setRolePermissions(group, role, "com.liferay.portlet.messageboards");
@@ -3465,9 +4226,82 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		setRolePermissions(group, role, "com.liferay.portlet.wiki");
 	}
 
+	protected boolean isParentGroup(long parentGroupId, long groupId)
+		throws PortalException, SystemException {
+
+		// Return true if parentGroupId is among the parent groups of groupId
+
+		if (groupId == GroupConstants.DEFAULT_PARENT_GROUP_ID) {
+			return false;
+		}
+
+		Group group = groupPersistence.findByPrimaryKey(groupId);
+
+		String treePath = group.getTreePath();
+
+		if (treePath.contains(
+				StringPool.SLASH + parentGroupId + StringPool.SLASH)) {
+
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 	protected boolean isStaging(ServiceContext serviceContext) {
 		if (serviceContext != null) {
 			return ParamUtil.getBoolean(serviceContext, "staging");
+		}
+
+		return false;
+	}
+
+	protected boolean isUseComplexSQL(long[] classNameIds) {
+		if (ArrayUtil.isEmpty(classNameIds)) {
+			return true;
+		}
+
+		if (_complexSQLClassNameIds == null) {
+			String[] complexSQLClassNames =
+				PropsValues.GROUPS_COMPLEX_SQL_CLASS_NAMES;
+
+			long[] complexSQLClassNameIds =
+				new long[complexSQLClassNames.length];
+
+			for (int i = 0; i < complexSQLClassNames.length; i++) {
+				String complexSQLClassName = complexSQLClassNames[i];
+
+				complexSQLClassNameIds[i] = PortalUtil.getClassNameId(
+					complexSQLClassName);
+			}
+
+			_complexSQLClassNameIds = complexSQLClassNameIds;
+		}
+
+		for (long classNameId : classNameIds) {
+			if (ArrayUtil.contains(_complexSQLClassNameIds, classNameId)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	protected boolean matches(String s, String[] keywords) {
+		if ((keywords == null) ||
+			((keywords.length == 1) && (keywords[0] == null))) {
+
+			return true;
+		}
+
+		for (String keyword : keywords) {
+			if (StringUtil.wildcardMatches(
+					s, keyword, CharPool.UNDERLINE, CharPool.PERCENT,
+					CharPool.BACK_SLASH, false)) {
+
+				return true;
+			}
 		}
 
 		return false;
@@ -3515,6 +4349,19 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 				String.valueOf(group.getGroupId()), role.getRoleId(),
 				actionIds);
 		}
+	}
+
+	protected List<Group> sort(
+		List<Group> groups, int start, int end, OrderByComparator obc) {
+
+		if (obc == null) {
+			obc = new GroupNameComparator(true);
+		}
+
+		Collections.sort(groups, obc);
+
+		return Collections.unmodifiableList(
+			ListUtil.subList(groups, start, end));
 	}
 
 	protected void unscheduleStaging(Group group) {
@@ -3637,6 +4484,42 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		}
 	}
 
+	protected void validateLanguageIds(
+			String defaultLanguageId, String languageIds)
+		throws PortalException {
+
+		Locale[] availableLocales = LanguageUtil.getAvailableLocales();
+
+		String[] availableLanguageIds = LocaleUtil.toLanguageIds(
+			availableLocales);
+
+		String[] languageIdsArray = StringUtil.split(languageIds);
+
+		for (String languageId : languageIdsArray) {
+			if (!ArrayUtil.contains(availableLanguageIds, languageId)) {
+				LocaleException le = new LocaleException(
+					LocaleException.TYPE_DISPLAY_SETTINGS);
+
+				le.setSourceAvailableLocales(availableLocales);
+				le.setTargetAvailableLocales(
+					LocaleUtil.fromLanguageIds(languageIdsArray));
+
+				throw le;
+			}
+		}
+
+		if (!ArrayUtil.contains(languageIdsArray, defaultLanguageId)) {
+			LocaleException le = new LocaleException(
+				LocaleException.TYPE_DEFAULT);
+
+			le.setSourceAvailableLocales(availableLocales);
+			le.setTargetAvailableLocales(
+				LocaleUtil.fromLanguageIds(languageIdsArray));
+
+			throw le;
+		}
+	}
+
 	protected void validateName(
 			long groupId, long companyId, String name, boolean site)
 		throws PortalException, SystemException {
@@ -3667,11 +4550,54 @@ public class GroupLocalServiceImpl extends GroupLocalServiceBaseImpl {
 		}
 	}
 
+	protected void validateParentGroup(long groupId, long parentGroupId)
+		throws PortalException, SystemException {
+
+		if (parentGroupId == GroupConstants.DEFAULT_PARENT_GROUP_ID) {
+			return;
+		}
+
+		if (groupId == parentGroupId) {
+			throw new GroupParentException(
+				GroupParentException.SELF_DESCENDANT);
+		}
+
+		Group group = groupPersistence.fetchByPrimaryKey(groupId);
+
+		if (group == null) {
+			return;
+		}
+
+		if ((groupId > 0) &&
+			(parentGroupId != GroupConstants.DEFAULT_PARENT_GROUP_ID)) {
+
+			// Prevent circular groupal references
+
+			if (isParentGroup(groupId, parentGroupId)) {
+				throw new GroupParentException(
+					GroupParentException.CHILD_DESCENDANT);
+			}
+		}
+
+		Group parentGroup = groupPersistence.findByPrimaryKey(parentGroupId);
+
+		if (group.isStagingGroup()) {
+			Group stagingGroup = parentGroup.getStagingGroup();
+
+			if (groupId == stagingGroup.getGroupId()) {
+				throw new GroupParentException(
+					GroupParentException.STAGING_DESCENDANT);
+			}
+		}
+	}
+
 	protected File publicLARFile;
 
 	private static Log _log = LogFactoryUtil.getLog(
 		GroupLocalServiceImpl.class);
 
+	private volatile long[] _classNameIds;
+	private volatile long[] _complexSQLClassNameIds;
 	private Map<String, Group> _systemGroupsMap = new HashMap<String, Group>();
 
 }

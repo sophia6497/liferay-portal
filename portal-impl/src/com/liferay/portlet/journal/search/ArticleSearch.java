@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -55,20 +55,21 @@ public class ArticleSearch extends SearchContainer<JournalArticle> {
 		headerNames.add("author");
 		headerNames.add(StringPool.BLANK);
 
-		orderableHeaders.put("id", "id");
-		orderableHeaders.put("name", "title");
+		//orderableHeaders.put("id", "id");
+		//orderableHeaders.put("title", "title");
 		//orderableHeaders.put("version", "version");
 		orderableHeaders.put("modified-date", "modified-date");
 		orderableHeaders.put("display-date", "display-date");
 	}
 
 	public ArticleSearch(
-		PortletRequest portletRequest, PortletURL iteratorURL) {
+		PortletRequest portletRequest, int cur, int delta,
+		PortletURL iteratorURL) {
 
 		super(
 			portletRequest, new ArticleDisplayTerms(portletRequest),
-			new ArticleSearchTerms(portletRequest), DEFAULT_CUR_PARAM,
-			DEFAULT_DELTA, iteratorURL, headerNames, null);
+			new ArticleSearchTerms(portletRequest), DEFAULT_CUR_PARAM, cur,
+			delta, iteratorURL, headerNames, null);
 
 		PortletConfig portletConfig =
 			(PortletConfig)portletRequest.getAttribute(
@@ -150,6 +151,12 @@ public class ArticleSearch extends SearchContainer<JournalArticle> {
 		catch (Exception e) {
 			_log.error(e);
 		}
+	}
+
+	public ArticleSearch(
+		PortletRequest portletRequest, PortletURL iteratorURL) {
+
+		this(portletRequest, 0, DEFAULT_DELTA, iteratorURL);
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(ArticleSearch.class);

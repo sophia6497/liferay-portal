@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -72,6 +72,7 @@ public class RepositoryCacheModel implements CacheModel<Repository>,
 		return sb.toString();
 	}
 
+	@Override
 	public Repository toEntityModel() {
 		RepositoryImpl repositoryImpl = new RepositoryImpl();
 
@@ -145,6 +146,7 @@ public class RepositoryCacheModel implements CacheModel<Repository>,
 		return repositoryImpl;
 	}
 
+	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		uuid = objectInput.readUTF();
 		repositoryId = objectInput.readLong();
@@ -162,6 +164,7 @@ public class RepositoryCacheModel implements CacheModel<Repository>,
 		dlFolderId = objectInput.readLong();
 	}
 
+	@Override
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		if (uuid == null) {

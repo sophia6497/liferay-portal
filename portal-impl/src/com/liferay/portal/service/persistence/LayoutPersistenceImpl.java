@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -49,6 +50,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the layout service.
@@ -111,6 +113,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByUuid(String uuid) throws SystemException {
 		return findByUuid(uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -128,6 +131,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByUuid(String uuid, int start, int end)
 		throws SystemException {
 		return findByUuid(uuid, start, end, null);
@@ -147,6 +151,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByUuid(String uuid, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -267,6 +272,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByUuid_First(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -296,6 +302,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByUuid_First(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Layout> list = findByUuid(uuid, 0, 1, orderByComparator);
@@ -316,6 +323,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByUuid_Last(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -345,9 +353,14 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByUuid_Last(String uuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid(uuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByUuid(uuid, count - 1, count, orderByComparator);
 
@@ -368,6 +381,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByUuid_PrevAndNext(long plid, String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -522,6 +536,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param uuid the uuid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid(String uuid) throws SystemException {
 		for (Layout layout : findByUuid(uuid, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null)) {
@@ -536,6 +551,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid(String uuid) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID;
 
@@ -626,6 +642,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByUUID_G_P(String uuid, long groupId,
 		boolean privateLayout) throws NoSuchLayoutException, SystemException {
 		Layout layout = fetchByUUID_G_P(uuid, groupId, privateLayout);
@@ -665,6 +682,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByUUID_G_P(String uuid, long groupId,
 		boolean privateLayout) throws SystemException {
 		return fetchByUUID_G_P(uuid, groupId, privateLayout, true);
@@ -680,6 +698,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByUUID_G_P(String uuid, long groupId,
 		boolean privateLayout, boolean retrieveFromCache)
 		throws SystemException {
@@ -794,6 +813,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layout that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout removeByUUID_G_P(String uuid, long groupId,
 		boolean privateLayout) throws NoSuchLayoutException, SystemException {
 		Layout layout = findByUUID_G_P(uuid, groupId, privateLayout);
@@ -810,6 +830,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUUID_G_P(String uuid, long groupId, boolean privateLayout)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_G_P;
@@ -914,6 +935,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		return findByUuid_C(uuid, companyId, QueryUtil.ALL_POS,
@@ -934,6 +956,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByUuid_C(String uuid, long companyId, int start,
 		int end) throws SystemException {
 		return findByUuid_C(uuid, companyId, start, end, null);
@@ -954,6 +977,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByUuid_C(String uuid, long companyId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -1084,6 +1108,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -1117,6 +1142,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByUuid_C_First(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Layout> list = findByUuid_C(uuid, companyId, 0, 1,
@@ -1139,6 +1165,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -1172,9 +1199,14 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByUuid_C_Last(String uuid, long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid_C(uuid, companyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByUuid_C(uuid, companyId, count - 1, count,
 				orderByComparator);
@@ -1197,6 +1229,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByUuid_C_PrevAndNext(long plid, String uuid,
 		long companyId, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -1357,6 +1390,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param companyId the company ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		for (Layout layout : findByUuid_C(uuid, companyId, QueryUtil.ALL_POS,
@@ -1373,6 +1407,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByUuid_C(String uuid, long companyId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID_C;
@@ -1470,6 +1505,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByGroupId(long groupId) throws SystemException {
 		return findByGroupId(groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -1487,6 +1523,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByGroupId(long groupId, int start, int end)
 		throws SystemException {
 		return findByGroupId(groupId, start, end, null);
@@ -1506,6 +1543,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByGroupId(long groupId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -1612,6 +1650,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByGroupId_First(long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -1641,6 +1680,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByGroupId_First(long groupId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Layout> list = findByGroupId(groupId, 0, 1, orderByComparator);
@@ -1661,6 +1701,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByGroupId_Last(long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -1690,9 +1731,14 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByGroupId_Last(long groupId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByGroupId(groupId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByGroupId(groupId, count - 1, count,
 				orderByComparator);
@@ -1714,6 +1760,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByGroupId_PrevAndNext(long plid, long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -1855,6 +1902,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByGroupId(long groupId)
 		throws SystemException {
 		return filterFindByGroupId(groupId, QueryUtil.ALL_POS,
@@ -1874,6 +1922,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByGroupId(long groupId, int start, int end)
 		throws SystemException {
 		return filterFindByGroupId(groupId, start, end, null);
@@ -1893,6 +1942,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByGroupId(long groupId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -1925,11 +1975,11 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -1983,6 +2033,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] filterFindByGroupId_PrevAndNext(long plid, long groupId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -2163,6 +2214,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param groupId the group ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByGroupId(long groupId) throws SystemException {
 		for (Layout layout : findByGroupId(groupId, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null)) {
@@ -2177,6 +2229,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByGroupId(long groupId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_GROUPID;
 
@@ -2229,6 +2282,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByGroupId(long groupId) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
 			return countByGroupId(groupId);
@@ -2301,6 +2355,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByCompanyId(long companyId)
 		throws SystemException {
 		return findByCompanyId(companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
@@ -2320,6 +2375,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByCompanyId(long companyId, int start, int end)
 		throws SystemException {
 		return findByCompanyId(companyId, start, end, null);
@@ -2339,6 +2395,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByCompanyId(long companyId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -2445,6 +2502,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByCompanyId_First(long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -2474,6 +2532,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByCompanyId_First(long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Layout> list = findByCompanyId(companyId, 0, 1, orderByComparator);
@@ -2494,6 +2553,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByCompanyId_Last(long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -2523,9 +2583,14 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByCompanyId_Last(long companyId,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByCompanyId(companyId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByCompanyId(companyId, count - 1, count,
 				orderByComparator);
@@ -2547,6 +2612,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByCompanyId_PrevAndNext(long plid, long companyId,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -2687,6 +2753,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param companyId the company ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByCompanyId(long companyId) throws SystemException {
 		for (Layout layout : findByCompanyId(companyId, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null)) {
@@ -2701,6 +2768,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByCompanyId(long companyId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_COMPANYID;
 
@@ -2765,6 +2833,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByIconImageId(long iconImageId)
 		throws NoSuchLayoutException, SystemException {
 		Layout layout = fetchByIconImageId(iconImageId);
@@ -2796,6 +2865,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByIconImageId(long iconImageId)
 		throws SystemException {
 		return fetchByIconImageId(iconImageId, true);
@@ -2809,6 +2879,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByIconImageId(long iconImageId, boolean retrieveFromCache)
 		throws SystemException {
 		Object[] finderArgs = new Object[] { iconImageId };
@@ -2900,6 +2971,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layout that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout removeByIconImageId(long iconImageId)
 		throws NoSuchLayoutException, SystemException {
 		Layout layout = findByIconImageId(iconImageId);
@@ -2914,6 +2986,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByIconImageId(long iconImageId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_ICONIMAGEID;
 
@@ -2993,6 +3066,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByLayoutPrototypeUuid(String layoutPrototypeUuid)
 		throws SystemException {
 		return findByLayoutPrototypeUuid(layoutPrototypeUuid,
@@ -3012,6 +3086,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByLayoutPrototypeUuid(String layoutPrototypeUuid,
 		int start, int end) throws SystemException {
 		return findByLayoutPrototypeUuid(layoutPrototypeUuid, start, end, null);
@@ -3031,6 +3106,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByLayoutPrototypeUuid(String layoutPrototypeUuid,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -3157,6 +3233,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByLayoutPrototypeUuid_First(String layoutPrototypeUuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -3187,6 +3264,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByLayoutPrototypeUuid_First(String layoutPrototypeUuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Layout> list = findByLayoutPrototypeUuid(layoutPrototypeUuid, 0,
@@ -3208,6 +3286,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByLayoutPrototypeUuid_Last(String layoutPrototypeUuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -3238,9 +3317,14 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByLayoutPrototypeUuid_Last(String layoutPrototypeUuid,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByLayoutPrototypeUuid(layoutPrototypeUuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByLayoutPrototypeUuid(layoutPrototypeUuid,
 				count - 1, count, orderByComparator);
@@ -3262,6 +3346,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByLayoutPrototypeUuid_PrevAndNext(long plid,
 		String layoutPrototypeUuid, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -3417,6 +3502,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param layoutPrototypeUuid the layout prototype uuid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByLayoutPrototypeUuid(String layoutPrototypeUuid)
 		throws SystemException {
 		for (Layout layout : findByLayoutPrototypeUuid(layoutPrototypeUuid,
@@ -3432,6 +3518,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByLayoutPrototypeUuid(String layoutPrototypeUuid)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_LAYOUTPROTOTYPEUUID;
@@ -3532,6 +3619,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findBySourcePrototypeLayoutUuid(
 		String sourcePrototypeLayoutUuid) throws SystemException {
 		return findBySourcePrototypeLayoutUuid(sourcePrototypeLayoutUuid,
@@ -3551,6 +3639,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findBySourcePrototypeLayoutUuid(
 		String sourcePrototypeLayoutUuid, int start, int end)
 		throws SystemException {
@@ -3572,6 +3661,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findBySourcePrototypeLayoutUuid(
 		String sourcePrototypeLayoutUuid, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -3698,6 +3788,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findBySourcePrototypeLayoutUuid_First(
 		String sourcePrototypeLayoutUuid, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -3728,6 +3819,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchBySourcePrototypeLayoutUuid_First(
 		String sourcePrototypeLayoutUuid, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -3750,6 +3842,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findBySourcePrototypeLayoutUuid_Last(
 		String sourcePrototypeLayoutUuid, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -3780,10 +3873,15 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchBySourcePrototypeLayoutUuid_Last(
 		String sourcePrototypeLayoutUuid, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countBySourcePrototypeLayoutUuid(sourcePrototypeLayoutUuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findBySourcePrototypeLayoutUuid(sourcePrototypeLayoutUuid,
 				count - 1, count, orderByComparator);
@@ -3805,6 +3903,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findBySourcePrototypeLayoutUuid_PrevAndNext(long plid,
 		String sourcePrototypeLayoutUuid, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -3960,6 +4059,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param sourcePrototypeLayoutUuid the source prototype layout uuid
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeBySourcePrototypeLayoutUuid(
 		String sourcePrototypeLayoutUuid) throws SystemException {
 		for (Layout layout : findBySourcePrototypeLayoutUuid(
@@ -3976,6 +4076,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countBySourcePrototypeLayoutUuid(
 		String sourcePrototypeLayoutUuid) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_SOURCEPROTOTYPELAYOUTUUID;
@@ -4072,6 +4173,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P(long groupId, boolean privateLayout)
 		throws SystemException {
 		return findByG_P(groupId, privateLayout, QueryUtil.ALL_POS,
@@ -4092,6 +4194,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P(long groupId, boolean privateLayout,
 		int start, int end) throws SystemException {
 		return findByG_P(groupId, privateLayout, start, end, null);
@@ -4112,6 +4215,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P(long groupId, boolean privateLayout,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -4229,6 +4333,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_First(long groupId, boolean privateLayout,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -4263,6 +4368,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_First(long groupId, boolean privateLayout,
 		OrderByComparator orderByComparator) throws SystemException {
 		List<Layout> list = findByG_P(groupId, privateLayout, 0, 1,
@@ -4285,6 +4391,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_Last(long groupId, boolean privateLayout,
 		OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -4319,9 +4426,14 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_Last(long groupId, boolean privateLayout,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByG_P(groupId, privateLayout);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByG_P(groupId, privateLayout, count - 1, count,
 				orderByComparator);
@@ -4344,6 +4456,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByG_P_PrevAndNext(long plid, long groupId,
 		boolean privateLayout, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -4491,6 +4604,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P(long groupId, boolean privateLayout)
 		throws SystemException {
 		return filterFindByG_P(groupId, privateLayout, QueryUtil.ALL_POS,
@@ -4511,6 +4625,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P(long groupId, boolean privateLayout,
 		int start, int end) throws SystemException {
 		return filterFindByG_P(groupId, privateLayout, start, end, null);
@@ -4531,6 +4646,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P(long groupId, boolean privateLayout,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -4567,11 +4683,11 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -4628,6 +4744,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] filterFindByG_P_PrevAndNext(long plid, long groupId,
 		boolean privateLayout, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -4814,6 +4931,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param privateLayout the private layout
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_P(long groupId, boolean privateLayout)
 		throws SystemException {
 		for (Layout layout : findByG_P(groupId, privateLayout,
@@ -4830,6 +4948,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P(long groupId, boolean privateLayout)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P;
@@ -4888,6 +5007,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_P(long groupId, boolean privateLayout)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -4964,6 +5084,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_L(long groupId, boolean privateLayout, long layoutId)
 		throws NoSuchLayoutException, SystemException {
 		Layout layout = fetchByG_P_L(groupId, privateLayout, layoutId);
@@ -5003,6 +5124,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_L(long groupId, boolean privateLayout,
 		long layoutId) throws SystemException {
 		return fetchByG_P_L(groupId, privateLayout, layoutId, true);
@@ -5018,6 +5140,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_L(long groupId, boolean privateLayout,
 		long layoutId, boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { groupId, privateLayout, layoutId };
@@ -5116,6 +5239,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layout that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout removeByG_P_L(long groupId, boolean privateLayout,
 		long layoutId) throws NoSuchLayoutException, SystemException {
 		Layout layout = findByG_P_L(groupId, privateLayout, layoutId);
@@ -5132,6 +5256,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P_L(long groupId, boolean privateLayout, long layoutId)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_L;
@@ -5227,6 +5352,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId) throws SystemException {
 		return findByG_P_P(groupId, privateLayout, parentLayoutId,
@@ -5248,6 +5374,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId, int start, int end) throws SystemException {
 		return findByG_P_P(groupId, privateLayout, parentLayoutId, start, end,
@@ -5270,6 +5397,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -5393,6 +5521,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_P_First(long groupId, boolean privateLayout,
 		long parentLayoutId, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -5431,6 +5560,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_P_First(long groupId, boolean privateLayout,
 		long parentLayoutId, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -5455,6 +5585,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_P_Last(long groupId, boolean privateLayout,
 		long parentLayoutId, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -5493,10 +5624,15 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_P_Last(long groupId, boolean privateLayout,
 		long parentLayoutId, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_P_P(groupId, privateLayout, parentLayoutId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByG_P_P(groupId, privateLayout, parentLayoutId,
 				count - 1, count, orderByComparator);
@@ -5520,6 +5656,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByG_P_P_PrevAndNext(long plid, long groupId,
 		boolean privateLayout, long parentLayoutId,
 		OrderByComparator orderByComparator)
@@ -5673,6 +5810,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId) throws SystemException {
 		return filterFindByG_P_P(groupId, privateLayout, parentLayoutId,
@@ -5694,6 +5832,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId, int start, int end) throws SystemException {
 		return filterFindByG_P_P(groupId, privateLayout, parentLayoutId, start,
@@ -5716,6 +5855,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
@@ -5754,11 +5894,11 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -5818,6 +5958,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] filterFindByG_P_P_PrevAndNext(long plid, long groupId,
 		boolean privateLayout, long parentLayoutId,
 		OrderByComparator orderByComparator)
@@ -6011,6 +6152,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param parentLayoutId the parent layout ID
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId) throws SystemException {
 		for (Layout layout : findByG_P_P(groupId, privateLayout,
@@ -6028,6 +6170,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_P;
@@ -6093,6 +6236,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_P_P(long groupId, boolean privateLayout,
 		long parentLayoutId) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -6174,6 +6318,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_F(long groupId, boolean privateLayout,
 		String friendlyURL) throws NoSuchLayoutException, SystemException {
 		Layout layout = fetchByG_P_F(groupId, privateLayout, friendlyURL);
@@ -6213,6 +6358,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_F(long groupId, boolean privateLayout,
 		String friendlyURL) throws SystemException {
 		return fetchByG_P_F(groupId, privateLayout, friendlyURL, true);
@@ -6228,6 +6374,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_F(long groupId, boolean privateLayout,
 		String friendlyURL, boolean retrieveFromCache)
 		throws SystemException {
@@ -6342,6 +6489,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layout that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout removeByG_P_F(long groupId, boolean privateLayout,
 		String friendlyURL) throws NoSuchLayoutException, SystemException {
 		Layout layout = findByG_P_F(groupId, privateLayout, friendlyURL);
@@ -6358,6 +6506,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P_F(long groupId, boolean privateLayout,
 		String friendlyURL) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_F;
@@ -6470,6 +6619,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P_T(long groupId, boolean privateLayout,
 		String type) throws SystemException {
 		return findByG_P_T(groupId, privateLayout, type, QueryUtil.ALL_POS,
@@ -6491,6 +6641,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P_T(long groupId, boolean privateLayout,
 		String type, int start, int end) throws SystemException {
 		return findByG_P_T(groupId, privateLayout, type, start, end, null);
@@ -6512,6 +6663,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findByG_P_T(long groupId, boolean privateLayout,
 		String type, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -6649,6 +6801,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_T_First(long groupId, boolean privateLayout,
 		String type, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -6687,6 +6840,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_T_First(long groupId, boolean privateLayout,
 		String type, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -6711,6 +6865,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_T_Last(long groupId, boolean privateLayout,
 		String type, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -6749,10 +6904,15 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the last matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_T_Last(long groupId, boolean privateLayout,
 		String type, OrderByComparator orderByComparator)
 		throws SystemException {
 		int count = countByG_P_T(groupId, privateLayout, type);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Layout> list = findByG_P_T(groupId, privateLayout, type,
 				count - 1, count, orderByComparator);
@@ -6776,6 +6936,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] findByG_P_T_PrevAndNext(long plid, long groupId,
 		boolean privateLayout, String type, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -6942,6 +7103,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P_T(long groupId, boolean privateLayout,
 		String type) throws SystemException {
 		return filterFindByG_P_T(groupId, privateLayout, type,
@@ -6963,6 +7125,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P_T(long groupId, boolean privateLayout,
 		String type, int start, int end) throws SystemException {
 		return filterFindByG_P_T(groupId, privateLayout, type, start, end, null);
@@ -6984,6 +7147,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> filterFindByG_P_T(long groupId, boolean privateLayout,
 		String type, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -7016,15 +7180,15 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		boolean bindType = false;
 
 		if (type == null) {
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_1);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_1_SQL);
 		}
 		else if (type.equals(StringPool.BLANK)) {
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_3);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_3_SQL);
 		}
 		else {
 			bindType = true;
 
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_2);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_2_SQL);
 		}
 
 		if (!getDB().isSupportsInlineDistinct()) {
@@ -7034,11 +7198,11 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
 		else {
@@ -7100,6 +7264,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout[] filterFindByG_P_T_PrevAndNext(long plid, long groupId,
 		boolean privateLayout, String type, OrderByComparator orderByComparator)
 		throws NoSuchLayoutException, SystemException {
@@ -7162,15 +7327,15 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		boolean bindType = false;
 
 		if (type == null) {
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_1);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_1_SQL);
 		}
 		else if (type.equals(StringPool.BLANK)) {
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_3);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_3_SQL);
 		}
 		else {
 			bindType = true;
 
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_2);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_2_SQL);
 		}
 
 		if (!getDB().isSupportsInlineDistinct()) {
@@ -7305,6 +7470,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param type the type
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByG_P_T(long groupId, boolean privateLayout, String type)
 		throws SystemException {
 		for (Layout layout : findByG_P_T(groupId, privateLayout, type,
@@ -7322,6 +7488,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P_T(long groupId, boolean privateLayout, String type)
 		throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_T;
@@ -7399,6 +7566,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByG_P_T(long groupId, boolean privateLayout,
 		String type) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled(groupId)) {
@@ -7416,15 +7584,15 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		boolean bindType = false;
 
 		if (type == null) {
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_1);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_1_SQL);
 		}
 		else if (type.equals(StringPool.BLANK)) {
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_3);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_3_SQL);
 		}
 		else {
 			bindType = true;
 
-			query.append(_FINDER_COLUMN_G_P_T_TYPE_2);
+			query.append(_FINDER_COLUMN_G_P_T_TYPE_2_SQL);
 		}
 
 		String sql = InlineSQLHelperUtil.replacePermissionCheck(query.toString(),
@@ -7468,6 +7636,9 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	private static final String _FINDER_COLUMN_G_P_T_TYPE_1 = "layout.type IS NULL";
 	private static final String _FINDER_COLUMN_G_P_T_TYPE_2 = "layout.type = ?";
 	private static final String _FINDER_COLUMN_G_P_T_TYPE_3 = "(layout.type IS NULL OR layout.type = '')";
+	private static final String _FINDER_COLUMN_G_P_T_TYPE_1_SQL = "layout.type_ IS NULL";
+	private static final String _FINDER_COLUMN_G_P_T_TYPE_2_SQL = "layout.type_ = ?";
+	private static final String _FINDER_COLUMN_G_P_T_TYPE_3_SQL = "(layout.type_ IS NULL OR layout.type_ = '')";
 	public static final FinderPath FINDER_PATH_FETCH_BY_G_P_SPLU = new FinderPath(LayoutModelImpl.ENTITY_CACHE_ENABLED,
 			LayoutModelImpl.FINDER_CACHE_ENABLED, LayoutImpl.class,
 			FINDER_CLASS_NAME_ENTITY, "fetchByG_P_SPLU",
@@ -7496,6 +7667,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByG_P_SPLU(long groupId, boolean privateLayout,
 		String sourcePrototypeLayoutUuid)
 		throws NoSuchLayoutException, SystemException {
@@ -7537,6 +7709,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_SPLU(long groupId, boolean privateLayout,
 		String sourcePrototypeLayoutUuid) throws SystemException {
 		return fetchByG_P_SPLU(groupId, privateLayout,
@@ -7553,6 +7726,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the matching layout, or <code>null</code> if a matching layout could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByG_P_SPLU(long groupId, boolean privateLayout,
 		String sourcePrototypeLayoutUuid, boolean retrieveFromCache)
 		throws SystemException {
@@ -7678,6 +7852,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layout that was removed
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout removeByG_P_SPLU(long groupId, boolean privateLayout,
 		String sourcePrototypeLayoutUuid)
 		throws NoSuchLayoutException, SystemException {
@@ -7696,6 +7871,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of matching layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByG_P_SPLU(long groupId, boolean privateLayout,
 		String sourcePrototypeLayoutUuid) throws SystemException {
 		FinderPath finderPath = FINDER_PATH_COUNT_BY_G_P_SPLU;
@@ -7775,11 +7951,16 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	private static final String _FINDER_COLUMN_G_P_SPLU_SOURCEPROTOTYPELAYOUTUUID_3 =
 		"(layout.sourcePrototypeLayoutUuid IS NULL OR layout.sourcePrototypeLayoutUuid = '')";
 
+	public LayoutPersistenceImpl() {
+		setModelClass(Layout.class);
+	}
+
 	/**
 	 * Caches the layout in the entity cache if it is enabled.
 	 *
 	 * @param layout the layout
 	 */
+	@Override
 	public void cacheResult(Layout layout) {
 		EntityCacheUtil.putResult(LayoutModelImpl.ENTITY_CACHE_ENABLED,
 			LayoutImpl.class, layout.getPrimaryKey(), layout);
@@ -7818,6 +7999,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 *
 	 * @param layouts the layouts
 	 */
+	@Override
 	public void cacheResult(List<Layout> layouts) {
 		for (Layout layout : layouts) {
 			if (EntityCacheUtil.getResult(
@@ -8098,6 +8280,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @param plid the primary key for the new layout
 	 * @return the new layout
 	 */
+	@Override
 	public Layout create(long plid) {
 		Layout layout = new LayoutImpl();
 
@@ -8119,6 +8302,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout remove(long plid)
 		throws NoSuchLayoutException, SystemException {
 		return remove((Serializable)plid);
@@ -8442,6 +8626,8 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		layoutImpl.setPlid(layout.getPlid());
 		layoutImpl.setGroupId(layout.getGroupId());
 		layoutImpl.setCompanyId(layout.getCompanyId());
+		layoutImpl.setUserId(layout.getUserId());
+		layoutImpl.setUserName(layout.getUserName());
 		layoutImpl.setCreateDate(layout.getCreateDate());
 		layoutImpl.setModifiedDate(layout.getModifiedDate());
 		layoutImpl.setPrivateLayout(layout.isPrivateLayout());
@@ -8504,6 +8690,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @throws com.liferay.portal.NoSuchLayoutException if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout findByPrimaryKey(long plid)
 		throws NoSuchLayoutException, SystemException {
 		return findByPrimaryKey((Serializable)plid);
@@ -8563,6 +8750,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layout, or <code>null</code> if a layout with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Layout fetchByPrimaryKey(long plid) throws SystemException {
 		return fetchByPrimaryKey((Serializable)plid);
 	}
@@ -8573,6 +8761,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -8589,6 +8778,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the range of layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findAll(int start, int end) throws SystemException {
 		return findAll(start, end, null);
 	}
@@ -8606,6 +8796,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the ordered range of layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Layout> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
 		boolean pagination = true;
@@ -8691,6 +8882,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (Layout layout : findAll()) {
 			remove(layout);
@@ -8703,6 +8895,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	 * @return the number of layouts
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
 				FINDER_ARGS_EMPTY, this);
@@ -8734,6 +8927,11 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		return count.intValue();
 	}
 
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
+	}
+
 	/**
 	 * Initializes the layout persistence.
 	 */
@@ -8748,7 +8946,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<Layout>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -8785,6 +8983,9 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No Layout exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(LayoutPersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"uuid", "type", "hidden"
+			});
 	private static Layout _nullLayout = new LayoutImpl() {
 			@Override
 			public Object clone() {
@@ -8798,6 +8999,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		};
 
 	private static CacheModel<Layout> _nullLayoutCacheModel = new CacheModel<Layout>() {
+			@Override
 			public Layout toEntityModel() {
 				return _nullLayout;
 			}

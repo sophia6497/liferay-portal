@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,10 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link PermissionService}.
- * </p>
+ * Provides a wrapper for {@link PermissionService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       PermissionService
+ * @author Brian Wing Shun Chan
+ * @see PermissionService
  * @generated
  */
 public class PermissionServiceWrapper implements PermissionService,
@@ -34,6 +32,7 @@ public class PermissionServiceWrapper implements PermissionService,
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _permissionService.getBeanIdentifier();
 	}
@@ -43,6 +42,7 @@ public class PermissionServiceWrapper implements PermissionService,
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_permissionService.setBeanIdentifier(beanIdentifier);
 	}
@@ -58,6 +58,7 @@ public class PermissionServiceWrapper implements PermissionService,
 	the permission information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void checkPermission(long groupId, java.lang.String name,
 		long primKey)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -76,6 +77,7 @@ public class PermissionServiceWrapper implements PermissionService,
 	the permission information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void checkPermission(long groupId, java.lang.String name,
 		java.lang.String primKey)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -84,23 +86,25 @@ public class PermissionServiceWrapper implements PermissionService,
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #getWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
 	 */
 	public PermissionService getWrappedPermissionService() {
 		return _permissionService;
 	}
 
 	/**
-	 * @deprecated Renamed to {@link #setWrappedService}
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
 	 */
 	public void setWrappedPermissionService(PermissionService permissionService) {
 		_permissionService = permissionService;
 	}
 
+	@Override
 	public PermissionService getWrappedService() {
 		return _permissionService;
 	}
 
+	@Override
 	public void setWrappedService(PermissionService permissionService) {
 		_permissionService = permissionService;
 	}

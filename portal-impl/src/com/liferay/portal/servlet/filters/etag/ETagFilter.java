@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,9 +14,10 @@
 
 package com.liferay.portal.servlet.filters.etag;
 
-import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
+import com.liferay.portal.kernel.servlet.RestrictedByteBufferCacheServletResponse;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
+import com.liferay.portal.util.PropsValues;
 
 import java.nio.ByteBuffer;
 
@@ -44,23 +45,44 @@ public class ETagFilter extends BasePortalFilter {
 		}
 	}
 
+	protected boolean isEligibleForEtag(int status) {
+		if ((status >= HttpServletResponse.SC_OK) &&
+			(status < HttpServletResponse.SC_MULTIPLE_CHOICES)) {
+
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 	@Override
 	protected void processFilter(
 			HttpServletRequest request, HttpServletResponse response,
 			FilterChain filterChain)
 		throws Exception {
 
-		BufferCacheServletResponse bufferCacheServletResponse =
-			new BufferCacheServletResponse(response);
+		RestrictedByteBufferCacheServletResponse
+			restrictedByteBufferCacheServletResponse =
+				new RestrictedByteBufferCacheServletResponse(
+					response, PropsValues.ETAG_RESPONSE_SIZE_MAX);
 
 		processFilter(
-			ETagFilter.class, request, bufferCacheServletResponse, filterChain);
+			ETagFilter.class, request, restrictedByteBufferCacheServletResponse,
+			filterChain);
 
-		ByteBuffer byteBuffer = bufferCacheServletResponse.getByteBuffer();
+		if (!restrictedByteBufferCacheServletResponse.isOverflowed()) {
+			ByteBuffer byteBuffer =
+				restrictedByteBufferCacheServletResponse.getByteBuffer();
 
-		if (!ETagUtil.processETag(request, response, byteBuffer)) {
-			bufferCacheServletResponse.finishResponse();
-			bufferCacheServletResponse.outputBuffer();
+			if (!isEligibleForEtag(
+					restrictedByteBufferCacheServletResponse.getStatus()) ||
+				!ETagUtil.processETag(request, response, byteBuffer)) {
+
+				restrictedByteBufferCacheServletResponse.finishResponse();
+
+				restrictedByteBufferCacheServletResponse.flushCache();
+			}
 		}
 	}
 

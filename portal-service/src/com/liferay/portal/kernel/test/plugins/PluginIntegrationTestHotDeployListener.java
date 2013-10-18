@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -47,6 +47,7 @@ import org.junit.runner.notification.Failure;
 public class PluginIntegrationTestHotDeployListener
 	extends BaseHotDeployListener {
 
+	@Override
 	public void invokeDeploy(HotDeployEvent hotDeployEvent)
 		throws HotDeployException {
 
@@ -59,6 +60,7 @@ public class PluginIntegrationTestHotDeployListener
 		}
 	}
 
+	@Override
 	public void invokeUndeploy(HotDeployEvent hotDeployEvent)
 		throws HotDeployException {
 
@@ -83,7 +85,9 @@ public class PluginIntegrationTestHotDeployListener
 	protected void doInvokeUndeploy(HotDeployEvent hotDeployEvent)
 		throws Exception {
 
-		_log.debug("Undeploying tests for " + hotDeployEvent);
+		if (_log.isDebugEnabled()) {
+			_log.debug("Undeploying tests for " + hotDeployEvent);
+		}
 	}
 
 	protected List<Class<?>> getAllClassesInIntegrationJar(

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
@@ -50,7 +51,6 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.model.Plugin;
-import com.liferay.portal.util.HttpImpl;
 import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsValues;
 
@@ -68,7 +68,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -79,9 +78,6 @@ import java.util.jar.Manifest;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.lang.time.StopWatch;
 
 /**
@@ -90,11 +86,6 @@ import org.apache.commons.lang.time.StopWatch;
  * @author Sandeep Soni
  */
 public class PluginPackageUtil {
-
-	public static final String REPOSITORY_XML_FILENAME_EXTENSION = "xml";
-
-	public static final String REPOSITORY_XML_FILENAME_PREFIX =
-		"liferay-plugin-repository";
 
 	public static void endPluginPackageInstallation(String preliminaryContext) {
 		_instance._endPluginPackageInstallation(preliminaryContext);
@@ -635,71 +626,61 @@ public class PluginPackageUtil {
 
 		sb.append(repositoryURL);
 		sb.append(StringPool.SLASH);
-		sb.append(REPOSITORY_XML_FILENAME_PREFIX);
+		sb.append(PluginPackage.REPOSITORY_XML_FILENAME_PREFIX);
 		sb.append(StringPool.DASH);
 		sb.append(ReleaseInfo.getVersion());
 		sb.append(StringPool.PERIOD);
-		sb.append(REPOSITORY_XML_FILENAME_EXTENSION);
+		sb.append(PluginPackage.REPOSITORY_XML_FILENAME_EXTENSION);
 
 		String pluginsXmlURL = sb.toString();
 
 		try {
-			HttpImpl httpImpl = (HttpImpl)HttpUtil.getHttp();
+			Http.Options options = new Http.Options();
 
-			HostConfiguration hostConfiguration = httpImpl.getHostConfiguration(
-				pluginsXmlURL);
+			options.setLocation(pluginsXmlURL);
+			options.setPost(false);
 
-			HttpClient httpClient = httpImpl.getClient(hostConfiguration);
+			byte[] bytes = HttpUtil.URLtoByteArray(options);
 
-			httpImpl.proxifyState(httpClient.getState(), hostConfiguration);
+			Http.Response response = options.getResponse();
 
-			GetMethod getFileMethod = new GetMethod(pluginsXmlURL);
+			int responseCode = response.getResponseCode();
 
-			byte[] bytes = null;
-
-			try {
-				int responseCode = httpClient.executeMethod(
-					hostConfiguration, getFileMethod);
-
-				if (responseCode != HttpServletResponse.SC_OK) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"A repository for version " +
-								ReleaseInfo.getVersion() + " was not found. " +
-									"Checking general repository");
-					}
-
-					sb.setIndex(0);
-
-					sb.append(repositoryURL);
-					sb.append(StringPool.SLASH);
-					sb.append(REPOSITORY_XML_FILENAME_PREFIX);
-					sb.append(StringPool.PERIOD);
-					sb.append(REPOSITORY_XML_FILENAME_EXTENSION);
-
-					pluginsXmlURL = sb.toString();
-
-					getFileMethod.releaseConnection();
-
-					getFileMethod = new GetMethod(pluginsXmlURL);
-
-					responseCode = httpClient.executeMethod(
-						hostConfiguration, getFileMethod);
-
-					if (responseCode != HttpServletResponse.SC_OK) {
-						throw new PluginPackageException(
-							"Unable to download file " + pluginsXmlURL +
-								" because of response code " + responseCode);
-					}
+			if (responseCode != HttpServletResponse.SC_OK) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"A repository for version " +
+							ReleaseInfo.getVersion() + " was not found. " +
+								"Checking general repository");
 				}
 
-				bytes = getFileMethod.getResponseBody();
-			}
-			finally {
-				getFileMethod.releaseConnection();
+				sb.setIndex(0);
+
+				sb.append(repositoryURL);
+				sb.append(StringPool.SLASH);
+				sb.append(PluginPackage.REPOSITORY_XML_FILENAME_PREFIX);
+				sb.append(StringPool.PERIOD);
+				sb.append(PluginPackage.REPOSITORY_XML_FILENAME_EXTENSION);
+
+				pluginsXmlURL = sb.toString();
+
+				options = new Http.Options();
+
+				options.setLocation(pluginsXmlURL);
+				options.setPost(false);
+
+				bytes = HttpUtil.URLtoByteArray(options);
+
+				response = options.getResponse();
+
+				if (responseCode != HttpServletResponse.SC_OK) {
+					throw new PluginPackageException(
+						"Unable to download file " + pluginsXmlURL +
+							" because of response code " + responseCode);
+				}
 			}
 
-			if ((bytes != null) && (bytes.length > 0)) {
+			if (ArrayUtil.isNotEmpty(bytes)) {
 				repository = _parseRepositoryXml(
 					new String(bytes), repositoryURL);
 
@@ -710,11 +691,10 @@ public class PluginPackageUtil {
 
 				return repository;
 			}
-			else {
-				_lastUpdateDate = new Date();
 
-				throw new PluginPackageException("Download returned 0 bytes");
-			}
+			_lastUpdateDate = new Date();
+
+			throw new PluginPackageException("Download returned 0 bytes");
 		}
 		catch (MalformedURLException murle) {
 			_repositoryCache.remove(repositoryURL);
@@ -806,7 +786,7 @@ public class PluginPackageUtil {
 	private Date _readDate(String text) {
 		if (Validator.isNotNull(text)) {
 			DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
-				Time.RFC822_FORMAT, Locale.US);
+				Time.RFC822_FORMAT, LocaleUtil.US);
 
 			try {
 				return dateFormat.parse(text);
@@ -860,7 +840,7 @@ public class PluginPackageUtil {
 		}
 
 		for (Element element : parentElement.elements(name)) {
-			String text = element.getText().trim().toLowerCase();
+			String text = StringUtil.toLowerCase(element.getText().trim());
 
 			list.add(text);
 		}
@@ -1319,7 +1299,6 @@ public class PluginPackageUtil {
 					"Unable to load repository " + repositoryURL + " " +
 						ppe.toString());
 			}
-
 		}
 
 		Indexer indexer = IndexerRegistryUtil.getIndexer(PluginPackage.class);
@@ -1411,6 +1390,7 @@ public class PluginPackageUtil {
 
 	private class UpdateAvailableRunner implements Runnable {
 
+		@Override
 		public void run() {
 			try {
 				setUpdateAvailable();

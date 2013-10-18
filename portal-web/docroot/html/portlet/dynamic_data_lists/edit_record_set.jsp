@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,6 @@
 
 <%
 String redirect = ParamUtil.getString(request, "redirect");
-String backURL = ParamUtil.getString(request, "backURL");
 
 String portletResource = ParamUtil.getString(request, "portletResource");
 
@@ -48,7 +47,7 @@ if (ddmStructureId > 0) {
 %>
 
 <liferay-ui:header
-	backURL="<%= backURL %>"
+	backURL="<%= redirect %>"
 	localizeTitle="<%= (recordSet == null) %>"
 	title='<%= (recordSet == null) ? "new-list" : recordSet.getName(locale) %>'
 />
@@ -60,7 +59,6 @@ if (ddmStructureId > 0) {
 <aui:form action="<%= editRecordSetURL %>" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveRecordSet();" %>'>
 	<aui:input name="<%= Constants.CMD %>" type="hidden" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
-	<aui:input name="backURL" type="hidden" value="<%= backURL %>" />
 	<aui:input name="portletResource" type="hidden" value="<%= portletResource %>" />
 	<aui:input name="groupId" type="hidden" value="<%= groupId %>" />
 	<aui:input name="recordSetId" type="hidden" value="<%= recordSetId %>" />
@@ -77,29 +75,17 @@ if (ddmStructureId > 0) {
 	<aui:model-context bean="<%= recordSet %>" model="<%= DDLRecordSet.class %>" />
 
 	<aui:fieldset>
-		<aui:input name="name" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
 
 		<aui:input name="description" />
 
 		<aui:field-wrapper label="data-definition" required="<%= true %>">
-			<span id="<portlet:namespace />ddmStructureNameDisplay">
-
-				<%
-				StringBundler sb = new StringBundler(5);
-
-				sb.append("javascript:");
-				sb.append(renderResponse.getNamespace());
-				sb.append("openDDMStructureSelector('/dynamic_data_mapping/edit_structure', '");
-				sb.append(ddmStructureId);
-				sb.append("');");
-				%>
-
-				<a href="<%= sb.toString() %>"><%= ddmStructureName %></a>
-			</span>
+			<liferay-ui:input-resource id="ddmStructureNameDisplay" url="<%= ddmStructureName %>" />
 
 			<liferay-ui:icon
-				image="add"
+				iconClass="icon-search"
 				label="<%= true %>"
+				linkCssClass="btn"
 				message="select"
 				url='<%= "javascript:" + renderResponse.getNamespace() + "openDDMStructureSelector();" %>'
 			/>
@@ -149,23 +135,33 @@ if (ddmStructureId > 0) {
 </aui:form>
 
 <aui:script>
-	function <portlet:namespace />openDDMStructureSelector(strutsAction, ddmStructureId) {
+	function <portlet:namespace />openDDMStructureSelector() {
 		Liferay.Util.openDDMPortlet(
 			{
-				chooseCallback: '<portlet:namespace />selectDDMStructure',
-				classNameId: '<%= PortalUtil.getClassNameId(DDMStructure.class) %>',
-				classPK: ddmStructureId,
-				ddmResource: '<%= ddmResource %>',
+				basePortletURL: '<%= PortletURLFactoryUtil.create(request, PortletKeys.DYNAMIC_DATA_MAPPING, themeDisplay.getPlid(), PortletRequest.RENDER_PHASE) %>',
+				classPK: <%= ddmStructureId %>,
 				dialog: {
-					width: 820
+					destroyOnHide: true
 				},
+				eventName: '<portlet:namespace />selectDDMStructure',
 				groupId: <%= groupId %>,
-				saveCallback: '<portlet:namespace />selectDDMStructure',
-				storageType: '<%= PropsValues.DYNAMIC_DATA_LISTS_STORAGE_TYPE %>',
-				structureName: 'data-definition',
-				structureType: 'com.liferay.portlet.dynamicdatalists.model.DDLRecordSet',
-				struts_action: strutsAction,
+
+				<%
+				Portlet portlet = PortletLocalServiceUtil.getPortletById(portletDisplay.getId());
+				%>
+
+				refererPortletName: '<%= portlet.getPortletName() %>',
+				refererWebDAVToken: '<%= portlet.getWebDAVStorageToken() %>',
+				showGlobalScope: true,
+				struts_action: '/dynamic_data_mapping/select_structure',
 				title: '<%= UnicodeLanguageUtil.get(pageContext, "data-definitions") %>'
+			},
+			function(event) {
+				var A = AUI();
+
+				A.one('#<portlet:namespace />ddmStructureId').val(event.ddmstructureid);
+
+				A.one('#<portlet:namespace />ddmStructureNameDisplay').val(event.name);
 			}
 		);
 	}
@@ -175,39 +171,6 @@ if (ddmStructureId > 0) {
 
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />selectDDMStructure',
-		function(ddmStructureId, ddmStructureName, dialog) {
-			var A = AUI();
-
-			A.one('#<portlet:namespace />ddmStructureId').val(ddmStructureId);
-
-			var href = [];
-
-			href.push('javascript:<portlet:namespace />openDDMStructureSelector("/dynamic_data_mapping/edit_structure", "');
-			href.push(ddmStructureId);
-			href.push('");');
-
-			var a = A.Node.create('<a />');
-
-			a.setAttribute('href', href.join(''));
-
-			a.append(ddmStructureName);
-
-			A.one('#<portlet:namespace />ddmStructureNameDisplay').setContent(a);
-
-			if (dialog) {
-				dialog.close();
-			}
-		},
-		['aui-base']
-	);
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-	</c:if>
 </aui:script>
 
 <%

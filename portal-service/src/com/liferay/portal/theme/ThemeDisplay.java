@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -53,6 +53,8 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import javax.portlet.PortletURL;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
@@ -238,21 +240,25 @@ public class ThemeDisplay
 		return _mdrRuleGroupInstance;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroup}
+	 */
 	public Group getParentGroup() {
-		return _parentGroup;
+		return getSiteGroup();
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroupId}
+	 */
 	public long getParentGroupId() {
-		return _parentGroupId;
+		return getSiteGroupId();
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroupName}
+	 */
 	public String getParentGroupName() throws PortalException, SystemException {
-		if (_parentGroup == null) {
-			return StringPool.BLANK;
-		}
-		else {
-			return _parentGroup.getDescriptiveName();
-		}
+		return getSiteGroupName();
 	}
 
 	public String getPathApplet() {
@@ -308,7 +314,7 @@ public class ThemeDisplay
 	}
 
 	/**
-	 * @deprecated Use <code>getPathThemeImages</code>.
+	 * @deprecated As of 6.2.0, replaced by {@link #getPathThemeImages}
 	 */
 	public String getPathThemeImage() {
 		return getPathThemeImages();
@@ -347,7 +353,7 @@ public class ThemeDisplay
 	}
 
 	/**
-	 * @deprecated Use <code>getScopeGroupId</code>.
+	 * @deprecated As of 6.2.0, replaced by {@link #getScopeGroupId}
 	 */
 	public long getPortletGroupId() {
 		return getScopeGroupId();
@@ -377,8 +383,16 @@ public class ThemeDisplay
 		return _realUser.getUserId();
 	}
 
+	public long getRefererGroupId() {
+		return _refererGroupId;
+	}
+
 	public long getRefererPlid() {
 		return _refererPlid;
+	}
+
+	public HttpServletRequest getRequest() {
+		return _request;
 	}
 
 	public Group getScopeGroup() {
@@ -389,19 +403,21 @@ public class ThemeDisplay
 		return _scopeGroupId;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroupIdOrLiveGroupId}
+	 */
 	public long getScopeGroupIdOrLiveGroupId()
 		throws PortalException, SystemException {
 
-		return StagingUtil.getLiveGroupId(_scopeGroupId);
+		return getSiteGroupIdOrLiveGroupId();
 	}
 
 	public String getScopeGroupName() throws PortalException, SystemException {
 		if (_scopeGroup == null) {
 			return StringPool.BLANK;
 		}
-		else {
-			return _scopeGroup.getDescriptiveName();
-		}
+
+		return _scopeGroup.getDescriptiveName();
 	}
 
 	public Layout getScopeLayout() throws PortalException, SystemException {
@@ -426,6 +442,32 @@ public class ThemeDisplay
 
 	public String getSessionId() {
 		return _sessionId;
+	}
+
+	public Locale getSiteDefaultLocale() {
+		return _siteDefaultLocale;
+	}
+
+	public Group getSiteGroup() {
+		return _siteGroup;
+	}
+
+	public long getSiteGroupId() {
+		return _siteGroupId;
+	}
+
+	public long getSiteGroupIdOrLiveGroupId()
+		throws PortalException, SystemException {
+
+		return StagingUtil.getLiveGroupId(_siteGroupId);
+	}
+
+	public String getSiteGroupName() throws PortalException, SystemException {
+		if (_siteGroup == null) {
+			return StringPool.BLANK;
+		}
+
+		return _siteGroup.getDescriptiveName();
 	}
 
 	public Theme getTheme() {
@@ -513,6 +555,9 @@ public class ThemeDisplay
 		return _urlLayoutTemplates;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getURLSiteAdministration()}
+	 */
 	public PortletURL getURLManageSiteMemberships() {
 		return _urlManageSiteMemberships;
 	}
@@ -541,14 +586,28 @@ public class ThemeDisplay
 		return _urlSignOut;
 	}
 
-	public String getURLSiteContent() {
-		return _urlSiteContent;
+	public String getURLSiteAdministration() {
+		return _urlSiteAdministration;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getURLSiteAdministration()}
+	 */
+	public String getURLSiteContent() {
+		return getURLSiteAdministration();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public PortletURL getURLSiteMapSettings() {
 		return _urlSiteMapSettings;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getURLSiteAdministration()}
+	 */
 	public PortletURL getURLSiteSettings() {
 		return _urlSiteSettings;
 	}
@@ -589,9 +648,8 @@ public class ThemeDisplay
 		if (getUserId() == getRealUserId()) {
 			return false;
 		}
-		else {
-			return true;
-		}
+
+		return true;
 	}
 
 	public boolean isIncludedJs(String js) {
@@ -602,9 +660,8 @@ public class ThemeDisplay
 
 			return true;
 		}
-		else {
-			return false;
-		}
+
+		return false;
 	}
 
 	public boolean isIncludePortletCssJs() {
@@ -655,6 +712,10 @@ public class ThemeDisplay
 		return _showLayoutTemplatesIcon;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public boolean isShowManageSiteMembershipsIcon() {
 		return _showManageSiteMembershipsIcon;
 	}
@@ -683,14 +744,30 @@ public class ThemeDisplay
 		return _showSignOutIcon;
 	}
 
-	public boolean isShowSiteContentIcon() {
-		return _showSiteContentIcon;
+	public boolean isShowSiteAdministrationIcon() {
+		return _showSiteAdministrationIcon;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
+	public boolean isShowSiteContentIcon() {
+		return isShowSiteAdministrationIcon();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public boolean isShowSiteMapSettingsIcon() {
 		return _showSiteMapSettingsIcon;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public boolean isShowSiteSettingsIcon() {
 		return _showSiteSettingsIcon;
 	}
@@ -743,6 +820,7 @@ public class ThemeDisplay
 		return _widget;
 	}
 
+	@Override
 	public ThemeDisplay merge(ThemeDisplay themeDisplay) {
 		if ((themeDisplay == null) || (themeDisplay == this)) {
 			return this;
@@ -781,7 +859,7 @@ public class ThemeDisplay
 		throws PortalException, SystemException {
 
 		_company = company;
-		_companyGroupId = company.getGroup().getGroupId();
+		_companyGroupId = company.getGroupId();
 
 		setAccount(company.getAccount());
 	}
@@ -918,46 +996,56 @@ public class ThemeDisplay
 		_theme = theme;
 		_colorScheme = colorScheme;
 
-		if ((theme != null) && (colorScheme != null)) {
-			String themeStaticResourcePath = theme.getStaticResourcePath();
+		if ((theme == null) || (colorScheme == null)) {
+			return;
+		}
 
-			String cdnBaseURL = getCDNBaseURL();
+		String themeStaticResourcePath = theme.getStaticResourcePath();
 
-			setPathColorSchemeImages(
-				cdnBaseURL + themeStaticResourcePath +
-					colorScheme.getColorSchemeImagesPath());
+		String cdnBaseURL = getCDNBaseURL();
 
-			String dynamicResourcesHost = getCDNDynamicResourcesHost();
+		setPathColorSchemeImages(
+			cdnBaseURL + themeStaticResourcePath +
+				colorScheme.getColorSchemeImagesPath());
 
-			if (Validator.isNull(dynamicResourcesHost)) {
-				String portalURL = getPortalURL();
+		String dynamicResourcesHost = getCDNDynamicResourcesHost();
 
-				if (getServerName() != null) {
-					try {
-						portalURL = PortalUtil.getPortalURL(getLayout(), this);
-					}
-					catch (Exception e) {
-						_log.error(e, e);
-					}
+		if (Validator.isNull(dynamicResourcesHost)) {
+			String portalURL = getPortalURL();
+
+			if (getServerName() != null) {
+				try {
+					portalURL = PortalUtil.getPortalURL(getLayout(), this);
 				}
-
-				dynamicResourcesHost = portalURL;
+				catch (Exception e) {
+					_log.error(e, e);
+				}
 			}
 
-			setPathThemeCss(
-				dynamicResourcesHost + themeStaticResourcePath +
-					theme.getCssPath());
-
-			setPathThemeImages(
-				cdnBaseURL + themeStaticResourcePath + theme.getImagesPath());
-			setPathThemeJavaScript(
-				cdnBaseURL + themeStaticResourcePath +
-					theme.getJavaScriptPath());
-			setPathThemeRoot(themeStaticResourcePath + theme.getRootPath());
-			setPathThemeTemplates(
-				cdnBaseURL + themeStaticResourcePath +
-					theme.getTemplatesPath());
+			dynamicResourcesHost = portalURL;
 		}
+
+		setPathThemeCss(
+			dynamicResourcesHost + themeStaticResourcePath +
+				theme.getCssPath());
+
+		setPathThemeImages(
+			cdnBaseURL + themeStaticResourcePath + theme.getImagesPath());
+		setPathThemeJavaScript(
+			cdnBaseURL + themeStaticResourcePath +
+				theme.getJavaScriptPath());
+
+		String rootPath = theme.getRootPath();
+
+		if (rootPath.equals(StringPool.SLASH)) {
+			setPathThemeRoot(themeStaticResourcePath);
+		}
+		else {
+			setPathThemeRoot(themeStaticResourcePath + rootPath);
+		}
+
+		setPathThemeTemplates(
+			cdnBaseURL + themeStaticResourcePath + theme.getTemplatesPath());
 	}
 
 	public void setMDRRuleGroupInstance(
@@ -966,17 +1054,11 @@ public class ThemeDisplay
 		_mdrRuleGroupInstance = mdrRuleGroupInstance;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #setSiteGroupId(long)}
+	 */
 	public void setParentGroupId(long parentGroupId) {
-		_parentGroupId = parentGroupId;
-
-		if (_parentGroupId > 0) {
-			try {
-				_parentGroup = GroupLocalServiceUtil.getGroup(_parentGroupId);
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
-		}
+		setSiteGroupId(parentGroupId);
 	}
 
 	public void setPathApplet(String pathApplet) {
@@ -1090,8 +1172,16 @@ public class ThemeDisplay
 		_realUser = realUser;
 	}
 
+	public void setRefererGroupId(long refererGroupId) {
+		_refererGroupId = refererGroupId;
+	}
+
 	public void setRefererPlid(long refererPlid) {
 		_refererPlid = refererPlid;
+	}
+
+	public void setRequest(HttpServletRequest request) {
+		_request = request;
 	}
 
 	public void setScopeGroupId(long scopeGroupId) {
@@ -1177,8 +1267,18 @@ public class ThemeDisplay
 		_showSignOutIcon = showSignOutIcon;
 	}
 
+	public void setShowSiteAdministrationIcon(
+		boolean showSiteAdministrationIcon) {
+
+		_showSiteAdministrationIcon = showSiteAdministrationIcon;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #setShowSiteAdministrationIcon(boolean)}
+	 */
 	public void setShowSiteContentIcon(boolean showSiteContentIcon) {
-		_showSiteContentIcon = showSiteContentIcon;
+		setShowSiteAdministrationIcon(showSiteContentIcon);
 	}
 
 	public void setShowSiteMapSettingsIcon(boolean showSiteMapSettingsIcon) {
@@ -1195,6 +1295,25 @@ public class ThemeDisplay
 
 	public void setSignedIn(boolean signedIn) {
 		_signedIn = signedIn;
+	}
+
+	public void setSiteDefaultLocale(Locale siteDefaultLocale) {
+		_siteDefaultLocale = siteDefaultLocale;
+
+		LocaleThreadLocal.setSiteDefaultLocale(siteDefaultLocale);
+	}
+
+	public void setSiteGroupId(long siteGroupId) {
+		_siteGroupId = siteGroupId;
+
+		if (_siteGroupId > 0) {
+			try {
+				_siteGroup = GroupLocalServiceUtil.getGroup(_siteGroupId);
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+			}
+		}
 	}
 
 	public void setStateExclusive(boolean stateExclusive) {
@@ -1297,8 +1416,16 @@ public class ThemeDisplay
 		_urlSignOut = urlSignOut;
 	}
 
+	public void setURLSiteAdministration(String urlSiteAdministration) {
+		_urlSiteAdministration = urlSiteAdministration;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #setURLSiteAdministration(String)}
+	 */
 	public void setURLSiteContent(String urlSiteContent) {
-		_urlSiteContent = urlSiteContent;
+		setURLSiteAdministration(urlSiteContent);
 	}
 
 	public void setURLSiteMapSettings(PortletURL urlSiteMapSettings) {
@@ -1377,8 +1504,6 @@ public class ThemeDisplay
 	private boolean _lifecycleResource;
 	private Locale _locale;
 	private MDRRuleGroupInstance _mdrRuleGroupInstance;
-	private Group _parentGroup;
-	private long _parentGroupId;
 	private String _pathApplet = StringPool.BLANK;
 	private String _pathCms = StringPool.BLANK;
 	private String _pathColorSchemeImages = StringPool.BLANK;
@@ -1405,7 +1530,9 @@ public class ThemeDisplay
 	private int _realCompanyLogoHeight;
 	private int _realCompanyLogoWidth;
 	private User _realUser;
+	private long _refererGroupId;
 	private long _refererPlid;
+	private transient HttpServletRequest _request;
 	private Group _scopeGroup;
 	private long _scopeGroupId;
 	private boolean _secure;
@@ -1424,11 +1551,14 @@ public class ThemeDisplay
 	private boolean _showPortalIcon;
 	private boolean _showSignInIcon;
 	private boolean _showSignOutIcon;
-	private boolean _showSiteContentIcon;
+	private boolean _showSiteAdministrationIcon;
 	private boolean _showSiteMapSettingsIcon;
 	private boolean _showSiteSettingsIcon;
 	private boolean _showStagingIcon;
 	private boolean _signedIn;
+	private Locale _siteDefaultLocale;
+	private Group _siteGroup;
+	private long _siteGroupId;
 	private boolean _stateExclusive;
 	private boolean _stateMaximized;
 	private boolean _statePopUp;
@@ -1454,7 +1584,7 @@ public class ThemeDisplay
 	private transient PortletURL _urlPublishToLive = null;
 	private String _urlSignIn = StringPool.BLANK;
 	private String _urlSignOut = StringPool.BLANK;
-	private String _urlSiteContent = StringPool.BLANK;
+	private String _urlSiteAdministration = StringPool.BLANK;
 	private transient PortletURL _urlSiteMapSettings = null;
 	private transient PortletURL _urlSiteSettings = null;
 	private transient PortletURL _urlUpdateManager = null;

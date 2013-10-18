@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,16 +19,10 @@
 <%@ page import="com.liferay.taglib.ui.SitesDirectoryTag" %>
 
 <%
-PortletPreferences preferences = renderRequest.getPreferences();
-
 String portletResource = ParamUtil.getString(request, "portletResource");
 
-if (Validator.isNotNull(portletResource)) {
-	preferences = PortletPreferencesFactoryUtil.getPortletSetup(request, portletResource);
-}
-
-String displayStyle = PrefsParamUtil.getString(preferences, renderRequest, "displayStyle", "descriptive");
-String sites = PrefsParamUtil.getString(preferences, renderRequest, "sites", SitesDirectoryTag.SITES_TOP_LEVEL);
+String displayStyle = PrefsParamUtil.getString(portletPreferences, renderRequest, "displayStyle", "descriptive");
+String sites = PrefsParamUtil.getString(portletPreferences, renderRequest, "sites", SitesDirectoryTag.SITES_TOP_LEVEL);
 %>
 
 <%@ include file="/html/portlet/sites_directory/init-ext.jsp" %>

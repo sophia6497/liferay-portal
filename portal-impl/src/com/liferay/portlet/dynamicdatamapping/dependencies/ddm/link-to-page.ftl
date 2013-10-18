@@ -2,7 +2,13 @@
 
 <#assign layoutLocalService = serviceLocator.findService("com.liferay.portal.service.LayoutLocalService")>
 
-<#macro getLayoutsOptions groupId privateLayout parentLayoutId selectedPlid level=0>
+<#macro getLayoutsOptions
+	groupId
+	parentLayoutId
+	privateLayout
+	selectedPlid
+	level = 0
+>
 	<#assign layouts = layoutLocalService.getLayouts(groupId, privateLayout, parentLayoutId)>
 
 	<#if (layouts?size > 0)>
@@ -27,7 +33,13 @@
 				${curLayout.getName(requestedLocale)}
 			</@>
 
-			<@getLayoutsOptions groupId=scopeGroupId privateLayout=false parentLayoutId=curLayout.getLayoutId() selectedPlid=selectedPlid level=level+1></@>
+			<@getLayoutsOptions
+				groupId = scopeGroupId
+				level = level + 1
+				parentLayoutId = curLayout.getLayoutId()
+				privateLayout = false
+				selectedPlid = selectedPlid
+			/>
 		</#list>
 
 		<#if (level == 0)>
@@ -44,7 +56,13 @@
 	<#if (fieldRawValue?? && fieldRawValue != "")>
 		<#assign fieldLayoutJSONObject = jsonFactoryUtil.createJSONObject(fieldRawValue)>
 
-		<#assign selectedLayout = layoutLocalService.fetchLayout(fieldLayoutJSONObject.getLong("groupId"), fieldLayoutJSONObject.getBoolean("privateLayout"), fieldLayoutJSONObject.getLong("layoutId"))!"">
+		<#if (fieldLayoutJSONObject.getLong("groupId") > 0)>
+			<#assign selectedLayoutGroupId = fieldLayoutJSONObject.getLong("groupId")>
+		<#else>
+			<#assign selectedLayoutGroupId = scopeGroupId>
+		</#if>
+
+		<#assign selectedLayout = layoutLocalService.fetchLayout(selectedLayoutGroupId, fieldLayoutJSONObject.getBoolean("privateLayout"), fieldLayoutJSONObject.getLong("layoutId"))!"">
 
 		<#if (selectedLayout?? && selectedLayout != "")>
 			<#assign selectedPlid = selectedLayout.getPlid()>
@@ -52,9 +70,19 @@
 	</#if>
 
 	<select name="${namespacedFieldName}">
-		<@getLayoutsOptions groupId=scopeGroupId privateLayout=false parentLayoutId=0 selectedPlid=selectedPlid></@>
+		<@getLayoutsOptions
+			groupId = scopeGroupId
+			parentLayoutId = 0
+			privateLayout = false
+			selectedPlid = selectedPlid
+		/>
 
-		<@getLayoutsOptions groupId=scopeGroupId privateLayout=true parentLayoutId=0 selectedPlid=selectedPlid></@>
+		<@getLayoutsOptions
+			groupId = scopeGroupId
+			parentLayoutId = 0
+			privateLayout = true
+			selectedPlid = selectedPlid
+		/>
 	</select>
 
 	${fieldStructure.children}

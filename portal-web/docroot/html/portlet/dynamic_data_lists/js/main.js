@@ -3,6 +3,8 @@ AUI.add(
 	function(A) {
 		var AArray = A.Array;
 
+		var DateMath = A.DataType.DateMath;
+
 		var Lang = A.Lang;
 
 		var JSON = A.JSON;
@@ -23,7 +25,7 @@ AUI.add(
 					initializer: function() {
 						var instance = this;
 
-						window[Liferay.Util.getPortletNamespace('15') + 'selectDocumentLibrary'] = A.bind(instance._selectFileEntry, instance);
+						window[Liferay.Util.getPortletNamespace('166') + 'selectDocumentLibrary'] = A.bind('_selectFileEntry', instance);
 					},
 
 					getElementsValue: function() {
@@ -39,31 +41,32 @@ AUI.add(
 
 						instance.toolbar.add(
 							{
-								handler: A.bind(instance._handleChooseEvent, instance),
+								on: {
+									click: A.bind('_onClickChoose', instance)
+								},
 								label: Liferay.Language.get('choose')
 							},
 							1
 						);
 					},
 
-					_handleChooseEvent: function() {
+					_onClickChoose: function() {
 						var instance = this;
 
-						var uri = Liferay.Util.addParams(
-							{
-								groupId: themeDisplay.getScopeGroupId(),
-								p_p_id: '166',
-								p_p_state: 'pop_up',
-								struts_action: '/dynamic_data_mapping/select_document_library'
-							},
-							themeDisplay.getURLControlPanel()
-						);
+						var portletURL = Liferay.PortletURL.createURL(themeDisplay.getURLControlPanel());
+
+						portletURL.setParameter('groupId', themeDisplay.getScopeGroupId());
+						portletURL.setParameter('struts_action', '/dynamic_data_mapping/select_document_library');
+
+						portletURL.setPortletId('166');
+
+						portletURL.setWindowState('pop_up');
 
 						Liferay.Util.openWindow(
 							{
 								id: 'selectDocumentLibrary',
 								title: Liferay.Language.get('javax.portlet.title.20'),
-								uri: uri
+								uri: portletURL.toString()
 							}
 						);
 					},
@@ -156,7 +159,7 @@ AUI.add(
 					}
 				},
 
-				CSS_PREFIX: '',
+				CSS_PREFIX: 'table',
 
 				DATATYPE_VALIDATOR: {
 					'date': 'date',
@@ -297,7 +300,8 @@ AUI.add(
 									data: data,
 									record: record,
 									recordsetId: recordsetId,
-									structure: structure
+									structure: structure,
+									zIndex: Liferay.zIndex.OVERLAY
 								}
 							);
 						}
@@ -328,7 +332,13 @@ AUI.add(
 									fieldsMap,
 									function(json) {
 										if (json.recordId > 0) {
-											record.set('recordId', json.recordId);
+											record.set(
+												'recordId',
+												json.recordId,
+												{
+													silent: true
+												}
+											);
 										}
 									}
 								);
@@ -446,16 +456,26 @@ AUI.add(
 								};
 							}
 							else if (type === 'ddm-date') {
-								config.inputFormatter = function(value) {
-									var date = A.DataType.Date.parse(value);
+								config.inputFormatter = function(val) {
+									return AArray.map(
+										val,
+										function(item, index, collection) {
+											return item.getTime();
+										}
+									);
+								};
 
-									var dateValue = STR_EMPTY;
+								config.outputFormatter = function(val) {
+									return AArray.map(
+										val,
+										function(item, index, collection) {
+											var date = new Date(Lang.toInt(item));
 
-									if (date) {
-										dateValue = date.getTime();
-									}
+											date = DateMath.add(date, DateMath.MINUTES, date.getTimezoneOffset());
 
-									return dateValue;
+											return date;
+										}
+									);
 								};
 
 								item.formatter = function(obj) {
@@ -464,9 +484,36 @@ AUI.add(
 									var value = data[name];
 
 									if (value !== STR_EMPTY) {
-										value = parseInt(value, 10);
+										var date = new Date(Lang.toInt(value));
 
-										value = A.DataType.Date.format(new Date(value));
+										date = DateMath.add(date, DateMath.MINUTES, date.getTimezoneOffset());
+
+										value = A.DataType.Date.format(date);
+									}
+
+									return value;
+								};
+							}
+							else if ((type === 'ddm-decimal') || (type === 'ddm-integer') || (type === 'ddm-number')) {
+								config.outputFormatter = function(value) {
+									var number = A.DataType.Number.parse(value);
+
+									var numberValue = STR_EMPTY;
+
+									if (Lang.isNumber(number)) {
+										numberValue = number;
+									}
+
+									return numberValue;
+								};
+
+								item.formatter = function(obj) {
+									var data = obj.data;
+
+									var value = A.DataType.Number.parse(data[name]);
+
+									if (!Lang.isNumber(value)) {
+										value = STR_EMPTY;
 									}
 
 									return value;
@@ -488,31 +535,6 @@ AUI.add(
 									}
 
 									return label;
-								};
-							}
-							else if (type === 'ddm-fileupload') {
-								item.formatter = function(obj) {
-									var data = obj.data;
-
-									var label = STR_EMPTY;
-									var value = data[name];
-
-									if (value !== STR_EMPTY) {
-										var fileData = SpreadSheet.Util.parseJSON(value);
-
-										if (fileData.classPK) {
-											label = fileData.name;
-										}
-									}
-
-									return label;
-								};
-
-								structureField = instance.findStructureFieldByAttribute(structure, 'name', name);
-
-								config.validator.rules[name] = {
-									acceptFiles: structureField.acceptFiles,
-									requiredFields: true
 								};
 							}
 							else if ((type === 'radio') || (type === 'select')) {
@@ -705,15 +727,14 @@ AUI.add(
 				var previewDialog = instance.previewDialog;
 
 				if (!previewDialog) {
-					previewDialog = new A.Dialog(
+					previewDialog = Liferay.Util.Window.getWindow(
 						{
-							bodyContent: content,
-							centered: true,
-							modal: true,
-							width: A.getWin().width() / 2,
+							dialog: {
+								bodyContent: content
+							},
 							title: Liferay.Language.get('preview')
 						}
-					).render();
+					);
 
 					instance.previewDialog = previewDialog;
 				}
@@ -722,8 +743,6 @@ AUI.add(
 
 					previewDialog.set('bodyContent', content);
 				}
-
-				return previewDialog;
 			}
 		};
 
@@ -731,6 +750,6 @@ AUI.add(
 	},
 	'',
 	{
-		requires: ['aui-arraysort', 'aui-datatable', 'datatable-sort', 'aui-dialog', 'json', 'liferay-portlet-url']
+		requires: ['aui-arraysort', 'aui-datatable', 'datatable-sort', 'json', 'liferay-portlet-url', 'liferay-util-window']
 	}
 );

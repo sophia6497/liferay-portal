@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2012 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -88,8 +88,13 @@ public class PortletSessionListenerManager
 		_httpSessionListeners.remove(httpSessionListener);
 	}
 
+	@Override
 	public void attributeAdded(
 		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		if (_httpSessionAttributeListeners.isEmpty()) {
+			return;
+		}
 
 		httpSessionBindingEvent = getHttpSessionBindingEvent(
 			httpSessionBindingEvent);
@@ -102,8 +107,13 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void attributeRemoved(
 		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		if (_httpSessionAttributeListeners.isEmpty()) {
+			return;
+		}
 
 		httpSessionBindingEvent = getHttpSessionBindingEvent(
 			httpSessionBindingEvent);
@@ -116,8 +126,13 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void attributeReplaced(
 		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		if (_httpSessionAttributeListeners.isEmpty()) {
+			return;
+		}
 
 		httpSessionBindingEvent = getHttpSessionBindingEvent(
 			httpSessionBindingEvent);
@@ -130,7 +145,12 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void sessionCreated(HttpSessionEvent httpSessionEvent) {
+		if (_httpSessionListeners.isEmpty()) {
+			return;
+		}
+
 		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
 
 		Thread currentThread = Thread.currentThread();
@@ -155,15 +175,23 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
 		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
+
+		PortletSessionTracker.invalidate(httpSessionEvent.getSession().getId());
 
 		for (HttpSessionListener httpSessionListener : _httpSessionListeners) {
 			httpSessionListener.sessionDestroyed(httpSessionEvent);
 		}
 	}
 
+	@Override
 	public void sessionDidActivate(HttpSessionEvent httpSessionEvent) {
+		if (_httpSessionActivationListeners.isEmpty()) {
+			return;
+		}
+
 		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
 
 		for (HttpSessionActivationListener httpSessionActivationListener :
@@ -173,7 +201,12 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void sessionWillPassivate(HttpSessionEvent httpSessionEvent) {
+		if (_httpSessionActivationListeners.isEmpty()) {
+			return;
+		}
+
 		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
 
 		for (HttpSessionActivationListener httpSessionActivationListener :
@@ -184,7 +217,12 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void valueBound(HttpSessionBindingEvent httpSessionBindingEvent) {
+		if (_httpSessionBindingListeners.isEmpty()) {
+			return;
+		}
+
 		httpSessionBindingEvent = getHttpSessionBindingEvent(
 			httpSessionBindingEvent);
 
@@ -195,9 +233,13 @@ public class PortletSessionListenerManager
 		}
 	}
 
+	@Override
 	public void valueUnbound(HttpSessionBindingEvent httpSessionBindingEvent) {
 		httpSessionBindingEvent = getHttpSessionBindingEvent(
 			httpSessionBindingEvent);
+
+		PortletSessionTracker.invalidate(
+			httpSessionBindingEvent.getSession().getId());
 
 		for (HttpSessionBindingListener httpSessionBindingListener :
 				_httpSessionBindingListeners) {
